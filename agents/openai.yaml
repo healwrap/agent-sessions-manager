@@ -1,0 +1,4 @@
+interface:
+  display_name: "恢复 Codex 上下文"
+  short_description: "从 Codex 原始记录中按需找回历史对话、工具轨迹与媒体引用"
+  default_prompt: "使用 $recover-codex-context 从当前 Codex 任务中按需恢复与本轮问题相关的历史上下文。"

@@ -56,6 +56,8 @@ python3 scripts/session_context.py turn T003
 python3 scripts/session_context.py message T003/A04 --page 1
 python3 scripts/session_context.py tools T003 --page 1 --page-size 15
 python3 scripts/session_context.py evidence T003/C002 --query "需要核对的关键词"
+python3 scripts/session_context.py agents
+python3 scripts/session_context.py agent <agent-id> --query "需要核对的关键词"
 ```
 
 使用其他任务时，把全局参数放在子命令之前：
@@ -72,7 +74,9 @@ python3 scripts/session_context.py --session "任务标题或任务 ID" outline
 4. `turn`：读取一个 turn 的可见对话；过长或被截断时不要提高上限，改用返回的消息引用。
 5. `message`：按 `T003/A04` 或 `T003/U01` 精确读取单条消息；长消息使用 `--page` 分页。
 6. `tools` / `tool`：分页查看工具轨迹和脱敏输入摘要，不含结果。可用 `--name`、`--status` 筛选。
-7. `evidence`：必须指定调用引用和查询词，只返回命中附近的小片段；JSON 结果按字段展开。
+7. `agents`：汇总主任务 rollout 中记录过的 `multi_agent_v1` 子代理，包括 agent ID、昵称、续跑/等待/关闭事件和是否有回传结果。
+8. `agent`：按 agent ID 或唯一前缀读取主任务已经保存的子代理输入摘要和工具结果；可用 `--query` 缩小结果。
+9. `evidence`：必须指定调用引用和查询词，只返回命中附近的小片段；JSON 结果按字段展开。
 
 需要衡量读取规模时，把全局参数放在子命令前：
 
@@ -94,6 +98,12 @@ python3 scripts/session_context.py tool T003/C002.1
 ```
 
 沿引用继续读取，不要重新扫描会话。
+
+## 子代理记录边界
+
+`agents` / `agent` 只读取主任务 rollout 已经收到的子代理事件和结果。它可以找回已经回传到主任务的最终报告，即使后续子代理已经关闭；但 Codex 没有写入主任务的子代理内部消息、隐藏推理和未回传过程，无法通过本 Skill 凭 agent ID 重新构造。若子代理实际产生了独立 rollout，会话定位仍使用 `locate --include-derived`，再用该任务 ID 按普通流程读取。
+
+主任务经 `exec` 组合调用多个子代理时，内部调用与外层结果共享同一份历史结果；`agent` 会明确展示这一边界，不把共享结果误称为某个内部调用的独立 transcript。
 
 ## 图片和音频
 

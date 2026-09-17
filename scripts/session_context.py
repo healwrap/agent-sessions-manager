@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any
 
 from session_artifacts import (
+    evidence_windows,
+    read_raw_entry,
     render_cache,
     render_evidence,
     render_media_item,
@@ -36,7 +38,7 @@ from session_locator import (
 from session_sanitize import DATA_URL_RE, compact_line, sanitize_text, text_from_content
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 DEFAULT_LIMITS = {
     "locate": 8_000,
     "status": 2_000,
@@ -47,11 +49,21 @@ DEFAULT_LIMITS = {
     "tools": 8_000,
     "tool": 6_000,
     "evidence": 8_000,
+    "agents": 8_000,
+    "agent": 14_000,
     "media": 6_000,
     "cache": 3_000,
 }
 HARD_LIMITS = {key: value for key, value in DEFAULT_LIMITS.items()}
 NESTED_TOOL_RE = re.compile(r"\btools\.([A-Za-z0-9_]+)\s*\(")
+AGENT_ID_RE = re.compile(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.I)
+AGENT_TOOL_NAMES = {
+    "multi_agent_v1__spawn_agent",
+    "multi_agent_v1__send_input",
+    "multi_agent_v1__wait_agent",
+    "multi_agent_v1__resume_agent",
+    "multi_agent_v1__close_agent",
+}
 PATCH_PATH_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File:\s*(.+)$", re.M)
 ABS_PATH_RE = re.compile(r"/(?:Users|private|var|tmp|Volumes|opt)/[^\s'\"`;,)}\]]+")
 CMD_STRING_RE = re.compile(r"\bcmd\s*:\s*(\"(?:\\.|[^\"\\])*\")", re.S)
@@ -441,6 +453,7 @@ def normalize_entry(
             "kind": "tool_call", "turn_seq": state["turn_seq"], "timestamp": timestamp,
             "call_id": payload.get("call_id") or payload.get("id") or f"line-{line_number}",
             "outer_name": payload.get("name") or "unknown", "call_type": payload_type,
+            "input_offset": offset,
             "line_number": line_number, **summary,
         })
         return
@@ -874,6 +887,158 @@ def call_names(call: dict[str, Any]) -> str:
     return ", ".join(f"{name}×{count}" for name, count in counts.items())
 
 
+def agent_operation_names(call: dict[str, Any]) -> list[str]:
+    names = call.get("nested_tools") or [call.get("outer_name", "unknown")]
+    return [str(name) for name in names if str(name) in AGENT_TOOL_NAMES]
+
+
+def raw_call_input(source: Path, call: dict[str, Any]) -> tuple[Any, str]:
+    offset = call.get("input_offset")
+    if offset is None:
+        return None, str(call.get("input_excerpt") or "")
+    entry = read_raw_entry(source, int(offset))
+    payload = entry.get("payload") or {}
+    raw = payload.get("arguments")
+    if raw is None:
+        raw = payload.get("input")
+    if raw is None:
+        raw = {
+            key: value for key, value in payload.items()
+            if key not in {"type", "name", "call_id", "id", "status"}
+        }
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw), raw
+        except json.JSONDecodeError:
+            return None, raw
+    return raw, json.dumps(raw, ensure_ascii=False, separators=(",", ":"))
+
+
+def raw_call_output(source: Path, call: dict[str, Any]) -> tuple[Any, str]:
+    output_meta = call.get("output") or {}
+    offset = output_meta.get("offset")
+    if offset is None:
+        return None, ""
+    entry = read_raw_entry(source, int(offset))
+    payload = entry.get("payload") or {}
+    output = payload.get("output")
+    return output, text_from_content(output)
+
+
+def agent_activity(source: Path, turns: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Collect only the child-agent data that was recorded in the parent rollout."""
+    registry: dict[str, dict[str, Any]] = {}
+    for turn in turns:
+        for call in turn.get("calls") or []:
+            operations = agent_operation_names(call)
+            if not operations:
+                continue
+            _, input_text = raw_call_input(source, call)
+            _, output_text = raw_call_output(source, call)
+            searchable = "\n".join((input_text, output_text))
+            agent_ids = sorted(set(AGENT_ID_RE.findall(searchable)), key=str.casefold)
+            if not agent_ids:
+                continue
+            nickname_match = re.search(
+                r"[\"']nickname[\"']\s*[:=]\s*[\"']([^\"']+)", output_text,
+            )
+            nickname = nickname_match.group(1) if nickname_match else None
+            for agent_id in agent_ids:
+                item = registry.setdefault(agent_id, {"nickname": None, "events": []})
+                if nickname:
+                    item["nickname"] = nickname
+                item["events"].append({
+                    "turn": f"T{turn['seq']:03d}",
+                    "call": call.get("ref", "(无引用)"),
+                    "operations": operations,
+                    "input": compact_line(sanitize_text(input_text), 600),
+                    "output": output_text,
+                    "output_chars": len(output_text),
+                })
+    return registry
+
+
+def agent_state(events: list[dict[str, Any]]) -> str:
+    state = "已记录"
+    for event in events:
+        operations = event.get("operations") or []
+        output = str(event.get("output") or "").casefold()
+        if "multi_agent_v1__close_agent" in operations:
+            state = "已关闭"
+        elif "multi_agent_v1__resume_agent" in operations:
+            state = "已恢复"
+        elif "completed" in output:
+            state = "已完成"
+        elif "errored" in output:
+            state = "异常"
+        elif "running" in output:
+            state = "运行中"
+    return state
+
+
+def render_agents(index: dict[str, Any], source: Path, turns: list[dict[str, Any]]) -> str:
+    registry = agent_activity(source, turns)
+    lines = untrusted_header(index)
+    lines.append("## 子代理记录（主任务 rollout 中可恢复的部分）")
+    lines.append("[这里只展示主任务已经收到的子代理事件和结果；不代表存在完整子代理 transcript。]")
+    if not registry:
+        lines.append("没有找到可恢复的 multi_agent_v1 子代理记录。")
+        return "\n".join(lines)
+    for agent_id, item in registry.items():
+        nickname = f" · {sanitize_text(item['nickname'])}" if item.get("nickname") else ""
+        refs = ", ".join(event["call"] for event in item["events"])
+        has_output = any(event.get("output") for event in item["events"])
+        lines.extend([
+            f"### {agent_id}{nickname}",
+            f"- 状态：{agent_state(item['events'])}",
+            f"- 事件：{len(item['events'])} 次（{refs}）",
+            f"- 主任务已记录结果：{'是' if has_output else '否'}",
+        ])
+    lines.append("继续：agent <agent-id>；可加 --query <关键词> 定向读取已回传结果。")
+    return "\n".join(lines)
+
+
+def render_agent(
+    index: dict[str, Any], source: Path, turns: list[dict[str, Any]],
+    selector: str, query: str | None, context: int,
+) -> str:
+    registry = agent_activity(source, turns)
+    matches = [agent_id for agent_id in registry if agent_id.casefold().startswith(selector.casefold())]
+    if not matches:
+        raise ContextError(f"没有找到子代理 {selector}；先运行 agents 查看当前任务中可恢复的 agent。")
+    if len(matches) > 1:
+        raise ContextError("agent 前缀匹配到多个子代理，请提供完整 agent_id：" + ", ".join(matches))
+    agent_id = matches[0]
+    item = registry[agent_id]
+    nickname = f" · {sanitize_text(item['nickname'])}" if item.get("nickname") else ""
+    lines = untrusted_header(index)
+    lines.extend([
+        f"## 子代理 {agent_id}{nickname}",
+        f"- 状态：{agent_state(item['events'])}",
+        "[以下是主任务 rollout 已保存的输入摘要和工具结果；未保存的子代理内部对话无法恢复。]",
+    ])
+    search_query = query or agent_id
+    for event in item["events"]:
+        lines.extend([
+            f"### {event['turn']}/{event['call']} · {', '.join(event['operations'])}",
+            f"- 输入摘要：{event['input'] or '(无)'}",
+        ])
+        output = str(event.get("output") or "")
+        if not output:
+            lines.append("- 结果：主任务没有保存该调用的结果。")
+            continue
+        windows = evidence_windows(output, search_query, context)
+        if not windows and query:
+            lines.append("- 结果：没有命中查询词。")
+        elif windows:
+            lines.append("- 已记录结果：")
+            lines.extend(windows)
+        else:
+            lines.append("- 结果：已保存，但没有可展示的命中片段。")
+    lines.append("注意：这不是对子代理隐藏推理或未回传消息的读取。")
+    return "\n".join(lines)
+
+
 def render_tools(
     index: dict[str, Any], turn: dict[str, Any], page: int, page_size: int,
     name_filter: str | None, status_filter: str | None,
@@ -1014,6 +1179,11 @@ def make_parser() -> argparse.ArgumentParser:
     evidence.add_argument("call")
     evidence.add_argument("--query", required=True)
     evidence.add_argument("--context", type=int, default=2)
+    subparsers.add_parser("agents")
+    agent = subparsers.add_parser("agent")
+    agent.add_argument("agent_id")
+    agent.add_argument("--query")
+    agent.add_argument("--context", type=int, default=2)
     media = subparsers.add_parser("media")
     media.add_argument("ref", nargs="?")
     media.add_argument("--extract", action="store_true")
@@ -1083,6 +1253,12 @@ def main(argv: list[str] | None = None) -> int:
                 raise ContextError("--context 必须在 0-5 之间。")
             _, call = find_call(turns, args.call, args.include_incomplete)
             output = render_evidence(index, source, call, args.query, args.context)
+        elif command == "agents":
+            output = render_agents(index, source, visible)
+        elif command == "agent":
+            if not 0 <= args.context <= 5:
+                raise ContextError("--context 必须在 0-5 之间。")
+            output = render_agent(index, source, visible, args.agent_id, args.query, args.context)
         elif command == "media":
             if args.extract and not args.ref:
                 raise ContextError("--extract 必须指定一个媒体引用，例如 T003/M01。")

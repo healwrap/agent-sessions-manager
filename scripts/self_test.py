@@ -16,6 +16,8 @@ SCRIPT = Path(__file__).with_name("session_context.py")
 THREAD_ID = "11111111-2222-3333-4444-555555555555"
 SECOND_THREAD_ID = "66666666-7777-8888-9999-aaaaaaaaaaaa"
 THIRD_THREAD_ID = "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+AGENT_THREAD_ID = "12121212-3434-5656-7878-909090909090"
+AGENT_ID = "abababab-cdcd-efef-1212-343434343434"
 
 
 def entry(timestamp: str, entry_type: str, payload: dict) -> str:
@@ -141,6 +143,58 @@ def main() -> int:
             }),
         ]
         third_session.write_text("\n".join(third_rows) + "\n", encoding="utf-8")
+        agent_session = session_dir / f"rollout-test-{AGENT_THREAD_ID}.jsonl"
+        agent_rows = [
+            entry("2026-08-10T00:00:00Z", "session_meta", {
+                "id": AGENT_THREAD_ID, "cwd": "/tmp/project",
+            }),
+            entry("2026-08-10T00:00:01Z", "event_msg", {
+                "type": "task_started", "turn_id": "agent-turn",
+            }),
+            entry("2026-08-10T00:00:02Z", "event_msg", {
+                "type": "user_message", "message": "请研究 Source2 的规则",
+            }),
+            entry("2026-08-10T00:00:03Z", "response_item", {
+                "type": "function_call", "name": "multi_agent_v1__spawn_agent",
+                "call_id": "agent-spawn",
+                "arguments": json.dumps({
+                    "model": "gpt-5.6-luna", "reasoning_effort": "max",
+                    "message": "研究 Source2 的规则并返回证据",
+                }, ensure_ascii=False),
+            }),
+            entry("2026-08-10T00:00:04Z", "response_item", {
+                "type": "function_call_output", "call_id": "agent-spawn",
+                "output": [{"type": "text", "text": json.dumps({
+                    "agent_id": AGENT_ID, "nickname": "Source2研究员",
+                }, ensure_ascii=False)}],
+            }),
+            entry("2026-08-10T00:00:05Z", "response_item", {
+                "type": "function_call", "name": "multi_agent_v1__wait_agent",
+                "call_id": "agent-wait",
+                "arguments": json.dumps({"targets": [AGENT_ID], "timeout_ms": 1000}),
+            }),
+            entry("2026-08-10T00:00:06Z", "response_item", {
+                "type": "function_call_output", "call_id": "agent-wait",
+                "output": [{"type": "text", "text": json.dumps({
+                    "status": {AGENT_ID: {"completed": "Source2 已确认：Test Lion 映射缺失；证据来自测试配置。"}},
+                }, ensure_ascii=False)}],
+            }),
+            entry("2026-08-10T00:00:07Z", "response_item", {
+                "type": "function_call", "name": "multi_agent_v1__close_agent",
+                "call_id": "agent-close",
+                "arguments": json.dumps({"target": AGENT_ID}),
+            }),
+            entry("2026-08-10T00:00:08Z", "response_item", {
+                "type": "function_call_output", "call_id": "agent-close",
+                "output": [{"type": "text", "text": json.dumps({
+                    "previous_status": {"completed": "Source2 已确认：Test Lion 映射缺失；证据来自测试配置。"},
+                }, ensure_ascii=False)}],
+            }),
+            entry("2026-08-10T00:00:09Z", "event_msg", {
+                "type": "task_complete", "turn_id": "agent-turn",
+            }),
+        ]
+        agent_session.write_text("\n".join(agent_rows) + "\n", encoding="utf-8")
         (root / "session_index.jsonl").write_text(
             "\n".join([
                 json.dumps({
@@ -151,6 +205,9 @@ def main() -> int:
                 }, ensure_ascii=False),
                 json.dumps({
                     "id": THIRD_THREAD_ID, "thread_name": "派生会话", "updated_at": "2026-08-11T00:00:03Z",
+                }, ensure_ascii=False),
+                json.dumps({
+                    "id": AGENT_THREAD_ID, "thread_name": "子代理记录自测", "updated_at": "2026-08-10T00:00:09Z",
                 }, ensure_ascii=False),
             ]) + "\n",
             encoding="utf-8",
@@ -219,6 +276,10 @@ def main() -> int:
         assert long_path in structured and "another-secret-value" not in structured
         nested_evidence = run(root, session, "evidence", "T001/C001.1", "--query", "balance marker")
         assert "共享结果" in nested_evidence and "不能证明" in nested_evidence
+        agents = run(root, agent_session, "agents")
+        assert AGENT_ID in agents and "Source2研究员" in agents and "已关闭" in agents
+        agent = run(root, agent_session, "agent", AGENT_ID, "--query", "Source2")
+        assert "Source2 已确认" in agent and "Test Lion" in agent and "未保存的子代理内部对话" in agent
         media = run(root, session, "media", "T001")
         assert "T001/M01" in media and "T001/M02" in media and "嵌入 JSONL" in media
         assert image_data not in media and audio_data not in media and "原临时路径 已失效" in media

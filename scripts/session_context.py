@@ -35,10 +35,11 @@ from session_locator import (
     resolve_session,
     stable_hash,
 )
-from session_sanitize import DATA_URL_RE, compact_line, sanitize_text, text_from_content
+from session_text import DATA_URL_RE, compact_line, text_from_content
 
 
-SCHEMA_VERSION = 6
+# v7 invalidates indexes produced by the former value-replacement pipeline.
+SCHEMA_VERSION = 7
 DEFAULT_LIMITS = {
     "locate": 8_000,
     "status": 2_000,
@@ -190,7 +191,7 @@ def tool_summary(name: str, raw_input: str, *, include_nested: bool = True) -> d
     display = [f"{key}×{counts[key]}" for key in counts]
     paths = []
     for value in PATCH_PATH_RE.findall(raw_input) + ABS_PATH_RE.findall(raw_input):
-        cleaned = sanitize_text(value.rstrip(".:")[:500])
+        cleaned = value[:500]
         if cleaned and cleaned not in paths:
             paths.append(cleaned)
     commands = []
@@ -211,7 +212,7 @@ def tool_summary(name: str, raw_input: str, *, include_nested: bool = True) -> d
         "nested_calls": nested_calls,
         "summary": summary,
         "paths": paths[:20],
-        "input_excerpt": sanitize_text(raw_input[:2_500]),
+        "input_excerpt": raw_input[:2_500],
         "input_chars": len(raw_input),
     }
 
@@ -262,7 +263,7 @@ def media_descriptor(
         })
         return descriptor
     if value.startswith(("http://", "https://")):
-        descriptor.update({"locator": "remote_url", "url": sanitize_url(value)})
+        descriptor.update({"locator": "remote_url", "url": value})
         return descriptor
     descriptor.update({
         "locator": "local_path",
@@ -322,17 +323,18 @@ def output_status(output: Any) -> str:
 
     inspect(output)
     text = text_from_content(output)[:10_000]
-    head = text.casefold()
-    exit_codes.extend(int(value) for value in re.findall(r"[\"']?exit_code[\"']?\s*[:=]\s*(-?\d+)", text, re.I))
+    searchable = text.replace(r'\"', '"')
+    searchable_head = searchable.casefold()
+    exit_codes.extend(int(value) for value in re.findall(r"[\"']?exit_code[\"']?\s*[:=]\s*(-?\d+)", searchable, re.I))
     if any(code != 0 for code in exit_codes) or any(flag is False for flag in flags):
         return "error"
-    if any(marker in head for marker in ("script failed", "iserror\":true", "is_error\":true")):
+    if any(marker in searchable_head for marker in ("script failed", "iserror\":true", "is_error\":true")):
         return "error"
-    if "script running with cell id" in head:
+    if "script running with cell id" in searchable_head:
         return "running"
     if exit_codes or any(flag is True for flag in flags):
         return "success"
-    if any(marker in head for marker in ("script completed", "exit_code\":0", "success\":true")):
+    if any(marker in searchable_head for marker in ("script completed", "exit_code\":0", "success\":true")):
         return "success"
     return "result"
 
@@ -385,7 +387,7 @@ def normalize_entry(
 
     if entry_type == "event_msg" and payload_type == "user_message":
         ensure_turn(state, records, timestamp, offset)
-        text = sanitize_text(str(payload.get("message", ""))).strip()
+        text = str(payload.get("message", ""))
         if text:
             records.append({
                 "kind": "message", "role": "user", "phase": "user", "text": text,
@@ -406,7 +408,7 @@ def normalize_entry(
 
     if entry_type == "event_msg" and payload_type == "agent_message":
         ensure_turn(state, records, timestamp, offset)
-        text = sanitize_text(str(payload.get("message", ""))).strip()
+        text = str(payload.get("message", ""))
         if text:
             records.append({
                 "kind": "message", "role": "assistant", "phase": payload.get("phase") or "unknown",
@@ -691,14 +693,14 @@ def render_locate(
 ) -> str:
     filters = []
     if title:
-        filters.append(f"标题={sanitize_text(title)}")
+        filters.append(f"标题={compact_line(title)}")
     if query:
         role_label = {"all": "用户和Agent", "user": "仅用户", "assistant": "仅Agent"}[match_role]
         filters.append(
-            f"对话={sanitize_text(query)}（{'全部词' if match_mode == 'all' else '任一词'}；{role_label}）"
+            f"对话={compact_line(query)}（{'全部词' if match_mode == 'all' else '任一词'}；{role_label}）"
         )
     if cwd:
-        filters.append(f"工作目录={sanitize_text(cwd)}")
+        filters.append(f"工作目录={compact_line(cwd)}")
     if include_derived:
         filters.append("包含子代理派生任务")
     if include_current:
@@ -717,7 +719,7 @@ def render_locate(
             f"- 任务 ID：{item['id']}",
             f"- 更新时间：{item['updated_at']}",
             f"- 工作目录：{item['cwd']}",
-            f"- 会话来源：{sanitize_text(str(item.get('session_source') or '未知'))}",
+            f"- 会话来源：{compact_line(str(item.get('session_source') or '未知'))}",
             f"- 原始大小：{item['size']} 字节",
             f"- 首条用户消息：{item['first_user']}",
         ])
@@ -812,7 +814,7 @@ def render_search(index: dict[str, Any], turns: list[dict[str, Any]], query: str
                 ranked.append((hits, turn["seq"], message))
     ranked.sort(key=lambda item: (-item[0], -item[1]))
     lines = untrusted_header(index)
-    lines.append(f"## 搜索：{sanitize_text(query)}")
+    lines.append(f"## 搜索：{compact_line(query)}")
     if not ranked:
         lines.append("未在用户/Agent 可见对话中命中。请换一个更短的业务词；工具结果不会被此命令搜索。")
         return "\n".join(lines)
@@ -951,7 +953,7 @@ def agent_activity(source: Path, turns: list[dict[str, Any]]) -> dict[str, dict[
                     "turn": f"T{turn['seq']:03d}",
                     "call": call.get("ref", "(无引用)"),
                     "operations": operations,
-                    "input": compact_line(sanitize_text(input_text), 600),
+                    "input": compact_line(input_text, 600),
                     "output": output_text,
                     "output_chars": len(output_text),
                 })
@@ -985,7 +987,7 @@ def render_agents(index: dict[str, Any], source: Path, turns: list[dict[str, Any
         lines.append("没有找到可恢复的 multi_agent_v1 子代理记录。")
         return "\n".join(lines)
     for agent_id, item in registry.items():
-        nickname = f" · {sanitize_text(item['nickname'])}" if item.get("nickname") else ""
+        nickname = f" · {compact_line(item['nickname'])}" if item.get("nickname") else ""
         refs = ", ".join(event["call"] for event in item["events"])
         has_output = any(event.get("output") for event in item["events"])
         lines.extend([
@@ -1010,7 +1012,7 @@ def render_agent(
         raise ContextError("agent 前缀匹配到多个子代理，请提供完整 agent_id：" + ", ".join(matches))
     agent_id = matches[0]
     item = registry[agent_id]
-    nickname = f" · {sanitize_text(item['nickname'])}" if item.get("nickname") else ""
+    nickname = f" · {compact_line(item['nickname'])}" if item.get("nickname") else ""
     lines = untrusted_header(index)
     lines.extend([
         f"## 子代理 {agent_id}{nickname}",
@@ -1059,7 +1061,7 @@ def render_tools(
     lines = untrusted_header(index)
     filters = []
     if name_filter:
-        filters.append(f"name={sanitize_text(name_filter)}")
+        filters.append(f"name={compact_line(name_filter)}")
     if status_filter:
         filters.append(f"status={status_filter}")
     suffix = f"；筛选 {'、'.join(filters)}" if filters else ""
@@ -1088,7 +1090,7 @@ def render_tools(
         if status_filter:
             command += f" --status {status_filter}"
         lines.append("下一页：" + command)
-    lines.append("继续：tool Txxx/Cxxx[.n] 查看脱敏输入；evidence Txxx/Cxxx[.n] --query <关键词> 定向读结果。")
+    lines.append("继续：tool Txxx/Cxxx[.n] 查看有界输入片段；evidence Txxx/Cxxx[.n] --query <关键词> 定向读结果。")
     return "\n".join(lines)
 
 
@@ -1106,7 +1108,7 @@ def render_tool(index: dict[str, Any], call: dict[str, Any]) -> str:
         lines.append(f"- 结果归属：与外层 {call.get('shared_output_ref')} 共享，历史格式无法可靠拆成单次内部调用结果")
     if call.get("paths"):
         lines.append("- 文件：\n" + "\n".join(f"  - {path}" for path in call["paths"][:20]))
-    lines.extend(["### 脱敏输入摘要", call.get("input_excerpt") or "(无)"])
+    lines.extend(["### 输入片段（保留原值，按上限截取）", call.get("input_excerpt") or "(无)"])
     lines.append("结果未读取。需要时使用 evidence 并指定查询词。")
     return "\n".join(lines)
 

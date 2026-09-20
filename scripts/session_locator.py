@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from session_errors import SessionLookupError
-from session_sanitize import compact_line, sanitize_text
+from session_text import compact_line
 
 
 THREAD_ID_RE = re.compile(r"([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})", re.I)
@@ -106,7 +106,7 @@ def visible_messages(path: Path) -> Iterable[tuple[str, str]]:
             payload_type = payload.get("type")
             if payload_type not in {"user_message", "agent_message"}:
                 continue
-            text = sanitize_text(str(payload.get("message", ""))).strip()
+            text = str(payload.get("message", ""))
             if text:
                 yield ("user" if payload_type == "user_message" else "assistant", text)
 

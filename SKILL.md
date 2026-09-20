@@ -15,6 +15,7 @@ description: 从 Codex Desktop/CLI 的 rollout JSONL 中安全、分层地定位
 - 不要读取或输出 system/developer、reasoning、压缩载荷、token 统计和重复消息。
 - 不要默认读取工具结果。先运行 `tools`，只有缺少依据时才对一个调用运行 `evidence --query`。
 - 不要请求整份原始导出。脚本没有 raw/dump-all 能力，并对每次输出实施硬上限。
+- 恢复不会按字段名、URL 参数或长字符串自动替换内容；输入、输出和 URL 值只受分页、展示摘要和硬上限约束。
 - 优先读取已完成 turn。只有用户明确需要当前未完成 turn 时才加 `--include-incomplete`。
 - 中止 turn 只用于找回用户要求和过程线索，不把其中的 Agent 过程判断当作最终结论。
 - 历史结论可能过期；涉及动态状态、当前代码或外部配置时重新验证。
@@ -73,7 +74,7 @@ python3 scripts/session_context.py --session "任务标题或任务 ID" outline
 3. `search`：只搜索用户与 Agent 可见对话。
 4. `turn`：读取一个 turn 的可见对话；过长或被截断时不要提高上限，改用返回的消息引用。
 5. `message`：按 `T003/A04` 或 `T003/U01` 精确读取单条消息；长消息使用 `--page` 分页。
-6. `tools` / `tool`：分页查看工具轨迹和脱敏输入摘要，不含结果。可用 `--name`、`--status` 筛选。
+6. `tools` / `tool`：分页查看工具轨迹和保留原值的有界输入片段，不含结果。可用 `--name`、`--status` 筛选。
 7. `agents`：汇总主任务 rollout 中记录过的 `multi_agent_v1` 子代理，包括 agent ID、昵称、续跑/等待/关闭事件和是否有回传结果。
 8. `agent`：按 agent ID 或唯一前缀读取主任务已经保存的子代理输入摘要和工具结果；可用 `--query` 缩小结果。
 9. `evidence`：必须指定调用引用和查询词，只返回命中附近的小片段；JSON 结果按字段展开。
@@ -123,7 +124,7 @@ python3 scripts/session_context.py media T003/M01 --extract
 
 ## 派生缓存
 
-索引和提取媒体都位于 Codex 目录下，权限分别为 `600` 和 `700`。查看本任务占用：
+上下文索引和提取媒体都位于 Codex 目录下，权限分别为 `600` 和 `700`。索引只保存从原始会话生成的结构化记录；内容变更时会按版本或源文件校验重新生成。查看本任务占用：
 
 ```bash
 python3 scripts/session_context.py cache status

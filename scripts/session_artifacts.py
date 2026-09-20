@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 from session_errors import ContextError
 from session_locator import cache_path_for
-from session_sanitize import DATA_URL_RE, compact_line, sanitize_text, text_from_content
+from session_text import DATA_URL_RE, compact_line, text_from_content
 
 
 MAX_MEDIA_BYTES = 25 * 1024 * 1024
@@ -84,7 +84,7 @@ def evidence_lines(text: str) -> list[str]:
             lines.extend(flatten_json_lines(parsed))
         else:
             lines.append(raw_line)
-    return [sanitize_text(line) for line in lines]
+    return lines
 
 
 def evidence_windows(text: str, query: str, context: int) -> list[str]:
@@ -131,7 +131,7 @@ def render_evidence(
     text = text_from_content(output)
     windows = evidence_windows(text, query, context)
     lines = untrusted_header(index)
-    lines.append(f"## {call['ref']} 工具证据 · 查询：{sanitize_text(query)}")
+    lines.append(f"## {call['ref']} 工具证据 · 查询：{compact_line(query)}")
     lines.append(f"结果规模：{output_meta.get('output_chars', 0)} 字符；只展示命中附近内容。")
     if call.get("is_nested"):
         lines.append(
@@ -264,6 +264,8 @@ def render_media_item(
     ])
     if item.get("locator") == "embedded":
         lines.append(f"- 摘要：sha256={str(item.get('sha256', ''))[:12]}")
+    elif item.get("locator") == "remote_url":
+        lines.append(f"- URL：{item.get('url', '')}")
     if item.get("original_path"):
         lines.append(f"- 原临时路径：{'存在' if path_exists(item.get('original_path')) else '已失效'}")
     if do_extract:
@@ -285,7 +287,7 @@ def render_cache(index: dict[str, Any], source: Path, root: Path, action: str, c
         cache_mode = oct(cache_path.stat().st_mode & 0o777) if cache_path.exists() else "-"
         media_mode = oct(media_path.stat().st_mode & 0o777) if media_path.exists() else "-"
         lines.extend([
-            f"- 脱敏索引：{'存在' if cache_path.exists() else '不存在'}；{cache_size} 字节；权限 {cache_mode}",
+            f"- 上下文索引：{'存在' if cache_path.exists() else '不存在'}；{cache_size} 字节；权限 {cache_mode}",
             f"- 已提取媒体：{len(media_files)} 个；{media_size} 字节；目录权限 {media_mode}",
             "- 原始 JSONL 不属于本缓存，clear 不会删除原始会话。",
         ])
@@ -293,7 +295,7 @@ def render_cache(index: dict[str, Any], source: Path, root: Path, action: str, c
     removed = []
     if cache_path.exists():
         cache_path.unlink()
-        removed.append("脱敏索引")
+        removed.append("上下文索引")
     if clear_media and media_path.exists():
         shutil.rmtree(media_path)
         removed.append("已提取媒体")

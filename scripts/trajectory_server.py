@@ -212,13 +212,17 @@ class Store:
                     if query.casefold() in label.casefold():
                         selected.append(event)
             overview = []
+            matched_refs = {e['ref'] for e in selected}
+            matched_refs.update(e['parent_ref'] for e in selected if e.get('parent_ref'))
             stride = max(1, (len(events)+249)//250)
             for start in range(0, len(events), stride):
                 chunk = events[start:start+stride]
                 for category in ('user', 'assistant', 'tool', 'media', 'context'):
                     members = [e for e in chunk if e['kind'] == category]
                     if members:
-                        overview.append({'position': start, 'kind': category, 'ref': members[0]['ref'],
+                        overview.append({'position': members[0]['position'], 'kind': category, 'ref': members[0]['ref'],
+                                         'end_position': members[-1]['position'],
+                                         'search_match': any(e['ref'] in matched_refs for e in members),
                                          'count': len(members), 'turn': members[0]['turn'],
                                          'timestamp': members[0]['timestamp'], 'status': members[0]['status'],
                                          'duration_ms': members[0].get('duration_ms')})

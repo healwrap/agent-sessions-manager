@@ -125,6 +125,9 @@ def main():
             second = get('/api/event', id=ID, ref='T001/U01', page=2)
             assert first['text']+second['text'] == user and len(first['text']) <= trajectory.PAGE_CHARS
             assert get('/api/trajectory', id=ID, q='末尾检索词')['total'] == 1
+            searched = get('/api/trajectory', id=ID, q='末尾检索词')
+            assert sum(span['search_match'] for span in searched['overview']) == 1
+            assert all(span['end_position'] >= span['position'] for span in searched['overview'])
             assert get('/api/trajectory', id=ID, kind='messages')['total'] == 3
             assert get('/api/trajectory', id=ID, offset=1, limit=2)['next_offset'] == 3
             output = get('/api/event', id=ID, ref='T001/C001', part='output')
@@ -157,6 +160,21 @@ def main():
             with source.open('a') as handle:
                 handle.write('\n')
             assert get('/api/trajectory', id=ID, q='新追加消息')['total'] == 1
+            # Aggregated positions must contain a non-leading selection, and search
+            # must light up the aggregate rather than only its first message.
+            long_id = '44444444-2222-3333-4444-555555555555'
+            long_source = directory / f'rollout-test-{long_id}.jsonl'
+            long_source.write_text(entry('session_meta', {'id': long_id, 'cwd': '/tmp/project'}) +
+                                   ''.join(entry('event_msg', {'type': 'agent_message',
+                                                             'message': f'聚合消息 {i}'}) for i in range(510)))
+            store.refresh_files()
+            aggregate = get('/api/trajectory', id=long_id, q='聚合消息 1')
+            assert aggregate['event_count'] == 510
+            assert len(aggregate['overview']) <= 250
+            target = aggregate['events'][0]
+            span = next(s for s in aggregate['overview'] if s['position'] <= target['position'] <= s['end_position'])
+            assert span['count'] > 1 and span['search_match']
+            assert span['ref'] != target['ref']
         finally:
             server.shutdown()
             server.server_close()

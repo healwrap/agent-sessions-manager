@@ -186,3 +186,15 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 .fold-summary { display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary);padding:0;font:inherit; }
 .fold-summary:hover { color:var(--dsw-alias-state-business-primary); }
 .summary-ellipsis { min-width:16px;font-size:18px;line-height:1; }
+
+.settings-description { font-size:12px;color:var(--dsw-alias-label-tertiary);margin:0 0 18px; }
+.settings-source { border-bottom:1px solid var(--dsw-alias-border-l1);padding:12px 0; }
+.settings-source>label { display:flex;align-items:center;gap:8px;font-weight:600; }
+.settings-source input[type='text'] { width:100%;margin-top:8px;padding:7px 9px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:inherit;font:12px var(--ds-font-family-code); }
+.settings-path-status { font-size:11px;color:var(--dsw-alias-label-tertiary);margin:5px 0 0; }
+.settings-options { display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0 0;font-size:13px; }
+.settings-options select { margin-left:12px;padding:4px 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:inherit; }
+.settings-error { color:#c3463f;font-size:12px; }
+#handoff-text { width:100%;height:300px;resize:vertical;padding:10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:inherit;font:12px/1.7 var(--ds-font-family-code); }
+.chat-message-actions .handoff-button { width:auto;padding:0 6px;gap:5px;font-size:12px; }
+

@@ -373,12 +373,12 @@ class MultiStore:
         self.adapters = {'codex:local': self.codex, 'claude:local': ClaudeStore(claude),
                          'antigravity:desktop': AntigravityStore(antigravity, 'desktop'),
                          'antigravity:cli': AntigravityStore(antigravity_cli, 'cli')}
-        self.errors = {}; self.project_overrides = {}
+        self.errors = {}; self.project_overrides = {}; self.disabled = set()
         self.catalogue_time = 0; self.catalogue_rows = []
 
     def sources(self):
         return {'items': [{'id': key, 'provider': key.split(':')[0], 'label': LABELS[key.split(':')[0]],
-                           'instance': key.split(':')[1], 'path': str(a.root), 'available': a.root.exists(),
+                           'instance': key.split(':')[1], 'enabled': key not in self.disabled, 'path': str(a.root), 'available': a.root.exists(),
                            'error': self.errors.get(key), 'independent_results': key.split(':')[0] != 'antigravity'}
                           for key, a in self.adapters.items()]}
 
@@ -387,6 +387,7 @@ class MultiStore:
             return self.catalogue_rows
         items = []
         for source, adapter in self.adapters.items():
+            if source in self.disabled: continue
             try:
                 if source == 'codex:local':
                     first = adapter.sessions(limit=100)
@@ -440,9 +441,11 @@ class MultiStore:
 
     def resolve(self, key):
         parts = key.split(':', 2)
+        if ':'.join(parts[:2]) in self.disabled: raise ValueError('此会话来源已停用，请在设置中启用')
         if len(parts) == 3 and ':'.join(parts[:2]) in self.adapters:
             return ':'.join(parts[:2]), parts[2]
         # Preserve old Codex links and view settings.
+        if 'codex:local' in self.disabled: raise ValueError('Codex 来源已停用，请在设置中启用')
         return 'codex:local', key
 
     def trajectory(self, key, *args, **kwargs):

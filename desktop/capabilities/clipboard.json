@@ -1,0 +1,7 @@
+{
+  "identifier": "local-clipboard",
+  "description": "本机查看器仅写入用户主动复制的文本",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:*/*"] },
+  "permissions": ["clipboard-manager:allow-write-text"]
+}

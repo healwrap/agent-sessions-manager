@@ -47,6 +47,12 @@ class Handler(BaseHTTPRequestHandler):
                 result = {'ready': True, 'application': 'Agent Sessions'}
             elif parsed.path == '/api/preferences':
                 result = self.server.settings.read() if hasattr(self.server, 'settings') else {'saved': False, 'value': {}}
+            elif parsed.path == '/api/settings':
+                result = {'value': self.server.app_settings.read(), 'defaults': self.server.app_settings.defaults,
+                          'sources': self.server.store.sources()['items']}
+            elif parsed.path == '/api/handoff':
+                from session_handoff import prompt
+                result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
             elif parsed.path == '/api/sources':
                 result = self.server.store.sources()
             elif parsed.path == '/api/sessions':
@@ -81,7 +87,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        if self.path != '/api/preferences' or not hasattr(self.server, 'settings'):
+        if self.path not in {'/api/preferences', '/api/settings'} or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -92,10 +98,26 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
             if not 0 < length <= 2_000_000: raise ValueError('会话视图设置过大')
             value = json.loads(self.rfile.read(length))
-            self.respond(200, self.server.settings.write(value))
-            if hasattr(self.server.store, 'catalogue_time'): self.server.store.catalogue_time = 0
+            if self.path == '/api/settings':
+                config = self.server.app_settings.validate(value)
+                store = configured_store(config, self.server.settings)
+                saved = self.server.app_settings.write(config)
+                self.server.store = store
+                self.respond(200, {'value': saved, 'sources': store.sources()['items']})
+            else:
+                self.respond(200, self.server.settings.write(value))
+                if hasattr(self.server.store, 'catalogue_time'): self.server.store.catalogue_time = 0
         except (ValueError, OSError) as error:
             self.respond(400, {'error': str(error)})
+
+
+def configured_store(config, preferences):
+    from agent_sources import MultiStore
+    from view_settings import SOURCE_KEYS
+    store = MultiStore(*(Path(config['paths'][key]) for key in SOURCE_KEYS))
+    store.settings = preferences
+    store.disabled = {key for key in SOURCE_KEYS if not config['enabled'][key]}
+    return store
 
 
 def main():
@@ -108,17 +130,31 @@ def main():
     parser.add_argument('--codex-only', action='store_true')
     parser.add_argument('--desktop', action='store_true')
     parser.add_argument('--state-home', type=Path, default=Path.home()/'Library/Application Support/Agent Sessions' if sys.platform == 'darwin' else Path.home()/'.local/share/agent-sessions')
+    parser.add_argument('--read-session', default='')
+    parser.add_argument('--read-action', choices=['status', 'outline', 'message', 'tools', 'evidence'], default='outline')
+    parser.add_argument('--read-ref', default='')
+    parser.add_argument('--read-through', default='')
+    parser.add_argument('--read-query', default='')
+    parser.add_argument('--read-page', type=int, default=1)
     args = parser.parse_args()
+    from view_settings import ViewSettings, AppSettings
+    preferences = ViewSettings(args.state_home)
+    app_settings = AppSettings(args.state_home, (args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home))
+    store = Store(args.codex_home) if args.codex_only else configured_store(app_settings.read(), preferences)
+    if args.read_session:
+        if not 1 <= args.read_page <= 1_000_000: parser.error('页码无效')
+        from session_handoff import read
+        try:
+            result = read(store, args.read_session, args.read_action, args.read_ref, args.read_page, args.read_query, args.read_through)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        except (ValueError, OSError) as error:
+            parser.exit(1, str(error)+'\n')
+        return
     server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
     server.daemon_threads = True
-    from view_settings import ViewSettings
-    server.settings = ViewSettings(args.state_home)
-    if args.codex_only:
-        server.store = Store(args.codex_home)
-    else:
-        from agent_sources import MultiStore
-        server.store = MultiStore(args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home)
-        server.store.settings = server.settings
+    server.settings = preferences
+    server.app_settings = app_settings
+    server.store = store
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

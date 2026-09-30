@@ -5,6 +5,7 @@ const state = { id:null, provider:'', sessions:[], sessionNext:null, data:null, 
   offset:0, query:'', mode:'trace', duration:false, foldTurns:false, foldCalls:false,
   collapsed:new Set(), expandedCalls:new Set(), range:null, selected:null, detailTab:'概述', detailPage:1,
   generation:0, detailGeneration:0, loading:false, version:null };
+let appSettings={syncSeconds:3,animations:true}, syncTimers=[];
 let preferences;
 try {preferences=JSON.parse(localStorage.getItem('agent-sessions-view')||localStorage.getItem('codex-context-view')||'{}');}catch {preferences={};}
 preferences={pinned:[],archived:[],aliases:{},metadata:{},projectAssignments:{},...preferences};
@@ -37,6 +38,10 @@ async function api(path, params={}) {
   const value = await response.json();
   if (!response.ok) throw new Error(value.error || '读取失败');
   return value;
+}
+async function copyText(text){
+  if(window.__TAURI__?.clipboardManager)await window.__TAURI__.clipboardManager.writeText(text);
+  else await navigator.clipboard.writeText(text);
 }
 function toast(text) { $('toast').textContent=text; $('toast').hidden=false; clearTimeout(toast.timer); toast.timer=setTimeout(()=>$('toast').hidden=true,3500); }
 function info(title,text) { $('info-title').textContent=title; $('info-text').textContent=text; $('info-dialog').showModal(); }
@@ -277,7 +282,7 @@ function renderChat(prepend=false) {
   chatObserver?.disconnect();
   const fragment=document.createDocumentFragment(), hydrate=[];
   const replies=chatReplyRefs(state.events,state.next!==null);
-  const copyMessage=async(ref)=>{try{const data=state.chatCache.get(ref)||await api('/api/event',{id:state.id,ref});await navigator.clipboard.writeText(data.loadedText||data.text);toast((data.loadedPage||1)<data.pages?'已复制当前展开的原始内容。':'已复制消息。');}catch{toast('复制不可用，请在消息中选择文本复制。');}};
+  const copyMessage=async(ref)=>{try{const data=state.chatCache.get(ref)||await api('/api/event',{id:state.id,ref});await copyText(data.loadedText||data.text);toast((data.loadedPage||1)<data.pages?'已复制当前展开的原始内容。':'已复制消息。');}catch{toast('复制不可用，请在消息中选择文本复制。');}};
   const message=(event,parent)=>{
     const user=event.kind==='user', row=element('article',user?'chat-user-row':'chat-assistant-row');row.dataset.messageRef=event.ref;
     const stack=element('div',user?'chat-user-stack':'chat-assistant-stack'), body=element('div',user?'chat-user-bubble':'chat-assistant-body');
@@ -298,7 +303,8 @@ function renderChat(prepend=false) {
     if(cached)mount(cached);else{body.textContent=event.preview;hydrate.push({row,event,mount});}
     const actions=element('div','chat-message-actions'), copy=element('button');copy.append(icon('copy'));copy.title='复制';copy.setAttribute('aria-label','复制消息 '+event.ref);copy.addEventListener('click',()=>copyMessage(event.ref));
     const trace=element('button');trace.append(icon('jump'));trace.title='查看轨迹';trace.setAttribute('aria-label','查看消息轨迹 '+event.ref);trace.addEventListener('click',()=>selectEvent(event.ref,true));
-    const time=Date.parse(event.timestamp);actions.append(copy,trace,element('span','chat-time',Number.isFinite(time)?new Date(time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):''));stack.append(actions);parent.append(row);
+    const time=Date.parse(event.timestamp);const handoff=iconLabel(element('button','handoff-button'),'jump','续接');handoff.title='复制续接指令';handoff.setAttribute('aria-label','复制续接指令 '+event.ref);handoff.addEventListener('click',()=>copyHandoff(event.ref));
+    actions.append(copy,trace,handoff,element('span','chat-time',Number.isFinite(time)?new Date(time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):''));stack.append(actions);parent.append(row);
   };
   let process=[];
   const flush=(ongoing=false)=>{
@@ -462,7 +468,7 @@ function markdown(text) {
       let node;
       if(token.type==='space')continue;
       if(token.type==='heading'||token.type==='paragraph'||token.type==='text') {node=element(token.type==='heading'?'h'+token.depth:'p');inline(token.tokens||[{text:token.text}],node);}
-      else if(token.type==='code') {node=element('div','markdown-code');const header=element('div','markdown-code-header'),copy=iconLabel(element('button'),'copy','复制代码');copy.title='复制代码';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(token.text);toast('已复制代码。');}catch{toast('复制不可用，请选择代码复制。');}});header.append(element('span','',token.lang||'代码'),copy);const pre=element('pre');pre.append(element('code','',token.text));node.append(header,pre);}
+      else if(token.type==='code') {node=element('div','markdown-code');const header=element('div','markdown-code-header'),copy=iconLabel(element('button'),'copy','复制代码');copy.title='复制代码';copy.addEventListener('click',async()=>{try{await copyText(token.text);toast('已复制代码。');}catch{toast('复制不可用，请选择代码复制。');}});header.append(element('span','',token.lang||'代码'),copy);const pre=element('pre');pre.append(element('code','',token.text));node.append(header,pre);}
       else if(token.type==='blockquote') {node=element('blockquote');blocks(token.tokens,node);}
       else if(token.type==='hr')node=element('hr');
       else if(token.type==='list') {node=element(token.ordered?'ol':'ul');if(token.ordered&&token.start!==1)node.start=token.start;for(const item of token.items){const li=element('li');if(item.task)li.append(document.createTextNode(item.checked?'☑ ':'☐ '));blocks(item.tokens,li);node.append(li);}}
@@ -605,7 +611,48 @@ $('detail-resize').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key=
 new ResizeObserver(()=>renderTimeline()).observe($('timeline'));
 const canSync=()=>!document.hidden&&!window.agentSessionsPaused&&window.agentSessionsWindowVisible!==false;
 document.addEventListener('visibilitychange',()=>{if(canSync()&&!state.loading)loadTrace();});
-setInterval(()=>{if(canSync()&&!state.loading)loadTrace();},3000);
-setInterval(()=>{if(canSync())loadSessions(false,true);},15000);
+function applySettings(value){
+  appSettings=value;document.documentElement.classList.toggle('motion-off',!value.animations);
+  for(const timer of syncTimers)clearInterval(timer);
+  syncTimers=[setInterval(()=>{if(canSync()&&!state.loading)loadTrace();},value.syncSeconds*1000),
+    setInterval(()=>{if(canSync())loadSessions(false,true);},Math.max(15000,value.syncSeconds*1000))];
+}
+async function loadSettings(){try{const data=await api('/api/settings');applySettings(data.value);}catch(error){applySettings(appSettings);toast(error.message);}}
+const sourceLabels={'codex:local':['Codex','数据目录中包含 sessions'], 'claude:local':['Claude Code','数据目录中包含 projects'],
+  'antigravity:desktop':['Antigravity · 桌面版','数据目录中包含 brain'], 'antigravity:cli':['Antigravity · CLI','数据目录中包含 brain']};
+function renderSettings(value,sources=[]){
+  const fragment=document.createDocumentFragment();
+  for(const [key,[label,hint]]of Object.entries(sourceLabels)){
+    const row=element('div','settings-source'),heading=element('label'),enabled=element('input');enabled.type='checkbox';enabled.checked=value.enabled[key];enabled.dataset.settingSource=key;enabled.setAttribute('aria-label','启用 '+label);heading.append(enabled,document.createTextNode(label));
+    const path=element('input');path.type='text';path.value=value.paths[key];path.dataset.settingPath=key;path.setAttribute('aria-label',label+' 会话目录');path.spellcheck=false;
+    const source=sources.find(item=>item.id===key),status=element('p','settings-path-status',hint+(source?' · '+(source.available?'目录可读取':'目录尚不存在'):'') );
+    path.addEventListener('input',()=>{status.textContent=hint+' · 保存后检查目录';});row.append(heading,path,status);fragment.append(row);
+  }
+  $('settings-sources').replaceChildren(fragment);$('settings-sync').value=value.syncSeconds;$('settings-motion').checked=value.animations;$('settings-error').hidden=true;
+}
+$('settings-open').addEventListener('click',async()=>{try{const data=await api('/api/settings');state.settingsDefaults=data.defaults;renderSettings(data.value,data.sources);$('settings-dialog').showModal();}catch(error){toast(error.message);}});
+$('settings-defaults').addEventListener('click',()=>renderSettings(state.settingsDefaults));
+$('settings-cancel').addEventListener('click',()=>$('settings-dialog').close());
+$('settings-form').addEventListener('submit',async event=>{
+  event.preventDefault();$('settings-save').disabled=true;
+  const value={paths:{},enabled:{},syncSeconds:Number($('settings-sync').value),animations:$('settings-motion').checked};
+  for(const node of document.querySelectorAll('[data-setting-path]'))value.paths[node.dataset.settingPath]=node.value;
+  for(const node of document.querySelectorAll('[data-setting-source]'))value.enabled[node.dataset.settingSource]=node.checked;
+  try{
+    const response=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)}),data=await response.json();if(!response.ok)throw new Error(data.error);
+    const changed=JSON.stringify(appSettings.paths)!==JSON.stringify(data.value.paths)||JSON.stringify(appSettings.enabled)!==JSON.stringify(data.value.enabled);
+    applySettings(data.value);$('settings-dialog').close();
+    if(changed){state.id=null;state.events=[];state.data=null;state.selected=null;state.openedSession=null;history.replaceState(null,'','/');$('details').hidden=true;$('events').replaceChildren();$('chat-messages').replaceChildren();$('session-title').textContent='从项目列表打开会话';}
+    await loadSessions();toast('设置已保存。');
+  }catch(error){$('settings-error').hidden=false;$('settings-error').textContent=error.message;}finally{$('settings-save').disabled=false;}
+});
+async function copyHandoff(ref){
+  try{const data=await api('/api/handoff',{id:state.id,ref});$('handoff-text').value=data.text;
+    try{await copyText(data.text);toast('已复制续接指令，可粘贴到本机其他 Agent。');}
+    catch{$('handoff-dialog').showModal();$('handoff-text').select();}
+  }catch(error){toast(error.message);}
+}
+$('handoff-close').addEventListener('click',()=>$('handoff-dialog').close());
+$('handoff-copy').addEventListener('click',async()=>{try{await copyText($('handoff-text').value);toast('已复制续接指令。');$('handoff-dialog').close();}catch{$('handoff-text').select();toast('请按 ⌘C 复制选中的指令。');}});
 for(const button of document.querySelectorAll('button[aria-label]'))if(!button.title)button.title=button.getAttribute('aria-label');
-syncFoldControls();syncTabs();loadPreferences().then(()=>loadSessions());
+syncFoldControls();syncTabs();Promise.all([loadPreferences(),loadSettings()]).then(()=>loadSessions());

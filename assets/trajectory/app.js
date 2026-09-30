@@ -159,7 +159,7 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
     state.events=prepend?events.concat(state.events):append?state.events.concat(events):events;
     state.offset=append&&!prepend?Math.min(state.offset,start):start;
     state.next=prepend?previousNext:next; state.data=first; state.version=first.version;
-    $('session-title').textContent=sessionTitle(id,first.title); document.title=sessionTitle(id,first.title)+' · Codex 上下文';
+    $('session-title').textContent=sessionTitle(id,first.title); document.title=sessionTitle(id,first.title)+' · Agent Sessions';
     const selected=state.sessions.find(item=>item.id===id)||{id,title:first.title,updated_at:'',project_id:first.project_id,project_label:first.project_label,project_path:first.project_path};
     if(!state.sessions.some(item=>item.id===id))state.sessions.push(selected);
     if(state.openedSession!==id){state.projectOpen.add(first.project_id);state.projectClosed.delete(first.project_id);state.openedSession=id;loadProject(first.project_id);}renderSessions();
@@ -528,13 +528,13 @@ function toggleSidebar(){const collapsed=document.querySelector('.application').
 $('sidebar-toggle').addEventListener('click',toggleSidebar);$('sidebar-reopen').addEventListener('click',toggleSidebar);
 $('header-more').addEventListener('click',e=>{if(state.data)showSessionMenu(state.sessions.find(item=>item.id===state.id)||{id:state.id,title:state.data.title,updated_at:'',project_id:state.data.project_id,project_label:state.data.project_label,project_path:state.data.project_path},e.currentTarget);});
 $('format-warning').addEventListener('click',()=>{if(state.data)info('记录格式',`上下文压缩次数：${state.data.compactions}\n\n未识别记录类型：\n${JSON.stringify(state.data.warnings,null,2)}\n\n只展示可见对话、调用元数据、按需工具结果和媒体引用。`);});
-$('about').addEventListener('click',()=>info('会话管理','点击会话旁的菜单可置顶、重命名、归档。整理只影响此界面，Codex 原始记录保留。\n\n对话：聊天气泡、助手正文与可折叠的执行过程。\n轨迹：事件列表、时间线、参数与结果详情。\n\n内容保留原值，每 3 秒更新。顶部搜索框检索轨迹；继续聊天请回到 Codex。\n\n界面参考 DeepSeek Harness 官方源码（MIT）。'));
+$('about').addEventListener('click',()=>info('Agent Sessions','点击会话旁的菜单可置顶、重命名、归档。整理只影响此界面，原始记录保留。\n\n对话：聊天气泡、助手正文与可折叠的执行过程。\n轨迹：事件列表、时间线、参数与结果详情。\n\n当前支持 Codex 本地记录，Claude Code 与 Antigravity 接入正在规划。内容保留原值，每 3 秒更新。顶部搜索框检索轨迹；继续聊天请回到原 Agent。'));
 document.querySelector('.dialog-close').addEventListener('click',()=>$('info-dialog').close());
 function showSessionSearch() {document.querySelector('.session-search').hidden=false;$('session-search').focus();}
-$('session-search-toggle').addEventListener('click',showSessionSearch);$('select-session').addEventListener('click',showSessionSearch);
+$('session-search-toggle').addEventListener('click',showSessionSearch);
 $('archive-toggle').addEventListener('click',()=>{state.archiveView=!state.archiveView;$('archive-toggle').setAttribute('aria-pressed',String(state.archiveView));$('workspace-heading').textContent=state.archiveView?'归档会话':'项目';renderSessions();});
 $('rename-cancel').addEventListener('click',()=>$('rename-dialog').close());
-$('rename-form').addEventListener('submit',e=>{e.preventDefault();const item=state.renameItem;const title=$('rename-input').value.trim();if(!item||!title)return;preferences.aliases[item.id]=title;preferences.metadata[item.id]=item;savePreferences();$('rename-dialog').close();renderSessions();if(state.id===item.id){$('session-title').textContent=title;document.title=title+' · Codex 上下文';}});
+$('rename-form').addEventListener('submit',e=>{e.preventDefault();const item=state.renameItem;const title=$('rename-input').value.trim();if(!item||!title)return;preferences.aliases[item.id]=title;preferences.metadata[item.id]=item;savePreferences();$('rename-dialog').close();renderSessions();if(state.id===item.id){$('session-title').textContent=title;document.title=title+' · Agent Sessions';}});
 document.addEventListener('click',e=>{if(!e.target.closest('#session-menu')&&!e.target.closest('.session-options')&&!e.target.closest('#header-more'))$('session-menu').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('session-menu').hidden=true;});
 function loadHistoryEdge(mode,pane,direction){

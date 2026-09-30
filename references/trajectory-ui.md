@@ -1,4 +1,4 @@
-# 本地会话查看器
+# Agent Sessions 本地会话查看器
 
 ## 运行与核验
 
@@ -25,7 +25,7 @@ HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚
 
 会话置顶、显示名称与归档列表保存在当前浏览器的本地视图设置中。归档可恢复，不改 Codex 自身会话状态，也不删除源文件。不同浏览器或端口有各自的视图设置。
 
-每个项目默认显示 5 条会话，其余通过“展开其余 N 个会话”加载；当前会话保留在默认列表中。侧栏收起后，标题栏提供重新展开入口。对话与轨迹分别保留已加载内容、搜索条件、详情和滚动位置，切换会话时重置。
+每个项目默认显示 5 条会话，其余通过“展开其余 N 个会话”加载；当前会话保留在默认列表中。会话直接从项目列表打开，顶部放置 Agent Sessions 名称，不再展示品牌图片或“选择会话”大按钮；搜索由项目标题旁的图标打开。侧栏收起后，标题栏提供重新展开入口。对话与轨迹分别保留已加载内容、搜索条件、详情和滚动位置，切换会话时重置。
 
 对话页使用聊天气泡和 Markdown 助手正文，向上或向下滚动到边缘时自动加载相邻历史页，没有“加载更早/更多对话”按钮；向前补页时保留已加载记录和阅读位置。过程消息与工具调用集中折叠；点击可跳转到轨迹中的同一引用。用户消息中 Codex 附加的浏览器/附件包装投影为正文和“附带上下文与附件”入口；事件的原始内容与复制内容仍保留原文。这是展示层整理，不替换任何字段值。
 
@@ -48,7 +48,7 @@ HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚
 - `packages/client/ui-theme/src/styles/{base,design-platform,gradient-shadow-text}.css`
 - `packages/client/ui-trajectory/src/client/{TrajectoryToolbar,TrajectoryTimeline,TrajectoryTable}.module.css`
 
-品牌 SVG 保留 `packages/client/ui-primitives/src/BrandWordmark.tsx` 的路径、徽标背景与裁切。对话气泡尺寸及正文节奏参考 `ui-chat` 的 `MessageItem`、`AssistantMarkdown`、`ChatView`；应用外壳与 Codex 数据适配在 `style.css` / `app.js` 中实现。品牌仅用于设计参考，界面标注“Codex 轨迹”。版权声明保存在 `harness-license.txt`。
+界面使用独立的 Agent Sessions 文字标识，不展示 DeepSeek 的品牌 SVG。对话气泡尺寸及正文节奏参考 `ui-chat` 的 `MessageItem`、`AssistantMarkdown`、`ChatView`；应用外壳与 Codex 数据适配在 `style.css` / `app.js` 中实现。版权声明保存在 `harness-license.txt`。
 
 `icons.svg` 复用 `ui-primitives/src/icons/index.tsx`、`shared-artwork.tsx` 与 `TrajectoryTable.tsx` 的原始 SVG。轮次/调用展开收起图标按原工具栏的方框加减图形绘制为 SVG。图标通过本地 SVG sprite 加载，无外部字体或 CDN。界面保留项目会话侧栏、对话、轨迹与事件详情，移除了底部输入框。
 

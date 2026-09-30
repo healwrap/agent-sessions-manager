@@ -15,10 +15,9 @@ button:disabled { opacity:.45; cursor:default; }
 .traffic-lights i { width:14px; height:14px; border-radius:50%; background:rgba(60,89,98,.24); }
 .icon-button { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border:0; border-radius:6px; color:var(--dsw-alias-label-secondary); background:transparent; font-size:18px; }
 .icon-button:hover { background:var(--dsw-alias-interactive-bg-hover); }
-.brand-row { position:relative; height:48px; display:flex; align-items:center; padding-left:4px; }
-.brand-row img { width:188px; height:auto; }
-.codex-label { position:absolute; right:4px; bottom:0; font-size:9px; color:var(--dsw-alias-label-tertiary); }
-.new-session { height:38px; margin:8px 2px 16px; border:1px solid rgba(90,110,120,.14); border-radius:10px; background:rgba(255,255,255,.6); color:inherit; font-weight:600; }
+.brand-row { flex:none; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:10px 4px 18px; }
+.brand-name { font-size:23px; font-weight:650; letter-spacing:-.6px; line-height:1.2; }
+.brand-description { font-size:11px; color:var(--dsw-alias-label-tertiary); }
 .panel-list { margin-bottom:18px; }
 .panel-row { display:flex; width:100%; height:40px; align-items:center; gap:12px; padding:0 10px; border:0; border-radius:8px; background:transparent; color:inherit; text-align:left; }
 .panel-row:hover,.session-item:hover { background:rgba(77,93,100,.06); }
@@ -147,7 +146,6 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 @media(max-width:700px) { .chat-pane { padding:16px 16px 24px; --dsh-chat-content-width:min(calc(100% - 32px),920px); } .chat-user-stack { max-width:90%; } }
 
 .dsh-icon { width:16px;height:16px;display:inline-block;flex:none;vertical-align:-3px;color:inherit; }
-.new-session .dsh-icon { margin-right:4px; }
 .project-heading { display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:inherit;text-align:left; }
 .project-heading:hover { background:rgba(77,93,100,.06); }
 .project-folder { color:#4e88fb; }
@@ -166,7 +164,7 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 .kindTagIcon.dsh-icon { width:12px;height:12px; }
 .TrajectoryToolbar-actionIcon.dsh-icon { width:11px;height:11px; }
 @media(max-width:1050px) { .sidebar { width:230px; } }
-@media(max-width:700px) { .sidebar { width:180px; } .brand-row img { width:155px; } .main-header { padding-left:12px;gap:8px; } .session-title { max-width:70%; } .main-tabs { padding-left:12px; } .details { position:absolute;top:0;right:0;bottom:0;width:100% !important;max-width:none;z-index:6; } .session-date { display:none; } }
+@media(max-width:700px) { .sidebar { width:180px; } .brand-name { font-size:19px; } .main-header { padding-left:12px;gap:8px; } .session-title { max-width:70%; } .main-tabs { padding-left:12px; } .details { position:absolute;top:0;right:0;bottom:0;width:100% !important;max-width:none;z-index:6; } .session-date { display:none; } }
 
 .chat-assistant-stack>.chat-message-actions { margin-top:16px; margin-left:-6px; }
 .TrajectoryToolbar-search>.dsh-icon { width:11px; height:11px; }

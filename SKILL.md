@@ -1,9 +1,11 @@
 ---
-name: codex-context-manager
-description: 管理 Codex 的长期上下文，提供会话管理、聊天记录和轨迹可视化，并从 Desktop/CLI 本地历史中按需恢复对话、工具证据与媒体引用。用于查看对话轨迹、整理会话、跨压缩找回历史、核对用户原话和工具结果，或用户要求无限长上下文管理时。
+name: agent-sessions
+description: 使用 Agent Sessions 管理会话、聊天记录、轨迹与长期上下文。当前可从 Codex Desktop/CLI 本地历史中按需恢复对话、工具证据与媒体引用；用于查看 Codex 对话轨迹、整理会话、跨压缩找回历史及核对原话与结果。多 Agent 接入与桌面应用改造见项目方案。
 ---
 
-# Codex 长期上下文管理
+# Agent Sessions
+
+Agent 会话管理与长期上下文工具，提供项目会话列表、对话和轨迹。当前已实现 Codex 本地历史读取；Claude Code、Antigravity 和桌面常驻应用尚在规划，不把未实现的数据源显示成可用。调整多 Agent 架构或桌面打包时，读 [references/agent-sessions-plan.md](references/agent-sessions-plan.md)。
 
 长期上下文依靠本地历史记录持续积累与按需检索；模型的单次上下文窗口仍有上限。原始记录只读，不自动改写、删除或压缩。会话读取统一复用 `scripts/session_context.py` 的解析器；命令行恢复和可视化查看是两个入口。
 
@@ -25,7 +27,7 @@ python3 scripts/trajectory_server.py --port 8765
 - 参数与结果按事件加载；长消息与工具结果每页最多 7000 字符。内部调用在读取结果时按明确编号或逐条输出顺序匹配；无法确认归属时只提供组合结果入口。
 - 每 3 秒检查记录更新，包含当前进行中的可见消息。顶部搜索框检索轨迹；界面没有聊天输入框。
 
-界面沿用 DeepSeek Harness 官方轨迹主题与组件样式，只保留会话管理、对话、轨迹。实现来源、数据边界及排查方法见 [references/trajectory-ui.md](references/trajectory-ui.md)，只有调整或排查查看器时才读。
+界面以 Agent Sessions 展示，只保留会话管理、对话、轨迹。组件样式参考 DeepSeek Harness，保留原版权声明；产品不使用其品牌。实现来源、数据边界及排查方法见 [references/trajectory-ui.md](references/trajectory-ui.md)，只有调整或排查查看器时才读。
 
 ## 读取纪律
 

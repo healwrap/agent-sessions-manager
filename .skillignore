@@ -6,3 +6,10 @@ __pycache__/
 *.jsonl
 *.log
 .DS_Store
+node_modules/
+.venv-desktop/
+build/
+dist/
+desktop/target/
+desktop/binaries/
+*.spec

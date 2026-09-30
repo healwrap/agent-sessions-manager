@@ -2,15 +2,16 @@
 
 ## 运行与核验
 
-从 Skill 目录启动 `python3 scripts/trajectory_server.py --port 8765`。服务只绑定 `127.0.0.1`；使用 `--codex-home /绝对路径` 可选择其他 Codex 记录目录。
+从 Skill 目录启动 `python3 scripts/trajectory_server.py --port 8765`。服务只绑定 `127.0.0.1`；可使用 `--codex-home`、`--claude-home`、`--antigravity-home`、`--antigravity-cli-home` 指定来源目录；`--state-home` 指定应用整理设置目录。`--codex-only` 可仅运行原有 Codex 适配器。
 
-浏览器地址支持 `?id=会话UUID&ref=T003/C002`。默认会话依次取 URL、`CODEX_THREAD_ID`、最近的本地会话。服务读 `sessions/`、`archived_sessions/` 和 `session_index.jsonl`，缓存由原有解析器增量维护。未写完的 JSONL 行等待完整换行后才显示。
+地址使用 `?id=来源:实例:原生键&ref=事件引用`，原有 Codex `?id=会话UUID&ref=T003/C002` 深链接仍兼容。默认会话依次取 URL、`CODEX_THREAD_ID`、最近的本地会话。服务读 `sessions/`、`archived_sessions/` 和 `session_index.jsonl`，缓存由原有解析器增量维护。未写完的 JSONL 行等待完整换行后才显示。
 
 如果浏览器空白，先核验服务地址，再查看会话格式警告；不要因此直接导出原始 rollout。服务没有远程请求、聊天发送或原始文件写入接口。
 
 验证命令：
 
 ```bash
+python3 scripts/agent_sources_self_test.py
 python3 scripts/trajectory_self_test.py
 python3 scripts/self_test.py
 node scripts/trajectory_chat_self_test.cjs
@@ -23,7 +24,7 @@ HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚
 
 侧栏按项目分组，优先读取 `.codex-global-state.json` 的 `local-projects` 与 `thread-project-assignments`，保留项目的真实名称。同一目录属于多个项目时，按会话明确归属区分，不能凭目录猜项目。`projectless-thread-ids` 中的会话归入“未分配项目”；其余历史记录使用工作目录分组。只读取所需项目元数据，不修改 Codex 设置。项目列表覆盖全部本地记录，会话列表按项目分页加载，每页最多 100 条，默认展开当前项目。
 
-会话置顶、显示名称与归档列表保存在当前浏览器的本地视图设置中。归档可恢复，不改 Codex 自身会话状态，也不删除源文件。不同浏览器或端口有各自的视图设置。
+会话置顶、显示名称、归档和项目映射通过本地 API 写入应用独立的 `view.json`，macOS 默认位于 `~/Library/Application Support/Agent Sessions/`。后台使用动态端口时也能复用设置；旧浏览器设置在首次读取时迁移，旧 Codex UUID 转换为统一来源键。归档可恢复，不改各 Agent 自身会话状态，也不删除源文件。
 
 每个项目默认显示 5 条会话，其余通过“展开其余 N 个会话”加载；当前会话保留在默认列表中。会话直接从项目列表打开，顶部放置 Agent Sessions 名称，不再展示品牌图片或“选择会话”大按钮；搜索由项目标题旁的图标打开。侧栏收起后，标题栏提供重新展开入口。对话与轨迹分别保留已加载内容、搜索条件、详情和滚动位置，切换会话时重置。
 

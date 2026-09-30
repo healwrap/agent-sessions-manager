@@ -6,6 +6,8 @@
   <aside class="sidebar" aria-label="会话侧边栏">
     <div class="titlebar"><span class="traffic-lights"><i></i><i></i><i></i></span><button class="icon-button" id="sidebar-toggle" aria-label="收起侧边栏"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#panel"></use></svg></button></div>
     <div class="brand-row"><span class="brand-name">Agent Sessions</span><span class="brand-description">会话 · 对话 · 轨迹</span></div>
+    <label class="source-filter">来源<select id="provider-filter" aria-label="筛选 Agent"><option value="">全部 Agent</option><option value="codex">Codex</option><option value="claude">Claude Code</option><option value="antigravity">Antigravity</option></select></label>
+    <div id="source-warning" class="source-warning" hidden></div>
     <div class="workspace-header"><span id="workspace-heading">项目</span><div><button class="icon-button" id="session-search-toggle" aria-label="搜索会话"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg></button><button class="icon-button" id="archive-toggle" aria-label="查看归档会话" aria-pressed="false"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg></button><button class="icon-button" id="refresh-sessions" aria-label="刷新会话"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg></button></div></div>
     <div class="session-search" hidden><input id="session-search" type="search" placeholder="搜索会话名称" aria-label="搜索会话名称"></div>
     <nav id="sessions" class="session-list" aria-label="Agent 会话"></nav>
@@ -28,6 +30,7 @@
 </div>
 <dialog id="info-dialog"><button class="dialog-close" aria-label="关闭"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#close"></use></svg></button><h2 id="info-title"></h2><pre id="info-text"></pre></dialog>
 <dialog id="rename-dialog"><form id="rename-form"><h2>重命名会话</h2><input id="rename-input" aria-label="会话名称" required maxlength="200"><div class="rename-actions"><button type="button" id="rename-cancel">取消</button><button type="submit">保存</button></div></form></dialog>
+<dialog id="project-dialog"><form id="project-form"><h2>移动到项目</h2><select id="project-target" aria-label="目标项目"></select><div class="rename-actions"><button type="button" id="project-cancel">取消</button><button type="submit">保存</button></div></form></dialog>
 <div id="session-menu" class="session-menu" role="menu" hidden></div>
 <div id="toast" role="status" hidden></div>
 </body></html>

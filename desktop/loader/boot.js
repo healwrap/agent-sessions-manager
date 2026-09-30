@@ -1,0 +1,1 @@
+document.getElementById('restart').addEventListener('click',()=>{document.getElementById('status').textContent='正在重新启动…';window.__TAURI__.core.invoke('restart_backend').catch(error=>{document.getElementById('status').textContent=String(error);});});

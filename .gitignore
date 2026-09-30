@@ -3,3 +3,10 @@ __pycache__/
 .pytest_cache/
 .codegraph/
 .DS_Store
+.venv-desktop/
+build/
+dist/
+desktop/target/
+desktop/binaries/
+node_modules/
+*.spec

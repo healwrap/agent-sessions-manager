@@ -1,17 +1,19 @@
 'use strict';
 // Session data always enters the page through textContent, never executable HTML.
 const $ = id => document.getElementById(id);
-const state = { id:null, sessions:[], sessionNext:null, data:null, events:[], next:null,
+const state = { id:null, provider:'', sessions:[], sessionNext:null, data:null, events:[], next:null,
   offset:0, query:'', mode:'trace', duration:false, foldTurns:false, foldCalls:false,
   collapsed:new Set(), range:null, selected:null, detailTab:'概述', detailPage:1,
   generation:0, detailGeneration:0, loading:false, version:null };
 let preferences;
-try {preferences=JSON.parse(localStorage.getItem('codex-context-view')||'{}');}catch {preferences={};}
-preferences={pinned:[],archived:[],aliases:{},metadata:{},...preferences};
+try {preferences=JSON.parse(localStorage.getItem('agent-sessions-view')||localStorage.getItem('codex-context-view')||'{}');}catch {preferences={};}
+preferences={pinned:[],archived:[],aliases:{},metadata:{},projectAssignments:{},...preferences};
 state.projects=[];state.projectOpen=new Set();state.projectPages=new Map();state.projectLoading=new Set();
 state.archiveView=false; state.processOpen=new Set(); state.chatCache=new Map();
 state.projectExpanded=new Set();state.projectClosed=new Set();state.views=new Map();state.viewport=null;state.focusGeneration=0;
-function savePreferences(){try{localStorage.setItem('codex-context-view',JSON.stringify(preferences));}catch{toast('浏览器无法保存会话视图设置。');}}
+let preferenceSave=Promise.resolve();
+function savePreferences(){try{localStorage.setItem('agent-sessions-view',JSON.stringify(preferences));}catch{}const snapshot=JSON.stringify(preferences);preferenceSave=preferenceSave.catch(()=>{}).then(async()=>{const response=await fetch('/api/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:snapshot});if(!response.ok)throw new Error('会话视图设置保存失败');}).catch(error=>toast(error.message));return preferenceSave;}
+async function loadPreferences(){try{const data=await api('/api/preferences');if(data.saved)preferences={pinned:[],archived:[],aliases:{},metadata:{},projectAssignments:{},...data.value};const qualified=key=>/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(key)?'codex:local:'+key:key;for(const field of ['pinned','archived'])preferences[field]=preferences[field].map(qualified);for(const field of ['aliases','metadata'])preferences[field]=Object.fromEntries(Object.entries(preferences[field]).map(([key,value])=>[qualified(key),field==='metadata'?{...value,id:qualified(key),provider:value.provider||'codex',provider_label:value.provider_label||'Codex'}:value]));}catch(error){toast(error.message);}}
 function sessionTitle(id,fallback){return preferences.aliases[id]||fallback||'(无标题)';}
 const kinds = { user:['用户','user'], assistant:['助手','assistantVioletBright'],
   tool:['工具','toolAmber'], subtool:['工具','toolAmber'], media:['上下文','contextGreen'], context:['上下文','contextGreen'] };
@@ -51,7 +53,7 @@ function renderSessions() {
   const known=new Map(state.sessions.map(item=>[item.id,item]));
   for(const item of Object.values(preferences.metadata))if(!known.has(item.id))known.set(item.id,item);
   const q=$('session-search').value.toLowerCase();
-  const items=Array.from(known.values()).filter(item=>preferences.archived.includes(item.id)===state.archiveView && (!q||(sessionTitle(item.id,item.title)+' '+(item.project_label||'')).toLowerCase().includes(q)));
+  const items=Array.from(known.values()).filter(item=>(!state.provider||item.provider===state.provider)&&preferences.archived.includes(item.id)===state.archiveView && (!q||(sessionTitle(item.id,item.title)+' '+(item.project_label||'')).toLowerCase().includes(q)));
   const groups=new Map((state.archiveView?[]:state.projects).map(group=>[group.project_id,{...group,items:[]} ]));
   for(const item of items){const key=item.project_id||'projectless';if(!groups.has(key))groups.set(key,{project_id:key,project_label:item.project_label||'未分配项目',project_path:item.project_path||'',count:0,items:[]});groups.get(key).items.push(item);}
   for(const group of groups.values()){
@@ -71,7 +73,7 @@ function renderSessions() {
       const row=element('div','session-entry'),button=element('button','session-item'),title=sessionTitle(item.id,item.title);
       button.setAttribute('aria-current',String(item.id===state.id));button.title=title+'\n'+item.id;
       const name=element('span','session-name');if(preferences.pinned.includes(item.id))name.append(icon('pin','session-pin'));name.append(document.createTextNode(title));
-      button.append(name,element('span','session-date',relativeDate(item.updated_at)));button.addEventListener('click',()=>selectSession(item.id));
+      button.append(name,element('span','provider-tag',item.provider_label||'Codex'),element('span','session-date',relativeDate(item.updated_at)));button.addEventListener('click',()=>selectSession(item.id));
       const menu=element('button','session-options');menu.append(icon('more'));menu.setAttribute('aria-label','管理会话：'+title);menu.addEventListener('click',e=>{e.stopPropagation();showSessionMenu(item,e.currentTarget);});
       row.append(button,menu);row.addEventListener('contextmenu',e=>{e.preventDefault();showSessionMenu(item,row);});list.append(row);
     }
@@ -91,7 +93,7 @@ function renderSessions() {
 async function loadProject(key){
   if(state.projectLoading.has(key)||state.projectPages.get(key)===null)return;
   state.projectLoading.add(key);renderSessions();const generation=sessionGeneration;
-  try{const data=await api('/api/sessions',{project:key,q:$('session-search').value,offset:state.projectPages.get(key)||0,limit:100});if(generation!==sessionGeneration)return;
+  try{const data=await api('/api/sessions',{project:key,provider:state.provider,q:$('session-search').value,offset:state.projectPages.get(key)||0,limit:100});if(generation!==sessionGeneration)return;
     const known=new Map(state.sessions.map(item=>[item.id,item]));for(const item of data.items)known.set(item.id,item);state.sessions=Array.from(known.values());state.projectPages.set(key,data.next_offset);
   }catch(error){toast(error.message);}finally{state.projectLoading.delete(key);renderSessions();}
 }
@@ -100,26 +102,28 @@ function showSessionMenu(item,anchor) {
   const actions=[
     [preferences.pinned.includes(item.id)?'取消置顶':'置顶',()=>{const index=preferences.pinned.indexOf(item.id);if(index<0)preferences.pinned.push(item.id);else preferences.pinned.splice(index,1);preferences.metadata[item.id]=item;savePreferences();renderSessions();}],
     ['重命名',()=>{state.renameItem=item;$('rename-input').value=sessionTitle(item.id,item.title);$('rename-dialog').showModal();$('rename-input').focus();}],
+    ['移动到项目',async()=>{try{const data=await api('/api/sessions',{limit:1});state.projectTargets=data.projects;state.projectItem=item;const options=document.createDocumentFragment();const automatic=element('option','','跟随原会话的项目');automatic.value='';options.append(automatic);for(const project of data.projects){const option=element('option','',project.project_label);option.value=project.project_id;option.title=project.project_path;options.append(option);}$('project-target').replaceChildren(options);$('project-target').value=preferences.projectAssignments[item.id]?.project_id||'';$('project-dialog').showModal();}catch(error){toast(error.message);}}],
     [preferences.archived.includes(item.id)?'移出归档':'归档',()=>{const index=preferences.archived.indexOf(item.id);if(index<0)preferences.archived.push(item.id);else preferences.archived.splice(index,1);preferences.metadata[item.id]=item;savePreferences();renderSessions();toast(index<0?'已在此视图归档，原始会话保留。':'已移出归档。');}],
   ];
-  for(const [label,action]of actions){const button=iconLabel(element('button'),'置顶取消置顶'.includes(label)?'pin':label==='重命名'?'edit':'archive',label);button.setAttribute('role','menuitem');button.addEventListener('click',()=>{menu.hidden=true;action();});menu.append(button);}
-  const bounds=anchor.getBoundingClientRect();menu.hidden=false;menu.style.left=Math.min(innerWidth-160,bounds.right-140)+'px';menu.style.top=Math.min(innerHeight-130,bounds.bottom)+'px';
+  for(const [label,action]of actions){const button=iconLabel(element('button'),'置顶取消置顶'.includes(label)?'pin':label==='重命名'?'edit':label==='移动到项目'?'folder':'archive',label);button.setAttribute('role','menuitem');button.addEventListener('click',()=>{menu.hidden=true;action();});menu.append(button);}
+  const bounds=anchor.getBoundingClientRect();menu.hidden=false;menu.style.left=Math.min(innerWidth-160,bounds.right-140)+'px';menu.style.top=Math.min(innerHeight-menu.offsetHeight-8,bounds.bottom)+'px';
 }
 let sessionGeneration=0;
-async function loadSessions(append=false) {
+async function loadSessions(append=false,preserve=false) {
   const generation=++sessionGeneration;
   try {
-    const data=await api('/api/sessions',{q:$('session-search').value,offset:append?state.sessionNext||0:0});
+    const data=await api('/api/sessions',{q:$('session-search').value,provider:state.provider,offset:append?state.sessionNext||0:0});
     if (generation!==sessionGeneration) return;
-    state.sessions=append?state.sessions.concat(data.items):data.items;
-    state.sessionNext=data.next_offset;state.projects=data.projects||[];if(!append)state.projectPages.clear();
+    if(preserve){const known=new Map(state.sessions.map(item=>[item.id,item]));for(const item of data.items)known.set(item.id,item);state.sessions=Array.from(known.values());}else state.sessions=append?state.sessions.concat(data.items):data.items;
+    state.sessionNext=data.next_offset;state.projects=data.projects||[];if(!append&&!preserve)state.projectPages.clear();
+    const errors=(data.sources||[]).filter(source=>source.error);$('source-warning').hidden=!errors.length;$('source-warning').textContent=errors.map(source=>source.label+'：'+source.error).join('；');
     renderSessions();
     if (!state.id) {
       const requested=new URLSearchParams(location.search).get('id');
       const current=data.items.find(s=>s.id===data.current_id);
       const selected=requested || current?.id || data.items[0]?.id;
       if (selected) await selectSession(selected,new URLSearchParams(location.search).get('ref'));
-      else $('empty').textContent='没有找到本地 Codex 会话。';
+      else $('empty').textContent='没有找到该来源的本地会话。';
     }
   } catch (error) { toast(error.message); $('empty').textContent=error.message; }
 }
@@ -156,12 +160,17 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
       events=events.concat(page.events); next=page.next_offset;
     }
     const changed=state.version!==null && first.version!==state.version;
+    if(first.id!==id&&first.provider==='codex'){
+      for(const list of ['pinned','archived'])preferences[list]=preferences[list].map(key=>key===id?first.id:key);
+      if(preferences.aliases[id]){preferences.aliases[first.id]=preferences.aliases[id];delete preferences.aliases[id];}
+      delete preferences.metadata[id];state.id=first.id;savePreferences();
+    }
     state.events=prepend?events.concat(state.events):append?state.events.concat(events):events;
     state.offset=append&&!prepend?Math.min(state.offset,start):start;
     state.next=prepend?previousNext:next; state.data=first; state.version=first.version;
-    $('session-title').textContent=sessionTitle(id,first.title); document.title=sessionTitle(id,first.title)+' · Agent Sessions';
-    const selected=state.sessions.find(item=>item.id===id)||{id,title:first.title,updated_at:'',project_id:first.project_id,project_label:first.project_label,project_path:first.project_path};
-    if(!state.sessions.some(item=>item.id===id))state.sessions.push(selected);
+    $('session-title').textContent=sessionTitle(state.id,first.title); document.title=sessionTitle(state.id,first.title)+' · Agent Sessions';
+    const selected=state.sessions.find(item=>item.id===state.id)||{id:state.id,title:first.title,updated_at:'',provider:first.provider,provider_label:first.provider_label,project_id:first.project_id,project_label:first.project_label,project_path:first.project_path};
+    if(!state.sessions.some(item=>item.id===state.id))state.sessions.push(selected);
     if(state.openedSession!==id){state.projectOpen.add(first.project_id);state.projectClosed.delete(first.project_id);state.openedSession=id;loadProject(first.project_id);}renderSessions();
     $('session-stats').textContent=`${first.turn_count} 轮 ${first.event_count} 步 · ${first.tool_count} 次调用 · 本地只读`;
     const unknown=Object.values(first.warnings).reduce((a,b)=>a+b,0);
@@ -217,7 +226,7 @@ function renderRows(prepend=false) {
   }
   $('events').replaceChildren(fragment);
   $('empty').hidden=state.events.length>0;
-  $('empty').textContent=state.query?'没有匹配的轨迹记录。':'该会话暂无可见记录。';
+  $('empty').textContent=state.query?'没有匹配的轨迹记录。':state.data?.unavailable_reason||'该会话暂无可见记录。';
   pane.scrollTop=previousTop+(prepend?pane.scrollHeight-previousHeight:0);
 }
 let chatObserver=null, chatGeneration=0;
@@ -248,8 +257,9 @@ function renderChat(prepend=false) {
       // Project the request out of Codex's attachment/browser wrapper. Keep the
       // exact original in the event inspector, copy action, and cache.
       const marker='## My request:';
-      const wrapped=user&&/^\s*(<in-app-browser-context\b|# Files mentioned by the user:)/.test(displayText)&&displayText.includes(marker);
-      if(wrapped)displayText=displayText.slice(displayText.indexOf(marker)+marker.length).trim();
+      const agentRequest=user&&state.data?.provider==='antigravity'&&/^\s*<USER_REQUEST>[\s\S]*?<\/USER_REQUEST>/.test(displayText);
+      const wrapped=agentRequest||user&&/^\s*(<in-app-browser-context\b|# Files mentioned by the user:)/.test(displayText)&&displayText.includes(marker);
+      if(agentRequest)displayText=displayText.match(/<USER_REQUEST>([\s\S]*?)<\/USER_REQUEST>/)[1].trim();else if(wrapped)displayText=displayText.slice(displayText.indexOf(marker)+marker.length).trim();
       body.replaceChildren(user?document.createTextNode(displayText):markdown(displayText));
       if(wrapped){const source=element('button','chat-expand','附带上下文与附件 ›');source.addEventListener('click',()=>{selectEvent(event.ref,true);state.detailTab='原始内容';renderDetail();});stack.append(source);}
       if((data.loadedPage||1)<data.pages){const more=element('button','chat-expand',`展开剩余内容（${data.pages} 页）`);let page=data.loadedPage||1;more.addEventListener('click',async()=>{more.disabled=true;try{const next=await api('/api/event',{id:state.id,ref:event.ref,page:++page});data.loadedText=(data.loadedText||data.text)+next.text;data.loadedPage=page;state.chatCache.set(event.ref,data);if(generation!==chatGeneration)return;if(user)body.append(document.createTextNode(next.text));else body.replaceChildren(markdown(data.loadedText));if(page===next.pages)more.remove();else{more.textContent=`继续展开（${page} / ${next.pages} 页）`;more.disabled=false;}}catch(error){page--;more.disabled=false;toast(error.message);}});stack.append(more);}
@@ -272,7 +282,7 @@ function renderChat(prepend=false) {
     details.append(summary);details.addEventListener('toggle',()=>{if(details.open)state.processOpen.add(key);else state.processOpen.delete(key);});
     summary.prepend(icon(ongoing?'clock':stopped?'close':'check'));summary.append(icon('down','process-chevron'));
     const body=element('div','chat-process-body');
-    for(const event of process){if(event.kind==='subtool')continue;if(event===last)continue;const button=element('button','chat-process-event');button.append(iconLabel(element('span','chat-process-kind'),event.kind==='tool'?'wrench':'sparkle',event.kind==='tool'?event.name:'助手'),element('span','chat-process-preview',event.preview));button.title=event.ref;button.addEventListener('click',()=>selectEvent(event.ref,true));body.append(button);}
+    for(const event of process){if(event.kind==='subtool')continue;if(event===last)continue;const button=element('button','chat-process-event');button.append(iconLabel(element('span','chat-process-kind'),event.kind==='assistant'?'sparkle':'wrench',event.kind==='assistant'?'助手':event.name),element('span','chat-process-preview',event.preview));button.title=event.ref;button.addEventListener('click',()=>selectEvent(event.ref,true));body.append(button);}
     details.append(body);fragment.append(details);
     if(last)message(last,fragment);
     process=[];
@@ -280,12 +290,12 @@ function renderChat(prepend=false) {
   for(const event of state.events){
     if(event.kind==='user'){flush();message(event,fragment);}
     else if(event.kind==='assistant'&&replies.has(event.ref)){flush();message(event,fragment);}
-    else if(['assistant','tool','subtool'].includes(event.kind))process.push(event);
+    else if(['assistant','tool','subtool'].includes(event.kind)||(event.kind==='context'&&event.name==='执行记录'))process.push(event);
     else if(event.kind==='context'){flush();const marker=iconLabel(element('button','chat-compaction'),'compacted','上下文已压缩 · 查看轨迹');marker.addEventListener('click',()=>selectEvent(event.ref,true));fragment.append(marker);}
     else if(event.kind==='media'){const attachment=iconLabel(element('button','chat-media'),'clip',event.name+' · 查看附件来源');attachment.addEventListener('click',()=>selectEvent(event.ref,true));fragment.append(attachment);}
   }
   flush(state.next===null&&state.data.current_status==='in_progress');
-  if(!fragment.childNodes.length)fragment.append(element('p','empty-message',state.query?'没有匹配的对话。':'该会话暂无可见对话。'));
+  if(!fragment.childNodes.length)fragment.append(element('p','empty-message',state.query?'没有匹配的对话。':state.data?.unavailable_reason||'该会话暂无可见对话。'));
   $('chat-messages').replaceChildren(fragment);
   if(prepend)pane.scrollTop=previousTop+pane.scrollHeight-previousHeight;
   else if(follow)pane.scrollTop=pane.scrollHeight;else pane.scrollTop=previousTop;
@@ -470,7 +480,7 @@ async function renderDetail() {
     $('detail-body').scrollTop=0;
     if(state.detailTab==='概述') {
       const list=element('dl','overview');
-      overviewRow(list,'来源',tool?event.name:'Codex 可见消息');
+      overviewRow(list,'来源',(data.provider_label||'Codex')+' · '+(tool?event.name:'可见记录'));
       overviewRow(list,'状态',statuses[event.status]||event.status);
       overviewRow(list,'引用',event.ref);
       overviewRow(list,'时长',tool&&event.duration_ms!==null?event.duration_ms.toLocaleString()+' 毫秒（记录间隔）':'未记录');
@@ -479,16 +489,17 @@ async function renderDetail() {
       const title=element('button','section-title',tool?'参数 ›':'预览 ›');
       title.addEventListener('click',()=>{state.detailTab=tool?'参数':'预览';renderDetail();});block.append(title,tool?payload(data.text):markdown(data.text));
       for(const nested of data.nested){const button=element('button','nested-link',nested.name+' › '+nested.ref);button.addEventListener('click',()=>selectEvent(nested.ref));block.append(button);}
-      if(tool){const result=element('button','section-title detail-section','结果 ›');result.addEventListener('click',()=>{state.detailTab='结果';renderDetail();});block.append(result,element('p','metadata-note',event.kind==='subtool'?'点击读取此命令的结果。':data.output_available?'点击查看本次调用的结果。':'原始记录尚未返回结果。'));}
+      if(tool){const result=element('button','section-title detail-section','结果 ›');result.addEventListener('click',()=>{state.detailTab='结果';renderDetail();});block.append(result,element('p','metadata-note',event.kind==='subtool'?'点击读取此命令的结果。':data.output_available?'点击查看本次调用的结果。':event.result_note||'原始记录尚未返回结果。'));}
       $('detail-body').append(block); detailPager(data);
     } else if(state.detailTab==='来源') {
       const list=element('dl','overview');overviewRow(list,'会话',data.thread_id,true);overviewRow(list,'文件',data.source,true);overviewRow(list,'行号',data.line??event.line);overviewRow(list,'引用',ref);overviewRow(list,'时间',event.timestamp||'未记录',true);$('detail-body').append(list);
     } else if(state.detailTab==='Schema') {
-      $('detail-body').append(element('p','metadata-note','Codex rollout 未保存工具 Schema。'));
+      $('detail-body').append(element('p','metadata-note',(data.provider_label||'此来源')+' 本地记录未保存工具 Schema。'));
     } else if(state.detailTab==='计时') {
       const list=element('dl','overview');overviewRow(list,'开始',event.timestamp||'未记录',true);overviewRow(list,'记录间隔',event.duration_ms!==null?event.duration_ms+' 毫秒':'未记录');$('detail-body').append(list,element('p','metadata-note','记录间隔来自调用与结果时间戳；模型首字时间、解码耗时和工具内部耗时未记录。'));
     } else {
       if(event.kind==='subtool'&&part==='output'&&!data.output_available){const note=element('p','metadata-note',data.parent_output_available?'这条命令的独立结果尚未匹配，组合输出可在原调用中查看。':'组合调用尚未返回结果。');$('detail-body').append(note);if(data.parent_ref){const parent=element('button','nested-link','查看组合调用结果 ›');parent.addEventListener('click',async()=>{await selectEvent(data.parent_ref,true);state.detailTab='结果';renderDetail();});$('detail-body').append(parent);}return;}
+      if(tool&&part==='output'&&!data.output_available){$('detail-body').append(element('p','metadata-note',event.result_note||'原始记录尚未返回可读取的结果。'));return;}
       if(data.input_truncated)$('detail-body').append(element('p','metadata-note','内部调用参数只保留前 2500 字符；完整参数可在外层调用中查看。'));
       const block=element('div','detail-content');block.append(!tool&&state.detailTab==='预览'?markdown(data.text):payload(data.text,state.detailTab==='原始内容'));$('detail-body').append(block);detailPager(data);
     }
@@ -528,12 +539,15 @@ function toggleSidebar(){const collapsed=document.querySelector('.application').
 $('sidebar-toggle').addEventListener('click',toggleSidebar);$('sidebar-reopen').addEventListener('click',toggleSidebar);
 $('header-more').addEventListener('click',e=>{if(state.data)showSessionMenu(state.sessions.find(item=>item.id===state.id)||{id:state.id,title:state.data.title,updated_at:'',project_id:state.data.project_id,project_label:state.data.project_label,project_path:state.data.project_path},e.currentTarget);});
 $('format-warning').addEventListener('click',()=>{if(state.data)info('记录格式',`上下文压缩次数：${state.data.compactions}\n\n未识别记录类型：\n${JSON.stringify(state.data.warnings,null,2)}\n\n只展示可见对话、调用元数据、按需工具结果和媒体引用。`);});
-$('about').addEventListener('click',()=>info('Agent Sessions','点击会话旁的菜单可置顶、重命名、归档。整理只影响此界面，原始记录保留。\n\n对话：聊天气泡、助手正文与可折叠的执行过程。\n轨迹：事件列表、时间线、参数与结果详情。\n\n当前支持 Codex 本地记录，Claude Code 与 Antigravity 接入正在规划。内容保留原值，每 3 秒更新。顶部搜索框检索轨迹；继续聊天请回到原 Agent。'));
+$('about').addEventListener('click',()=>info('Agent Sessions','按项目查看 Codex、Claude Code 与 Antigravity 本地会话。置顶、重命名和归档只整理此应用，原始记录保留。\n\n对话：聊天正文与可折叠的执行过程。\n轨迹：事件列表、时间线、参数与结果。\n\nAntigravity 的执行记录单独展示；没有关联标识时不将其作为某条调用的独立结果。内容保留原值，正文和结果按需读取。继续聊天请回到原 Agent。'));
 document.querySelector('.dialog-close').addEventListener('click',()=>$('info-dialog').close());
 function showSessionSearch() {document.querySelector('.session-search').hidden=false;$('session-search').focus();}
 $('session-search-toggle').addEventListener('click',showSessionSearch);
+$('provider-filter').addEventListener('change',()=>{state.provider=$('provider-filter').value;state.projectPages.clear();state.projectExpanded.clear();loadSessions();});
 $('archive-toggle').addEventListener('click',()=>{state.archiveView=!state.archiveView;$('archive-toggle').setAttribute('aria-pressed',String(state.archiveView));$('workspace-heading').textContent=state.archiveView?'归档会话':'项目';renderSessions();});
 $('rename-cancel').addEventListener('click',()=>$('rename-dialog').close());
+$('project-cancel').addEventListener('click',()=>$('project-dialog').close());
+$('project-form').addEventListener('submit',async e=>{e.preventDefault();const item=state.projectItem;if(!item)return;const project=state.projectTargets.find(p=>p.project_id===$('project-target').value);if(project)preferences.projectAssignments[item.id]={project_id:project.project_id,project_label:project.project_label,project_path:project.project_path};else delete preferences.projectAssignments[item.id];delete preferences.metadata[item.id];await savePreferences();$('project-dialog').close();if(project){state.projectOpen.add(project.project_id);state.projectClosed.delete(project.project_id);}await loadSessions();if(state.id===item.id)loadTrace(true);});
 $('rename-form').addEventListener('submit',e=>{e.preventDefault();const item=state.renameItem;const title=$('rename-input').value.trim();if(!item||!title)return;preferences.aliases[item.id]=title;preferences.metadata[item.id]=item;savePreferences();$('rename-dialog').close();renderSessions();if(state.id===item.id){$('session-title').textContent=title;document.title=title+' · Agent Sessions';}});
 document.addEventListener('click',e=>{if(!e.target.closest('#session-menu')&&!e.target.closest('.session-options')&&!e.target.closest('#header-more'))$('session-menu').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('session-menu').hidden=true;});
@@ -568,7 +582,9 @@ window.addEventListener('pointerup',()=>{resize=null;});
 $('detail-resize').addEventListener('dblclick',()=>{$('details').style.width='';});
 $('detail-resize').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();$('details').style.width=Math.max(280,Math.min($('split').clientWidth-280,$('details').clientWidth+(e.key==='ArrowLeft'?20:-20)))+'px';}});
 new ResizeObserver(()=>renderTimeline()).observe($('timeline'));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!state.loading)loadTrace();});
-setInterval(()=>{if(!document.hidden&&!state.loading)loadTrace();},3000);
+const canSync=()=>!document.hidden&&!window.agentSessionsPaused&&window.agentSessionsWindowVisible!==false;
+document.addEventListener('visibilitychange',()=>{if(canSync()&&!state.loading)loadTrace();});
+setInterval(()=>{if(canSync()&&!state.loading)loadTrace();},3000);
+setInterval(()=>{if(canSync())loadSessions(false,true);},15000);
 for(const button of document.querySelectorAll('button[aria-label]'))if(!button.title)button.title=button.getAttribute('aria-label');
-syncFoldControls();syncTabs();loadSessions();
+syncFoldControls();syncTabs();loadPreferences().then(()=>loadSessions());

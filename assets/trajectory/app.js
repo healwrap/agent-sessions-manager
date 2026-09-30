@@ -10,7 +10,7 @@ try {preferences=JSON.parse(localStorage.getItem('codex-context-view')||'{}');}c
 preferences={pinned:[],archived:[],aliases:{},metadata:{},...preferences};
 state.projects=[];state.projectOpen=new Set();state.projectPages=new Map();state.projectLoading=new Set();
 state.archiveView=false; state.processOpen=new Set(); state.chatCache=new Map();
-state.projectExpanded=new Set();state.projectClosed=new Set();state.views=new Map();state.viewport=null;
+state.projectExpanded=new Set();state.projectClosed=new Set();state.views=new Map();state.viewport=null;state.focusGeneration=0;
 function savePreferences(){try{localStorage.setItem('codex-context-view',JSON.stringify(preferences));}catch{toast('浏览器无法保存会话视图设置。');}}
 function sessionTitle(id,fallback){return preferences.aliases[id]||fallback||'(无标题)';}
 const kinds = { user:['用户','user'], assistant:['助手','assistantVioletBright'],
@@ -135,7 +135,7 @@ async function selectSession(id,ref=null) {
   await loadTrace(true);
   if (ref) await selectEvent(ref,true);
 }
-async function loadTrace(force=false,append=false,offset=null) {
+async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true) {
   if (!state.id) return;
   const generation=++state.generation;
   const id=state.id, query=state.query, kind='all';
@@ -143,15 +143,15 @@ async function loadTrace(force=false,append=false,offset=null) {
   try {
     let start=offset!==null?offset:(append?state.next||0:state.offset);
     let first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:150});
-    if (generation!==state.generation || id!==state.id) return;
+    if (generation!==state.generation || id!==state.id || !isCurrent()) return;
     if (!force && !append && first.version===state.version) return;
-    if(state.mode==='chat'&&!state.events.length&&!query&&offset===null&&first.next_offset!==null){start=Math.max(0,first.total-150);first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:150});if(generation!==state.generation)return;}
+    if(state.mode==='chat'&&!state.events.length&&!query&&offset===null&&first.next_offset!==null){start=Math.max(0,first.total-150);first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:150});if(generation!==state.generation||!isCurrent())return;}
     let events=first.events, next=first.next_offset;
     // Keep an already expanded window stable when new records arrive.
     const target=append?0:Math.max(150,state.events.length);
     while (!append && next!==null && events.length<target) {
       const page=await api('/api/trajectory',{id,q:query,kind,offset:next,limit:150});
-      if (generation!==state.generation) return;
+      if (generation!==state.generation||!isCurrent()) return;
       events=events.concat(page.events); next=page.next_offset;
     }
     const changed=state.version!==null && first.version!==state.version;
@@ -296,6 +296,7 @@ function renderChat() {
   for(const item of hydrate)chatObserver.observe(item.row);
 }
 function timelineTimes() {
+  if(state.data?.time_bounds){const [min,max]=state.data.time_bounds;return [min,Math.max(1,max-min)];}
   const times=(state.data?.overview||[]).map(e=>Date.parse(e.timestamp)).filter(Number.isFinite);
   const min=Math.min(...times), max=Math.max(...times);
   return [min,max>min?max-min:1];
@@ -337,6 +338,8 @@ function renderTimeline() {
   fragment.append(selection,element('div','timeline-hover-line')); $('timeline').replaceChildren(fragment);
 }
 async function selectEvent(ref,jump=false) {
+  ++state.focusGeneration;
+  const id=state.id;
   if(state.mode==='chat')switchMode('trace',false);
   state.selected=ref; state.detailTab='概述'; state.detailPage=1;
   $('details').hidden=false; renderRows(); renderTimeline();
@@ -344,16 +347,43 @@ async function selectEvent(ref,jump=false) {
   if (jump && !state.events.some(e=>e.ref===ref)) {
     try {
       const data=await api('/api/event',{id:state.id,ref});
-      if(state.selected!==ref)return;
+      if(state.selected!==ref||state.id!==id)return;
       state.query=''; $('trace-search').value=''; state.mode='trace'; syncTabs(); state.events=[];
       await loadTrace(true,false,Math.floor(data.event.position/150)*150);
     } catch(error) {toast(error.message);}
   }
+  if(state.selected!==ref||state.id!==id)return;
   const target=state.events.find(event=>event.ref===ref);
   if(target){if(turnCollapsed(target.turn)){if(state.collapsed.has(target.turn))state.collapsed.delete(target.turn);else state.collapsed.add(target.turn);}if(['tool','subtool'].includes(target.kind)&&state.foldCalls){state.foldCalls=false;syncFoldControls();}renderRows();renderTimeline();}
   await renderDetail();
+  if(state.selected!==ref||state.id!==id)return;
   const row=Array.from($('events').children).find(e=>e.dataset.ref===ref);
   if(jump&&row)row.scrollIntoView({block:'center',behavior:'smooth'});
+}
+async function focusTimelineRange() {
+  const generation=++state.focusGeneration,id=state.id,range=state.range,duration=state.duration;
+  const current=()=>generation===state.focusGeneration&&id===state.id&&range===state.range&&duration===state.duration&&state.mode==='trace';
+  if(!range||!id)return;
+  try {
+    const result=await api('/api/trajectory-focus',{id,start:range[0],end:range[1],mode:duration?'duration':'position'});
+    if(!current())return;
+    if(!result.count){toast('圈选范围内没有记录。');return;}
+    const height=$('events').querySelector('tr')?.getBoundingClientRect().height||36;
+    const tall=result.span*height>$('table-pane').clientHeight;
+    const target=tall?result.first:result.middle;
+    if(state.query||!state.events.some(event=>event.ref===target.ref)){
+      state.query='';$('trace-search').value='';state.events=[];
+      await loadTrace(true,false,Math.floor(target.position/150)*150,current);
+      if(!current())return;
+    }
+    const event=state.events.find(event=>event.ref===target.ref);
+    if(!event)return;
+    if(turnCollapsed(event.turn)){if(state.collapsed.has(event.turn))state.collapsed.delete(event.turn);else state.collapsed.add(event.turn);}
+    if(event.kind==='tool'&&state.foldCalls){state.foldCalls=false;syncFoldControls();}
+    renderRows();renderTimeline();
+    const row=Array.from($('events').children).find(row=>row.dataset.ref===target.ref);
+    row?.scrollIntoView({block:tall?'start':'center',behavior:'smooth'});
+  } catch(error){if(current())toast(error.message);}
 }
 function overviewRow(list,label,value,wrap=false) {
   const row=element('div'), data=element('dd',wrap?'wrap':'',value);
@@ -515,9 +545,9 @@ let rangeDrag=null;
 let suppressTimelineClickUntil=0;
 function timelineCoordinate(x){const bounds=$('timeline').getBoundingClientRect(),[start,end]=state.viewport||[0,1];return start+Math.max(0,Math.min(1,(x-bounds.left)/Math.max(1,bounds.width)))*(end-start);}
 $('timeline').addEventListener('wheel',e=>{e.preventDefault();const bounds=$('timeline').getBoundingClientRect(),[start,end]=state.viewport||[0,1];const fraction=Math.max(0,Math.min(1,(e.clientX-bounds.left)/Math.max(1,bounds.width)));const minimum=state.duration?Math.min(1,20/timelineTimes()[1]):Math.min(1,4/Math.max(1,state.data?.event_count||1));const span=Math.min(1,Math.max(minimum,(end-start)*Math.exp(e.deltaY*.0015)));const nextStart=Math.max(0,Math.min(1-span,start+fraction*(end-start)-fraction*span));state.viewport=span>=.999?null:[nextStart,nextStart+span];renderTimeline();},{passive:false});
-$('timeline').addEventListener('pointerdown',e=>{if(e.button!==0&&e.button!==2)return;rangeDrag={start:timelineCoordinate(e.clientX),x:e.clientX,pointer:e.pointerId,moved:false,pan:e.button===2,viewport:state.viewport?.slice()};});
+$('timeline').addEventListener('pointerdown',e=>{if(e.button!==0&&e.button!==2)return;++state.focusGeneration;rangeDrag={start:timelineCoordinate(e.clientX),x:e.clientX,pointer:e.pointerId,moved:false,pan:e.button===2,viewport:state.viewport?.slice()};});
 window.addEventListener('pointermove',e=>{if(!rangeDrag||e.pointerId!==rangeDrag.pointer||!rangeDrag.moved&&Math.abs(e.clientX-rangeDrag.x)<4)return;if(!rangeDrag.moved){rangeDrag.moved=true;$('timeline').setPointerCapture(e.pointerId);}if(rangeDrag.pan){if(rangeDrag.viewport){const [start,end]=rangeDrag.viewport,span=end-start,nextStart=Math.max(0,Math.min(1-span,start-(e.clientX-rangeDrag.x)/Math.max(1,$('timeline').clientWidth)*span));state.viewport=[nextStart,nextStart+span];renderTimeline();}return;}const end=timelineCoordinate(e.clientX);state.range=[Math.min(rangeDrag.start,end),Math.max(rangeDrag.start,end)];renderTimeline();renderRows();});
-function endRangeDrag(){if(rangeDrag?.moved)suppressTimelineClickUntil=performance.now()+250;rangeDrag=null;}
+function endRangeDrag(event){if(!rangeDrag||event.pointerId!==rangeDrag.pointer)return;const focus=rangeDrag.moved&&!rangeDrag.pan&&event.type==='pointerup';if(rangeDrag.moved)suppressTimelineClickUntil=performance.now()+250;rangeDrag=null;if(focus)focusTimelineRange();}
 window.addEventListener('pointerup',endRangeDrag);window.addEventListener('pointercancel',endRangeDrag);
 $('timeline').addEventListener('click',e=>{if(e.detail&&performance.now()<suppressTimelineClickUntil){e.preventDefault();e.stopImmediatePropagation();}},true);
 $('timeline').addEventListener('pointermove',e=>{const line=$('timeline').querySelector('.timeline-hover-line');if(line){line.style.left=(e.clientX-$('timeline').getBoundingClientRect().left)+'px';line.style.opacity='1';}});

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import math
 import os
 import re
 import threading
@@ -30,6 +31,19 @@ def elapsed(start, end):
                              datetime.fromisoformat(start.replace('Z', '+00:00'))).total_seconds() * 1000))
     except (ValueError, TypeError, AttributeError):
         return None
+
+
+def timestamp_ms(value):
+    try:
+        return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp() * 1000
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def timeline_bounds(events):
+    times = [time for e in events if e['kind'] != 'subtool'
+             if (time := timestamp_ms(e.get('timestamp'))) is not None]
+    return [min(times), max(times)] if times else None
 
 
 class Store:
@@ -237,9 +251,34 @@ class Store:
                     'turn_count': len(data['turns']), 'tool_count': sum(e['kind'] == 'tool' for e in events),
                     'current_status': data['turns'][-1]['status'] if data['turns'] else 'completed',
                     'overview': overview, 'compactions': meta.get('compactions', 0),
+                    'time_bounds': timeline_bounds(events),
                     'warnings': meta.get('unrecognized_record_types') or {},
                     'source_size': data['index'].get('source_size', 0),
                     'version': data['index'].get('source_mtime_ns')}
+
+    def focus(self, key, start, end, mode='position'):
+        """Resolve against the full ledger, without reading message/tool bodies."""
+        if not all(math.isfinite(x) and 0 <= x <= 1 for x in (start, end)) or mode not in {'position', 'duration'}:
+            raise ValueError('时间线范围无效')
+        start, end = sorted((start, end))
+        with self.lock:
+            events = self.session(key)['events']
+            bounds = timeline_bounds(events)
+            matches = []
+            for event in events:
+                if event['kind'] == 'subtool':
+                    continue
+                position = event['position'] / max(1, len(events)-1)
+                time = timestamp_ms(event.get('timestamp'))
+                if mode == 'duration' and bounds and time is not None:
+                    position = (time-bounds[0]) / max(1, bounds[1]-bounds[0])
+                if start <= position <= end:
+                    matches.append(event)
+            # References and positions only: no lazy evidence reads for navigation.
+            metadata = lambda e: {'ref': e['ref'], 'position': e['position']}
+            return {'count': len(matches), 'span': matches[-1]['position']-matches[0]['position']+1 if matches else 0,
+                    'first': metadata(matches[0]) if matches else None,
+                    'middle': metadata(matches[(len(matches)-1)//2]) if matches else None}
 
     def detail(self, key, ref, page=1, part='input'):
         with self.lock:
@@ -336,6 +375,8 @@ class Handler(BaseHTTPRequestHandler):
                 if part not in {'input', 'output'}:
                     raise ValueError('内容类型无效')
                 result = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
+            elif parsed.path == '/api/trajectory-focus':
+                result = self.server.store.focus(get('id'), float(get('start')), float(get('end')), get('mode', 'position'))
             else:
                 name = {'/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css',
                         '/harness.css': 'harness.css', '/harness-wordmark.svg': 'harness-wordmark.svg',

@@ -130,6 +130,18 @@ def main():
             searched = get('/api/trajectory', id=ID, q='末尾检索词')
             assert sum(span['search_match'] for span in searched['overview']) == 1
             assert all(span['end_position'] >= span['position'] for span in searched['overview'])
+            focused = get('/api/trajectory-focus', id=ID, start=0, end=1)
+            assert focused['count'] == len([e for e in data['events'] if e['kind'] != 'subtool'])
+            assert set(focused['first']) == {'ref', 'position'}  # Navigation never reads evidence.
+            tool_event = next(e for e in data['events'] if e['ref'] == 'T001/C001')
+            point = tool_event['position'] / (data['event_count']-1)
+            exact = get('/api/trajectory-focus', id=ID, start=point, end=point)
+            assert exact['first']['ref'] == 'T001/C001' and exact['count'] == 1
+            assert get('/api/trajectory-focus', id=ID, start=.251, end=.252)['count'] == 0
+            time_point = (trajectory.timestamp_ms(tool_event['timestamp'])-data['time_bounds'][0]) / (data['time_bounds'][1]-data['time_bounds'][0])
+            assert get('/api/trajectory-focus', id=ID, start=time_point+.01, end=time_point-.01, mode='duration')['first']['ref'] == 'T001/C001'
+            assert request('/api/trajectory-focus', {'id': ID, 'start': 'nan', 'end': 1})[0] == 400
+            assert request('/api/trajectory-focus', {'id': ID, 'start': -1, 'end': 1})[0] == 400
             assert get('/api/trajectory', id=ID, kind='messages')['total'] == 3
             assert get('/api/trajectory', id=ID, offset=1, limit=2)['next_offset'] == 3
             output = get('/api/event', id=ID, ref='T001/C001', part='output')
@@ -164,6 +176,18 @@ def main():
             with source.open('a') as handle:
                 handle.write('\n')
             assert get('/api/trajectory', id=ID, q='新追加消息')['total'] == 1
+            # A range deep inside an aggregated span must resolve off the first page.
+            long_id = '44444444-2222-3333-4444-555555555555'
+            long_source = directory / f'rollout-test-{long_id}.jsonl'
+            long_source.write_text(entry('session_meta', {'id': long_id, 'cwd': '/tmp/project'}) + ''.join(
+                entry('event_msg', {'type': 'user_message', 'message': f'第 {i} 条'}) for i in range(800)))
+            store.refresh_files()
+            long_data = get('/api/trajectory', id=long_id)
+            middle_position = 601
+            long_focus = get('/api/trajectory-focus', id=long_id, start=middle_position/799, end=middle_position/799)
+            assert long_focus['count'] == 1 and long_focus['first']['position'] == middle_position
+            target_page = get('/api/trajectory', id=long_id, offset=600)
+            assert any(e['ref'] == long_focus['first']['ref'] for e in target_page['events'])
             matched_id = '55555555-2222-3333-4444-555555555555'
             matched_source = directory / f'rollout-test-{matched_id}.jsonl'
             program = 'const rs=await Promise.allSettled([tools.exec_command({cmd:"one"}),tools.exec_command({cmd:"two"})]);rs.forEach((r,i)=>text({i,...r}));'

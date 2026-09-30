@@ -20,10 +20,10 @@
     <div class="trajectory-timeline" aria-label="轨迹时间线"><div class="TrajectoryTimeline-plot"><div class="TrajectoryTimeline-labels"><span>输入</span><span>模型</span><span>工具</span></div><div class="TrajectoryTimeline-track" id="timeline" aria-label="时间线概览；拖动选择范围，滚轮缩放，右键拖动平移，双击复原"><div class="timeline-selection" hidden></div></div></div></div>
     <div id="format-warning" class="format-warning" hidden></div>
     <div class="split" id="split">
-      <section class="tablePane" id="table-pane" aria-label="轨迹记录"><table class="table" id="trajectory-table" data-scroll-ready="true"><colgroup><col class="eventColumn"><col class="contentColumn"></colgroup><tbody id="events"></tbody></table><div id="empty" class="empty-message">正在读取本地会话…</div><button id="more-events" class="historyLoadButton" hidden>加载更多轨迹</button></section>
+      <section class="tablePane" id="table-pane" aria-label="轨迹记录"><table class="table" id="trajectory-table" data-scroll-ready="true"><colgroup><col class="eventColumn"><col class="contentColumn"></colgroup><tbody id="events"></tbody></table><div id="empty" class="empty-message">正在读取本地会话…</div></section>
       <aside class="details" id="details" aria-label="事件详情" hidden><div class="detailsResizeHandle" id="detail-resize" role="separator" aria-label="调整事件详情宽度"></div><div class="detailsHeader"><div class="detailsTitle"><span class="kindTag" id="detail-kind"></span><span class="detailsLocation" id="detail-location"></span></div><button class="close" id="close-detail" aria-label="关闭详情"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#close"></use></svg></button></div><nav class="detailTabs" id="detail-tabs" aria-label="事件详情页签"></nav><div class="detailBody" id="detail-body" aria-live="polite"></div></aside>
     </div>
-    <section id="chat-pane" class="chat-pane" aria-label="对话记录" hidden><button id="chat-earlier" class="historyLoadButton" hidden>加载更早的对话</button><div id="chat-messages" class="chat-messages"></div><button id="chat-more" class="historyLoadButton" hidden>加载更多对话</button></section>
+    <section id="chat-pane" class="chat-pane" aria-label="对话记录" hidden><div id="chat-messages" class="chat-messages"></div></section>
     <div class="session-stats" id="session-stats">本地轨迹</div>
   </main>
 </div>

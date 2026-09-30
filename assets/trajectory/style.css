@@ -144,7 +144,6 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 .chat-expand,.chat-compaction,.chat-media { align-self:flex-end; border:0; background:transparent; color:var(--dsw-alias-label-tertiary); font-size:12px; padding:4px 0; text-align:left; }
 .chat-compaction { align-self:stretch; font-size:13px; padding:10px 0; }
 .chat-expand:hover,.chat-compaction:hover,.chat-media:hover { color:var(--dsw-alias-state-business-primary); }
-.chat-pane>.historyLoadButton { display:block; margin:0 auto 14px; }
 @media(max-width:700px) { .chat-pane { padding:16px 16px 24px; --dsh-chat-content-width:min(calc(100% - 32px),920px); } .chat-user-stack { max-width:90%; } }
 
 .dsh-icon { width:16px;height:16px;display:inline-block;flex:none;vertical-align:-3px;color:inherit; }

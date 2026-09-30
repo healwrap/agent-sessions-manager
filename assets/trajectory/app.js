@@ -139,10 +139,11 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
   if (!state.id) return;
   const generation=++state.generation;
   const id=state.id, query=state.query, kind='all';
+  const prepend=append==='before', previousNext=state.next;
   state.loading=true;
   try {
-    let start=offset!==null?offset:(append?state.next||0:state.offset);
-    let first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:150});
+    let start=offset!==null?offset:(prepend?Math.max(0,state.offset-150):append?state.next||0:state.offset);
+    let first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:prepend?state.offset-start:150});
     if (generation!==state.generation || id!==state.id || !isCurrent()) return;
     if (!force && !append && first.version===state.version) return;
     if(state.mode==='chat'&&!state.events.length&&!query&&offset===null&&first.next_offset!==null){start=Math.max(0,first.total-150);first=await api('/api/trajectory',{id,q:query,kind,offset:start,limit:150});if(generation!==state.generation||!isCurrent())return;}
@@ -155,9 +156,9 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
       events=events.concat(page.events); next=page.next_offset;
     }
     const changed=state.version!==null && first.version!==state.version;
-    state.events=append?state.events.concat(events):events;
-    state.offset=start; if (append) state.offset=Math.min(state.offset,start);
-    state.next=next; state.data=first; state.version=first.version;
+    state.events=prepend?events.concat(state.events):append?state.events.concat(events):events;
+    state.offset=append&&!prepend?Math.min(state.offset,start):start;
+    state.next=prepend?previousNext:next; state.data=first; state.version=first.version;
     $('session-title').textContent=sessionTitle(id,first.title); document.title=sessionTitle(id,first.title)+' · Codex 上下文';
     const selected=state.sessions.find(item=>item.id===id)||{id,title:first.title,updated_at:'',project_id:first.project_id,project_label:first.project_label,project_path:first.project_path};
     if(!state.sessions.some(item=>item.id===id))state.sessions.push(selected);
@@ -166,13 +167,14 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
     const unknown=Object.values(first.warnings).reduce((a,b)=>a+b,0);
     $('format-warning').hidden=state.mode==='chat'||(!unknown && !first.compactions);
     $('format-warning').textContent=[first.compactions?`上下文已压缩 ${first.compactions} 次，历史可见记录仍可查看`:'',unknown?`${unknown} 条记录类型尚未识别，点此查看`:''].filter(Boolean).join(' · ');
-    if(state.mode==='chat')renderChat();else{renderRows(); renderTimeline();}
+    if(state.mode==='chat')renderChat(prepend);else{renderRows(prepend); renderTimeline();}
     if (changed && state.mode==='trace' && state.selected && !$('details').hidden) await renderDetail();
   } catch (error) { if (generation===state.generation) { toast(error.message); $('empty').hidden=false; $('empty').textContent=error.message; } }
   finally { if (generation===state.generation) state.loading=false; }
 }
 function turnCollapsed(turn) { return state.foldTurns!==state.collapsed.has(turn); }
-function renderRows() {
+function renderRows(prepend=false) {
+  const pane=$('table-pane'), previousTop=pane.scrollTop, previousHeight=pane.scrollHeight;
   const fragment=document.createDocumentFragment(); let previousTurn=null;
   for (const event of state.events) {
     const first=previousTurn!==event.turn;
@@ -216,11 +218,7 @@ function renderRows() {
   $('events').replaceChildren(fragment);
   $('empty').hidden=state.events.length>0;
   $('empty').textContent=state.query?'没有匹配的轨迹记录。':'该会话暂无可见记录。';
-  $('more-events').hidden=state.next===null;
-  // A timeline jump can start at a later page. Expose the preceding page explicitly.
-  let earlier=$('earlier-events');
-  if (!earlier) { earlier=element('button','historyLoadButton','加载更早的轨迹'); earlier.id='earlier-events'; $('table-pane').prepend(earlier); earlier.addEventListener('click',()=>{state.events=[];loadTrace(true,false,Math.max(0,state.offset-150));}); }
-  earlier.hidden=state.offset===0;
+  pane.scrollTop=previousTop+(prepend?pane.scrollHeight-previousHeight:0);
 }
 let chatObserver=null, chatGeneration=0;
 function chatReplyRefs(events,hasMore=false){
@@ -233,10 +231,11 @@ function chatReplyRefs(events,hasMore=false){
   for(const [turn,event]of legacy)if(!finals.has(turn)&&event.turn_status!=='in_progress'&&!(hasMore&&turn===events.at(-1)?.turn))replies.add(event.ref);
   return replies;
 }
-function renderChat() {
+function renderChat(prepend=false) {
   const generation=++chatGeneration, pane=$('chat-pane');
   const follow=pane.scrollHeight-pane.scrollTop-pane.clientHeight<60;
   const previousTop=pane.scrollTop;
+  const previousHeight=pane.scrollHeight;
   chatObserver?.disconnect();
   const fragment=document.createDocumentFragment(), hydrate=[];
   const replies=chatReplyRefs(state.events,state.next!==null);
@@ -288,8 +287,8 @@ function renderChat() {
   flush(state.next===null&&state.data.current_status==='in_progress');
   if(!fragment.childNodes.length)fragment.append(element('p','empty-message',state.query?'没有匹配的对话。':'该会话暂无可见对话。'));
   $('chat-messages').replaceChildren(fragment);
-  $('chat-earlier').hidden=state.offset===0;$('chat-more').hidden=state.next===null;
-  if(follow)pane.scrollTop=pane.scrollHeight;else pane.scrollTop=previousTop;
+  if(prepend)pane.scrollTop=previousTop+pane.scrollHeight-previousHeight;
+  else if(follow)pane.scrollTop=pane.scrollHeight;else pane.scrollTop=previousTop;
   // Hydrate only messages near the viewport, retaining bounded first-page reads.
   const pending=new Map(hydrate.map(item=>[item.row,item]));
   chatObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;const item=pending.get(entry.target);if(!item)continue;pending.delete(entry.target);chatObserver.unobserve(entry.target);const id=state.id;api('/api/event',{id,ref:item.event.ref}).then(data=>{if(generation!==chatGeneration||id!==state.id)return;state.chatCache.set(item.event.ref,data);const atBottom=pane.scrollHeight-pane.scrollTop-pane.clientHeight<60;item.mount(data);if(atBottom)pane.scrollTop=pane.scrollHeight;}).catch(error=>toast(error.message));}},{root:pane,rootMargin:'250px'});
@@ -517,7 +516,6 @@ function searchTrace() {if(state.mode!=='trace')return;state.query=$('trace-sear
 $('trace-search').addEventListener('input',debounce(searchTrace));
 $('session-search').addEventListener('input',debounce(()=>loadSessions()));
 $('more-sessions').addEventListener('click',()=>loadSessions(true));
-$('more-events').addEventListener('click',()=>{if(!state.loading)loadTrace(true,true);});
 $('refresh-sessions').addEventListener('click',()=>loadSessions());
 $('refresh-trace').addEventListener('click',()=>loadTrace(true));
 for(const tab of document.querySelectorAll('[data-main-tab]')){tab.addEventListener('click',()=>switchMode(tab.dataset.mainTab));tab.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const mode=state.mode==='chat'?'trace':'chat';switchMode(mode);document.querySelector(`[data-main-tab="${mode}"]`).focus();}});}
@@ -539,8 +537,16 @@ $('rename-cancel').addEventListener('click',()=>$('rename-dialog').close());
 $('rename-form').addEventListener('submit',e=>{e.preventDefault();const item=state.renameItem;const title=$('rename-input').value.trim();if(!item||!title)return;preferences.aliases[item.id]=title;preferences.metadata[item.id]=item;savePreferences();$('rename-dialog').close();renderSessions();if(state.id===item.id){$('session-title').textContent=title;document.title=title+' · Codex 上下文';}});
 document.addEventListener('click',e=>{if(!e.target.closest('#session-menu')&&!e.target.closest('.session-options')&&!e.target.closest('#header-more'))$('session-menu').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('session-menu').hidden=true;});
-$('chat-earlier').addEventListener('click',()=>{if(!state.loading){state.events=[];loadTrace(true,false,Math.max(0,state.offset-150));}});
-$('chat-more').addEventListener('click',()=>{if(!state.loading)loadTrace(true,true);});
+function loadHistoryEdge(mode,pane,direction){
+  if(state.mode!==mode||state.loading)return;
+  if(direction<0&&pane.scrollTop<80&&state.offset>0)loadTrace(true,'before');
+  else if(direction>0&&pane.scrollHeight-pane.scrollTop-pane.clientHeight<80&&state.next!==null)loadTrace(true,true);
+}
+for(const [mode,id]of [['chat','chat-pane'],['trace','table-pane']]){
+  const pane=$(id);let lastScrollTop=0;
+  pane.addEventListener('scroll',()=>{const top=pane.scrollTop;loadHistoryEdge(mode,pane,top-lastScrollTop);lastScrollTop=top;});
+  pane.addEventListener('wheel',event=>loadHistoryEdge(mode,pane,event.deltaY),{passive:true});
+}
 let rangeDrag=null;
 let suppressTimelineClickUntil=0;
 function timelineCoordinate(x){const bounds=$('timeline').getBoundingClientRect(),[start,end]=state.viewport||[0,1];return start+Math.max(0,Math.min(1,(x-bounds.left)/Math.max(1,bounds.width)))*(end-start);}

@@ -10,3 +10,4 @@ desktop/target/
 desktop/binaries/
 node_modules/
 *.spec
+desktop/gen/

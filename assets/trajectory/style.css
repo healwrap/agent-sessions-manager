@@ -9,7 +9,7 @@ button { cursor:pointer; }
 button:focus-visible,input:focus-visible,textarea:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary); outline-offset:-2px; }
 button:disabled { opacity:.45; cursor:default; }
 .application { display:flex; width:100%; height:100%; }
-.sidebar { width:280px; flex:none; display:flex; flex-direction:column; padding:0 12px; background:linear-gradient(160deg,#d3e6ed,#deebeb 75%,#dae7e8); }
+.sidebar { --sidebar-width:280px; width:var(--sidebar-width); flex:none; display:flex; flex-direction:column; padding:0 12px; background:rgba(216,231,236,.64);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);overflow:hidden;transition:width 240ms cubic-bezier(.22,1,.36,1),padding 240ms cubic-bezier(.22,1,.36,1),opacity 180ms ease; }
 .titlebar { height:48px; display:flex; align-items:center; justify-content:space-between; }
 .traffic-lights { display:flex; gap:8px; padding-left:4px; }
 .traffic-lights i { width:14px; height:14px; border-radius:50%; background:rgba(60,89,98,.24); }
@@ -102,7 +102,7 @@ dialog h2 { font-size:16px; margin:0 0 12px; }
 dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflow-wrap:anywhere; }
 .dialog-close { float:right; border:0; background:transparent; font-size:20px; color:inherit; }
 #toast { position:fixed; z-index:20; bottom:145px; left:50%; transform:translateX(-50%); padding:8px 16px; border-radius:8px; background:var(--dsw-alias-toast-bg); color:var(--dsw-alias-toast-label); font-size:12px; }
-.application.sidebar-collapsed .sidebar { display:none; }
+.application.sidebar-collapsed .sidebar { width:0;padding-left:0;padding-right:0;opacity:0;pointer-events:none; }
 .session-entry { position:relative; }
 .session-item { padding-right:8px; }
 .session-entry:hover .session-date { opacity:0; }
@@ -168,8 +168,8 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 .chat-process-kind .dsh-icon,.chat-compaction .dsh-icon,.chat-media .dsh-icon { margin-right:6px; }
 .kindTagIcon.dsh-icon { width:12px;height:12px; }
 .TrajectoryToolbar-actionIcon.dsh-icon { width:11px;height:11px; }
-@media(max-width:1050px) { .sidebar { width:230px; } }
-@media(max-width:700px) { .sidebar { width:180px; } .brand-name { font-size:19px; } .main-header { padding-left:12px;gap:8px; } .session-title { max-width:70%; } .main-tabs { padding-left:12px; } .details { position:absolute;top:0;right:0;bottom:0;width:100% !important;max-width:none;z-index:6; } .session-date { display:none; } }
+@media(max-width:1050px) { .sidebar { --sidebar-width:230px; } }
+@media(max-width:700px) { .sidebar { --sidebar-width:180px; } .brand-name { font-size:19px; } .main-header { padding-left:12px;gap:8px; } .session-title { max-width:70%; } .main-tabs { padding-left:12px; } .details { position:absolute;top:0;right:0;bottom:0;width:100% !important;max-width:none;z-index:6; } .session-date { display:none; } }
 
 .chat-assistant-stack>.chat-message-actions { margin-top:16px; margin-left:-6px; }
 .TrajectoryToolbar-search>.dsh-icon { width:11px; height:11px; }
@@ -198,3 +198,13 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 #handoff-text { width:100%;height:300px;resize:vertical;padding:10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:inherit;font:12px/1.7 var(--ds-font-family-code); }
 .chat-message-actions .handoff-button { width:auto;padding:0 6px;gap:5px;font-size:12px; }
 
+.sidebar>* { width:calc(var(--sidebar-width) - 24px);flex-shrink:0; }
+.desktop-host body,.desktop-host .application { background:transparent; }
+.desktop-host .sidebar { background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none; }
+.project-chevron,.process-chevron { transition:transform 220ms cubic-bezier(.22,1,.36,1); }
+.details { overflow:hidden; }
+.detailsHeader,.detailTabs,.detailBody { min-width:280px; }
+dialog[open] { animation:dialog-enter 180ms cubic-bezier(.22,1,.36,1); }
+@keyframes dialog-enter { from { opacity:0;transform:translateY(6px) scale(.985); } to { opacity:1;transform:none; } }
+.motion-off *, .motion-off *::before,.motion-off *::after { transition:none!important;animation:none!important; }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important;animation:none!important; } }

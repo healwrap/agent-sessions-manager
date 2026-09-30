@@ -39,6 +39,11 @@ fn stop(app: &tauri::AppHandle) {
 }
 
 #[tauri::command]
+fn backend_status(app: tauri::AppHandle) -> bool {
+    app.state::<Backend>().failed.load(Ordering::SeqCst)
+}
+
+#[tauri::command]
 fn restart_backend(app: tauri::AppHandle) -> Result<(), String> {
     stop(&app);
     app.state::<Backend>().failed.store(false, Ordering::SeqCst);
@@ -90,7 +95,7 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .manage(Backend::default())
-        .invoke_handler(tauri::generate_handler![restart_backend])
+        .invoke_handler(tauri::generate_handler![restart_backend, backend_status])
         .on_page_load(|window, _| {
             let paused = window.state::<Backend>().paused.load(Ordering::SeqCst);
             let _ = window.eval(&format!("window.agentSessionsDesktop=true;window.agentSessionsPaused={paused};document.documentElement.classList.add('desktop-host');"));

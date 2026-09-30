@@ -1,1 +1,2 @@
+window.__TAURI__.core.invoke('backend_status').then(failed=>{if(failed)document.getElementById('status').textContent='后台已停止，点击重新启动恢复。';}).catch(()=>{});
 document.getElementById('restart').addEventListener('click',()=>{document.getElementById('status').textContent='正在重新启动…';window.__TAURI__.core.invoke('restart_backend').catch(error=>{document.getElementById('status').textContent=String(error);});});

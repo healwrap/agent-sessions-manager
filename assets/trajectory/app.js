@@ -53,6 +53,40 @@ function relativeDate(raw) {
   if (hours<24) return hours+'小时';
   return Math.floor(hours/24)+'天';
 }
+const motionEnabled=()=>appSettings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animateHeight(node,from,to,finish){
+  node._heightAnimation?.cancel();
+  if(!motionEnabled()||Math.abs(from-to)<1){finish();return;}
+  node.style.overflow='hidden';
+  const animation=node.animate([{height:from+'px',opacity:to>from?.65:1},{height:to+'px',opacity:to>from?1:.65}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'});
+  node._heightAnimation=animation;
+  animation.onfinish=()=>{if(node._heightAnimation!==animation)return;animation.cancel();node._heightAnimation=null;node.style.overflow='';finish();};
+}
+function animateProject(key,change){
+  const find=()=>Array.from($('sessions').children).find(node=>node.dataset.project===key)?.querySelector('.project-sessions');
+  const previous=find(),height=previous?.getBoundingClientRect().height||0;
+  change();const node=find();if(!node)return;
+  const hidden=node.hidden;node.hidden=false;node.inert=hidden;
+  animateHeight(node,height,hidden?0:node.scrollHeight,()=>{node.hidden=hidden;node.inert=false;});
+}
+function processMotion(details,summary){
+  let expanded=details.open;
+  summary.addEventListener('click',event=>{
+    event.preventDefault();const from=details.getBoundingClientRect().height;expanded=!expanded;
+    details.open=true;const target=expanded?details.scrollHeight:summary.getBoundingClientRect().height;
+    animateHeight(details,from,target,()=>{details.open=expanded;});
+  });
+}
+function showDetail(open){
+  const node=$('details');node._panelAnimation?.cancel();node._panelAnimation=null;
+  if(!motionEnabled()){node.hidden=!open;node.inert=!open;return;}
+  if(!open&&node.hidden)return;
+  const width=node.hidden?0:node.getBoundingClientRect().width;node.hidden=false;node.inert=!open;
+  const target=open?(width||node.getBoundingClientRect().width):0;
+  const animation=node.animate([{width:width+'px',minWidth:width+'px',opacity:open?.65:1},{width:target+'px',minWidth:target+'px',opacity:open?1:0}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'});
+  node._panelAnimation=animation;
+  animation.onfinish=()=>{if(node._panelAnimation!==animation)return;animation.cancel();node._panelAnimation=null;node.hidden=!open;};
+}
 function renderSessions() {
   const fragment=document.createDocumentFragment();
   const known=new Map(state.sessions.map(item=>[item.id,item]));
@@ -66,7 +100,7 @@ function renderSessions() {
     const header=element('button','project-heading'),open=!state.projectClosed.has(group.project_id)&&(state.projectOpen.has(group.project_id)||!!q);
     header.setAttribute('aria-expanded',String(open));header.title=group.project_path||group.project_label;
     header.append(icon('folder','project-folder'),element('span','project-name',group.project_label),icon('right','project-chevron'));
-    header.addEventListener('click',()=>{if(open){state.projectOpen.delete(group.project_id);state.projectClosed.add(group.project_id);}else{state.projectClosed.delete(group.project_id);state.projectOpen.add(group.project_id);loadProject(group.project_id);}renderSessions();});
+    header.addEventListener('click',()=>animateProject(group.project_id,()=>{if(open){state.projectOpen.delete(group.project_id);state.projectClosed.add(group.project_id);}else{state.projectClosed.delete(group.project_id);state.projectOpen.add(group.project_id);loadProject(group.project_id);}renderSessions();}));
     section.append(header);
     const list=element('div','project-sessions');list.hidden=!open;
     group.items.sort((a,b)=>Number(preferences.pinned.includes(b.id))-Number(preferences.pinned.includes(a.id))||String(b.updated_at).localeCompare(String(a.updated_at)));
@@ -86,9 +120,9 @@ function renderSessions() {
     const archived=Array.from(known.values()).filter(item=>(item.project_id||'projectless')===group.project_id&&preferences.archived.includes(item.id)).length;
     const count=state.archiveView?group.items.length:Math.max(group.items.length,group.count-archived);
     if((!expanded&&count>visible.length)||(!state.archiveView&&(page===undefined||page!==null)&&group.items.length<count)){
-      const more=element('button','more-sessions',state.projectLoading.has(group.project_id)?'正在读取…':!expanded?`展开其余 ${count-visible.length} 个会话`:'展开更多会话');more.disabled=state.projectLoading.has(group.project_id);more.addEventListener('click',()=>{state.projectExpanded.add(group.project_id);if(group.items.length<count)loadProject(group.project_id);else renderSessions();});list.append(more);
+      const more=element('button','more-sessions',state.projectLoading.has(group.project_id)?'正在读取…':!expanded?`展开其余 ${count-visible.length} 个会话`:'展开更多会话');more.disabled=state.projectLoading.has(group.project_id);more.addEventListener('click',()=>animateProject(group.project_id,()=>{state.projectExpanded.add(group.project_id);if(group.items.length<count)loadProject(group.project_id);else renderSessions();}));list.append(more);
     }else if(expanded&&!q&&count>5){
-      const less=element('button','more-sessions','收起会话');less.addEventListener('click',()=>{state.projectExpanded.delete(group.project_id);renderSessions();});list.append(less);
+      const less=element('button','more-sessions','收起会话');less.addEventListener('click',()=>animateProject(group.project_id,()=>{state.projectExpanded.delete(group.project_id);renderSessions();}));list.append(less);
     }
     section.append(list);fragment.append(section);
   }
@@ -318,7 +352,7 @@ function renderChat(prepend=false) {
     summary.prepend(icon(ongoing?'clock':stopped?'close':'check'));summary.append(icon('down','process-chevron'));
     const body=element('div','chat-process-body');
     for(const event of process){if(event.kind==='subtool')continue;if(event===last)continue;const button=element('button','chat-process-event');button.append(iconLabel(element('span','chat-process-kind'),event.kind==='assistant'?'sparkle':'wrench',event.kind==='assistant'?'助手':event.name),element('span','chat-process-preview',event.preview));button.title=event.ref;button.addEventListener('click',()=>selectEvent(event.ref,true));body.append(button);}
-    details.append(body);fragment.append(details);
+    details.append(body);processMotion(details,summary);fragment.append(details);
     if(last)message(last,fragment);
     process=[];
   };
@@ -378,7 +412,7 @@ async function selectEvent(ref,jump=false) {
   const id=state.id;
   if(state.mode==='chat')switchMode('trace',false);
   state.selected=ref; state.detailTab='概述'; state.detailPage=1;
-  $('details').hidden=false; renderRows(); renderTimeline();
+  showDetail(true); renderRows(); renderTimeline();
   history.replaceState(null,'','?'+new URLSearchParams({id:state.id,ref}));
   if (jump && !state.events.some(e=>e.ref===ref)) {
     try {
@@ -560,9 +594,9 @@ for(const tab of document.querySelectorAll('[data-main-tab]')){tab.addEventListe
 $('duration').addEventListener('click',()=>{state.duration=!state.duration;state.range=null;state.viewport=null;$('duration').setAttribute('aria-pressed',String(state.duration));$('duration').title=state.duration?'使用等距排列':'使用执行时长（折叠空闲时间）';$('duration').setAttribute('aria-label',$('duration').title);renderTimeline();renderRows();});
 $('fold-turns').addEventListener('click',()=>{state.foldTurns=!state.foldTurns;state.collapsed.clear();syncFoldControls();renderRows();});
 $('fold-calls').addEventListener('click',()=>{state.foldCalls=!state.foldCalls;state.expandedCalls.clear();syncFoldControls();renderRows();});
-$('close-detail').addEventListener('click',()=>{$('details').hidden=true;});
-$('details-toggle').addEventListener('click',()=>{if(state.selected){$('details').hidden=!$('details').hidden;}else if(state.events[0])selectEvent(state.events[0].ref);});
-function toggleSidebar(){const collapsed=document.querySelector('.application').classList.toggle('sidebar-collapsed');$('sidebar-reopen').hidden=!collapsed;(collapsed?$('sidebar-reopen'):$('sidebar-toggle')).focus();}
+$('close-detail').addEventListener('click',()=>showDetail(false));
+$('details-toggle').addEventListener('click',()=>{if(state.selected){showDetail($('details').hidden||$('details').inert);}else if(state.events[0])selectEvent(state.events[0].ref);});
+function toggleSidebar(){const collapsed=document.querySelector('.application').classList.toggle('sidebar-collapsed');document.querySelector('.sidebar').inert=collapsed;$('sidebar-reopen').hidden=!collapsed;(collapsed?$('sidebar-reopen'):$('sidebar-toggle')).focus();}
 $('sidebar-toggle').addEventListener('click',toggleSidebar);$('sidebar-reopen').addEventListener('click',toggleSidebar);
 $('header-more').addEventListener('click',e=>{if(state.data)showSessionMenu(state.sessions.find(item=>item.id===state.id)||{id:state.id,title:state.data.title,updated_at:'',project_id:state.data.project_id,project_label:state.data.project_label,project_path:state.data.project_path},e.currentTarget);});
 $('format-warning').addEventListener('click',()=>{if(state.data)info('记录格式',`上下文压缩次数：${state.data.compactions}\n\n未识别记录类型：\n${JSON.stringify(state.data.warnings,null,2)}\n\n只展示可见对话、调用元数据、按需工具结果和媒体引用。`);});

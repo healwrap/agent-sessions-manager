@@ -20,6 +20,12 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 
 来源统一键为 `provider:instance:native-key`。引用随原生 UUID、步骤或原有 Codex 引用保持稳定；事件正文每页 7000 字符、轨迹每页默认 150 条，滚到边缘自动补页。工具结果只在用户打开结果时读取。
 
+侧栏底部“设置”支持 Codex、Claude Code、Antigravity 桌面/CLI 四个数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。
+
+对话消息旁“续接”复制本地只读指令。目标 Agent 在同一台电脑、有文件读取权限时，可执行应用自带的读取程序，按目录和引用恢复到所选消息。指令包含来源路径、会话 ID、续接位置、分页及证据读取方法；历史授权不继承。云端 Agent 不能直接访问本机文件。本功能恢复可见上下文，不搬运原 Agent 的隐藏运行状态。
+
+macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、详情、项目会话列表和对话过程使用短过渡，遵循系统“减少动态效果”和应用动画开关。时长模式按已记录调用区间的并集折叠空闲时间；圈选用区间重叠判断。缺少模型时长的来源保留点标记，不伪造计时。摘要步骤数按可见助手消息与外层调用计数，内部调用计入工具调用数；没有原生模型请求分组的来源，不宣称这是模型请求数。
+
 本版的侧栏搜索覆盖标题和项目，轨迹搜索覆盖当前会话可见正文、引用和参数摘要。跨会话正文搜索、自动交接摘要和后台目录监听暂未加入。
 
 ## 构建
@@ -45,6 +51,8 @@ Rust 外壳：`desktop/src/main.rs`。后台与来源：`scripts/trajectory_serv
 ## 验证
 
 ```bash
+python3 scripts/settings_handoff_self_test.py
+python3 scripts/trajectory_layout_self_test.py
 python3 scripts/agent_sources_self_test.py
 python3 scripts/trajectory_self_test.py
 python3 scripts/self_test.py
@@ -55,4 +63,4 @@ node scripts/trajectory_focus_self_test.cjs
 
 来源测试涵盖同名原生 ID 隔离、Claude 分支和乱序结果关联、半行写入、记录重写、可见正文全文匹配、Antigravity 步骤更新与摘要空态、WAL 快照、原值保留与项目设置持久化。桌面验收另外检查真实窗口、关闭常驻、重复打开、后台停止恢复和退出清理。
 
-官方实现依据：[Tauri sidecar](https://v2.tauri.app/develop/sidecar/)、[托盘](https://v2.tauri.app/learn/system-tray/)、[单实例](https://v2.tauri.app/plugin/single-instance/)。
+官方实现依据：[Tauri sidecar](https://v2.tauri.app/develop/sidecar/)、[托盘](https://v2.tauri.app/learn/system-tray/)、[单实例](https://v2.tauri.app/plugin/single-instance/)、[系统剪贴板](https://v2.tauri.app/plugin/clipboard/)。

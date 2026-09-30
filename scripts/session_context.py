@@ -734,6 +734,8 @@ def find_call(turns: list[dict[str, Any]], value: str, include_incomplete: bool)
         "call_type": "nested_tool_call",
         "output": call.get("output"),
         "shared_output_ref": call.get("ref"),
+        "parent_call": call,
+        "nested_index": nested_index,
     })
     return turn, nested
 
@@ -1163,12 +1165,12 @@ def render_tool(index: dict[str, Any], call: dict[str, Any]) -> str:
     lines.extend([
         f"## {call['ref']} · {call_names(call)}",
         f"- 外层类型：{call.get('call_type')} / {call.get('outer_name')}",
-        f"- 状态：{output.get('status', '无结果')}",
+        f"- 状态：{'独立结果未读取' if call.get('is_nested') else output.get('status', '无结果')}",
         f"- 输入大小：{call.get('input_chars', 0)} 字符",
-        f"- 结果大小：{output.get('output_chars', 0)} 字符 / {output.get('output_blocks', 0)} 块",
+        f"- {'组合结果' if call.get('is_nested') else '结果'}大小：{output.get('output_chars', 0)} 字符 / {output.get('output_blocks', 0)} 块",
     ])
     if call.get("is_nested"):
-        lines.append(f"- 结果归属：与外层 {call.get('shared_output_ref')} 共享，历史格式无法可靠拆成单次内部调用结果")
+        lines.append(f"- 结果归属：关联组合调用 {call.get('shared_output_ref')}；evidence 按需匹配独立结果，不沿用组合调用的状态")
     if call.get("paths"):
         lines.append("- 文件：\n" + "\n".join(f"  - {path}" for path in call["paths"][:20]))
     lines.extend(["### 输入片段（保留原值，按上限截取）", call.get("input_excerpt") or "(无)"])

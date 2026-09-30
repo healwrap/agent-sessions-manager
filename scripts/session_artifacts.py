@@ -16,6 +16,7 @@ from typing import Any, Iterable
 from session_errors import ContextError
 from session_locator import cache_path_for
 from session_text import DATA_URL_RE, compact_line, text_from_content
+from nested_results import match_nested_results
 
 
 MAX_MEDIA_BYTES = 25 * 1024 * 1024
@@ -129,15 +130,28 @@ def render_evidence(
     payload = entry.get("payload") or {}
     output = payload.get("output") if isinstance(payload, dict) else None
     text = text_from_content(output)
+    matched = None
+    if call.get('is_nested'):
+        parent = call['parent_call']
+        input_entry = read_raw_entry(source, int(parent['input_offset'])) if parent.get('input_offset') is not None else {}
+        input_payload = input_entry.get('payload') or {}
+        program = input_payload.get('input') or input_payload.get('arguments') or ''
+        matches = match_nested_results(program if isinstance(program, str) else '', output,
+                                       [child['name'] for child in parent.get('nested_calls') or []])
+        matched = matches.get(call['nested_index'])
+        if not matched:
+            lines = untrusted_header(index)
+            lines.append(f"## {call['ref']} 工具证据")
+            lines.append('未匹配到此调用的独立结果；共享结果不能证明某段输出属于它，因此本次不查询组合输出。')
+            lines.append(f"组合输出入口：evidence {parent['ref']} --query <查询词>")
+            return '\n'.join(lines)
+        text = matched['text']
     windows = evidence_windows(text, query, context)
     lines = untrusted_header(index)
     lines.append(f"## {call['ref']} 工具证据 · 查询：{compact_line(query)}")
-    lines.append(f"结果规模：{output_meta.get('output_chars', 0)} 字符；只展示命中附近内容。")
+    lines.append(f"结果规模：{len(text)} 字符；只展示命中附近内容。")
     if call.get("is_nested"):
-        lines.append(
-            f"注意：这是 {call.get('shared_output_ref')} 的内部调用；旧记录只保存外层组合结果，"
-            "本次查询仍在共享结果中定位，不能证明命中一定来自该内部调用。"
-        )
+        lines.append('结果已按' + ('输出编号' if matched['method'] == 'indexed' else '明确的逐条输出顺序') + '匹配到此调用。')
     if not windows:
         lines.append("没有精确命中。请换用 tools/tool 中出现的文件名、函数名或错误关键词，不会自动返回结果开头。")
     else:

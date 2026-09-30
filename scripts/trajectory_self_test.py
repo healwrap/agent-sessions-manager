@@ -13,6 +13,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import trajectory_server as trajectory
+from session_context import find_call
+from session_artifacts import render_evidence
 from session_locator import visible_messages
 
 ID = '11111111-2222-3333-4444-555555555555'
@@ -132,7 +134,9 @@ def main():
             assert get('/api/trajectory', id=ID, offset=1, limit=2)['next_offset'] == 3
             output = get('/api/event', id=ID, ref='T001/C001', part='output')
             assert output['text'].startswith('工具结果专属标记') and output['pages'] == 2
-            assert get('/api/event', id=ID, ref='T001/C001.1', part='output')['shared_output']
+            single = get('/api/event', id=ID, ref='T001/C001.1', part='output')
+            assert not single['shared_output'] and single['result_match'] == 'sequence'
+            assert single['text'] == output['text']
             assert get('/api/event', id=ID, ref='T001/C001')['event']['duration_ms'] == 2000
             assert get('/api/event', id=ID, ref='T002/M01')['text'].find('/tmp/original-image.png') >= 0
             assert list(visible_messages(source))[-1] == ('user', '当前未完成消息')
@@ -160,6 +164,36 @@ def main():
             with source.open('a') as handle:
                 handle.write('\n')
             assert get('/api/trajectory', id=ID, q='新追加消息')['total'] == 1
+            matched_id = '55555555-2222-3333-4444-555555555555'
+            matched_source = directory / f'rollout-test-{matched_id}.jsonl'
+            program = 'const rs=await Promise.allSettled([tools.exec_command({cmd:"one"}),tools.exec_command({cmd:"two"})]);rs.forEach((r,i)=>text({i,...r}));'
+            zero = json.dumps({'i': 0, 'status': 'fulfilled', 'value': {'exit_code': 0, 'output': '独立第一条 token=original'}}, ensure_ascii=False)
+            one = json.dumps({'i': 1, 'status': 'rejected', 'reason': {'message': '独立第二条错误'}}, ensure_ascii=False)
+            matched_source.write_text(entry('session_meta', {'id': matched_id, 'cwd': '/tmp/project'}) +
+                                      entry('response_item', {'type': 'custom_tool_call', 'name': 'exec', 'call_id': 'match', 'input': program}) +
+                                      entry('response_item', {'type': 'custom_tool_call_output', 'call_id': 'match', 'output': [
+                                          {'type': 'input_text', 'text': zero}, {'type': 'input_text', 'text': one}]}) +
+                                      entry('response_item', {'type': 'custom_tool_call', 'name': 'exec', 'call_id': 'ambiguous', 'input': 'if(ok){text(await tools.exec_command({cmd:"one"}));text(await tools.exec_command({cmd:"two"}));}'}) +
+                                      entry('response_item', {'type': 'custom_tool_call_output', 'call_id': 'ambiguous', 'output': '不能归因的组合输出'}))
+            store.refresh_files()
+            ledger = get('/api/trajectory', id=matched_id)
+            assert '独立第一条' not in json.dumps(ledger, ensure_ascii=False)
+            a = get('/api/event', id=matched_id, ref='T001/C001.1', part='output')
+            b = get('/api/event', id=matched_id, ref='T001/C001.2', part='output')
+            assert a['text'] == zero and b['text'] == one and a['text'] != b['text']
+            assert a['event']['status'] == 'success' and b['event']['status'] == 'error'
+            assert not a['shared_output'] and a['parent_ref'] == 'T001/C001'
+            unavailable = get('/api/event', id=matched_id, ref='T001/C002.1', part='output')
+            assert unavailable['text'] == '' and not unavailable['output_available']
+            assert unavailable['result_match'] == 'unmatched' and unavailable['parent_output_available']
+            assert get('/api/event', id=matched_id, ref=unavailable['parent_ref'], part='output')['text'] == '不能归因的组合输出'
+            parsed = store.session(matched_id)
+            _, child = find_call(parsed['turns'], 'T001/C001.1', True)
+            evidence = render_evidence(parsed['index'], parsed['source'], child, '独立', 1)
+            assert '独立第一条' in evidence and '独立第二条' not in evidence
+            _, child = find_call(parsed['turns'], 'T001/C002.1', True)
+            evidence = render_evidence(parsed['index'], parsed['source'], child, '不能归因', 1)
+            assert '未匹配' in evidence and '组合输出入口' in evidence and '命中 1' not in evidence
             # Aggregated positions must contain a non-leading selection, and search
             # must light up the aggregate rather than only its first message.
             long_id = '44444444-2222-3333-4444-555555555555'

@@ -16,7 +16,7 @@ function sessionTitle(id,fallback){return preferences.aliases[id]||fallback||'(�
 const kinds = { user:['用户','user'], assistant:['助手','assistantVioletBright'],
   tool:['工具','toolAmber'], subtool:['工具','toolAmber'], media:['上下文','contextGreen'], context:['上下文','contextGreen'] };
 const statuses = { completed:'已完成', in_progress:'进行中', aborted:'已中止', success:'已完成',
-  error:'失败', pending:'等待结果', running:'运行中', result:'已返回', shared:'共享外层结果', metadata:'已记录' };
+  error:'失败', pending:'等待结果', running:'运行中', result:'已返回', unread:'未读取', unmatched:'未匹配', metadata:'已记录' };
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -203,7 +203,8 @@ function renderRows() {
       request.append(element('span','toolCallNameTypeface',event.name),element('span','toolCallPayload',event.preview));
       const result=element('div','inlineResult'); result.append(icon('right','arrow'));
       result.append(element('span','inlineResultText'+(event.status==='error'?' error':''),
-        event.kind==='subtool'?'共享外层结果':(statuses[event.status]||event.status)+(event.output_chars?` · ${event.output_chars.toLocaleString()} 字符`:'')));
+        event.kind==='subtool'&&event.status==='unread'?'':event.kind==='subtool'&&event.status==='unmatched'?'查看组合调用':(statuses[event.status]||event.status)+(event.output_chars?` · ${event.output_chars.toLocaleString()} 字符`:'')));
+      if(event.kind==='subtool'&&event.status==='unread')result.hidden=true;
       preview.append(request,result); content.append(preview);
     } else content.append(element('div','contentText',event.preview));
     if (turnCollapsed(event.turn)) content.append(element('span','toolCallPayload',' · 轮次已收起'));
@@ -428,6 +429,7 @@ async function renderDetail() {
     const data=await api('/api/event',{id,ref,part,page:state.detailPage});
     if(generation!==state.detailGeneration||id!==state.id||ref!==state.selected)return;
     const event=data.event, tool=event.kind==='tool'||event.kind==='subtool';
+    const listed=state.events.find(item=>item.ref===ref);if(listed&&event.kind==='subtool'){Object.assign(listed,event);renderRows();renderTimeline();}
     const [name,cls]=kinds[event.kind]||['消息','systemNeutral'];
     $('detail-kind').className='kindTag '+cls; $('detail-kind').textContent=name;
     $('detail-location').textContent=`第 ${event.turn} 轮 · ${tool?event.name:'消息'}`;
@@ -448,7 +450,7 @@ async function renderDetail() {
       const title=element('button','section-title',tool?'参数 ›':'预览 ›');
       title.addEventListener('click',()=>{state.detailTab=tool?'参数':'预览';renderDetail();});block.append(title,tool?payload(data.text):markdown(data.text));
       for(const nested of data.nested){const button=element('button','nested-link',nested.name+' › '+nested.ref);button.addEventListener('click',()=>selectEvent(nested.ref));block.append(button);}
-      if(tool){const result=element('button','section-title detail-section','结果 ›');result.addEventListener('click',()=>{state.detailTab='结果';renderDetail();});block.append(result,element('p','metadata-note',data.output_available?'点击查看本次调用的结果。':'原始记录尚未返回结果。'));}
+      if(tool){const result=element('button','section-title detail-section','结果 ›');result.addEventListener('click',()=>{state.detailTab='结果';renderDetail();});block.append(result,element('p','metadata-note',event.kind==='subtool'?'点击读取此命令的结果。':data.output_available?'点击查看本次调用的结果。':'原始记录尚未返回结果。'));}
       $('detail-body').append(block); detailPager(data);
     } else if(state.detailTab==='来源') {
       const list=element('dl','overview');overviewRow(list,'会话',data.thread_id,true);overviewRow(list,'文件',data.source,true);overviewRow(list,'行号',data.line??event.line);overviewRow(list,'引用',ref);overviewRow(list,'时间',event.timestamp||'未记录',true);$('detail-body').append(list);
@@ -457,7 +459,7 @@ async function renderDetail() {
     } else if(state.detailTab==='计时') {
       const list=element('dl','overview');overviewRow(list,'开始',event.timestamp||'未记录',true);overviewRow(list,'记录间隔',event.duration_ms!==null?event.duration_ms+' 毫秒':'未记录');$('detail-body').append(list,element('p','metadata-note','记录间隔来自调用与结果时间戳；模型首字时间、解码耗时和工具内部耗时未记录。'));
     } else {
-      if(data.shared_output&&part==='output')$('detail-body').append(element('p','metadata-note','这是外层调用的共享结果，无法单独归因于该内部工具。'));
+      if(event.kind==='subtool'&&part==='output'&&!data.output_available){const note=element('p','metadata-note',data.parent_output_available?'这条命令的独立结果尚未匹配，组合输出可在原调用中查看。':'组合调用尚未返回结果。');$('detail-body').append(note);if(data.parent_ref){const parent=element('button','nested-link','查看组合调用结果 ›');parent.addEventListener('click',async()=>{await selectEvent(data.parent_ref,true);state.detailTab='结果';renderDetail();});$('detail-body').append(parent);}return;}
       if(data.input_truncated)$('detail-body').append(element('p','metadata-note','内部调用参数只保留前 2500 字符；完整参数可在外层调用中查看。'));
       const block=element('div','detail-content');block.append(!tool&&state.detailTab==='预览'?markdown(data.text):payload(data.text,state.detailTab==='原始内容'));$('detail-body').append(block);detailPager(data);
     }

@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from session_context import build_turns, load_index, raw_call_input, raw_call_output
+from nested_results import match_nested_results, nested_result_status
 from session_locator import codex_root, read_session_index, read_session_meta, unique_session_rows
 from session_text import compact_line
 
@@ -166,7 +167,8 @@ class Store:
                     for nested in call.get('nested_calls') or []:
                         child = {**item, 'ref': nested['ref'], 'kind': 'subtool', 'name': nested['name'],
                                  'parent_ref': call['ref'], 'preview': compact_line(nested.get('input_excerpt', ''), 420),
-                                 'nested_count': 0, 'duration_ms': None, 'status': 'shared'}
+                                 'nested_count': 0, 'duration_ms': None, 'status': 'unread',
+                                 'output_chars': 0, 'result_match': 'unread'}
                         events.append(child)
                         lookup[child['ref']] = ('nested', {**nested, 'parent': call})
                 for media in turn['media']:
@@ -185,7 +187,8 @@ class Store:
             events.sort(key=lambda e: (e['line'], e['ref']))
             for position, event in enumerate(events):
                 event['position'] = position
-            value = {'index': index, 'source': source, 'turns': turns, 'events': events, 'lookup': lookup}
+            value = {'index': index, 'source': source, 'turns': turns, 'events': events, 'lookup': lookup,
+                     'nested_results': {}}
             # Keep only a handful of active parsed sessions in the HTTP process.
             if len(self.loaded) >= 5:
                 self.loaded.pop(next(iter(self.loaded)))
@@ -256,9 +259,25 @@ class Store:
                 else:
                     _, text = raw_call_input(source, record)
             elif category == 'nested':
-                output_available = bool(record['parent'].get('output'))
+                parent = record['parent']
+                output_available = event['result_match'] in ('sequence', 'indexed')
                 if part == 'output':
-                    _, text = raw_call_output(source, record['parent'])
+                    if parent['ref'] not in data['nested_results']:
+                        _, input_text = raw_call_input(source, parent)
+                        raw, _ = raw_call_output(source, parent)
+                        data['nested_results'][parent['ref']] = match_nested_results(
+                            input_text if parent.get('input_offset') is not None else '', raw,
+                            [child['name'] for child in parent['nested_calls']])
+                    number = next(i for i, child in enumerate(parent['nested_calls']) if child['ref'] == ref)
+                    result = data['nested_results'][parent['ref']].get(number)
+                    output_available = result is not None
+                    text = result['text'] if result else ''
+                    event['result_match'] = result['method'] if result else 'unmatched'
+                    event['output_chars'] = len(text)
+                    if result:
+                        event['status'] = nested_result_status(text)
+                    else:
+                        event['status'] = 'unmatched'
                 else:
                     text = record.get('input_excerpt', '')
             else:
@@ -272,7 +291,10 @@ class Store:
                     'output_available': output_available, 'source': str(source),
                     'line': record.get('line_number') or event['line'], 'thread_id': key,
                     'nested': record.get('nested_calls') or [],
-                    'shared_output': category == 'nested',
+                    'shared_output': False,
+                    'result_match': event.get('result_match'),
+                    'parent_ref': record['parent']['ref'] if category == 'nested' else None,
+                    'parent_output_available': bool(record['parent'].get('output')) if category == 'nested' else None,
                     'input_truncated': category == 'nested' and record.get('input_chars', 0) > len(text) and part == 'input'}
 
 

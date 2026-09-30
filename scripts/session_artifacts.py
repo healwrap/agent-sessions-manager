@@ -193,6 +193,9 @@ def render_media_list(index: dict[str, Any], turns: Iterable[dict[str, Any]]) ->
 def embedded_media_value(entry: dict[str, Any], item: dict[str, Any]) -> str:
     payload = entry.get("payload") or {}
     content = payload.get("content") if isinstance(payload, dict) else None
+    if item.get('source_field') == 'item.content':
+        desktop_item = payload.get('item') or {}
+        content = desktop_item.get('content') if isinstance(desktop_item, dict) else None
     index = item.get("block_index")
     if not isinstance(content, list) or not isinstance(index, int) or index >= len(content):
         raise ContextError("嵌入媒体位置无效；源文件可能已变化。")

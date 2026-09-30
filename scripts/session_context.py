@@ -35,11 +35,11 @@ from session_locator import (
     resolve_session,
     stable_hash,
 )
-from session_text import DATA_URL_RE, compact_line, text_from_content
+from session_text import DATA_URL_RE, compact_line, desktop_visible_message, text_from_content
 
 
-# v7 invalidates indexes produced by the former value-replacement pipeline.
-SCHEMA_VERSION = 7
+# v9 adds Desktop messages and compaction locations; v7 removed value replacement.
+SCHEMA_VERSION = 9
 DEFAULT_LIMITS = {
     "locate": 8_000,
     "status": 2_000,
@@ -70,12 +70,12 @@ ABS_PATH_RE = re.compile(r"/(?:Users|private|var|tmp|Volumes|opt)/[^\s'\"`;,)}\]
 CMD_STRING_RE = re.compile(r"\bcmd\s*:\s*(\"(?:\\.|[^\"\\])*\")", re.S)
 KNOWN_TOP_LEVEL_TYPES = {
     "session_meta", "turn_context", "event_msg", "response_item", "compacted",
-    "ghost_snapshot", "world_state",
+    "ghost_snapshot", "world_state", "token_usage_record",
 }
 KNOWN_EVENT_TYPES = {
     "task_started", "task_complete", "turn_aborted", "user_message", "agent_message",
     "agent_reasoning", "token_count", "context_compacted", "thread_name_updated",
-    "thread_settings_applied", "patch_apply_end", "web_search_end",
+    "thread_settings_applied", "patch_apply_end", "web_search_end", "item_completed",
 }
 KNOWN_RESPONSE_TYPES = {
     "message", "reasoning", "function_call", "custom_tool_call", "function_call_output",
@@ -368,6 +368,56 @@ def normalize_entry(
     payload_type = payload.get("type")
     note_record_format(meta, entry_type, payload_type)
 
+    # Desktop completion events carry visible messages separately from response
+    # items. Read only the two explicit message kinds; never flatten all items.
+    if entry_type == 'event_msg' and payload_type == 'item_completed':
+        item = payload.get('item') or {}
+        if not isinstance(item, dict):
+            return
+        item_type = item.get('type')
+        if item_type not in {'UserMessage', 'AgentMessage'}:
+            return
+        if payload.get('turn_id') and payload['turn_id'] != state.get('turn_id'):
+            state['turn_seq'] += 1
+            state['turn_id'] = payload['turn_id']
+            records.append({'kind': 'turn_start', 'turn_seq': state['turn_seq'], 'turn_id': state['turn_id'],
+                            'timestamp': timestamp, 'offset': offset})
+        ensure_turn(state, records, timestamp, offset)
+        visible = desktop_visible_message(payload)
+        if visible is None:
+            return
+        role, text = visible
+        blocks = item.get('content') or []
+        if not isinstance(blocks, list):
+            blocks = []
+        if text:
+            duplicate = any(record.get('kind') == 'message' and record.get('turn_seq') == state['turn_seq']
+                            and record.get('role') == role and record.get('text') == text
+                            and ((item.get('id') and record.get('item_id') == item.get('id')) or
+                                 (not record.get('item_id') and record.get('timestamp') == timestamp))
+                            for record in records[-10:])
+            if not duplicate:
+                records.append({'kind': 'message', 'role': role, 'text': text,
+                                'phase': 'user' if role == 'user' else item.get('phase') or 'unknown',
+                                'item_id': item.get('id'), 'turn_seq': state['turn_seq'],
+                                'timestamp': timestamp, 'line_number': line_number})
+        if role == 'user':
+            for block_index, block in enumerate(blocks):
+                if not isinstance(block, dict):
+                    continue
+                block_type = str(block.get('type', '')).lower()
+                media_kind = 'image' if block_type in {'local_image', 'image', 'input_image'} else 'audio' if block_type in {'local_audio', 'audio', 'input_audio'} else None
+                if not media_kind:
+                    continue
+                key = next((key for key in ('path', 'image_url', 'audio_url', 'url', 'data') if key in block), None)
+                if key:
+                    descriptor = media_descriptor(block[key], media_kind=media_kind, source_field='item.content',
+                                                  offset=offset, line_number=line_number, block_index=block_index, value_key=key)
+                    if descriptor:
+                        descriptor['turn_seq'] = state['turn_seq']
+                        records.append(descriptor)
+        return
+
     if entry_type == "session_meta":
         for key in ("id", "cwd", "source", "originator", "timestamp", "cli_version"):
             if payload.get(key) is not None:
@@ -375,6 +425,9 @@ def normalize_entry(
         return
     if entry_type == "compacted":
         meta["compactions"] = int(meta.get("compactions", 0)) + 1
+        records.append({'kind': 'context_boundary', 'turn_seq': state['turn_seq'],
+                        'timestamp': timestamp, 'line_number': line_number,
+                        'source_type': 'compacted'})
         return
     if entry_type == "event_msg" and payload_type == "task_started":
         state["turn_seq"] += 1
@@ -388,7 +441,10 @@ def normalize_entry(
     if entry_type == "event_msg" and payload_type == "user_message":
         ensure_turn(state, records, timestamp, offset)
         text = str(payload.get("message", ""))
-        if text:
+        duplicate = any(record.get('kind') == 'message' and record.get('role') == 'user'
+                        and record.get('item_id') and record.get('timestamp') == timestamp
+                        and record.get('text') == text for record in records[-10:])
+        if text and not duplicate:
             records.append({
                 "kind": "message", "role": "user", "phase": "user", "text": text,
                 "turn_seq": state["turn_seq"], "timestamp": timestamp, "line_number": line_number,
@@ -409,7 +465,10 @@ def normalize_entry(
     if entry_type == "event_msg" and payload_type == "agent_message":
         ensure_turn(state, records, timestamp, offset)
         text = str(payload.get("message", ""))
-        if text:
+        duplicate = any(record.get('kind') == 'message' and record.get('role') == 'assistant'
+                        and record.get('item_id') and record.get('timestamp') == timestamp
+                        and record.get('text') == text for record in records[-10:])
+        if text and not duplicate:
             records.append({
                 "kind": "message", "role": "assistant", "phase": payload.get("phase") or "unknown",
                 "text": text, "turn_seq": state["turn_seq"], "timestamp": timestamp,
@@ -568,7 +627,7 @@ def build_turns(index: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         turn = turns.setdefault(seq, {
             "seq": seq, "turn_id": None, "timestamp": None, "status": "in_progress",
-            "messages": [], "calls": [], "media": [],
+            "messages": [], "calls": [], "media": [], "boundaries": [],
         })
         kind = record.get("kind")
         if kind == "turn_start":
@@ -600,6 +659,8 @@ def build_turns(index: dict[str, Any]) -> list[dict[str, Any]]:
             turn["media"].append(media)
         elif kind == "turn_end":
             turn["status"] = record.get("status", "completed")
+        elif kind == 'context_boundary':
+            turn['boundaries'].append(dict(record))
 
     ordered = [turns[key] for key in sorted(turns)]
     for turn in ordered:
@@ -613,6 +674,8 @@ def build_turns(index: dict[str, Any]) -> list[dict[str, Any]]:
                 nested["parent_ref"] = call["ref"]
         for index, media in enumerate(turn["media"], 1):
             media["ref"] = f"{prefix}/M{index:02d}"
+        for index, boundary in enumerate(turn['boundaries'], 1):
+            boundary['ref'] = f"{prefix}/X{index:02d}"
     return ordered
 
 

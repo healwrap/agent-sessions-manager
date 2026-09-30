@@ -338,7 +338,7 @@ def main() -> int:
         assert field_value in rebuilt_tool and url_value in rebuilt_tool and "old-index-placeholder" not in rebuilt_tool
         rebuilt_media = run(root, session, "media", "T001/M03")
         assert remote_media_url in rebuilt_media and "old-index-placeholder" not in rebuilt_media
-        assert json.loads(cache_path.read_text(encoding="utf-8"))["schema_version"] == 7
+        assert json.loads(cache_path.read_text(encoding="utf-8"))["schema_version"] == 9
         blocked = run(root, session, "turn", "T002", expect=2)
         assert "--include-incomplete" in blocked
         complete = run(root, session, "--include-incomplete", "turn", "T002")

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from session_errors import SessionLookupError
-from session_text import compact_line
+from session_text import compact_line, desktop_visible_message
 
 
 THREAD_ID_RE = re.compile(r"([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})", re.I)
@@ -94,7 +94,8 @@ def visible_messages(path: Path) -> Iterable[tuple[str, str]]:
                 continue
             is_user = b'"user_message"' in raw
             is_agent = b'"agent_message"' in raw
-            if not is_user and not is_agent:
+            is_desktop = b'"item_completed"' in raw
+            if not is_user and not is_agent and not is_desktop:
                 continue
             try:
                 entry = json.loads(raw.decode("utf-8"))
@@ -104,6 +105,11 @@ def visible_messages(path: Path) -> Iterable[tuple[str, str]]:
             if not isinstance(payload, dict):
                 continue
             payload_type = payload.get("type")
+            if payload_type == 'item_completed':
+                visible = desktop_visible_message(payload)
+                if visible and visible[1]:
+                    yield visible
+                continue
             if payload_type not in {"user_message", "agent_message"}:
                 continue
             text = str(payload.get("message", ""))

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codex 轨迹</title><link rel="stylesheet" href="/harness.css"><link rel="stylesheet" href="/style.css"><script src="/marked.js" defer></script><script src="/app.js" defer></script></head>
+<body>
+<div class="application">
+  <aside class="sidebar" aria-label="会话侧边栏">
+    <div class="titlebar"><span class="traffic-lights"><i></i><i></i><i></i></span><button class="icon-button" id="sidebar-toggle" aria-label="收起侧边栏"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#panel"></use></svg></button></div>
+    <div class="brand-row"><img src="/harness-wordmark.svg" alt="DeepSeek Harness"><span class="codex-label">Codex 轨迹</span></div>
+    <button class="new-session" id="select-session"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#new-chat"></use></svg> 选择会话</button>
+    <div class="workspace-header"><span id="workspace-heading">项目</span><div><button class="icon-button" id="session-search-toggle" aria-label="搜索会话"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg></button><button class="icon-button" id="archive-toggle" aria-label="查看归档会话" aria-pressed="false"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#archive"></use></svg></button><button class="icon-button" id="refresh-sessions" aria-label="刷新会话"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg></button></div></div>
+    <div class="session-search" hidden><input id="session-search" type="search" placeholder="搜索会话名称" aria-label="搜索会话名称"></div>
+    <nav id="sessions" class="session-list" aria-label="Codex 会话"></nav>
+    <button id="more-sessions" class="more-sessions" hidden>展开更多会话</button>
+    <footer><button id="about" class="panel-row"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#more"></use></svg>会话管理</button></footer>
+  </aside>
+  <main class="main">
+    <header class="main-header"><div class="session-title" id="session-title">选择一个 Codex 会话</div><div class="header-actions"><button class="icon-button" id="refresh-trace" aria-label="刷新会话内容"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg></button><button class="icon-button" id="header-more" aria-label="管理当前会话"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#more"></use></svg></button><button class="icon-button" id="details-toggle" aria-label="打开事件详情"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#panel"></use></svg></button></div></header>
+    <nav class="main-tabs" aria-label="会话视图"><button data-main-tab="chat">对话</button><button data-main-tab="trace" class="active">轨迹</button></nav>
+    <div class="trajectory-toolbar"><div class="TrajectoryToolbar-inner"><div class="TrajectoryToolbar-actions"><button id="duration" class="TrajectoryToolbar-toggle" aria-label="使用实际时长" aria-pressed="false"><svg class="TrajectoryToolbar-toggleIcon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.25"/><path d="M8 4.75V8l2.25 1.5"/></svg>时长</button><button id="fold-turns" class="TrajectoryToolbar-action" aria-label="收起所有轮次" aria-pressed="false"><svg class="dsh-icon TrajectoryToolbar-actionIcon" aria-hidden="true"><use href="/icons.svg#collapse"></use></svg>轮次</button><button id="fold-calls" class="TrajectoryToolbar-action" aria-label="收起所有调用" aria-pressed="false"><svg class="dsh-icon TrajectoryToolbar-actionIcon" aria-hidden="true"><use href="/icons.svg#collapse"></use></svg>调用</button></div><div class="TrajectoryToolbar-search"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg><input id="trace-search" class="TrajectoryToolbar-searchInput" type="search" aria-label="搜索轨迹" placeholder="搜索"></div></div></div>
+    <div class="trajectory-timeline" aria-label="轨迹时间线"><div class="TrajectoryTimeline-plot"><div class="TrajectoryTimeline-labels"><span>输入</span><span>模型</span><span>工具</span></div><div class="TrajectoryTimeline-track" id="timeline" aria-label="时间线概览；水平拖动可聚焦事件"><div class="timeline-selection" hidden></div></div></div></div>
+    <div id="format-warning" class="format-warning" hidden></div>
+    <div class="split" id="split">
+      <section class="tablePane" id="table-pane" aria-label="轨迹记录"><table class="table" id="trajectory-table" data-scroll-ready="true"><colgroup><col class="eventColumn"><col class="contentColumn"></colgroup><tbody id="events"></tbody></table><div id="empty" class="empty-message">正在读取本地会话…</div><button id="more-events" class="historyLoadButton" hidden>加载更多轨迹</button></section>
+      <aside class="details" id="details" aria-label="事件详情" hidden><div class="detailsResizeHandle" id="detail-resize" role="separator" aria-label="调整事件详情宽度"></div><div class="detailsHeader"><div class="detailsTitle"><span class="kindTag" id="detail-kind"></span><span class="detailsLocation" id="detail-location"></span></div><button class="close" id="close-detail" aria-label="关闭详情"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#close"></use></svg></button></div><nav class="detailTabs" id="detail-tabs" aria-label="事件详情页签"></nav><div class="detailBody" id="detail-body" aria-live="polite"></div></aside>
+    </div>
+    <section id="chat-pane" class="chat-pane" aria-label="对话记录" hidden><button id="chat-earlier" class="historyLoadButton" hidden>加载更早的对话</button><div id="chat-messages" class="chat-messages"></div><button id="chat-more" class="historyLoadButton" hidden>加载更多对话</button></section>
+    <div class="session-stats" id="session-stats">本地轨迹</div>
+  </main>
+</div>
+<dialog id="info-dialog"><button class="dialog-close" aria-label="关闭"><svg class="dsh-icon" aria-hidden="true"><use href="/icons.svg#close"></use></svg></button><h2 id="info-title"></h2><pre id="info-text"></pre></dialog>
+<dialog id="rename-dialog"><form id="rename-form"><h2>重命名会话</h2><input id="rename-input" aria-label="会话名称" required maxlength="200"><div class="rename-actions"><button type="button" id="rename-cancel">取消</button><button type="submit">保存</button></div></form></dialog>
+<div id="session-menu" class="session-menu" role="menu" hidden></div>
+<div id="toast" role="status" hidden></div>
+</body></html>

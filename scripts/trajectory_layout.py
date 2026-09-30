@@ -62,7 +62,7 @@ def layout(events):
         remaining = [e for e in records if e['position'] > anchor['position']]
         summaries[str(turn)] = {'anchor_ref': anchor['ref'], 'anchor_position': anchor['position'], 'first_position': records[0]['position'],
                                'last_position': records[-1]['position'],
-                               'steps': sum(e['kind'] == 'assistant' for e in remaining),
+                               'steps': sum(e['kind'] in ('assistant', 'tool') or e['kind'] == 'context' and e['name'] == '执行记录' for e in remaining),
                                'calls': sum(e['kind'] in ('tool', 'subtool') for e in remaining),
                                'remaining': len(remaining)}
     return {'active_duration_ms': total, 'turn_summaries': summaries, 'call_groups': groups}

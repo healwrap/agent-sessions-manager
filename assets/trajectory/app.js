@@ -217,7 +217,7 @@ function renderRows(prepend=false) {
       const label=element('td','event');label.append(element('span','step-dot'));
       const content=element('td','content'),button=element('button','fold-summary');button.append(element('span','summary-ellipsis','…'),document.createTextNode(event.preview));
       const expand=()=>{if(event.summaryType==='turn'){if(state.collapsed.has(event.turn))state.collapsed.delete(event.turn);else state.collapsed.add(event.turn);}else state.expandedCalls.add(event.group);renderRows();};
-      button.title='展开'+(event.summaryType==='turn'?'轮次':'工具调用');button.addEventListener('click',expand);content.append(button);row.append(label,content);fragment.append(row);continue;
+      button.title='展开'+(event.summaryType==='turn'?'轮次':'工具调用');row.addEventListener('click',expand);row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();expand();}});content.append(button);row.append(label,content);fragment.append(row);continue;
     }
     const row=element('tr'); row.tabIndex=0; row.dataset.ref=event.ref; row.dataset.kind=event.kind;
     row.dataset.turnStart=String(first); row.dataset.selected=String(event.ref===state.selected);

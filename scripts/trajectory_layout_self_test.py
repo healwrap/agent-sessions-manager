@@ -19,7 +19,7 @@ assert events[2]['timeline_start'] == 0 and events[2]['timeline_end'] == 2/3
 assert events[3]['timeline_start'] == 2/15 and events[3]['timeline_end'] == 6/15
 assert focus(events, .3, .31, 'duration')['first']['ref'] == 'C1'  # Interior of span.
 assert meta['call_groups']['A']['count'] == 2
-assert meta['turn_summaries']['1']['steps'] == 1
+assert meta['turn_summaries']['1']['steps'] == 3
 assert meta['turn_summaries']['1']['calls'] == 2
 assert layout(events) == meta  # Live refresh never shifts the projection.
 points = [event('x', 0, None), event('y', 1, '2026-01-01T00:00:00Z')]

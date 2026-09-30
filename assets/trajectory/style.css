@@ -182,3 +182,7 @@ dialog pre { font:12px/1.7 var(--dsw-font-family); white-space:pre-wrap; overflo
 .markdown-table-scroll { overflow-x:auto;max-width:100%;margin:10px 0; }
 .markdown-table-scroll table { min-width:100%;width:max-content; }
 .markdown-table-scroll th,.markdown-table-scroll td { max-width:420px; }
+
+.fold-summary { display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary);padding:0;font:inherit; }
+.fold-summary:hover { color:var(--dsw-alias-state-business-primary); }
+.summary-ellipsis { min-width:16px;font-size:18px;line-height:1; }

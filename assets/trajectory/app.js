@@ -3,7 +3,7 @@
 const $ = id => document.getElementById(id);
 const state = { id:null, provider:'', sessions:[], sessionNext:null, data:null, events:[], next:null,
   offset:0, query:'', mode:'trace', duration:false, foldTurns:false, foldCalls:false,
-  collapsed:new Set(), range:null, selected:null, detailTab:'概述', detailPage:1,
+  collapsed:new Set(), expandedCalls:new Set(), range:null, selected:null, detailTab:'概述', detailPage:1,
   generation:0, detailGeneration:0, loading:false, version:null };
 let preferences;
 try {preferences=JSON.parse(localStorage.getItem('agent-sessions-view')||localStorage.getItem('codex-context-view')||'{}');}catch {preferences={};}
@@ -182,18 +182,47 @@ async function loadTrace(force=false,append=false,offset=null,isCurrent=()=>true
   finally { if (generation===state.generation) state.loading=false; }
 }
 function turnCollapsed(turn) { return state.foldTurns!==state.collapsed.has(turn); }
+function trajectoryRows() {
+  if(state.query)return state.events;
+  const rows=[], summarizedTurns=new Set(), summarizedCalls=new Set();
+  for(const event of state.events){
+    const turn=state.data?.turn_summaries?.[event.turn];
+    if(turnCollapsed(event.turn)){
+      if(summarizedTurns.has(event.turn))continue;
+      if(turn&&event.position<turn.anchor_position){rows.push(event);continue;}
+      rows.push(event);summarizedTurns.add(event.turn);
+      if(turn?.remaining)rows.push({ref:'summary:turn:'+event.turn,turn:event.turn,kind:'summary',position:event.position,
+        preview:`${turn.steps} 个步骤 · ${turn.calls} 个工具调用`,summaryType:'turn'});
+      continue;
+    }
+    const key=event.call_group||event.call_summary,group=state.data?.call_groups?.[key];
+    if(state.foldCalls&&group&&!state.expandedCalls.has(key)){
+      if(event.kind==='assistant')rows.push(event);
+      if(!summarizedCalls.has(key)){rows.push({ref:'summary:call:'+key,turn:event.turn,kind:'summary',position:event.position,
+        preview:`${group.count} 个工具调用 · ${group.names.join(', ')}`,summaryType:'call',group:key});summarizedCalls.add(key);}
+      continue;
+    }
+    rows.push(event);
+  }
+  return rows;
+}
 function renderRows(prepend=false) {
   const pane=$('table-pane'), previousTop=pane.scrollTop, previousHeight=pane.scrollHeight;
   const fragment=document.createDocumentFragment(); let previousTurn=null;
-  for (const event of state.events) {
+  for (const event of trajectoryRows()) {
     const first=previousTurn!==event.turn;
     previousTurn=event.turn;
-    if (turnCollapsed(event.turn) && !first) continue;
-    if (state.foldCalls && (event.kind==='tool'||event.kind==='subtool')) continue;
+    if(event.kind==='summary'){
+      const row=element('tr','summary-row');row.tabIndex=0;row.dataset.collapsedSummary=event.summaryType;
+      const label=element('td','event');label.append(element('span','step-dot'));
+      const content=element('td','content'),button=element('button','fold-summary');button.append(element('span','summary-ellipsis','…'),document.createTextNode(event.preview));
+      const expand=()=>{if(event.summaryType==='turn'){if(state.collapsed.has(event.turn))state.collapsed.delete(event.turn);else state.collapsed.add(event.turn);}else state.expandedCalls.add(event.group);renderRows();};
+      button.title='展开'+(event.summaryType==='turn'?'轮次':'工具调用');button.addEventListener('click',expand);content.append(button);row.append(label,content);fragment.append(row);continue;
+    }
     const row=element('tr'); row.tabIndex=0; row.dataset.ref=event.ref; row.dataset.kind=event.kind;
     row.dataset.turnStart=String(first); row.dataset.selected=String(event.ref===state.selected);
     row.dataset.error=String(event.status==='error');
-    row.dataset.timelineFocus=state.range && (positionOf(event)<state.range[0]||positionOf(event)>state.range[1])?'outside':'inside';
+    row.dataset.timelineFocus=state.range && ((state.duration?(event.timeline_end??positionOf(event)):positionOf(event))<state.range[0]||positionOf(event)>state.range[1])?'outside':'inside';
     if (turnCollapsed(event.turn)) row.dataset.collapsedSummary='turn';
     const label=element('td','event'), inner=element('div','eventInner'), slot=element('span','kindSlot');
     label.append(element('span','turnRail'));
@@ -218,7 +247,7 @@ function renderRows(prepend=false) {
       if(event.kind==='subtool'&&event.status==='unread')result.hidden=true;
       preview.append(request,result); content.append(preview);
     } else content.append(element('div','contentText',event.preview));
-    if (turnCollapsed(event.turn)) content.append(element('span','toolCallPayload',' · 轮次已收起'));
+
     row.append(label,content); row.title=event.ref+' · '+event.name;
     row.addEventListener('click',()=>selectEvent(event.ref));
     row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectEvent(event.ref);}});
@@ -304,17 +333,9 @@ function renderChat(prepend=false) {
   chatObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;const item=pending.get(entry.target);if(!item)continue;pending.delete(entry.target);chatObserver.unobserve(entry.target);const id=state.id;api('/api/event',{id,ref:item.event.ref}).then(data=>{if(generation!==chatGeneration||id!==state.id)return;state.chatCache.set(item.event.ref,data);const atBottom=pane.scrollHeight-pane.scrollTop-pane.clientHeight<60;item.mount(data);if(atBottom)pane.scrollTop=pane.scrollHeight;}).catch(error=>toast(error.message));}},{root:pane,rootMargin:'250px'});
   for(const item of hydrate)chatObserver.observe(item.row);
 }
-function timelineTimes() {
-  if(state.data?.time_bounds){const [min,max]=state.data.time_bounds;return [min,Math.max(1,max-min)];}
-  const times=(state.data?.overview||[]).map(e=>Date.parse(e.timestamp)).filter(Number.isFinite);
-  const min=Math.min(...times), max=Math.max(...times);
-  return [min,max>min?max-min:1];
-}
+function timelineTimes() { return [0,Math.max(1,state.data?.active_duration_ms||0)]; }
 function positionOf(event) {
-  if (state.duration) {
-    const [min,span]=timelineTimes(), time=Date.parse(event.timestamp);
-    if (Number.isFinite(min)&&Number.isFinite(time)) return Math.max(0,Math.min(1,(time-min)/span));
-  }
+  if(state.duration&&Number.isFinite(event.timeline_start))return event.timeline_start;
   return event.position/Math.max(1,(state.data?.event_count||1)-1);
 }
 function renderTimeline() {
@@ -330,11 +351,11 @@ function renderTimeline() {
     button.style.setProperty('--trajectory-span-left',(position*Math.max(1,width-10))+'px');
     button.style.setProperty('--trajectory-span-gap','0px');
     const [,span]=timelineTimes();
-    button.style.setProperty('--trajectory-span-width',(state.duration&&event.duration_ms?Math.min(width,Math.max(3,event.duration_ms/span*width)):8)+'px');
+    button.style.setProperty('--trajectory-span-width',(state.duration?Math.min(width,Math.max(3,((event.timeline_end??fullPosition)-fullPosition)/(end-start)*width)):8)+'px');
     button.dataset.timelineSpan=event.kind==='assistant'?'message':['media','context'].includes(event.kind)?'context':event.kind;
     button.dataset.equalDuration=String(!state.duration); button.dataset.current=String(event.ref===(selected?.ref||state.selected)||!!selected&&selected.kind===event.kind&&selected.position>=event.position&&selected.position<=(event.end_position??event.position));
     button.dataset.searchMatch=String(event.search_match!==false);
-    button.dataset.selected=String(!state.range||(fullPosition>=state.range[0]&&fullPosition<=state.range[1]));
+    button.dataset.selected=String(!state.range||((event.timeline_end??fullPosition)>=state.range[0]&&fullPosition<=state.range[1]));
     button.dataset.error=String(event.status==='error'); button.dataset.ref=event.ref;
     button.title=`第 ${event.turn} 轮 · ${kinds[event.kind]?.[0]||event.kind} · ${event.ref}${event.count>1?' · '+event.count+' 条聚合':''}`;
     button.setAttribute('aria-label',button.title); button.addEventListener('click',()=>selectEvent(event.ref,true));
@@ -530,9 +551,9 @@ $('more-sessions').addEventListener('click',()=>loadSessions(true));
 $('refresh-sessions').addEventListener('click',()=>loadSessions());
 $('refresh-trace').addEventListener('click',()=>loadTrace(true));
 for(const tab of document.querySelectorAll('[data-main-tab]')){tab.addEventListener('click',()=>switchMode(tab.dataset.mainTab));tab.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const mode=state.mode==='chat'?'trace':'chat';switchMode(mode);document.querySelector(`[data-main-tab="${mode}"]`).focus();}});}
-$('duration').addEventListener('click',()=>{state.duration=!state.duration;state.range=null;state.viewport=null;$('duration').setAttribute('aria-pressed',String(state.duration));$('duration').title=state.duration?'使用等距排列':'使用实际时长';$('duration').setAttribute('aria-label',$('duration').title);renderTimeline();renderRows();});
+$('duration').addEventListener('click',()=>{state.duration=!state.duration;state.range=null;state.viewport=null;$('duration').setAttribute('aria-pressed',String(state.duration));$('duration').title=state.duration?'使用等距排列':'使用执行时长（折叠空闲时间）';$('duration').setAttribute('aria-label',$('duration').title);renderTimeline();renderRows();});
 $('fold-turns').addEventListener('click',()=>{state.foldTurns=!state.foldTurns;state.collapsed.clear();syncFoldControls();renderRows();});
-$('fold-calls').addEventListener('click',()=>{state.foldCalls=!state.foldCalls;syncFoldControls();renderRows();});
+$('fold-calls').addEventListener('click',()=>{state.foldCalls=!state.foldCalls;state.expandedCalls.clear();syncFoldControls();renderRows();});
 $('close-detail').addEventListener('click',()=>{$('details').hidden=true;});
 $('details-toggle').addEventListener('click',()=>{if(state.selected){$('details').hidden=!$('details').hidden;}else if(state.events[0])selectEvent(state.events[0].ref);});
 function toggleSidebar(){const collapsed=document.querySelector('.application').classList.toggle('sidebar-collapsed');$('sidebar-reopen').hidden=!collapsed;(collapsed?$('sidebar-reopen'):$('sidebar-toggle')).focus();}

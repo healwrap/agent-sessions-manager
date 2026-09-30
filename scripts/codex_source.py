@@ -15,6 +15,7 @@ from session_context import build_turns, load_index, raw_call_input, raw_call_ou
 from nested_results import match_nested_results, nested_result_status
 from session_locator import codex_root, read_session_index, read_session_meta, unique_session_rows
 from session_text import compact_line
+from trajectory_layout import layout, focus as layout_focus
 
 UUID = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', re.I)
 PAGE_CHARS = 7000
@@ -208,6 +209,7 @@ class Store:
         with self.lock:
             data = self.session(key)
             events = data['events']
+            timeline = layout(events)
             accepts = lambda e: kind == 'all' or e['kind'] == kind or (kind == 'messages' and e['kind'] in {'user', 'assistant'})
             selected = [e for e in events if accepts(e) and
                         (not query or query.casefold() in (e['preview']+' '+e['name']+' '+e['ref']).casefold())]
@@ -237,7 +239,9 @@ class Store:
                                          'search_match': any(e['ref'] in matched_refs for e in members),
                                          'count': len(members), 'turn': members[0]['turn'],
                                          'timestamp': members[0]['timestamp'], 'status': members[0]['status'],
-                                         'duration_ms': members[0].get('duration_ms')})
+                                         'duration_ms': members[0].get('duration_ms'),
+                                         'timeline_start': min(e['timeline_start'] for e in members),
+                                         'timeline_end': max(e['timeline_end'] for e in members)})
             meta = data['index']['meta']
             return {'id': key, 'title': meta.get('title') or '(无标题)', 'cwd': meta.get('cwd'),
                     **self.project(key, meta.get('cwd')),
@@ -246,7 +250,7 @@ class Store:
                     'turn_count': len(data['turns']), 'tool_count': sum(e['kind'] == 'tool' for e in events),
                     'current_status': data['turns'][-1]['status'] if data['turns'] else 'completed',
                     'overview': overview, 'compactions': meta.get('compactions', 0),
-                    'time_bounds': timeline_bounds(events),
+                    'time_bounds': timeline_bounds(events), **timeline,
                     'warnings': meta.get('unrecognized_record_types') or {},
                     'source_size': data['index'].get('source_size', 0),
                     'version': data['index'].get('source_mtime_ns')}
@@ -258,22 +262,7 @@ class Store:
         start, end = sorted((start, end))
         with self.lock:
             events = self.session(key)['events']
-            bounds = timeline_bounds(events)
-            matches = []
-            for event in events:
-                if event['kind'] == 'subtool':
-                    continue
-                position = event['position'] / max(1, len(events)-1)
-                time = timestamp_ms(event.get('timestamp'))
-                if mode == 'duration' and bounds and time is not None:
-                    position = (time-bounds[0]) / max(1, bounds[1]-bounds[0])
-                if start <= position <= end:
-                    matches.append(event)
-            # References and positions only: no lazy evidence reads for navigation.
-            metadata = lambda e: {'ref': e['ref'], 'position': e['position']}
-            return {'count': len(matches), 'span': matches[-1]['position']-matches[0]['position']+1 if matches else 0,
-                    'first': metadata(matches[0]) if matches else None,
-                    'middle': metadata(matches[(len(matches)-1)//2]) if matches else None}
+            return layout_focus(events, start, end, mode)
 
     def detail(self, key, ref, page=1, part='input'):
         with self.lock:

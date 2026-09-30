@@ -138,7 +138,7 @@ def main():
             exact = get('/api/trajectory-focus', id=ID, start=point, end=point)
             assert exact['first']['ref'] == 'T001/C001' and exact['count'] == 1
             assert get('/api/trajectory-focus', id=ID, start=.251, end=.252)['count'] == 0
-            time_point = (trajectory.timestamp_ms(tool_event['timestamp'])-data['time_bounds'][0]) / (data['time_bounds'][1]-data['time_bounds'][0])
+            time_point = (tool_event['timeline_start']+tool_event['timeline_end'])/2
             assert get('/api/trajectory-focus', id=ID, start=time_point+.01, end=time_point-.01, mode='duration')['first']['ref'] == 'T001/C001'
             assert request('/api/trajectory-focus', {'id': ID, 'start': 'nan', 'end': 1})[0] == 400
             assert request('/api/trajectory-focus', {'id': ID, 'start': -1, 'end': 1})[0] == 400

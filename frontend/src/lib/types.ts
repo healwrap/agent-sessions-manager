@@ -175,6 +175,7 @@ declare global {
     loadTrace?: () => void;
     loadSessions?: () => void;
     __TAURI__?: {
+      core?: { invoke: <T>(command: string) => Promise<T> };
       clipboardManager?: { writeText: (text: string) => Promise<void> };
     };
   }

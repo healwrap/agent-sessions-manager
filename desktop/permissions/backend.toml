@@ -1,0 +1,9 @@
+[[permission]]
+identifier = "allow-backend-status"
+description = "检查本机后台启动状态"
+commands.allow = ["backend_status"]
+
+[[permission]]
+identifier = "allow-restart-backend"
+description = "从启动页重新启动本机后台"
+commands.allow = ["restart_backend"]

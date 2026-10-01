@@ -44,6 +44,27 @@ fn backend_status(app: tauri::AppHandle) -> bool {
 }
 
 #[tauri::command]
+fn show_about(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    #[cfg(target_os = "macos")]
+    {
+        app.run_on_main_thread(|| {
+            let main_thread = objc2::MainThreadMarker::new().expect("关于窗口需在主线程打开");
+            objc2_app_kit::NSApplication::sharedApplication(main_thread)
+                .orderFrontStandardAboutPanel(None);
+        })
+        .map_err(|error| error.to_string())?;
+        Ok(None)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(Some(format!(
+            "Agent Sessions\n版本 {}\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Antigravity 和 Antigravity CLI。",
+            app.package_info().version
+        )))
+    }
+}
+
+#[tauri::command]
 fn restart_backend(app: tauri::AppHandle) -> Result<(), String> {
     stop(&app);
     app.state::<Backend>().failed.store(false, Ordering::SeqCst);
@@ -95,7 +116,7 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .manage(Backend::default())
-        .invoke_handler(tauri::generate_handler![restart_backend, backend_status])
+        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about])
         .on_page_load(|window, _| {
             let paused = window.state::<Backend>().paused.load(Ordering::SeqCst);
             let platform = std::env::consts::OS;

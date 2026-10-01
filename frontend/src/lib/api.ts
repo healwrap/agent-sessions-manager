@@ -26,3 +26,15 @@ export async function copyText(text: string) {
     await window.__TAURI__.clipboardManager.writeText(text);
   else await navigator.clipboard.writeText(text);
 }
+export async function showAbout() {
+  if (window.__TAURI__?.core) {
+    const fallback = await window.__TAURI__.core.invoke<string | null>(
+      'show_about',
+    );
+    if (fallback) window.alert(fallback);
+  } else {
+    window.alert(
+      'Agent Sessions\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Antigravity 和 Antigravity CLI。',
+    );
+  }
+}

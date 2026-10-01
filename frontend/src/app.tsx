@@ -11,7 +11,7 @@ import { ChatPane } from './components/chat-pane';
 import { TraceTable } from './components/trace-table';
 import { Timeline } from './components/timeline';
 import { DetailPanel } from './components/detail-panel';
-import { Dialog, Icon, IconButton } from './components/primitives';
+import { Icon, IconButton } from './components/primitives';
 import { StartupContent } from './components/startup-content';
 export function App() {
   const state = useSessionStore(),
@@ -205,20 +205,6 @@ export function App() {
       </div>
       <SettingsDialog open={state.settingsOpen} />
       <SessionActions state={state} menu={menu} onClose={closeMenu} />
-      <Dialog
-        open={!!state.info}
-        onClose={() => sessionStore.update({ info: null })}
-        id="info-dialog"
-        title={state.info?.title || '关于'}
-      >
-        <IconButton
-          icon="close"
-          label="关闭"
-          onClick={() => sessionStore.update({ info: null })}
-        />
-        <h2>{state.info?.title}</h2>
-        <pre>{state.info?.text}</pre>
-      </Dialog>
       {state.toast && (
         <div id="toast" role="status">
           {state.toast}

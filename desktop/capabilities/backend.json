@@ -1,0 +1,6 @@
+{
+  "identifier": "local-backend",
+  "description": "应用自带启动页检查与重试本机后台",
+  "windows": ["main"],
+  "permissions": ["allow-backend-status", "allow-restart-backend"]
+}

@@ -8,6 +8,7 @@ import {
   sourceId,
 } from '../lib/selectors';
 import { sourceNames, type Session } from '../lib/types';
+import { showAbout } from '../lib/api';
 import { Collapse, Icon, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
 export function Sidebar({
@@ -253,12 +254,9 @@ export function Sidebar({
             icon="info"
             label="关于 Agent Sessions"
             onClick={() =>
-              sessionStore.update({
-                info: {
-                  title: 'Agent Sessions',
-                  text: '管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Antigravity 和 Antigravity CLI。\n历史文件只读；名称、归档与设置单独保存。',
-                },
-              })
+              void showAbout().catch((error) =>
+                sessionStore.notify(String(error)),
+              )
             }
           />
         </footer>

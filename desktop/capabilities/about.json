@@ -1,0 +1,7 @@
+{
+  "identifier": "local-about",
+  "description": "本机查看器可打开应用的系统关于窗口",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:*/*"] },
+  "permissions": ["allow-show-about"]
+}

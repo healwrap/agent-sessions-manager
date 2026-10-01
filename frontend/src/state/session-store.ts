@@ -72,7 +72,6 @@ export interface AppState {
   preferences: Preferences;
   settings: Settings;
   settingsOpen: boolean;
-  info: { title: string; text: string } | null;
   toast: string;
   error: string;
   foldTurns: boolean;
@@ -114,7 +113,6 @@ export class SessionStore {
     preferences: emptyPreferences(),
     settings: { paths: {}, enabled: {}, syncSeconds: 3, animations: true },
     settingsOpen: false,
-    info: null,
     toast: '',
     error: '',
     foldTurns: false,

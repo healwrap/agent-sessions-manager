@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-show-about"
+description = "打开应用的系统关于窗口"
+commands.allow = ["show_about"]

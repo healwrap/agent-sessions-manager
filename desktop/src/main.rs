@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod appearance;
+mod app_icon;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     Mutex,
@@ -136,6 +137,7 @@ fn main() {
             }
         })
         .setup(|app| {
+            app_icon::apply();
             appearance::set_theme(app.handle().clone(), appearance::saved_preference(app.handle()))
                 .map_err(std::io::Error::other)?;
             let open = MenuItem::with_id(app, "open", "打开 Agent Sessions", true, None::<&str>)?;

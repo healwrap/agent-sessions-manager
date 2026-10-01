@@ -1,6 +1,8 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
+  useState,
   type ReactNode,
   type ButtonHTMLAttributes,
 } from 'react';
@@ -43,16 +45,23 @@ export function Collapse({
   children: ReactNode;
   className?: string;
 }) {
+  const content = useRef<HTMLDivElement>(null);
+  const [heightMotion, setHeightMotion] = useState(true);
+  useLayoutEffect(() => {
+    if (open && content.current)
+      setHeightMotion(content.current.scrollHeight <= 360);
+  }, [open]);
   return (
     <div
-      className={
-        'grid transition-[grid-template-rows,opacity] duration-200 ' + className
-      }
+      className={'content-collapse grid ' + className}
+      data-height-motion={heightMotion}
       style={{ gridTemplateRows: open ? '1fr' : '0fr', opacity: open ? 1 : 0 }}
       inert={!open}
       aria-hidden={!open}
     >
-      <div className="min-h-0 overflow-hidden">{children}</div>
+      <div ref={content} className="min-h-0 overflow-hidden">
+        {children}
+      </div>
     </div>
   );
 }

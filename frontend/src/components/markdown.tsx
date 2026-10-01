@@ -1,5 +1,5 @@
 import { marked, type Token } from 'marked';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { copyText } from '../lib/api';
 import { sessionStore } from '../state/session-store';
 import { Icon } from './primitives';
@@ -141,6 +141,6 @@ function tokens(items: Token[] = []): ReactNode[] {
     );
   });
 }
-export function Markdown({ text }: { text: string }) {
+export const Markdown = memo(function Markdown({ text }: { text: string }) {
   return <div className="markdown-body">{tokens(marked.lexer(text))}</div>;
-}
+});

@@ -2,6 +2,14 @@
 .process-chevron {
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+.content-collapse {
+  transition:
+    grid-template-rows 160ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 140ms ease;
+}
+.content-collapse[data-height-motion='false'] {
+  transition-property: opacity;
+}
 dialog[open] {
   animation: dialog-enter 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }

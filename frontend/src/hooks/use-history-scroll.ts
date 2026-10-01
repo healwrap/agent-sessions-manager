@@ -23,7 +23,7 @@ export function useHistoryScroll(
     if (changed) pane.scrollTop = mode === 'chat' ? pane.scrollHeight : 0;
     else if (old.events !== view.events && view.change === 'before')
       pane.scrollTop = old.top + pane.scrollHeight - old.height;
-    else if (!old.active) pane.scrollTop = view.scrollTop;
+    else if (!old.active) pane.scrollTop = sessionStore.scrollPosition(mode);
     else if (
       mode === 'chat' &&
       old.events !== view.events &&
@@ -62,7 +62,7 @@ export function useHistoryScroll(
     const onScroll = () => {
       previous.current.top = pane.scrollTop;
       previous.current.height = pane.scrollHeight;
-      sessionStore.updateView({ scrollTop: pane.scrollTop }, mode);
+      sessionStore.rememberScroll(mode, pane.scrollTop);
       const latest = sessionStore.state.views[mode];
       if (latest.loading) return;
       if (pane.scrollTop < 120 && latest.offset > 0)

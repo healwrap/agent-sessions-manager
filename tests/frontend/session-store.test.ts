@@ -41,6 +41,56 @@ function harness(loaded = true, count = 1) {
   return { store, requests };
 }
 describe('timeline navigation', () => {
+  it('remembers separate scroll positions without rerendering subscribers', () => {
+    const { store } = harness();
+    let updates = 0;
+    store.subscribe(() => updates++);
+    store.rememberScroll('trace', 1200);
+    store.rememberScroll('chat', 300);
+    expect(store.scrollPosition('trace')).toBe(1200);
+    expect(store.scrollPosition('chat')).toBe(300);
+    expect(updates).toBe(0);
+  });
+  it('keeps unchanged background polls silent', async () => {
+    const { store } = harness();
+    store.updateView({ data: trajectory, version: '1' });
+    let updates = 0;
+    store.subscribe(() => updates++);
+    await store.loadTrace();
+    expect(updates).toBe(0);
+    expect(store.view.loading).toBe(false);
+  });
+  it('publishes new records from background polls', async () => {
+    const { store } = harness();
+    store.updateView({ data: trajectory, version: 'old', events: [] });
+    await store.loadTrace();
+    expect(store.view.version).toBe('1');
+    expect(store.view.events).toEqual([event]);
+    expect(store.view.loading).toBe(false);
+  });
+  it('does not overlap background requests or discard their new records', async () => {
+    let resolve!: (value: unknown) => void;
+    let requests = 0;
+    const store = new SessionStore((() => {
+      requests++;
+      return new Promise((done) => (resolve = done));
+    }) as Request);
+    store.update({ id: 'session', projectClosed: new Set(['project']) });
+    store.updateView({ data: trajectory, version: 'old' });
+    const pending = store.loadTrace();
+    await store.loadTrace();
+    expect(requests).toBe(1);
+    resolve(trajectory);
+    await pending;
+    expect(store.view.events).toEqual([event]);
+  });
+  it('clears a recovered connection error even when the history is unchanged', async () => {
+    const { store } = harness();
+    store.update({ error: 'unavailable' });
+    store.updateView({ data: trajectory, version: '1' });
+    await store.loadTrace();
+    expect(store.state.error).toBe('');
+  });
   it('keeps a nested tool selection instead of redirecting to its outer call', async () => {
     const child = {
       ...event,

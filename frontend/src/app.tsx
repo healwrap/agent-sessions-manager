@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { sessionStore } from './state/session-store';
 import { useSessionStore } from './hooks/use-session-store';
 import { useLiveSync } from './hooks/use-live-sync';
+import { useLayoutSlide } from './hooks/use-layout-slide';
 import { sessionTitle } from './lib/selectors';
 import { Sidebar } from './components/sidebar';
 import { SettingsDialog } from './components/settings-dialog';
@@ -16,6 +17,8 @@ export function App() {
     [menu, setMenu] = useState<SessionMenu | null>(null),
     [search, setSearch] = useState('');
   const closeMenu = useCallback(() => setMenu(null), []);
+  const main = useRef<HTMLElement>(null);
+  useLayoutSlide(main, state.sidebarClosed, state.settings.animations);
   const view = state.views[state.mode];
   useEffect(() => {
     void sessionStore.initialize();
@@ -44,7 +47,7 @@ export function App() {
           state={state}
           onManage={(item, x, y) => setMenu({ item, x, y })}
         />
-        <main className="main">
+        <main ref={main} className="main">
           <header className="main-header" data-tauri-drag-region>
             {state.sidebarClosed && (
               <IconButton

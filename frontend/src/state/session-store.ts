@@ -23,7 +23,6 @@ export interface View {
   detailsOpen: boolean;
   version: string | null;
   loading: boolean;
-  scrollTop: number;
   range: [number, number] | null;
   viewport: [number, number] | null;
   navigation: { ref: string; block: 'start' | 'center'; nonce: number } | null;
@@ -39,7 +38,6 @@ const emptyView = (): View => ({
   detailsOpen: false,
   version: null,
   loading: false,
-  scrollTop: 0,
   range: null,
   viewport: null,
   navigation: null,
@@ -90,6 +88,8 @@ export class SessionStore {
   private selectionGeneration = 0;
   private preferenceSave = Promise.resolve();
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
+  private scrollPositions = { trace: 0, chat: 0 };
+  private refreshing = new Set<'trace' | 'chat'>();
   state: AppState = {
     id: null,
     mode: 'trace',
@@ -130,6 +130,12 @@ export class SessionStore {
   getSnapshot = () => this.state;
   get view() {
     return this.state.views[this.state.mode];
+  }
+  rememberScroll(mode: 'trace' | 'chat', top: number) {
+    this.scrollPositions[mode] = top;
+  }
+  scrollPosition(mode: 'trace' | 'chat') {
+    return this.scrollPositions[mode];
   }
   update(patch: Partial<AppState>) {
     this.state = { ...this.state, ...patch };
@@ -306,6 +312,7 @@ export class SessionStore {
     await this.loadSessions(false);
   }
   async selectSession(id: string, ref: string | null = null) {
+    this.scrollPositions = { trace: 0, chat: 0 };
     this.generations.trace++;
     this.generations.chat++;
     this.focusGeneration++;
@@ -329,6 +336,9 @@ export class SessionStore {
   ) {
     const { id, mode } = this.state;
     if (!id) return;
+    const background = !force && !edge && !!this.state.views[mode].data;
+    if (background && this.refreshing.has(mode)) return;
+    if (background) this.refreshing.add(mode);
     const generation = ++this.generations[mode],
       view = this.state.views[mode],
       query = view.query;
@@ -336,7 +346,7 @@ export class SessionStore {
       generation === this.generations[mode] &&
       id === this.state.id &&
       current();
-    this.updateView({ loading: true }, mode);
+    if (!background) this.updateView({ loading: true }, mode);
     try {
       let start =
         offset ??
@@ -358,7 +368,10 @@ export class SessionStore {
         edge === 'before' ? view.offset - start : 150,
       );
       if (!valid()) return;
-      if (!force && !edge && first.version === view.version) return;
+      if (!force && !edge && first.version === view.version) {
+        if (this.state.error) this.update({ error: '' });
+        return;
+      }
       if (
         mode === 'chat' &&
         !view.events.length &&
@@ -413,14 +426,15 @@ export class SessionStore {
         });
         void this.loadProject(first.project_id);
       }
-      this.update({ error: '' });
+      if (this.state.error) this.update({ error: '' });
     } catch (error) {
       if (valid()) {
         this.update({ error: String(error) });
         this.notify(String(error));
       }
     } finally {
-      if (generation === this.generations[mode])
+      if (background) this.refreshing.delete(mode);
+      if (!background && generation === this.generations[mode])
         this.updateView({ loading: false }, mode);
     }
   }

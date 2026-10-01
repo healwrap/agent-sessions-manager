@@ -2,6 +2,7 @@
 @import './dsh/index.css' layer(base);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
+@import './theme.css' layer(components);
 @import './shell.css' layer(components);
 @import './sidebar.css' layer(components);
 @import './sidebar-projects.css' layer(components);
@@ -12,6 +13,7 @@
 @import './settings.css' layer(components);
 @import './motion.css' layer(components);
 @import './startup.css' layer(components);
+@custom-variant dark (&:where([data-ds-dark-theme], [data-ds-dark-theme] *));
 @theme {
   --color-surface: var(--dsw-alias-bg-layer-2);
   --color-muted: var(--dsw-alias-label-tertiary);

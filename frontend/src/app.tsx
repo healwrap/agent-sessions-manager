@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sessionStore } from './state/session-store';
 import { useSessionStore } from './hooks/use-session-store';
+import { useTheme } from './hooks/use-theme';
 import { useLiveSync } from './hooks/use-live-sync';
 import { useLayoutSlide } from './hooks/use-layout-slide';
 import { sessionTitle } from './lib/selectors';
@@ -24,6 +25,11 @@ export function App() {
   useEffect(() => {
     void sessionStore.initialize();
   }, []);
+  useTheme(
+    state.themePreview ?? state.settings.theme,
+    !state.initializing,
+    state.settings.theme,
+  );
   useLiveSync(state.settings.syncSeconds, state.settings.animations);
   useEffect(() => {
     if (search === sessionStore.view.query) return;

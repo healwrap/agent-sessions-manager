@@ -286,6 +286,7 @@ export class SessionStore {
       settings: data.value,
       sources: data.sources,
       settingsOpen: false,
+      themePreview: null,
     });
     if (changed) {
       this.update({

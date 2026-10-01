@@ -114,10 +114,10 @@
   color: var(--dsw-alias-label-secondary);
 }
 .json-string {
-  color: #368b54;
+  color: var(--asm-json-string);
 }
 .json-number {
-  color: #7971c9;
+  color: var(--asm-json-number);
 }
 .metadata-note {
   color: var(--dsw-alias-label-tertiary);

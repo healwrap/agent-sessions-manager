@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod appearance;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     Mutex,
@@ -116,8 +117,10 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .manage(Backend::default())
-        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about])
+        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about, appearance::set_theme])
         .on_page_load(|window, _| {
+            let preference = appearance::saved_preference(window.app_handle());
+            let _ = window.eval(&format!("localStorage.setItem('agent-sessions-theme','{preference}');"));
             let paused = window.state::<Backend>().paused.load(Ordering::SeqCst);
             let platform = std::env::consts::OS;
             let _ = window.eval(&format!("window.agentSessionsDesktop=true;window.agentSessionsPlatform='{platform}';window.agentSessionsPaused={paused};document.documentElement.classList.add('desktop-host','desktop-{platform}');"));
@@ -133,6 +136,8 @@ fn main() {
             }
         })
         .setup(|app| {
+            appearance::set_theme(app.handle().clone(), appearance::saved_preference(app.handle()))
+                .map_err(std::io::Error::other)?;
             let open = MenuItem::with_id(app, "open", "打开 Agent Sessions", true, None::<&str>)?;
             let pause = CheckMenuItem::with_id(app, "pause", "暂停同步", true, false, None::<&str>)?;
             let login = CheckMenuItem::with_id(app, "login", "登录时启动", true, app.autolaunch().is_enabled().unwrap_or(false), None::<&str>)?;

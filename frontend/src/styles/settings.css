@@ -226,6 +226,6 @@
   }
 }
 .settings-error {
-  color: #c3463f;
+  color: var(--dsw-alias-state-error-primary);
   font-size: 12px;
 }

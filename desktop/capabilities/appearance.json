@@ -1,0 +1,7 @@
+{
+  "identifier": "local-appearance",
+  "description": "本机查看器仅可同步原生窗口的外观主题",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:*/*"] },
+  "permissions": ["allow-set-theme"]
+}

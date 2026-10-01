@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-set-theme"
+description = "将原生窗口外观同步为浅色、深色或跟随系统"
+commands.allow = ["set_theme"]

@@ -13,6 +13,7 @@ node_modules/
 desktop/gen/
 desktop/loader/assets/
 desktop/loader/icons.svg
+desktop/loader/theme-boot.js
 desktop/loader/index.html
 
 # 本机会话、个人设置与运行缓存

@@ -23,11 +23,13 @@ export interface Source {
   enabled: boolean;
   error?: string;
 }
+export type ThemePreference = 'light' | 'dark' | 'system';
 export interface Settings {
   paths: Record<string, string>;
   enabled: Record<string, boolean>;
   syncSeconds: number;
   animations: boolean;
+  theme: ThemePreference;
 }
 export interface Preferences {
   pinned: string[];
@@ -177,7 +179,12 @@ declare global {
     loadTrace?: () => void;
     loadSessions?: () => void;
     __TAURI__?: {
-      core?: { invoke: <T>(command: string) => Promise<T> };
+      core?: {
+        invoke: <T>(
+          command: string,
+          args?: Record<string, unknown>,
+        ) => Promise<T>;
+      };
       clipboardManager?: { writeText: (text: string) => Promise<void> };
     };
   }

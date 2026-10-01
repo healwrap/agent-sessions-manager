@@ -1,0 +1,36 @@
+body {
+  --asm-sidebar-surface: rgba(216, 231, 236, 0.64);
+  --asm-sidebar-field: rgba(255, 255, 255, 0.5);
+  --asm-sidebar-search: rgba(255, 255, 255, 0.65);
+  --asm-sidebar-selected: rgba(132, 158, 166, 0.13);
+  --asm-json-string: #368b54;
+  --asm-json-number: #7971c9;
+  --dsh-content-font-delta: 0px;
+}
+body[data-ds-dark-theme] {
+  --asm-sidebar-surface: rgba(27, 27, 28, 0.76);
+  --asm-sidebar-field: rgba(255, 255, 255, 0.06);
+  --asm-sidebar-search: rgba(255, 255, 255, 0.08);
+  --asm-sidebar-selected: rgba(255, 255, 255, 0.12);
+  --asm-json-string: #80cba0;
+  --asm-json-number: #bab0fa;
+}
+.appearance-card {
+  min-width: 110px;
+  color: inherit;
+  background: transparent;
+  border-style: solid;
+  border-color: var(--dsw-alias-border-l4);
+  cursor: pointer;
+}
+.appearance-card:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.appearance-card[aria-pressed='true'] {
+  background: var(--dsw-alias-bg-module-platform);
+  border-color: var(--dsw-static-neutral-bluish-400);
+}
+
+.appearance-group {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}

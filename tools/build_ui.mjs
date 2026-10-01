@@ -22,6 +22,7 @@ await mkdir(loader, { recursive: true });
 await rm(resolve(loader, 'assets'), { recursive: true, force: true });
 await cp(resolve(root, 'frontend/dist/assets'), resolve(loader, 'assets'), { recursive: true, force: true });
 await cp(resolve(root, 'frontend/dist/icons.svg'), resolve(loader, 'icons.svg'));
+await cp(resolve(root, 'frontend/dist/theme-boot.js'), resolve(loader, 'theme-boot.js'));
 const native = html.replace(/<script type="module"[^>]*><\/script>/g, '')
   .replace('</head>', '<link rel="stylesheet" href="/boot.css"><script src="/boot.js" defer></script></head>')
   .replace('</body>', '<div class="boot-recovery" hidden><button id="restart">重新启动</button></div></body>');

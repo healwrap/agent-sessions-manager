@@ -17,18 +17,23 @@ class AppSettings:
         if len(roots) != len(SOURCE_KEYS):
             raise ValueError('会话来源目录数量无效')
         self.defaults = {'paths': {key: str(Path(root).expanduser().resolve()) for key, root in zip(SOURCE_KEYS, roots)},
-                         'enabled': {key: True for key in SOURCE_KEYS}, 'syncSeconds': 3, 'animations': True}
+                         'enabled': {key: True for key in SOURCE_KEYS}, 'syncSeconds': 3, 'animations': True, 'theme': 'system'}
 
     def read(self):
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
-            return {**self.defaults, **value,
+            theme = value.get('theme', 'system')
+            return {**self.defaults, **value, 'theme': theme if theme in ('light', 'dark', 'system') else 'system',
                     'paths': {key: value.get('paths', {}).get(key, default) for key, default in self.defaults['paths'].items()},
                     'enabled': {key: value.get('enabled', {}).get(key, default) for key, default in self.defaults['enabled'].items()}}
 
     def validate(self, value):
+        if isinstance(value, dict) and set(value) == set(self.defaults)-{'theme'}:
+            value = {**value, 'theme': 'system'}
         if not isinstance(value, dict) or set(value) != set(self.defaults):
             raise ValueError('应用设置格式无效')
+        if value['theme'] not in ('light', 'dark', 'system'):
+            raise ValueError('外观应为浅色、深色或跟随系统')
         if not isinstance(value['paths'], dict) or set(value['paths']) != set(SOURCE_KEYS):
             raise ValueError('会话目录配置无效')
         if not isinstance(value['enabled'], dict) or set(value['enabled']) != set(SOURCE_KEYS) or any(type(v) is not bool for v in value['enabled'].values()):

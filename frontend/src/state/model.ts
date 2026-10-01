@@ -6,6 +6,7 @@ import type {
   Project,
   Source,
   Settings,
+  ThemePreference,
 } from '../lib/types';
 export interface View {
   events: Event[];
@@ -66,6 +67,7 @@ export interface AppState {
   preferences: Preferences;
   settings: Settings;
   settingsOpen: boolean;
+  themePreview: ThemePreference | null;
   toast: string;
   error: string;
   foldTurns: boolean;
@@ -95,8 +97,15 @@ export const initialState = (): AppState => ({
   projectLoading: new Set(),
   views: { trace: emptyView(), chat: emptyView() },
   preferences: emptyPreferences(),
-  settings: { paths: {}, enabled: {}, syncSeconds: 3, animations: true },
+  settings: {
+    paths: {},
+    enabled: {},
+    syncSeconds: 3,
+    animations: true,
+    theme: 'system',
+  },
   settingsOpen: false,
+  themePreview: null,
   toast: '',
   error: '',
   foldTurns: false,

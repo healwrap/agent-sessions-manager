@@ -73,7 +73,11 @@ class Handler(BaseHTTPRequestHandler):
                 path = (ASSETS / name).resolve()
                 if not path.is_relative_to(ASSETS.resolve()) or not path.is_file():
                     raise FileNotFoundError('页面不存在')
-                self.respond(200, path.read_bytes(), (mimetypes.guess_type(name)[0] or 'application/octet-stream'))
+                body = path.read_bytes()
+                if name == 'index.html':
+                    theme = self.server.app_settings.read()['theme'] if hasattr(self.server, 'app_settings') else 'system'
+                    body = body.replace(b'data-theme-preference="system"', f'data-theme-preference="{theme}"'.encode()).replace(b'data-theme-canonical="false"', b'data-theme-canonical="true"')
+                self.respond(200, body, (mimetypes.guess_type(name)[0] or 'application/octet-stream'))
                 return
             self.respond(200, result)
         except FileNotFoundError as exc:

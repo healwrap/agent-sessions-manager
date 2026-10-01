@@ -33,9 +33,21 @@ with tempfile.TemporaryDirectory() as folder:
         except HTTPError as error: return error.code, json.loads(error.read())
     try:
         config = request('/api/settings')[1]['value']
+        assert config['theme'] == 'system'
+        legacy = {key: value for key, value in config.items() if key != 'theme'}
+        settings.path.parent.mkdir(parents=True, exist_ok=True)
+        settings.path.write_text(json.dumps(legacy))
+        assert settings.read()['theme'] == 'system'
+        assert settings.validate(legacy)['theme'] == 'system'
+        config['theme'] = 'dark'
         config['syncSeconds'] = 10;config['animations'] = False
         assert request('/api/settings', config)[0] == 200
         assert AppSettings(root/'state', roots).read()['syncSeconds'] == 10
+        assert AppSettings(root/'state', roots).read()['theme'] == 'dark'
+        assert request('/api/settings', {**config, 'theme': 'invalid'})[0] == 400
+        with urlopen(base+'/') as page:
+            html = page.read().decode()
+            assert 'data-theme-preference="dark"' in html and 'data-theme-canonical="true"' in html
         invalid = {**config, 'paths': {**config['paths'], 'claude:local': 'relative/path'}}
         assert request('/api/settings', invalid)[0] == 400
         assert request('/api/settings', config, Origin='https://outside.example')[0] == 403

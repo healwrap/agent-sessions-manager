@@ -1,0 +1,169 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.trajectory-timeline {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  flex: none;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  user-select: none;
+}
+
+.trajectory-timeline [role='tooltip'] {
+  font: var(--dsw-font-xxxs-11);
+}
+
+.TrajectoryTimeline-plot {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  height: 50px;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.TrajectoryTimeline-labels {
+  position: relative;
+  border-right: 0.5px solid var(--dsw-alias-border-l1);
+  color: var(--dsw-alias-label-caption);
+  font: var(--dsw-font-xs-13);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.TrajectoryTimeline-labels span {
+  position: absolute;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 8px;
+  text-align: right;
+}
+
+.TrajectoryTimeline-labels span:nth-child(1) {
+  top: 7px;
+}
+
+.TrajectoryTimeline-labels span:nth-child(2) {
+  top: 21px;
+}
+
+.TrajectoryTimeline-labels span:nth-child(3) {
+  top: 35px;
+}
+
+.TrajectoryTimeline-track {
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.TrajectoryTimeline-track[data-panning='true'] {
+  cursor: grabbing;
+}
+
+.TrajectoryTimeline-track:focus-visible {
+  outline: 1px solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -1px;
+}
+
+.TrajectoryTimeline-span {
+  position: absolute;
+  top: calc(var(--trajectory-span-lane) * 14px);
+  left: calc(var(--trajectory-span-left) + var(--trajectory-span-gap));
+  width: max(
+    2px,
+    calc(
+      var(--trajectory-span-width) - var(--trajectory-span-gap) -
+        var(--trajectory-span-gap)
+    )
+  );
+  height: 8px;
+  min-width: 2px;
+  border-radius: 1px;
+  background: var(--dsw-alias-label-secondary);
+  opacity: 0.78;
+}
+
+.TrajectoryTimeline-span[data-timeline-span='user'] {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.TrajectoryTimeline-span[data-timeline-span='context'] {
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-success-primary) 68%,
+    var(--dsw-alias-label-secondary)
+  );
+}
+
+.TrajectoryTimeline-span[data-timeline-span='message'] {
+  --trajectory-assistant-decoding-color: color-mix(
+    in srgb,
+    var(--dsw-alias-brand-primary-new-colorprimary-new-color) 60%,
+    var(--dsw-alias-state-error-secondary)
+  );
+  --trajectory-assistant-ttft-color: color-mix(
+    in srgb,
+    var(--trajectory-assistant-decoding-color) 54%,
+    var(--dsw-alias-bg-layer-2)
+  );
+
+  background: var(--trajectory-assistant-decoding-color);
+  opacity: 1;
+}
+
+.TrajectoryTimeline-span[data-timeline-span='message'][data-assistant-timing='true'] {
+  background: linear-gradient(
+    to right,
+    var(--trajectory-assistant-ttft-color) 0,
+    var(--trajectory-assistant-ttft-color) var(--trajectory-assistant-ttft),
+    var(--trajectory-assistant-decoding-color) var(--trajectory-assistant-ttft),
+    var(--trajectory-assistant-decoding-color) 100%
+  );
+}
+
+.TrajectoryTimeline-span[data-timeline-span='tool'],
+.TrajectoryTimeline-span[data-timeline-span='subtool'] {
+  background: var(--dsw-alias-state-warn-label);
+  opacity: 1;
+}
+
+.TrajectoryTimeline-span[data-error='true'] {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.TrajectoryTimeline-span[data-equal-duration='true'] {
+  width: 8px;
+  min-width: 8px;
+}
+
+.TrajectoryTimeline-span[data-selected='false'] {
+  opacity: 0.2;
+}
+
+.TrajectoryTimeline-span[data-hovered='true']:not([data-current='true']) {
+  z-index: 1;
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px var(--dsw-alias-bg-layer-2),
+    0 0 0 2px
+      color-mix(
+        in srgb,
+        var(--dsw-alias-state-business-primary) 80%,
+        transparent
+      );
+}
+
+.TrajectoryTimeline-span[data-current='true'] {
+  z-index: 1;
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px var(--dsw-alias-bg-layer-2),
+    0 0 0 2px var(--dsw-alias-state-business-primary);
+}
+
+.TrajectoryTimeline-span[data-search-match='false'] {
+  opacity: 0.14;
+}

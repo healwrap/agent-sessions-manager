@@ -1,9 +1,15 @@
+import {
+  initialState,
+  emptyView,
+  emptyPreferences,
+  type AppState,
+  type View,
+} from './model';
+import { createTraceLoader } from './trace-loader';
+import { createNavigation, updateAddress } from './navigation';
 import { request } from '../lib/api';
 import type {
   Catalogue,
-  Detail,
-  Event,
-  FocusResult,
   Preferences,
   Project,
   Request,
@@ -11,117 +17,21 @@ import type {
   Settings,
   SettingsResponse,
   Source,
-  Trajectory,
 } from '../lib/types';
-export interface View {
-  events: Event[];
-  data: Trajectory | null;
-  offset: number;
-  next: number | null;
-  query: string;
-  selected: string | null;
-  detailsOpen: boolean;
-  version: string | null;
-  loading: boolean;
-  range: [number, number] | null;
-  viewport: [number, number] | null;
-  navigation: { ref: string; block: 'start' | 'center'; nonce: number } | null;
-  change: 'reset' | 'before' | 'after' | 'refresh';
-}
-const emptyView = (): View => ({
-  events: [],
-  data: null,
-  offset: 0,
-  next: null,
-  query: '',
-  selected: null,
-  detailsOpen: false,
-  version: null,
-  loading: false,
-  range: null,
-  viewport: null,
-  navigation: null,
-  change: 'reset',
-});
-const emptyPreferences = (): Preferences => ({
-  pinned: [],
-  archived: [],
-  aliases: {},
-  metadata: {},
-  projectAssignments: {},
-});
-export interface AppState {
-  initializing: boolean;
-  catalogueLoading: boolean;
-  id: string | null;
-  mode: 'trace' | 'chat';
-  provider: string;
-  query: string;
-  archive: boolean;
-  sidebarClosed: boolean;
-  searchOpen: boolean;
-  sessions: Session[];
-  projects: Project[];
-  sources: Source[];
-  projectOpen: Set<string>;
-  projectClosed: Set<string>;
-  projectExpanded: Set<string>;
-  projectPages: Record<string, number | null>;
-  projectLoading: Set<string>;
-  views: Record<'trace' | 'chat', View>;
-  preferences: Preferences;
-  settings: Settings;
-  settingsOpen: boolean;
-  toast: string;
-  error: string;
-  foldTurns: boolean;
-  foldCalls: boolean;
-  duration: boolean;
-  collapsed: Set<number>;
-  expandedCalls: Set<string>;
-  detailWidth: number;
-}
+export type { AppState, View } from './model';
 export class SessionStore {
+  private trace = createTraceLoader(this);
+  private navigation = createNavigation(this);
+  loadTrace = this.trace.loadTrace;
+  selectEvent = this.navigation.selectEvent;
+  cancelFocus = this.navigation.cancelFocus;
+  focusRange = this.navigation.focusRange;
   private listeners = new Set<() => void>();
   private sessionsGeneration = 0;
-  private generations = { trace: 0, chat: 0 };
-  private focusGeneration = 0;
-  private selectionGeneration = 0;
   private preferenceSave = Promise.resolve();
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private scrollPositions = { trace: 0, chat: 0 };
-  private refreshing = new Set<'trace' | 'chat'>();
-  state: AppState = {
-    initializing: true,
-    catalogueLoading: false,
-    id: null,
-    mode: 'trace',
-    provider: '',
-    query: '',
-    archive: false,
-    sidebarClosed: false,
-    searchOpen: false,
-    sessions: [],
-    projects: [],
-    sources: [],
-    projectOpen: new Set(),
-    projectClosed: new Set(),
-    projectExpanded: new Set(),
-    projectPages: {},
-    projectLoading: new Set(),
-    views: { trace: emptyView(), chat: emptyView() },
-    preferences: emptyPreferences(),
-    settings: { paths: {}, enabled: {}, syncSeconds: 3, animations: true },
-    settingsOpen: false,
-    toast: '',
-    error: '',
-    foldTurns: false,
-    foldCalls: false,
-    duration: false,
-    collapsed: new Set(),
-    expandedCalls: new Set(),
-    detailWidth: 400,
-  };
+  state: AppState = initialState();
   constructor(readonly api: Request = request) {}
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -156,15 +66,7 @@ export class SessionStore {
     this.update({ toast: message });
     this.toastTimer = setTimeout(() => this.update({ toast: '' }), 3500);
   }
-  private address(ref?: string) {
-    if (typeof history !== 'undefined' && this.state.id)
-      history.replaceState(
-        null,
-        '',
-        '?' +
-          new URLSearchParams({ id: this.state.id, ...(ref ? { ref } : {}) }),
-      );
-  }
+
   async initialize() {
     try {
       let legacy: Partial<Preferences> = {};
@@ -330,10 +232,8 @@ export class SessionStore {
   }
   async selectSession(id: string, ref: string | null = null) {
     this.scrollPositions = { trace: 0, chat: 0 };
-    this.generations.trace++;
-    this.generations.chat++;
-    this.focusGeneration++;
-    this.selectionGeneration++;
+    this.trace.invalidate();
+    this.navigation.invalidate();
     this.update({
       id,
       error: '',
@@ -341,132 +241,19 @@ export class SessionStore {
       collapsed: new Set(),
       expandedCalls: new Set(),
     });
-    this.address();
+    updateAddress(this);
     await this.loadTrace(true);
     if (ref) await this.selectEvent(ref, true);
   }
-  async loadTrace(
-    force = false,
-    edge?: 'before' | 'after',
-    offset?: number,
-    current: () => boolean = () => true,
-  ) {
-    const { id, mode } = this.state;
-    if (!id) return;
-    const background = !force && !edge && !!this.state.views[mode].data;
-    if (background && this.refreshing.has(mode)) return;
-    if (background) this.refreshing.add(mode);
-    const generation = ++this.generations[mode],
-      view = this.state.views[mode],
-      query = view.query;
-    const valid = () =>
-      generation === this.generations[mode] &&
-      id === this.state.id &&
-      current();
-    if (!background) this.updateView({ loading: true }, mode);
-    try {
-      let start =
-        offset ??
-        (edge === 'before'
-          ? Math.max(0, view.offset - 150)
-          : edge === 'after'
-            ? (view.next ?? 0)
-            : view.offset);
-      const get = (at: number, limit = 150) =>
-        this.api<Trajectory>('/api/trajectory', {
-          id,
-          q: query,
-          kind: 'all',
-          offset: at,
-          limit,
-        });
-      let first = await get(
-        start,
-        edge === 'before' ? view.offset - start : 150,
-      );
-      if (!valid()) return;
-      if (!force && !edge && first.version === view.version) {
-        if (this.state.error) this.update({ error: '' });
-        return;
-      }
-      if (
-        mode === 'chat' &&
-        !view.events.length &&
-        !query &&
-        offset === undefined &&
-        first.next_offset !== null
-      ) {
-        start = Math.max(0, first.total - 150);
-        first = await get(start);
-        if (!valid()) return;
-      }
-      let events = first.events,
-        next = first.next_offset;
-      // A view that already reached the live tail must keep reaching it as
-      // the transcript grows, rather than stopping at its old page length.
-      const refreshTail =
-        mode === 'chat' && !query && offset === undefined && view.next === null;
-      while (
-        !edge &&
-        next !== null &&
-        (refreshTail || events.length < Math.max(150, view.events.length))
-      ) {
-        const page = await get(next);
-        if (!valid()) return;
-        events = events.concat(page.events);
-        next = page.next_offset;
-      }
-      const canonical = first.id || id;
-      if (canonical !== id) this.update({ id: canonical });
-      this.updateView(
-        {
-          events:
-            edge === 'before'
-              ? events.concat(view.events)
-              : edge === 'after'
-                ? view.events.concat(events)
-                : events,
-          data: first,
-          offset: edge === 'after' ? view.offset : start,
-          next: edge === 'before' ? view.next : next,
-          version: first.version,
-          change: edge || 'refresh',
-        },
-        mode,
-      );
-      if (!this.state.sessions.some((item) => item.id === canonical)) {
-        const item = { ...first, updated_at: '', count: 1 };
-        this.update({ sessions: [...this.state.sessions, item] });
-      }
-      if (
-        !this.state.projectClosed.has(first.project_id) &&
-        !this.state.projectOpen.has(first.project_id)
-      ) {
-        this.update({
-          projectOpen: new Set(this.state.projectOpen).add(first.project_id),
-        });
-        void this.loadProject(first.project_id);
-      }
-      if (this.state.error) this.update({ error: '' });
-    } catch (error) {
-      if (valid()) {
-        this.update({ error: String(error) });
-        this.notify(String(error));
-      }
-    } finally {
-      if (background) this.refreshing.delete(mode);
-      if (!background && generation === this.generations[mode])
-        this.updateView({ loading: false }, mode);
-    }
-  }
+
   switchMode(mode: 'chat' | 'trace') {
     if (mode === this.state.mode) return;
-    this.focusGeneration++;
+    this.cancelFocus();
     this.update({ mode });
     void this.loadTrace(!this.state.views[mode].data);
   }
   async searchTrace(query: string) {
-    this.focusGeneration++;
+    this.cancelFocus();
     this.updateView({
       query,
       events: [],
@@ -483,101 +270,7 @@ export class SessionStore {
     else collapsed.add(turn);
     this.update({ collapsed });
   }
-  private unfold(event: Event) {
-    if (this.state.foldTurns !== this.state.collapsed.has(event.turn))
-      this.toggleTurn(event.turn);
-    if (['tool', 'subtool'].includes(event.kind) && this.state.foldCalls)
-      this.update({ foldCalls: false });
-  }
-  async selectEvent(ref: string, jump = false) {
-    const id = this.state.id;
-    if (!id) return;
-    const token = ++this.selectionGeneration;
-    const current = () =>
-      id === this.state.id && token === this.selectionGeneration;
-    this.focusGeneration++;
-    this.switchMode('trace');
-    try {
-      const detail = await this.api<Detail>('/api/event', { id, ref });
-      if (!current()) return;
-      const canonical = detail.event.ref || ref;
-      this.updateView({ selected: canonical, detailsOpen: true });
-      this.address(canonical);
-      if (jump) {
-        if (!this.view.events.some((e) => e.ref === canonical)) {
-          this.updateView({ query: '', events: [] });
-          await this.loadTrace(
-            true,
-            undefined,
-            Math.floor(detail.event.position / 150) * 150,
-            current,
-          );
-          if (!current()) return;
-        }
-        const event = this.view.events.find((e) => e.ref === canonical);
-        if (event) this.unfold(event);
-        this.updateView({
-          navigation: { ref: canonical, block: 'center', nonce: Date.now() },
-        });
-      }
-    } catch (error) {
-      this.notify(String(error));
-    }
-  }
-  cancelFocus() {
-    this.focusGeneration++;
-  }
-  async focusRange(range: [number, number], height: number) {
-    this.updateView({ range });
-    const token = ++this.focusGeneration,
-      id = this.state.id,
-      duration = this.state.duration;
-    const current = () =>
-      token === this.focusGeneration &&
-      id === this.state.id &&
-      this.state.mode === 'trace';
-    if (!id) return;
-    try {
-      const data = await this.api<FocusResult>('/api/trajectory-focus', {
-        id,
-        start: range[0],
-        end: range[1],
-        mode: duration ? 'duration' : 'position',
-      });
-      if (!current()) return;
-      if (!data.count) {
-        this.notify('圈选范围内没有记录。');
-        return;
-      }
-      const tall = data.span * 32 > height,
-        target = tall ? data.first : data.middle;
-      if (
-        this.view.query ||
-        !this.view.events.some((e) => e.ref === target.ref)
-      ) {
-        this.updateView({ query: '', events: [] });
-        await this.loadTrace(
-          true,
-          undefined,
-          Math.floor(target.position / 150) * 150,
-          current,
-        );
-        if (!current()) return;
-      }
-      const event = this.view.events.find((e) => e.ref === target.ref);
-      if (!event) return;
-      this.unfold(event);
-      this.updateView({
-        navigation: {
-          ref: target.ref,
-          block: tall ? 'start' : 'center',
-          nonce: Date.now(),
-        },
-      });
-    } catch (error) {
-      if (current()) this.notify(String(error));
-    }
-  }
+
   async saveSettings(value: Settings) {
     const data = await this.api<{ value: Settings; sources: Source[] }>(
       '/api/settings',

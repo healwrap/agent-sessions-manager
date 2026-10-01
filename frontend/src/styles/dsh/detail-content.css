@@ -1,0 +1,86 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.detailBody {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: var(--dsh-trajectory-bottom-clearance, 0px);
+  scrollbar-gutter: stable;
+}
+
+.overview {
+  margin: 0;
+  padding: 8px 0;
+  font: var(--dsw-font-xs-13);
+}
+
+.overview > div {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  min-height: 22px;
+  padding: 0 14px;
+  align-items: center;
+}
+
+.overview dt {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.overview dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.markdownPayload {
+  color: var(--dsw-alias-label-primary);
+}
+
+.markdownPayload > div:not([data-markdown-variant='compact']) {
+  gap: 8px;
+  font: var(--dsw-font-xs-13);
+}
+
+.markdownPayload > div:not([data-markdown-variant='compact']) h1 {
+  font: 600 16px/22px var(--dsw-font-family);
+}
+
+.markdownPayload > div:not([data-markdown-variant='compact']) h2 {
+  font: 600 15px/22px var(--dsw-font-family);
+}
+
+.markdownPayload
+  > div:not([data-markdown-variant='compact'])
+  :where(h3, h4, h5, h6) {
+  font: 600 14px/20px var(--dsw-font-family);
+}
+
+.markdownPayload > div:not([data-markdown-variant='compact']) :not(pre) > code {
+  font: 12px/18px var(--ds-font-family-code);
+}
+
+.markdownPayload > div:not([data-markdown-variant='compact']) table {
+  font: var(--dsw-font-xs-13);
+}
+
+.markdownPayload {
+  min-height: 100%;
+  padding: 14px;
+}
+
+@media (max-width: 760px) {
+  .details {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(92%, 420px);
+    max-width: 92%;
+    border-left-color: var(--dsw-alias-border-l3);
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.14);
+  }
+}

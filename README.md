@@ -13,11 +13,11 @@ references/                      按需加载的恢复、查看器与桌面说�
 frontend/
   src/app.tsx                    React 应用组合
   src/components/                项目侧栏、聊天、时间线、详情、设置
-  src/state/session-store.ts     会话状态、异步请求与版本控制
+  src/state/                     会话状态、目录、分页读取与导航请求控制
   src/hooks/                     状态订阅、自动同步与滚动分页
   src/lib/                       API、类型、纯数据投影
-  src/styles/                    Tailwind 入口与侧栏、聊天、轨迹、设置分区样式
-  public/                        DSH 样式、图标与第三方许可证
+  src/styles/                    Tailwind 入口、主题变量与侧栏、聊天、轨迹、设置分区样式
+  public/                        图标与第三方许可证
 backend/agent_sessions/
   api/                           本机 HTTP API 与静态资源服务
   sources/                       Codex / Claude / Antigravity / DSH 与目录聚合
@@ -33,7 +33,7 @@ tests/backend/                   Python 格式、读取、来源与 HTTP 回归
 tests/frontend/                  Vitest 状态、导航、显示投影与 API 回归
 ```
 
-前端使用 React、TypeScript、Vite、Tailwind CSS 和 Lucide。React 管理界面与交互，纯投影函数决定聊天正文和折叠摘要；状态层处理版本、请求竞争和分页，组件不读取历史文件。DSH 的 MIT 轨迹样式保留为本地基础样式，应用布局和过渡使用 Tailwind 与相应组件样式。
+前端使用 React、TypeScript、Vite、Tailwind CSS 和 Lucide。React 管理界面与交互，纯投影函数决定聊天正文和折叠摘要；状态层处理版本、请求竞争和分页，组件不读取历史文件。DSH 的 MIT 轨迹样式按职责保存在 `src/styles/dsh/`，仅保留本应用使用的规则，应用布局和过渡使用 Tailwind 与相应组件样式。
 
 后台是 Python 包，DSH 压缩日志使用 `zstandard`，依赖固定在 `requirements.txt`。来源适配器将各 Agent 的原生记录映射为稳定引用，HTTP 层负责接口和资源，不混入前端模板。Tauri 管理窗口、常驻菜单、剪贴板和 sidecar 生命周期。构建输出不纳入源码版本控制。
 
@@ -68,7 +68,7 @@ npm run desktop:build
 
 `test` 运行 Python 和 Vitest 回归；`build:ui` 同时执行 TypeScript 检查，并预渲染启动骨架供 React 水合接管。原生加载页面及资源自动生成在 `desktop/loader`，不手改生成文件。HTTP 资源测试需要先构建 UI。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，按宿主系统生成安装包（Mac app/dmg、Windows NSIS、Linux deb/AppImage）。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
 
-代码格式由 Prettier 管理前端；新增来源放入 `backend/agent_sessions/sources/` 并在聚合器登记。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。
+代码格式由 Prettier 管理前端；`npm run check:size` 限制源码文件 400 行、CSS 300 行、测试文件 450 行，避免新功能再次堆成大文件。应按职责拆分，不机械切块；新增来源放入 `backend/agent_sessions/sources/` 并在聚合器登记。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。
 
 ## 源码提交
 

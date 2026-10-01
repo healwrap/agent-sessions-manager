@@ -1,0 +1,136 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.split {
+  position: relative;
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-layer-1);
+  container-type: inline-size;
+}
+
+.tablePane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: var(--dsh-trajectory-bottom-clearance, 0px);
+  container: trajectory-table / inline-size;
+}
+
+.table:not([data-scroll-ready='true']) {
+  visibility: hidden;
+}
+
+.table {
+  --trajectory-turn-accent: color-mix(
+    in srgb,
+    var(--dsw-static-blue-500) 22%,
+    var(--dsw-alias-bg-layer-1)
+  );
+
+  width: 100%;
+  min-width: 0;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-layer-1);
+  font: var(--dsw-font-xxs-12);
+}
+
+.eventColumn {
+  width: 122px;
+}
+
+.eventColumn:where(:lang(zh)) {
+  width: 84px;
+}
+
+.contentColumn {
+  width: auto;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 8px;
+  overflow: hidden;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-specific-sidebar-fill);
+  font: var(--dsw-font-xxs-12);
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.table td {
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 8px;
+  overflow: hidden;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table
+  tbody
+  tr:not([data-collapsed-summary]):not([data-virtual-spacer]):not(
+    [data-history-load]
+  ) {
+  cursor: default;
+  outline: none;
+  transition:
+    background-color 120ms var(--ds-ease-in-out),
+    opacity 120ms var(--ds-ease-in-out);
+}
+
+.table tbody tr[data-timeline-focus='outside'] {
+  opacity: 0.24;
+}
+
+.table
+  tbody
+  tr:not([data-collapsed-summary]):not([data-virtual-spacer]):not(
+    [data-history-load]
+  ):not([data-selected='true']):hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.table tbody tr[data-request-only='true']:hover {
+  background: transparent;
+}
+
+.table tbody tr[data-request-only='true'] td {
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.table tbody tr[data-terminal-request-boundary='true'] td {
+  /* Retain the lower half of the 16px boundary marker at the table's end. */
+  height: 9px;
+}
+
+.table tbody tr[data-request-only='true'] .turnRail {
+  top: -15px;
+  bottom: 0;
+}
+
+.table tbody tr:not([data-collapsed-summary]):focus-visible {
+  box-shadow: inset 0 0 0 1px
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+}
+
+.table tbody tr[data-selected='true'] {
+  background: var(--dsw-alias-interactive-bg-active);
+}

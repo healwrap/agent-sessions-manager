@@ -1,0 +1,99 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.contentText {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table tbody tr[data-collapsed-summary='turn'] td,
+.table tbody tr[data-collapsed-summary='assistant'] td {
+  height: 20px;
+}
+
+.table tbody tr[data-collapsed-summary] {
+  cursor: pointer;
+  outline: none;
+  transition: background-color 120ms var(--ds-ease-in-out);
+}
+
+.table tbody tr[data-collapsed-summary]:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.table tbody tr[data-collapsed-summary]:focus-visible {
+  box-shadow: inset 0 0 0 1px
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+}
+
+.resultPreview {
+  display: grid;
+  grid-template-columns:
+    clamp(
+      180px,
+      var(--trajectory-tool-request-width, calc(36cqw - 56px)),
+      480px
+    )
+    minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.resultRequest,
+.inlineResultText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolCallNameTypeface {
+  color: var(--dsw-alias-label-primary);
+  font:
+    400 12px/18px Menlo,
+    Consolas,
+    'Liberation Mono',
+    'PingFang SC',
+    'Microsoft YaHei';
+}
+
+.toolCallPayload {
+  margin-left: 7px;
+  color: var(--dsw-alias-label-secondary);
+  font: 400 12px/18px var(--ds-font-family-code);
+}
+
+.table tbody tr[data-kind='tool'] .contentText,
+.table tbody tr[data-kind='subtool'] .contentText,
+.table tbody tr[data-kind='tool'] .resultPreview,
+.table tbody tr[data-kind='subtool'] .resultPreview {
+  font-family: var(--ds-font-family-code);
+  font-size: 12px;
+}
+
+.table tbody tr[data-kind='subtool'] .content {
+  padding-left: 26px;
+}
+
+.inlineResult {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.arrow {
+  flex: none;
+  margin-right: 8px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.error {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.overview dd.error {
+  color: var(--dsw-alias-state-error-primary);
+}

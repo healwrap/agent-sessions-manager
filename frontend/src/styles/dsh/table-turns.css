@@ -1,0 +1,193 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.requestBoundaryControl {
+  --request-boundary-base-left: 12px;
+
+  position: absolute;
+  z-index: 6;
+  top: -8px;
+  left: calc(
+    var(--request-boundary-base-left) + var(--request-boundary-offset, 0px)
+  );
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.requestBoundaryControl::before {
+  position: absolute;
+  top: 5.5px;
+  left: 5.5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dsw-alias-label-caption);
+  box-shadow:
+    0 0 0 2px var(--dsw-alias-bg-layer-1),
+    0 0 0 3px transparent;
+  content: '';
+  transition:
+    background 120ms var(--ds-ease-in-out),
+    box-shadow 120ms var(--ds-ease-in-out);
+}
+
+.requestBoundaryControl::after {
+  position: absolute;
+  top: 2px;
+  left: 17px;
+  width: max-content;
+  padding: 0 4px;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 2px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  content: attr(data-label);
+  font: 9px/12px var(--ds-font-family-code);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-2px);
+  transition:
+    opacity 120ms var(--ds-ease-in-out),
+    transform 120ms var(--ds-ease-in-out);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.requestBoundaryControl:hover::before,
+.requestBoundaryControl:focus-visible::before {
+  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+}
+
+.requestBoundaryControl[data-request-status='error']::before,
+.requestBoundaryControl[data-request-status='error']:hover::before,
+.requestBoundaryControl[data-request-status='error']:focus-visible::before {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.requestBoundaryControl:hover::after,
+.requestBoundaryControl:focus-visible::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.requestBoundaryControl:focus-visible {
+  outline: none;
+}
+
+.table tbody tr:has(.requestBoundaryControl:hover):not([data-selected='true']) {
+  background: transparent;
+}
+
+.event {
+  position: relative;
+}
+
+.turnRail,
+.selectionRail {
+  position: absolute;
+  left: 0;
+  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  pointer-events: none;
+}
+
+.turnRail {
+  z-index: 4;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--trajectory-turn-accent);
+}
+
+.table tbody tr[data-turn-end='true'] .turnRail {
+  bottom: 0;
+}
+
+.selectionRail {
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.table tbody tr[data-error='true'] .turnRail {
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-error-primary) 22%,
+    var(--dsw-alias-bg-layer-1)
+  );
+}
+
+.table tbody tr[data-error='true'] .selectionRail {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.table tbody tr[data-turn-start='true'] td {
+  position: relative;
+  overflow: visible;
+}
+
+.table tbody tr[data-turn-start='true']:not(:first-child) td::before {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--dsw-alias-border-l1);
+  content: '';
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.event {
+  overflow: visible !important;
+  padding-right: 4px !important;
+  padding-left: 36px !important;
+}
+
+.turnLabel {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  display: inline-grid;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  width: max-content;
+  padding: 1px 5px;
+  border-radius: 0 0 2px;
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-bg-module-platform);
+  font: 8px/10px var(--ds-font-family-code);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.turnLabelFull,
+.turnLabelCompact {
+  grid-area: 1 / 1;
+  max-width: 64px;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+}
+
+.turnLabelCompact {
+  max-width: 0;
+  opacity: 0;
+}
+
+.turnLabelActive {
+  color: color-mix(
+    in srgb,
+    var(--dsw-static-blue-500) 55%,
+    var(--dsw-alias-label-tertiary)
+  );
+  background: var(--trajectory-turn-accent);
+}

@@ -160,7 +160,7 @@ def main():
             assert request('/api/event', {'id': ID, 'ref': 'T001/U01', 'page': 99})[0] == 400
             assert request('/api/event', {'id': ID, 'ref': 'missing'})[0] == 404
             assert request('/api/sessions', method='POST')[0] == 501
-            for path in ['/', '/harness.css', '/icons.svg', '/harness-license.txt'] + ['/assets/'+p.name for p in (trajectory.ASSETS/'assets').iterdir()]:
+            for path in ['/', '/icons.svg', '/harness-license.txt'] + ['/assets/'+p.name for p in (trajectory.ASSETS/'assets').iterdir()]:
                 status, body, headers = request(path)
                 assert status == 200 and len(body) > 10
                 assert headers['Cache-Control'] == 'no-store'

@@ -41,7 +41,7 @@ HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚
 
 参考官方仓库 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)，固定源码提交 `639ed015397290b3745d163aafe02ffee4aa3f84`。同时通过原生界面核对本机 `0.2.0-rc.2` 的对话页、轨迹工具栏与详情页签。
 
-`frontend/public/harness.css` 由以下 MIT 源文件适配，主要改动为 CSS 模块选择器改为普通选择器、工具栏/时间线类名前缀和字体变量合并：
+`frontend/src/styles/dsh/` 的主题变量、工具栏、导轨、表格与详情样式由以下 MIT 源文件适配，主要改动为 CSS 模块选择器改为普通选择器、工具栏/时间线类名前缀和字体变量合并，并移除本应用未使用的规则与变量；按职责拆分的导入顺序保留原级联顺序：
 
 - `packages/client/ui-theme/src/styles/{base,design-platform,gradient-shadow-text}.css`
 - `packages/client/ui-trajectory/src/client/{TrajectoryToolbar,TrajectoryTimeline,TrajectoryTable}.module.css`

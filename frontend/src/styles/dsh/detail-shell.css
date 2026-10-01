@@ -1,0 +1,142 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.details {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: clamp(320px, 38%, 440px);
+  max-width: calc(100% - 280px);
+  min-width: 0;
+  min-height: 0;
+  border-left: 0.5px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.detailsResizeHandle {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.detailsResizeHandle:focus-visible {
+  outline: none;
+}
+
+.detailsHeader {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: 42px;
+  padding: 0 8px 0 12px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.detailsTitle {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.detailsLocation {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font: 11px/16px var(--ds-font-family-code);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.close:hover {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.detailTabs {
+  display: flex;
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 1px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.detailTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.detailTab {
+  position: relative;
+  flex: none;
+  padding: 0 9px;
+  border: 0;
+  color: var(--dsw-alias-label-tertiary);
+  background: transparent;
+  cursor: pointer;
+  font: var(--dsw-font-xs-13);
+}
+
+.detailTab:hover {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.detailTabActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.detailTabActive::after {
+  position: absolute;
+  right: 9px;
+  bottom: 0;
+  left: 9px;
+  height: 2px;
+  border-radius: 1px 1px 0 0;
+  background: var(--dsw-alias-state-business-primary);
+  content: '';
+}
+
+.close:focus-visible,
+.detailTab:focus-visible {
+  outline: 1px solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -1px;
+}

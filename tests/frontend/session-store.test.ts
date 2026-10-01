@@ -176,6 +176,31 @@ describe('timeline navigation', () => {
     await store.selectEvent('S/old-result');
     expect(store.view.selected).toBe(event.ref);
   });
+  it('loads and unfolds an off-page tool before jumping to its marker', async () => {
+    const tool = { ...event, kind: 'tool', ref: 'T002/C05' };
+    const offsets: number[] = [];
+    const store = new SessionStore((async (path, params) => {
+      if (path === '/api/event') return { event: tool };
+      offsets.push(Number(params?.offset));
+      return { ...trajectory, events: [tool] };
+    }) as Request);
+    store.update({
+      id: 'session',
+      foldTurns: true,
+      foldCalls: true,
+      projectClosed: new Set(['project']),
+    });
+    await store.selectEvent(tool.ref, true);
+    expect(offsets).toEqual([600]);
+    expect(store.view.selected).toBe(tool.ref);
+    expect(store.view.events).toEqual([tool]);
+    expect(store.state.collapsed.has(tool.turn)).toBe(true);
+    expect(store.state.foldCalls).toBe(false);
+    expect(store.view.navigation).toMatchObject({
+      ref: tool.ref,
+      block: 'center',
+    });
+  });
   it('focuses a loaded row without changing the selected detail', async () => {
     const { store, requests } = harness();
     await store.focusRange([0.7, 0.8], 300);

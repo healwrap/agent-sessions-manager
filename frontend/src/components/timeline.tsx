@@ -14,9 +14,11 @@ export function Timeline({ state }: { state: AppState }) {
     [panning, setPanning] = useState(false),
     suppress = useRef(false);
   const drag = useRef<{
+    pointerId: number;
     x: number;
     at: number;
     pan: boolean;
+    moved: boolean;
     viewport: [number, number];
     range: [number, number] | null;
   } | null>(null);
@@ -94,19 +96,30 @@ export function Timeline({ state }: { state: AppState }) {
           onPointerDown={(event) => {
             if (event.button !== 0 && event.button !== 2) return;
             sessionStore.cancelFocus();
+            suppress.current = false;
             drag.current = {
+              pointerId: event.pointerId,
               x: event.clientX,
               at: position(event.clientX),
               pan: event.button === 2,
+              moved: false,
               viewport: [...viewport],
               range: view.range,
             };
             setPanning(event.button === 2);
-            event.currentTarget.setPointerCapture(event.pointerId);
+            // Capturing a marker's pointer here would retarget its click to the track.
+            if (event.button === 2)
+              event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={(event) => {
             const active = drag.current;
-            if (!active) return;
+            if (!active || active.pointerId !== event.pointerId) return;
+            if (Math.abs(event.clientX - active.x) >= 4) active.moved = true;
+            if (
+              active.moved &&
+              !event.currentTarget.hasPointerCapture(event.pointerId)
+            )
+              event.currentTarget.setPointerCapture(event.pointerId);
             if (active.pan) {
               const delta =
                 ((active.x - event.clientX) / width) *
@@ -117,7 +130,7 @@ export function Timeline({ state }: { state: AppState }) {
                   active.viewport[1] + delta,
                 ),
               });
-            } else if (Math.abs(event.clientX - active.x) >= 4)
+            } else if (active.moved)
               setDraft([
                 Math.min(active.at, position(event.clientX)),
                 Math.max(active.at, position(event.clientX)),
@@ -125,11 +138,10 @@ export function Timeline({ state }: { state: AppState }) {
           }}
           onPointerUp={(event) => {
             const active = drag.current;
+            if (!active || active.pointerId !== event.pointerId) return;
             drag.current = null;
             setPanning(false);
-            if (!active) return;
-            suppress.current =
-              active.pan || Math.abs(event.clientX - active.x) >= 4;
+            suppress.current = active.pan || active.moved;
             if (!active.pan && suppress.current) {
               const range: [number, number] = [
                 Math.min(active.at, position(event.clientX)),
@@ -141,11 +153,17 @@ export function Timeline({ state }: { state: AppState }) {
                 document.getElementById('table-pane')?.clientHeight || 600,
               );
             }
-            event.currentTarget.releasePointerCapture(event.pointerId);
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerLeave={(event) => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId))
+              drag.current = null;
           }}
           onPointerCancel={() => {
             const active = drag.current;
             drag.current = null;
+            suppress.current = false;
             setDraft(null);
             setPanning(false);
             sessionStore.cancelFocus();

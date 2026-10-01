@@ -1,0 +1,211 @@
+.tablePane {
+  padding-bottom: var(--dsh-trajectory-bottom-clearance);
+}
+.table tr {
+  cursor: pointer;
+}
+.turnLabel {
+  cursor: pointer;
+  border: 0;
+}
+.step-dot {
+  position: absolute;
+  left: 17px;
+  top: 13px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-caption);
+}
+.table tr[data-kind='subtool'] .step-dot {
+  width: 3px;
+  height: 3px;
+  left: 23px;
+  top: 14px;
+}
+.table .inlineResultText {
+  color: var(--dsw-alias-label-caption);
+}
+.TrajectoryTimeline-span {
+  border: 0;
+  padding: 0;
+  top: calc(7px + var(--trajectory-span-lane) * 14px);
+  cursor: pointer;
+}
+.timeline-selection {
+  position: absolute;
+  z-index: 2;
+  top: 1px;
+  bottom: 1px;
+  pointer-events: none;
+  border: 1px solid rgba(83, 129, 255, 0.5);
+  background: rgba(83, 129, 255, 0.06);
+}
+.detailBody {
+  padding-top: 0;
+}
+.detailBody pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.65 var(--ds-font-family-code);
+}
+.detail-content {
+  padding: 12px 14px;
+  font: 13px/1.7 var(--dsw-font-family);
+}
+.detail-content > p:first-child {
+  margin-top: 0;
+}
+.detail-section {
+  margin-top: 14px;
+}
+.section-title {
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  margin-bottom: 9px;
+}
+.overview dd.wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.detail-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 14px 12px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.detail-pager button {
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2);
+  padding: 3px 9px;
+  border-radius: 4px;
+  color: inherit;
+}
+.json-tree {
+  font: 12px/1.65 var(--ds-font-family-code);
+  overflow-wrap: anywhere;
+}
+.json-tree details {
+  margin-left: 12px;
+}
+.json-tree > details {
+  margin-left: 0;
+}
+.json-tree summary {
+  cursor: pointer;
+  color: var(--dsw-alias-label-secondary);
+}
+.json-leaf {
+  margin-left: 12px;
+  white-space: pre-wrap;
+}
+.json-key {
+  color: var(--dsw-alias-label-secondary);
+}
+.json-string {
+  color: #368b54;
+}
+.json-number {
+  color: #7971c9;
+}
+.metadata-note {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  padding: 10px 14px 0;
+}
+.nested-link {
+  display: block;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  padding: 4px 0;
+  text-align: left;
+  font: 12px var(--ds-font-family-code);
+}
+.nested-link:hover {
+  color: var(--dsw-alias-state-business-primary);
+}
+.kindTagIcon.dsh-icon {
+  width: 12px;
+  height: 12px;
+}
+.TrajectoryToolbar-actionIcon.dsh-icon {
+  width: 11px;
+  height: 11px;
+}
+@media (max-width: 700px) {
+  .details {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    max-width: none;
+    z-index: 6;
+  }
+}
+.TrajectoryToolbar-search > .dsh-icon {
+  width: 11px;
+  height: 11px;
+}
+.timeline-turn-boundary {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.5px;
+  background: var(--dsw-alias-border-l2);
+  pointer-events: none;
+}
+.timeline-hover-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--dsw-alias-label-tertiary);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.fold-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  padding: 0;
+  font: inherit;
+}
+.fold-summary:hover {
+  color: var(--dsw-alias-state-business-primary);
+}
+.summary-ellipsis {
+  min-width: 16px;
+  font-size: 18px;
+  line-height: 1;
+}
+.details {
+  overflow: hidden;
+}
+.detailsHeader,
+.detailTabs,
+.detailBody {
+  min-width: 280px;
+}
+.TrajectoryToolbar-action[aria-pressed='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  border-radius: 8px;
+  color: var(--dsw-alias-label-primary);
+}
+.table .kindSlot .kindTag {
+  white-space: nowrap;
+}

@@ -10,6 +10,7 @@ node_modules/
 .venv-desktop/
 build/
 dist/
+frontend/dist/
 desktop/target/
 desktop/binaries/
 *.spec

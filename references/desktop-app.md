@@ -14,15 +14,15 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 | --- | --- | --- |
 | Codex Desktop / CLI | 可见对话、调用、按需结果、媒体引用、压缩位置 | 保留既有引用与深链接；隐藏推理、系统载荷不展示。 |
 | Claude Code | 原生 UUID 消息、当前分支、工具参数与结果 | 按 `parentUuid` 追踪当前分支；仅原生调用 ID 唯一配对时提供独立结果。实际本机文字记录已核验；工具场景通过受控 fixture 验证。附件渲染尚未实现。 |
-| Antigravity 桌面 / CLI | 会话摘要、可见正文、调用参数、执行记录、错误 | 两个实例保留独立键；按步骤最新快照读取，执行输出没有可靠关联标识时单独展示。只有摘要的会话保留在列表，说明未保存 transcript。未解析二进制步骤载荷，不宣称完整工具结果支持。 |
+| Antigravity 桌面 / CLI | 会话摘要、可见正文、调用参数、执行记录、错误 | 两个实例保留独立键；按步骤最新快照读取，按唯一原生调用 ID，或相邻导出步骤中完全一致的 search_web 查询关联结果；缺少关联依据的执行输出单独展示。只有摘要的会话保留在列表，说明未保存 transcript。未解析二进制步骤载荷，不宣称完整工具结果支持。 |
 
 后台只监听本机回环地址，界面资源随包附送，没有 CDN 或上传历史行为。SQLite 正常使用只读连接；不能打开活动库时，核对源文件状态后复制数据库和 WAL 到临时目录读取，避免遗漏已提交记录。保留原字段值，不自动替换 URL、输入或输出。
 
 来源统一键为 `provider:instance:native-key`。引用随原生 UUID、步骤或原有 Codex 引用保持稳定；事件正文每页 7000 字符、轨迹每页默认 150 条，滚到边缘自动补页。工具结果只在用户打开结果时读取。
 
-侧栏底部“设置”支持 Codex、Claude Code、Antigravity 桌面/CLI 四个数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。
+侧栏底部“设置”支持 Codex、Claude Code、Antigravity、Antigravity CLI 四个数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。
 
-对话消息旁“续接”复制本地只读指令。目标 Agent 在同一台电脑、有文件读取权限时，可执行应用自带的读取程序，按目录和引用恢复到所选消息。指令包含来源路径、会话 ID、续接位置、分页及证据读取方法；历史授权不继承。云端 Agent 不能直接访问本机文件。本功能恢复可见上下文，不搬运原 Agent 的隐藏运行状态。
+对话消息旁的剪贴板箭头图标复制本地只读指令。目标 Agent 在同一台电脑、有文件读取权限时，可执行应用自带的读取程序，按目录和引用恢复到所选消息。指令包含来源路径、会话 ID、续接位置、分页及证据读取方法；历史授权不继承。云端 Agent 不能直接访问本机文件。本功能恢复可见上下文，不搬运原 Agent 的隐藏运行状态。
 
 macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、详情、项目会话列表和对话过程使用短过渡，遵循系统“减少动态效果”和应用动画开关。时长模式按已记录调用区间的并集折叠空闲时间；圈选用区间重叠判断。缺少模型时长的来源保留点标记，不伪造计时。摘要步骤数按可见助手消息与外层调用计数，内部调用计入工具调用数；没有原生模型请求分组的来源，不宣称这是模型请求数。
 
@@ -34,7 +34,7 @@ macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、�
 
 ```bash
 npm ci
-python3 scripts/build_desktop.py
+npm run desktop:build
 ```
 
 脚本创建专用构建环境，将 Python 与查看器资源打包为 sidecar，再构建 Tauri 应用和普通安装镜像。运行成品无需上述开发依赖。
@@ -46,19 +46,15 @@ python3 scripts/build_desktop.py
 
 包面向本机测试，尚未使用 Developer ID 签名与 Apple 公证。外部分发需另行配置发布身份；不要把本机启动成功当作分发验收。
 
-Rust 外壳：`desktop/src/main.rs`。后台与来源：`scripts/trajectory_server.py`、`codex_source.py`、`agent_sources.py`。应用整理设置：`scripts/view_settings.py`。构建锁文件随仓库保存。
+Rust 外壳：`desktop/src/main.rs`。React + TypeScript 界面：`frontend/src/`，由 Vite 与 Tailwind CSS 构建。后台：`backend/agent_sessions/`，按 API、来源适配、上下文读取和轨迹布局分包。两个 `scripts/` 命令保留为兼容入口。目录约定见根目录 `README.md`。
+
+macOS 主窗口使用 Overlay 标题栏并隐藏原生标题文字。系统红黄绿按钮保留在侧栏顶部，网页头部提供拖动区域；收起侧栏后预留窗口按钮位置。设置采用 DSH 的固定尺寸分栏面板，仅提供本应用支持的通用设置与会话来源。
 
 ## 验证
 
 ```bash
-python3 scripts/settings_handoff_self_test.py
-python3 scripts/trajectory_layout_self_test.py
-python3 scripts/agent_sources_self_test.py
-python3 scripts/trajectory_self_test.py
-python3 scripts/self_test.py
-python3 scripts/nested_results_self_test.py
-node scripts/trajectory_chat_self_test.cjs
-node scripts/trajectory_focus_self_test.cjs
+npm run build:ui
+npm run test
 ```
 
 来源测试涵盖同名原生 ID 隔离、Claude 分支和乱序结果关联、半行写入、记录重写、可见正文全文匹配、Antigravity 步骤更新与摘要空态、WAL 快照、原值保留与项目设置持久化。桌面验收另外检查真实窗口、关闭常驻、重复打开、后台停止恢复和退出清理。

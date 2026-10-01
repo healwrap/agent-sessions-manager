@@ -1,0 +1,66 @@
+# Agent Sessions
+
+用于管理本机 Codex、Claude Code、Antigravity、Antigravity CLI 会话的桌面应用与 Skill。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
+
+## 项目结构
+
+```text
+SKILL.md                         Skill 入口与读取边界
+agents/openai.yaml               Skill 显示信息
+references/                      按需加载的恢复、查看器与桌面说明
+frontend/
+  src/app.tsx                    React 应用组合
+  src/components/                项目侧栏、聊天、时间线、详情、设置
+  src/state/session-store.ts     会话状态、异步请求与版本控制
+  src/hooks/                     状态订阅、自动同步与滚动分页
+  src/lib/                       API、类型、纯数据投影
+  src/styles/                    Tailwind 入口与侧栏、聊天、轨迹、设置分区样式
+  public/                        DSH 样式、图标与第三方许可证
+backend/agent_sessions/
+  api/                           本机 HTTP API 与静态资源服务
+  sources/                       Codex / Claude / Antigravity 与目录聚合
+  context/                       定位、索引、原话、证据、CLI 与续接
+  trajectory/                    执行时长投影、折叠摘要与圈选定位
+  settings.py                    独立应用设置
+scripts/                         两个稳定的命令行兼容入口
+  session_context.py
+  trajectory_server.py
+desktop/                         Tauri 外壳、启动页、原生能力与图标
+tools/                           桌面打包与后台测试运行器
+tests/backend/                   Python 格式、读取、来源与 HTTP 回归
+tests/frontend/                  Vitest 状态、导航、显示投影与 API 回归
+```
+
+前端使用 React、TypeScript、Vite、Tailwind CSS 和 Lucide。React 管理界面与交互，纯投影函数决定聊天正文和折叠摘要；状态层处理版本、请求竞争和分页，组件不读取历史文件。DSH 的 MIT 轨迹样式保留为本地基础样式，应用布局和过渡使用 Tailwind 与相应组件样式。
+
+后台是 Python 包，没有第三方运行依赖。来源适配器将各 Agent 的原生记录映射为稳定引用，HTTP 层负责接口和资源，不混入前端模板。Tauri 管理窗口、常驻菜单、剪贴板和 sidecar 生命周期。构建输出不纳入源码版本控制。
+
+## 开发
+
+需要 Node 22.12+（或兼容 Vite 的更新版本）与 Python 3.10+。从根目录运行：
+
+```bash
+npm ci
+python3 scripts/trajectory_server.py --port 8765
+```
+
+另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
+
+```bash
+npm run build:ui
+python3 scripts/trajectory_server.py --port 8765
+```
+
+如果只使用上下文恢复 CLI，无需安装 Node 或构建前端。既有 `scripts/session_context.py` 命令与 `scripts/trajectory_server.py --read-session` 继续可用。所有 Python 内部导入从 `agent_sessions` 包进行，不依赖当前工作目录；兼容入口自行设置包路径。
+
+## 校验与桌面打包
+
+```bash
+npm run test
+npm run format:check
+npm run desktop:build
+```
+
+`test` 运行 Python 和 Vitest 回归；`build:ui` 同时执行 TypeScript 检查。HTTP 资源测试需要先构建 UI。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，输出 App 和 DMG。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
+
+代码格式由 Prettier 管理前端；新增来源放入 `backend/agent_sessions/sources/` 并在聚合器登记。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。

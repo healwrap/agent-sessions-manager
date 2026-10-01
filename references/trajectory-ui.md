@@ -2,7 +2,7 @@
 
 ## 运行与核验
 
-从 Skill 目录启动 `python3 scripts/trajectory_server.py --port 8765`。服务只绑定 `127.0.0.1`；可使用 `--codex-home`、`--claude-home`、`--antigravity-home`、`--antigravity-cli-home` 指定来源目录；`--state-home` 指定应用整理设置目录。`--codex-only` 可仅运行原有 Codex 适配器。
+从仓库目录执行 `npm ci`、`npm run build:ui`，再启动 `python3 scripts/trajectory_server.py --port 8765`。开发时另开 `npm run dev`，Vite 将 API 请求代理到 8765。服务只绑定 `127.0.0.1`；可使用 `--codex-home`、`--claude-home`、`--antigravity-home`、`--antigravity-cli-home` 指定来源目录；`--state-home` 指定应用整理设置目录。`--codex-only` 可仅运行原有 Codex 适配器。
 
 地址使用 `?id=来源:实例:原生键&ref=事件引用`，原有 Codex `?id=会话UUID&ref=T003/C002` 深链接仍兼容。默认会话依次取 URL、`CODEX_THREAD_ID`、最近的本地会话。服务读 `sessions/`、`archived_sessions/` 和 `session_index.jsonl`，缓存由原有解析器增量维护。未写完的 JSONL 行等待完整换行后才显示。
 
@@ -11,11 +11,8 @@
 验证命令：
 
 ```bash
-python3 scripts/agent_sources_self_test.py
-python3 scripts/trajectory_self_test.py
-python3 scripts/self_test.py
-node scripts/trajectory_chat_self_test.cjs
-python3 scripts/nested_results_self_test.py
+npm run build:ui
+npm run test
 ```
 
 HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚合高亮、增量追加与只读访问边界；恢复测试验证已有命令；聊天测试验证旧记录缺少回答阶段标记、导入标记、进行中轮次与分页边界。
@@ -44,13 +41,17 @@ HTTP 测试验证新旧消息格式、原值、延迟结果读取、分页、聚
 
 参考官方仓库 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)，固定源码提交 `639ed015397290b3745d163aafe02ffee4aa3f84`。同时通过原生界面核对本机 `0.2.0-rc.2` 的对话页、轨迹工具栏与详情页签。
 
-`assets/trajectory/harness.css` 由以下 MIT 源文件适配，主要改动为 CSS 模块选择器改为普通选择器、工具栏/时间线类名前缀和字体变量合并：
+`frontend/public/harness.css` 由以下 MIT 源文件适配，主要改动为 CSS 模块选择器改为普通选择器、工具栏/时间线类名前缀和字体变量合并：
 
 - `packages/client/ui-theme/src/styles/{base,design-platform,gradient-shadow-text}.css`
 - `packages/client/ui-trajectory/src/client/{TrajectoryToolbar,TrajectoryTimeline,TrajectoryTable}.module.css`
 
-界面使用独立的 Agent Sessions 文字标识，不展示 DeepSeek 的品牌 SVG。对话气泡尺寸及正文节奏参考 `ui-chat` 的 `MessageItem`、`AssistantMarkdown`、`ChatView`；应用外壳与 Codex 数据适配在 `style.css` / `app.js` 中实现。版权声明保存在 `harness-license.txt`。
+界面使用独立的 Agent Sessions 文字标识，不展示 DeepSeek 的品牌 SVG。对话气泡尺寸及正文节奏参考 `ui-chat` 的 `MessageItem`、`AssistantMarkdown`、`ChatView`；应用外壳在 React 组件与 Tailwind 布局中实现，后台适配器在 `backend/agent_sessions/sources/` 中实现。版权声明保存在 `harness-license.txt`。
 
 `icons.svg` 复用 `ui-primitives/src/icons/index.tsx`、`shared-artwork.tsx` 与 `TrajectoryTable.tsx` 的原始 SVG。轮次/调用展开收起图标按原工具栏的方框加减图形绘制为 SVG。图标通过本地 SVG sprite 加载，无外部字体或 CDN。界面保留项目会话侧栏、对话、轨迹与事件详情，移除了底部输入框。
 
-Markdown 分词使用本地随附的 Marked `17.0.5`（MIT），文件 `marked.js` / `marked-license.txt`。分词结果用 DOM 节点构建，不执行记录里的 HTML；原文保留在事件详情中。没有外部 CDN 或构建时下载要求。
+Markdown 分词使用本地随附的 Marked `17.0.5`（MIT），随 Vite 从 npm 依赖打包，许可证在 `frontend/public/marked-license.txt`。分词结果用 React 节点构建，不执行记录里的 HTML；原文保留在事件详情中。运行时无需外部 CDN。
+
+## Antigravity 执行结果
+
+桌面端与 CLI 在来源筛选、会话标签和设置中分开。导出的 PLANNER_RESPONSE 常没有调用 ID：仅当下一条 GENERIC 的完整 search_web 查询与唯一调用完全一致、步骤连续时，才归并为该调用的结果；有唯一原生 ID 时使用 ID。不同查询、多调用或只包含 503 错误的记录不能靠顺序配对，保留为“执行结果”。旧 `S/结果步骤` 深链接仍解析到已关联的调用，原文按需读取。

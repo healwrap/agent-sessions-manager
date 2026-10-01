@@ -1,0 +1,93 @@
+.markdownPayload {
+  padding: 0;
+}
+.markdown-body {
+  font: 13px/1.65 var(--dsw-font-family);
+  overflow-wrap: anywhere;
+}
+.markdown-body p {
+  margin: 0 0 12px;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  margin: 16px 0 8px;
+}
+.markdown-body h1:first-child,
+.markdown-body h2:first-child,
+.markdown-body h3:first-child {
+  margin-top: 0;
+}
+.markdown-body a {
+  color: var(--dsw-alias-link);
+}
+.markdown-body pre {
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--dsw-alias-markdown-code-block);
+  margin: 10px 0;
+}
+.markdown-body :not(pre) > code {
+  background: var(--dsw-alias-markdown-inline-code);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+.markdown-body blockquote {
+  border-left: 3px solid var(--dsw-alias-border-l3);
+  margin: 10px 0;
+  padding-left: 10px;
+  color: var(--dsw-alias-label-secondary);
+}
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--dsw-alias-border-l2);
+  padding: 4px 6px;
+}
+.markdown-code {
+  border-radius: 8px;
+  background: var(--dsw-alias-markdown-code-block);
+  overflow: hidden;
+  margin: 10px 0;
+}
+.markdown-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+.markdown-code-header button {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.markdown-body .markdown-code pre {
+  margin: 0;
+  padding: 10px 12px;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-wrap: normal;
+  max-width: 100%;
+}
+.markdown-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 10px 0;
+}
+.markdown-table-scroll table {
+  min-width: 100%;
+  width: max-content;
+}
+.markdown-table-scroll th,
+.markdown-table-scroll td {
+  max-width: 420px;
+}

@@ -1,0 +1,201 @@
+.chat-pane {
+  --dsh-chat-content-width: min(calc(100% - 64px), 920px);
+  min-height: 0;
+  overflow-y: auto;
+  flex: 1;
+  padding: 24px 32px 28px;
+  scrollbar-gutter: stable;
+}
+.chat-messages {
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.chat-messages > article {
+  margin: 14px 0;
+}
+.chat-user-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.chat-user-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(calc(var(--dsh-chat-content-width, 748px) * 0.702), 82%);
+}
+.chat-user-bubble {
+  max-width: 100%;
+  background: var(--dsw-specific-bubble);
+  border-radius: var(--dsw-radius-xl);
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.chat-assistant-row,
+.chat-assistant-stack {
+  min-width: 0;
+  width: 100%;
+}
+.chat-assistant-body {
+  font-size: 14px;
+  line-height: 24px;
+}
+.chat-assistant-body .markdownPayload {
+  padding: 0;
+}
+.chat-assistant-body .markdown-body {
+  font: 14px/24px var(--dsw-font-family);
+}
+.chat-assistant-body .markdownPayload > div h1 {
+  font: var(--dsw-font-markdown-h1);
+}
+.chat-assistant-body .markdownPayload > div h2 {
+  font: var(--dsw-font-markdown-h2);
+}
+.chat-assistant-body .markdownPayload > div h3 {
+  font: var(--dsw-font-markdown-h3);
+}
+.chat-assistant-body .markdown-body p {
+  margin: 0 0 16px;
+}
+.chat-assistant-body .markdown-body ul,
+.chat-assistant-body .markdown-body ol {
+  padding-left: 22px;
+}
+.chat-assistant-body .markdown-body li p {
+  margin: 0;
+}
+.chat-message-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.chat-message-actions button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 5px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+}
+.chat-message-actions button:hover {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.chat-time {
+  font-size: 12px;
+  padding-left: 4px;
+}
+.chat-process {
+  margin: 14px 0 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 14px;
+}
+.chat-process-summary {
+  display: block;
+  cursor: pointer;
+  height: 33px;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  line-height: 24px;
+}
+.chat-process-body {
+  padding: 8px 0 0 12px;
+  border-left: 2px solid var(--dsw-alias-border-l2);
+  margin: 8px 0;
+}
+.chat-process-event {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  padding: 8px 10px;
+  text-align: left;
+}
+.chat-process-event:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.chat-process-kind {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.chat-process-preview {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 12px/18px var(--ds-font-family-code);
+}
+.chat-expand,
+.chat-compaction,
+.chat-media {
+  align-self: flex-end;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  padding: 4px 0;
+  text-align: left;
+}
+.chat-compaction {
+  align-self: stretch;
+  font-size: 13px;
+  padding: 10px 0;
+}
+.chat-expand:hover,
+.chat-compaction:hover,
+.chat-media:hover {
+  color: var(--dsw-alias-state-business-primary);
+}
+@media (max-width: 700px) {
+  .chat-pane {
+    padding: 16px 16px 24px;
+    --dsh-chat-content-width: min(calc(100% - 32px), 920px);
+  }
+  .chat-user-stack {
+    max-width: 90%;
+  }
+}
+.chat-message-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-process-summary .dsh-icon {
+  margin-right: 6px;
+}
+.chat-process[open] .process-chevron {
+  transform: rotate(180deg);
+}
+.chat-process-kind .dsh-icon,
+.chat-compaction .dsh-icon,
+.chat-media .dsh-icon {
+  margin-right: 6px;
+}
+
+.chat-assistant-stack > .chat-message-actions {
+  margin-top: 16px;
+  margin-left: -6px;
+}
+.chat-process-summary[aria-expanded='true'] .process-chevron {
+  transform: rotate(180deg);
+}

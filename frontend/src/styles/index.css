@@ -1,0 +1,22 @@
+@layer theme, base, components, utilities;
+@import '../../public/harness.css' layer(base);
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './shell.css' layer(components);
+@import './sidebar.css' layer(components);
+@import './dialogs.css' layer(components);
+@import './markdown.css' layer(components);
+@import './chat.css' layer(components);
+@import './trajectory.css' layer(components);
+@import './settings.css' layer(components);
+@import './motion.css' layer(components);
+@theme {
+  --color-surface: var(--dsw-alias-bg-layer-2);
+  --color-muted: var(--dsw-alias-label-tertiary);
+  --color-accent: var(--dsw-alias-state-business-primary);
+  --color-line: var(--dsw-alias-border-l2);
+}
+#root {
+  width: 100%;
+  height: 100%;
+}

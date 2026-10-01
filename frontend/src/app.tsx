@@ -45,6 +45,7 @@ export function App() {
       >
         <Sidebar
           state={state}
+          managedId={menu?.item.id}
           onManage={(item, x, y) => setMenu({ item, x, y })}
         />
         <main ref={main} className="main">

@@ -37,10 +37,6 @@
   letter-spacing: -0.6px;
   line-height: 1.2;
 }
-.brand-description {
-  font-size: 11px;
-  color: var(--dsw-alias-label-tertiary);
-}
 .source-filter {
   display: flex;
   align-items: center;
@@ -197,12 +193,13 @@
   opacity: 0;
 }
 .session-item:hover .session-options,
-.session-options:focus-visible {
+.session-options:focus-visible,
+.session-options[aria-expanded='true'] {
   opacity: 1;
-  background: rgba(215, 229, 232, 0.9);
 }
 .session-options:hover {
-  background: rgba(132, 158, 166, 0.16);
+  background: rgba(77, 93, 100, 0.08);
+  color: var(--dsw-alias-label-primary);
 }
 .session-menu {
   position: fixed;

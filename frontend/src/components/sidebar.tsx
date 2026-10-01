@@ -12,9 +12,11 @@ import { Collapse, Icon, IconButton } from './primitives';
 export function Sidebar({
   state,
   onManage,
+  managedId,
 }: {
   state: AppState;
   onManage: (item: Session, x: number, y: number) => void;
+  managedId?: string;
 }) {
   const [search, setSearch] = useState(state.query);
   useEffect(() => {
@@ -54,7 +56,6 @@ export function Sidebar({
         </div>
         <div className="brand-row">
           <span className="brand-name">Agent Sessions</span>
-          <span className="brand-description">会话 · 对话 · 轨迹</span>
         </div>
         <label className="source-filter">
           来源
@@ -166,6 +167,8 @@ export function Sidebar({
                           '管理会话 ' + sessionTitle(item, state.preferences)
                         }
                         className="icon-button session-options"
+                        aria-haspopup="menu"
+                        aria-expanded={managedId === item.id}
                         onClick={(event) => {
                           const rect =
                             event.currentTarget.getBoundingClientRect();

@@ -11,6 +11,7 @@ import { sourceNames, type Session } from '../lib/types';
 import { showAbout } from '../lib/api';
 import { Collapse, Icon, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
+import { MarqueeTitle } from './marquee-title';
 export function Sidebar({
   state,
   onManage,
@@ -149,27 +150,39 @@ export function Sidebar({
                 >
                   <Icon name="right" className="project-chevron" />
                   <Icon name="folder" className="project-folder" />
-                  <span className="project-name">{group.project_label}</span>
+                  <MarqueeTitle
+                    className="project-name"
+                    text={group.project_label}
+                  />
                 </button>
                 <Collapse open={open}>
                   {visible.map((item) => (
                     <div
                       key={item.id}
                       className="session-item"
+                      data-source-visible={!state.provider}
                       aria-current={item.id === state.id}
                     >
                       <button
                         className="session-select flex min-w-0 flex-1 items-center text-left"
                         onClick={() => void sessionStore.selectSession(item.id)}
                       >
-                        <span className="session-name">
-                          {state.preferences.pinned.includes(item.id) && (
-                            <Icon name="pin" className="session-pin" />
+                        <span className="session-copy">
+                          <MarqueeTitle
+                            className="session-name"
+                            text={sessionTitle(item, state.preferences)}
+                            prefix={
+                              state.preferences.pinned.includes(item.id) && (
+                                <Icon name="pin" className="session-pin" />
+                              )
+                            }
+                          />
+                          {!state.provider && (
+                            <span className="provider-tag">
+                              {sourceNames[sourceId(item)] ||
+                                item.provider_label}
+                            </span>
                           )}
-                          {sessionTitle(item, state.preferences)}
-                        </span>
-                        <span className="provider-tag">
-                          {sourceNames[sourceId(item)] || item.provider_label}
                         </span>
                         <span className="session-date">
                           {relativeDate(item.updated_at)}

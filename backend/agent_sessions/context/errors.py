@@ -1,4 +1,4 @@
-"""Shared errors for recover-codex-context modules."""
+"""Shared errors for Agent Sessions context modules."""
 
 
 class ContextError(RuntimeError):

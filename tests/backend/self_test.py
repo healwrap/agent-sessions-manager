@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-test for the recover-codex-context parser and safety boundaries."""
+"""Self-test for the Agent Sessions context parser and reading boundaries."""
 
 from __future__ import annotations
 

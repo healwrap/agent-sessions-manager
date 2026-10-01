@@ -8,6 +8,7 @@ from datetime import datetime
 from urllib.parse import unquote, urlparse
 from agent_sessions.sources.codex import elapsed
 from agent_sessions.context.text import compact_line
+from agent_sessions.paths import file_uri_path
 from .base import HistoryStore, readonly_db, as_text
 
 class AntigravityStore(HistoryStore):
@@ -32,7 +33,7 @@ class AntigravityStore(HistoryStore):
             item = summaries.get(key, {})
             try: roots = json.loads(item.get('workspace_uris') or '[]')
             except ValueError: roots = []
-            cwd = unquote(urlparse(roots[0]).path) if roots and isinstance(roots[0], str) else ''
+            cwd = file_uri_path(roots[0]) if roots and isinstance(roots[0], str) else ''
             self.rows[key] = {'id': key, 'native_id': key, 'title': item.get('title') or key,
                               'cwd': cwd, 'parent_session_id': item.get('parent_conversation_id'),
                               'updated_at': item.get('last_modified_time') or (datetime.fromtimestamp(file.stat().st_mtime).astimezone().isoformat() if file else ''),

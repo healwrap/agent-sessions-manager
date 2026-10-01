@@ -15,7 +15,7 @@ class AppSettings:
 
     def read(self):
         with self.lock:
-            value = json.loads(self.path.read_text()) if self.path.exists() else {}
+            value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {**self.defaults, **value,
                     'paths': {**self.defaults['paths'], **value.get('paths', {})},
                     'enabled': {**self.defaults['enabled'], **value.get('enabled', {})}}
@@ -44,7 +44,7 @@ class AppSettings:
         with self.lock:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix('.tmp')
-            temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2))
+            temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding='utf-8')
             temporary.replace(self.path)
         return value
 
@@ -57,7 +57,7 @@ class ViewSettings:
     def read(self):
         with self.lock:
             if not self.path.exists(): return {'saved': False, 'value': {}}
-            return {'saved': True, 'value': json.loads(self.path.read_text())}
+            return {'saved': True, 'value': json.loads(self.path.read_text(encoding='utf-8'))}
 
     def write(self, value):
         allowed = {'pinned', 'archived', 'aliases', 'metadata', 'projectAssignments'}
@@ -68,6 +68,6 @@ class ViewSettings:
         with self.lock:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix('.tmp')
-            temporary.write_text(json.dumps(value, ensure_ascii=False))
+            temporary.write_text(json.dumps(value, ensure_ascii=False), encoding='utf-8')
             temporary.replace(self.path)
         return {'saved': True}

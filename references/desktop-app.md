@@ -26,11 +26,11 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 
 macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、详情、项目会话列表和对话过程使用短过渡，遵循系统“减少动态效果”和应用动画开关。时长模式按已记录调用区间的并集折叠空闲时间；圈选用区间重叠判断。缺少模型时长的来源保留点标记，不伪造计时。摘要步骤数按可见助手消息与外层调用计数，内部调用计入工具调用数；没有原生模型请求分组的来源，不宣称这是模型请求数。
 
-本版的侧栏搜索覆盖标题和项目，轨迹搜索覆盖当前会话可见正文、引用和参数摘要。跨会话正文搜索、自动交接摘要和后台目录监听暂未加入。
+侧栏搜索覆盖标题、自定义名称、项目和跨会话可见对话正文；不会把隐藏内容或工具结果纳入对话搜索。结果按原项目、来源归类。轨迹搜索覆盖当前会话可见正文、引用和参数摘要。自动交接摘要和后台目录监听暂未加入。
 
 ## 构建
 
-需要 macOS、Xcode Command Line Tools、Rust/Cargo、Node/npm 和 Python 3。从仓库根目录运行：
+在目标系统上构建，使用 Rust/Cargo、Node/npm 和 Python 3，以及该系统的 Tauri 原生开发依赖。macOS 需要 Xcode Command Line Tools，Windows 需要 MSVC 和 WebView2，Linux 需要 WebKitGTK 等原生库，参见 [Tauri 开发前置条件](https://v2.tauri.app/start/prerequisites/)。从仓库根目录运行：
 
 ```bash
 npm ci
@@ -45,6 +45,10 @@ npm run desktop:build
 - `desktop/target/release/bundle/dmg/Agent Sessions_0.1.0_aarch64.dmg`（本机 Apple Silicon 构建）
 
 包面向本机测试，尚未使用 Developer ID 签名与 Apple 公证。外部分发需另行配置发布身份；不要把本机启动成功当作分发验收。
+
+构建脚本按宿主系统处理 Python 虚拟环境、Windows `.exe` sidecar 和安装包类型：macOS 生成 app / dmg，Windows 生成 NSIS，Linux 生成 deb / AppImage。Windows、Linux 需要在对应宿主机实际构建和验收，本机 Mac 测试不能替代它们。
+
+系统窗口装饰默认启用，Windows 和 Linux 的窗口按钮交给系统；仅 `desktop/tauri.macos.conf.json` 启用 macOS Overlay 和原生 Sidebar 材质。Tauri 自动合并平台配置。应用目录按本机用户选择：Mac 为 `~/Library/Application Support/Agent Sessions`，Windows 优先 `%LOCALAPPDATA%/Agent Sessions`，Linux 为 `$XDG_DATA_HOME/agent-sessions` 或 `~/.local/share/agent-sessions`。Codex 遵循 `CODEX_HOME`，Claude Code 遵循 `CLAUDE_CONFIG_DIR`；其他来源默认仍在当前用户的 `.gemini` 下，可在设置中更改。Antigravity 的 file URI 兼容 Windows 盘符、UNC 网络共享和编码路径；续接命令在 Windows 使用 PowerShell 引号。
 
 Rust 外壳：`desktop/src/main.rs`。React + TypeScript 界面：`frontend/src/`，由 Vite 与 Tailwind CSS 构建。后台：`backend/agent_sessions/`，按 API、来源适配、上下文读取和轨迹布局分包。两个 `scripts/` 命令保留为兼容入口。目录约定见根目录 `README.md`。
 

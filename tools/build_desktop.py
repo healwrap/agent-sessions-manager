@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build a self-contained macOS app, including Python, assets and source adapters."""
+"""Build native desktop bundles on the current host, including the Python sidecar."""
+import json
 import os
 import shutil
 import subprocess
@@ -15,31 +16,39 @@ def run(*args, cwd=ROOT):
 
 
 def main():
-    python = ROOT/'.venv-desktop/bin/python'
+    windows = sys.platform == 'win32'
+    python = ROOT/('.venv-desktop/Scripts/python.exe' if windows else '.venv-desktop/bin/python')
     if not python.exists():
         run(sys.executable, '-m', 'venv', ROOT/'.venv-desktop')
     if subprocess.run([str(python), '-c', 'import PyInstaller'], capture_output=True).returncode:
         run(python, '-m', 'pip', 'install', 'pyinstaller==6.22.3')
-    cli = ROOT/'node_modules/.bin/tauri'
-    if not cli.exists(): run('npm', 'ci')
-    run('npm', 'run', 'build:ui')
+    cli = ROOT/('node_modules/.bin/tauri.cmd' if windows else 'node_modules/.bin/tauri')
+    npm = shutil.which('npm.cmd' if windows else 'npm') or 'npm'
+    if not cli.exists(): run(npm, 'ci')
+    run(npm, 'run', 'build:ui')
     run(python, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
         '--name', 'agent-sessions-server', '--paths', ROOT/'backend',
         '--add-data', str(ROOT/'frontend/dist')+':frontend/dist', ROOT/'scripts/trajectory_server.py')
     triple = subprocess.check_output(['rustc', '--print', 'host-tuple'], text=True).strip()
     directory = ROOT/'desktop/binaries'
     directory.mkdir(exist_ok=True)
-    shutil.copy2(ROOT/'dist/agent-sessions-server', directory/('agent-sessions-server-'+triple))
+    extension = '.exe' if windows else ''
+    shutil.copy2(ROOT/('dist/agent-sessions-server'+extension), directory/('agent-sessions-server-'+triple+extension))
     with tempfile.TemporaryDirectory(prefix='agent-sessions-icons-') as icons:
         run(cli, 'icon', ROOT/'desktop/icons/source.svg', '--output', icons)
-        for name in ('icon.png', 'icon.icns'):
+        for name in ('icon.png', 'icon.icns', 'icon.ico'):
             shutil.copy2(Path(icons)/name, ROOT/'desktop/icons'/name)
-    run(cli, 'build', '--bundles', 'app', '--config', ROOT/'desktop/tauri.conf.json', cwd=ROOT/'desktop')
+    bundles = 'app' if sys.platform == 'darwin' else 'nsis' if windows else 'deb,appimage'
+    run(cli, 'build', '--bundles', bundles, cwd=ROOT/'desktop')
+    if sys.platform != 'darwin':
+        print('Bundles:', ROOT/'desktop/target/release/bundle')
+        return
     app = ROOT/'desktop/target/release/bundle/macos/Agent Sessions.app'
-    output = ROOT/'desktop/target/release/bundle/dmg'/f'Agent Sessions_0.1.0_{triple.split("-")[0]}.dmg'
+    version = json.loads((ROOT/'desktop/tauri.conf.json').read_text(encoding='utf-8'))['version']
+    output = ROOT/'desktop/target/release/bundle/dmg'/f'Agent Sessions_{version}_{triple.split("-")[0]}.dmg'
     output.parent.mkdir(parents=True, exist_ok=True)
     # A plain installation image avoids Finder automation during packaging.
-    with tempfile.TemporaryDirectory(prefix='agent-sessions-dmg-', dir='/tmp') as staging:
+    with tempfile.TemporaryDirectory(prefix='agent-sessions-dmg-') as staging:
         run('ditto', app, Path(staging)/app.name)
         (Path(staging)/'Applications').symlink_to('/Applications')
         run('hdiutil', 'create', '-volname', 'Agent Sessions', '-srcfolder', staging,

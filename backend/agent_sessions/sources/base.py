@@ -25,7 +25,7 @@ def read_row(path, offset):
 def readonly_db(path):
     """Read WAL normally; fallback to a verified private DB+WAL snapshot."""
     try:
-        db = sqlite3.connect('file:'+str(path)+'?mode=ro', uri=True)
+        db = sqlite3.connect(path.resolve().as_uri()+'?mode=ro', uri=True)
         db.execute('select name from sqlite_master limit 1').fetchone()
         return db, None
     except sqlite3.Error:

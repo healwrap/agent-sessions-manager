@@ -62,13 +62,20 @@ button:disabled {
   background: rgba(60, 89, 98, 0.24);
 }
 .desktop-host .traffic-lights {
+  display: none;
+}
+.desktop-macos .traffic-lights {
+  display: flex;
   visibility: hidden;
+}
+.desktop-host:not(.desktop-macos) .titlebar {
+  justify-content: flex-end;
 }
 .desktop-host .titlebar,
 .desktop-host .main-header {
   user-select: none;
 }
-.desktop-host .sidebar-collapsed .main-header {
+.desktop-macos .sidebar-collapsed .main-header {
   padding-left: 100px;
 }
 .icon-button {
@@ -208,7 +215,7 @@ button:disabled {
     padding-left: 12px;
   }
 }
-.desktop-host body,
-.desktop-host .application {
+.desktop-macos body,
+.desktop-macos .application {
   background: transparent;
 }

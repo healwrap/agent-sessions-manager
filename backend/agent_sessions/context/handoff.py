@@ -4,6 +4,12 @@ import sys
 from pathlib import Path
 
 
+def quote_command(args, platform=None):
+    if (platform or sys.platform) == 'win32':
+        return '& '+ ' '.join("'"+str(arg).replace("'", "''")+"'" for arg in args)
+    return shlex.join(args)
+
+
 def read(store, key, action='outline', ref='', page=1, query='', through=''):
     data = store.trajectory(key, limit=250)
     if data.get('unavailable_reason'): raise ValueError(data['unavailable_reason'])
@@ -46,9 +52,9 @@ def prompt(store, key, ref, state_home):
     for source, flag in [('codex:local', '--codex-home'), ('claude:local', '--claude-home'), ('antigravity:desktop', '--antigravity-home'), ('antigravity:cli', '--antigravity-cli-home')]:
         command += [flag, str(store.adapters[source].root)]
     command += ['--state-home', str(state_home), '--read-session', meta['id']]
-    base = shlex.join(command)
-    outline = base+' --read-action outline --read-through '+shlex.quote(ref)
-    message = base+' --read-action message --read-ref '+shlex.quote(ref)
+    outline = quote_command(command+['--read-action', 'outline', '--read-through', ref])
+    message = quote_command(command+['--read-action', 'message', '--read-ref', ref])
+    shell = '（在 PowerShell 中执行）' if sys.platform == 'win32' else ''
     text = f'''请续接 Agent Sessions 中的这段本地会话。
 
 来源：{meta['provider_label']}
@@ -57,7 +63,7 @@ def prompt(store, key, ref, state_home):
 项目目录：{meta.get('cwd') or '未记录'}
 续接位置：{ref}（只恢复到此处）
 
-先执行以下只读命令，查看对话目录；如有多页，使用 --read-page 分页：
+先执行以下只读命令{shell}，查看对话目录；如有多页，使用 --read-page 分页：
 {outline}
 
 再读取续接位置的原话，长消息同样按 --read-page 分页：

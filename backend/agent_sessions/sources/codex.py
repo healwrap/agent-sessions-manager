@@ -75,7 +75,7 @@ class Store:
         version = path.stat().st_mtime_ns if path.exists() else None
         if version != self.project_version:
             try:
-                state = json.loads(path.read_text())
+                state = json.loads(path.read_text(encoding='utf-8'))
                 self.project_state = {k: state.get(k, {}) for k in
                                       ('local-projects', 'thread-project-assignments',
                                        'thread-workspace-root-hints', 'projectless-thread-ids')}

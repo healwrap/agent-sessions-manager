@@ -98,7 +98,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![restart_backend, backend_status])
         .on_page_load(|window, _| {
             let paused = window.state::<Backend>().paused.load(Ordering::SeqCst);
-            let _ = window.eval(&format!("window.agentSessionsDesktop=true;window.agentSessionsPaused={paused};document.documentElement.classList.add('desktop-host');"));
+            let platform = std::env::consts::OS;
+            let _ = window.eval(&format!("window.agentSessionsDesktop=true;window.agentSessionsPlatform='{platform}';window.agentSessionsPaused={paused};document.documentElement.classList.add('desktop-host','desktop-{platform}');"));
             if window.state::<Backend>().failed.load(Ordering::SeqCst) {
                 let _ = window.eval("var status=document.getElementById('status');if(status)status.textContent='后台已停止，点击重新启动恢复。';");
             }
@@ -138,6 +139,7 @@ fn main() {
         })
         .build(tauri::generate_context!()).expect("无法启动 Agent Sessions");
     app.run(|app, event| match event {
+        #[cfg(target_os = "macos")]
         RunEvent::Reopen { .. } => show(app),
         RunEvent::Exit => stop(app),
         _ => {}

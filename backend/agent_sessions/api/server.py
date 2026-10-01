@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse, unquote
 from agent_sessions.sources.codex import Store, PAGE_CHARS, timestamp_ms
 from agent_sessions.context.locator import codex_root
+from agent_sessions.paths import claude_root, state_root
 
 ASSETS = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[3])) / 'frontend' / 'dist'
 
@@ -120,12 +121,12 @@ def main():
     parser = argparse.ArgumentParser(description='打开 Agent Sessions 本地会话应用')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--codex-home', type=Path, default=codex_root())
-    parser.add_argument('--claude-home', type=Path, default=Path.home()/'.claude')
+    parser.add_argument('--claude-home', type=Path, default=claude_root())
     parser.add_argument('--antigravity-home', type=Path, default=Path.home()/'.gemini/antigravity')
     parser.add_argument('--antigravity-cli-home', type=Path, default=Path.home()/'.gemini/antigravity-cli')
     parser.add_argument('--codex-only', action='store_true')
     parser.add_argument('--desktop', action='store_true')
-    parser.add_argument('--state-home', type=Path, default=Path.home()/'Library/Application Support/Agent Sessions' if sys.platform == 'darwin' else Path.home()/'.local/share/agent-sessions')
+    parser.add_argument('--state-home', type=Path, default=state_root())
     parser.add_argument('--read-session', default='')
     parser.add_argument('--read-action', choices=['status', 'outline', 'message', 'tools', 'evidence'], default='outline')
     parser.add_argument('--read-ref', default='')
@@ -138,6 +139,7 @@ def main():
     app_settings = AppSettings(args.state_home, (args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home))
     store = Store(args.codex_home) if args.codex_only else configured_store(app_settings.read(), preferences)
     if args.read_session:
+        if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
         if not 1 <= args.read_page <= 1_000_000: parser.error('页码无效')
         from agent_sessions.context.handoff import read
         try:

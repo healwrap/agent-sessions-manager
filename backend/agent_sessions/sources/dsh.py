@@ -32,10 +32,14 @@ def transcript_stream(path):
 class DshStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'dsh', 'local')
-        self.raw_files = {}; self.decoded = {}; self.headers = {}; self.failures = {}; self.titles = {}
+        self.raw_files = {}; self.decoded = {}; self.headers = {}; self.failures = {}; self.titles = {}; self.workspaces = {}
         self.temporary = tempfile.TemporaryDirectory(prefix='agent-sessions-dsh-')
 
     def discover(self):
+        try:
+            self.workspaces = json.loads((self.root/'storages/workspace.json').read_text(encoding='utf-8'))['tables']['workspaces']
+            if not isinstance(self.workspaces, dict): self.workspaces = {}
+        except (OSError, ValueError, KeyError, TypeError): self.workspaces = {}
         directory = self.root/'sessions' if (self.root/'sessions').is_dir() else self.root
         candidates = {}
         for path in directory.glob('*/*/session*.jsonl*'):
@@ -76,11 +80,26 @@ class DshStore(HistoryStore):
             rows[key] = {'id': key, 'native_id': header.get('id', path.parent.name), 'title': title or path.parent.name,
                          'cwd': cwd, 'updated_at': datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(),
                          'transcript_available': key not in failures, 'unavailable_reason': failures.get(key),
-                         **self.project(key, cwd)}
+                         **self.project(header.get('id', path.parent.name), cwd)}
             raw_files[key] = path
         self.rows, self.raw_files, self.failures = rows, raw_files, failures
         self.files = {key: self.decoded[key][1] if key in self.decoded else path for key, path in raw_files.items()}
         return list(rows.values())
+
+    def project(self, native, cwd=None):
+        directory = super().project(native, cwd)
+        memberships = []; same_path = []
+        for key, workspace in self.workspaces.items():
+            if not isinstance(workspace, dict) or not isinstance(workspace.get('path'), str) or not workspace['path']: continue
+            path = str(Path(workspace['path']).expanduser().resolve())
+            title = workspace.get('title')
+            project = {'project_id': 'dsh:workspace:'+key, 'project_label': title if isinstance(title, str) and title else Path(path).name,
+                       'project_path': path, 'project_source': 'membership'}
+            sessions = workspace.get('sessionIds')
+            if isinstance(sessions, list) and native in sessions: memberships.append(project)
+            if path == directory['project_path']: same_path.append(project)
+        candidates = memberships or same_path
+        return candidates[0] if len(candidates) == 1 else directory
 
     def session(self, key):
         with self.lock:

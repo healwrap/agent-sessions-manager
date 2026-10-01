@@ -3,6 +3,7 @@ import hashlib
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 import zstandard
 from agent_sessions.sources.catalog import MultiStore
 from agent_sessions.sources.dsh import DshStore
@@ -110,5 +111,33 @@ with tempfile.TemporaryDirectory() as folder:
     fresh = DshStore(dsh)
     assert next(r for r in fresh.discover() if r['id'] == 'project/3')['title'] == '独立索引标题'
     assert not fresh.decoded
+    # DSH workspaces own names and membership, even when Codex uses the same path.
+    workspace_path = dsh/'storages/workspace.json'
+    workspaces = {'work': {'path': '/tmp/dsh-project', 'title': 'DSH 工作区', 'sessionIds': ['0']}}
+    workspace_path.write_text(json.dumps({'tables': {'workspaces': workspaces}}))
+    store.catalogue_time = 0
+    codex_project = {'id': 'codex-session', 'title': 'Codex 会话', 'updated_at': '2026-09-30T00:00:00Z',
+                     'project_id': 'project:codex-work', 'project_label': 'Codex 自定义项目',
+                     'project_path': '/tmp/dsh-project', 'project_source': 'membership'}
+    with patch.object(store.codex, 'sessions', return_value={'items': [codex_project], 'next_offset': None}):
+        listed = store.catalogue()
+    owned = next(r for r in listed if r['id'] == 'dsh:local:project/0')
+    assert owned['project_label'] == 'DSH 工作区' and owned['project_id'] == 'dsh:workspace:work'
+    # Older logs without explicit membership may use a unique DSH directory match.
+    assert next(r for r in listed if r['id'] == 'dsh:local:project/3')['project_id'] == owned['project_id']
+    workspaces['second'] = {'path': '/tmp/dsh-project', 'title': '另一个 DSH 工作区', 'sessionIds': ['3']}
+    workspace_path.write_text(json.dumps({'tables': {'workspaces': workspaces}}))
+    listed = {r['native_id']: r for r in fresh.discover() if r['id'].startswith('project/')}
+    assert listed['0']['project_label'] == 'DSH 工作区'
+    assert listed['3']['project_label'] == '另一个 DSH 工作区'
+    assert listed['2']['project_label'] == 'dsh-project' and listed['2']['project_source'] == 'directory'
+    # An ambiguous native membership must not silently select either workspace.
+    workspaces['second']['sessionIds'].append('0')
+    workspace_path.write_text(json.dumps({'tables': {'workspaces': workspaces}}))
+    assert next(r for r in fresh.discover() if r['id'] == 'project/0')['project_label'] == 'dsh-project'
+    workspace_path.unlink()
+    store.catalogue_time = 0
+    with patch.object(store.codex, 'sessions', return_value={'items': [codex_project], 'next_offset': None}):
+        assert next(r for r in store.catalogue() if r['id'] == 'dsh:local:project/0')['project_label'] == 'dsh-project'
 
-print('DSH self-test: ok (v0-v4, Zstandard frames, step identity, ambiguity, exact results, full search, continuation, focus, append, future version, eviction, read-only)')
+print('DSH self-test: ok (v0-v4, Zstandard frames, step identity, ambiguity, exact results, full search, continuation, focus, append, future version, eviction, native workspaces, Agent isolation, read-only)')

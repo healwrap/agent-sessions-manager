@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import sqlite3
 import time
-from pathlib import Path
 from .codex import Store
 from .base import readonly_db
 from .claude import ClaudeStore, ClaudeDesktopStore
@@ -63,17 +62,8 @@ class MultiStore:
                                   'instance_id': source.split(':')[1]})
             except (OSError, ValueError, sqlite3.Error) as error:
                 self.errors[source] = str(error)
-        # Only merge a directory into a single explicit Codex project; ambiguous
-        # roots remain independent until the user assigns a project in the UI.
-        paths = {}
-        for row in items:
-            if row['provider'] == 'codex' and row['project_source'] == 'membership' and row['project_path']:
-                paths.setdefault(str(Path(row['project_path']).resolve()), {})[row['project_id']] = row
-        for row in items:
-            candidates = paths.get(row.get('project_path'), {})
-            if row['project_source'] == 'directory' and len(candidates) == 1:
-                project = next(iter(candidates.values()))
-                for field in ('project_id', 'project_label', 'project_path'): row[field] = project[field]
+        # Each adapter owns its project identity and label. A shared directory
+        # does not authorize borrowing a different Agent's named project.
         self.catalogue_rows = sorted(items, key=lambda r: r['updated_at'], reverse=True)
         assignments = self.settings.read()['value'].get('projectAssignments', {}) if hasattr(self, 'settings') else {}
         for row in self.catalogue_rows:

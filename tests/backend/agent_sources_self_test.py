@@ -40,6 +40,15 @@ def main():
         assert s.sessions(query='HIDDEN-REASONING')['total'] == 0
         assert s.sessions(query='深处检索词', provider='antigravity:desktop')['total'] == 0
         assert not any('HIDDEN' in e['preview'] for e in t['events'])
+        # Another Agent's working directory never borrows a Codex project alias.
+        codex_project = {'id': 'codex-project-session', 'title': 'Codex 会话', 'updated_at': '2026-09-30T00:00:00Z',
+                         'project_id': 'project:codex', 'project_label': 'Codex 专属名称',
+                         'project_path': '/tmp/same-project', 'project_source': 'membership'}
+        s.catalogue_time = 0
+        with patch.object(s.codex, 'sessions', return_value={'items': [codex_project], 'next_offset': None}):
+            catalogue = s.catalogue()
+        assert next(r for r in catalogue if r['id'] == c)['project_label'] == 'same-project'
+        assert next(r for r in catalogue if r['id'] == c)['project_id'] == 'directory:'+str(Path('/tmp/same-project').resolve())
         at=s.trajectory(a);ac=next(e for e in at['events'] if e['kind']=='tool')
         assert not s.detail(a,ac['ref'],part='output')['output_available']
         assert any(e['preview']=='UNLINKED RESULT' for e in at['events'])

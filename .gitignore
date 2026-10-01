@@ -20,12 +20,17 @@ desktop/loader/index.html
 .codex/
 .claude/
 .gemini/
+.dsh/
+claude-code-sessions/
 sessions/
 archived_sessions/
 session-cache/
 /settings.json
 /view.json
 *.jsonl
+*.jsonl.zstd
+*.jsonl.zst
+*.jsonl.gz
 *.log
 *.sqlite
 *.sqlite3

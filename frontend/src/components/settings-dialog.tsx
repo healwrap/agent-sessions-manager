@@ -167,7 +167,11 @@ export function SettingsDialog({ open }: { open: boolean }) {
                                   : '目录不存在')}
                           {key.startsWith('antigravity')
                             ? ' · 读取本地导出的记录'
-                            : ''}
+                            : key === 'claude:desktop'
+                              ? ' · 桌面会话索引，正文从 CLI 目录读取'
+                              : key === 'dsh:local'
+                                ? ' · 支持 JSONL 与 Zstandard 压缩日志'
+                                : ''}
                         </p>
                       </div>
                     );

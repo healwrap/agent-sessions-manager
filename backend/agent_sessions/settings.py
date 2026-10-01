@@ -3,13 +3,19 @@ import json
 import threading
 from pathlib import Path
 
-SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli')
+SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli', 'claude:desktop', 'dsh:local')
 
 
 class AppSettings:
     def __init__(self, directory, roots):
+        from agent_sessions.paths import claude_desktop_root
         self.path = Path(directory)/'settings.json'
         self.lock = threading.RLock()
+        roots = tuple(roots)
+        if len(roots) == 4:
+            roots += (claude_desktop_root(), Path.home()/'.dsh')
+        if len(roots) != len(SOURCE_KEYS):
+            raise ValueError('会话来源目录数量无效')
         self.defaults = {'paths': {key: str(Path(root).expanduser().resolve()) for key, root in zip(SOURCE_KEYS, roots)},
                          'enabled': {key: True for key in SOURCE_KEYS}, 'syncSeconds': 3, 'animations': True}
 
@@ -17,8 +23,8 @@ class AppSettings:
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {**self.defaults, **value,
-                    'paths': {**self.defaults['paths'], **value.get('paths', {})},
-                    'enabled': {**self.defaults['enabled'], **value.get('enabled', {})}}
+                    'paths': {key: value.get('paths', {}).get(key, default) for key, default in self.defaults['paths'].items()},
+                    'enabled': {key: value.get('enabled', {}).get(key, default) for key, default in self.defaults['enabled'].items()}}
 
     def validate(self, value):
         if not isinstance(value, dict) or set(value) != set(self.defaults):

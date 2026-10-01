@@ -1,6 +1,7 @@
 """Claude Code JSONL adapter with native call IDs and branch ancestry."""
 from __future__ import annotations
 import json
+import re
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ from .base import HistoryStore, as_text
 class ClaudeStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'claude', 'local')
+        self.desktop_ids = set()
 
     def discover(self):
         self.files = {str(p.relative_to(self.root/'projects')).removesuffix('.jsonl'): p
@@ -27,7 +29,7 @@ class ClaudeStore(HistoryStore):
                               'is_subagent': '/subagents/' in '/'+key,
                               **self.project(key, cwd)}
         self.rows = {k: v for k, v in self.rows.items() if k in self.files}
-        return list(self.rows.values())
+        return [row for row in self.rows.values() if row['native_id'] not in self.desktop_ids]
 
     def metadata(self, row):
         msg = row.get('message') or {}
@@ -109,3 +111,50 @@ class ClaudeStore(HistoryStore):
             return as_text(content)
         block = content[location['block']]
         return as_text(block.get('input') if location['part'] == 'tool_use' else block.get('content'))
+
+
+class ClaudeDesktopStore(ClaudeStore):
+    """Desktop's account/org session index points to shared CLI transcripts."""
+    def __init__(self, root, transcripts):
+        super().__init__(root)
+        self.instance = 'desktop'
+        self.transcripts = transcripts.expanduser().resolve()
+
+    def discover(self):
+        files = {}; rows = {}
+        paths = list(self.root.glob('*/*/*.json')) + list(self.root.glob('*.json'))
+        by_id = {}
+        for transcript in (self.transcripts/'projects').glob('*/**/*.jsonl'):
+            by_id.setdefault(transcript.stem, []).append(transcript)
+        for path in paths:
+            if path.stat().st_size > 10*1024*1024: continue
+            try: item = json.loads(path.read_text(encoding='utf-8'))
+            except (ValueError, OSError): continue
+            if not isinstance(item, dict) or not isinstance(item.get('sessionId'), str) or not isinstance(item.get('cwd'), str): continue
+            key = str(path.relative_to(self.root)).removesuffix('.json')
+            native = item.get('cliSessionId') or item.get('unarchivedCliSessionId')
+            matches = by_id.get(native, [])
+            direct = self.transcripts/'projects'/re.sub(r'[^a-zA-Z0-9]', '-', item['cwd'])/(str(native)+'.jsonl')
+            transcript = direct if direct in matches else matches[0] if len(matches) == 1 else None
+            files[key] = transcript or path
+            cwd = item.get('originCwd') or item['cwd']
+            title = item.get('title') or item.get('name') or '(无标题)'
+            updated = item.get('lastActivityAt') or item.get('updatedAt') or path.stat().st_mtime*1000
+            if isinstance(updated, (int, float)): updated = datetime.fromtimestamp(updated/1000).astimezone().isoformat()
+            rows[key] = {'id': key, 'native_id': native or item['sessionId'], 'title': title, 'cwd': cwd,
+                         'updated_at': str(updated), 'transcript_available': transcript is not None,
+                         'unavailable_reason': '找到多份同 ID 正文，且无法确认桌面会话目录。' if len(matches) > 1 and transcript is None else None,
+                         **self.project(key, cwd)}
+        self.files, self.rows = files, rows
+        return list(rows.values())
+
+    def session(self, key):
+        with self.lock:
+            self.discover()
+            row = self.rows.get(key)
+            if row and not row['transcript_available']:
+                stat = self.files[key].stat()
+                return {'source': self.files[key], 'events': [], 'lookup': {}, 'turns': [],
+                        'index': {'meta': {'title': row['title'], 'cwd': row['cwd']},
+                                  'source_size': stat.st_size, 'source_mtime_ns': stat.st_mtime_ns}}
+            return super().session(key)

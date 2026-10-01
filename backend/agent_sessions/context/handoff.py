@@ -49,7 +49,8 @@ def prompt(store, key, ref, state_home):
     if meta.get('unavailable_reason'): raise ValueError(meta['unavailable_reason'])
     command = [sys.executable]
     if not getattr(sys, 'frozen', False): command.append(str(Path(__file__).resolve().parents[3]/'scripts/trajectory_server.py'))
-    for source, flag in [('codex:local', '--codex-home'), ('claude:local', '--claude-home'), ('antigravity:desktop', '--antigravity-home'), ('antigravity:cli', '--antigravity-cli-home')]:
+    for source, flag in [('codex:local', '--codex-home'), ('claude:local', '--claude-home'), ('antigravity:desktop', '--antigravity-home'), ('antigravity:cli', '--antigravity-cli-home'), ('claude:desktop', '--claude-desktop-home'), ('dsh:local', '--dsh-home')]:
+        if source not in store.adapters: continue
         command += [flag, str(store.adapters[source].root)]
     command += ['--state-home', str(state_home), '--read-session', meta['id']]
     outline = quote_command(command+['--read-action', 'outline', '--read-through', ref])

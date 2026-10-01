@@ -6,18 +6,22 @@ import time
 from pathlib import Path
 from .codex import Store
 from .base import readonly_db
-from .claude import ClaudeStore
+from .claude import ClaudeStore, ClaudeDesktopStore
 from .antigravity import AntigravityStore
+from .dsh import DshStore
 
-SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code',
-                 'antigravity:desktop': 'Antigravity', 'antigravity:cli': 'Antigravity CLI'}
+SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code CLI',
+                 'antigravity:desktop': 'Antigravity', 'antigravity:cli': 'Antigravity CLI',
+                 'claude:desktop': 'Claude Code Desktop', 'dsh:local': 'DeepSeek Harness'}
 
 class MultiStore:
-    def __init__(self, codex, claude, antigravity, antigravity_cli):
+    def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None):
         self.codex = Store(codex)
         self.adapters = {'codex:local': self.codex, 'claude:local': ClaudeStore(claude),
                          'antigravity:desktop': AntigravityStore(antigravity, 'desktop'),
-                         'antigravity:cli': AntigravityStore(antigravity_cli, 'cli')}
+                         'antigravity:cli': AntigravityStore(antigravity_cli, 'cli'),
+                         'claude:desktop': ClaudeDesktopStore(claude_desktop or claude.parent/'claude-desktop', claude),
+                         'dsh:local': DshStore(dsh or codex.parent/'dsh')}
         self.errors = {}; self.project_overrides = {}; self.disabled = set()
         self.catalogue_time = 0; self.catalogue_rows = []
 
@@ -31,6 +35,15 @@ class MultiStore:
         if time.monotonic()-self.catalogue_time < 3:
             return self.catalogue_rows
         items = []
+        desktop_rows = []
+        if 'claude:desktop' not in self.disabled:
+            try:
+                desktop = self.adapters['claude:desktop']
+                with desktop.lock: desktop_rows = desktop.discover()
+                self.errors.pop('claude:desktop', None)
+            except (OSError, ValueError) as error:
+                self.errors['claude:desktop'] = str(error)
+        self.adapters['claude:local'].desktop_ids = {r['native_id'] for r in desktop_rows if r['transcript_available']}
         for source, adapter in self.adapters.items():
             if source in self.disabled: continue
             try:
@@ -39,9 +52,11 @@ class MultiStore:
                     rows = list(first['items']); next_offset = first['next_offset']
                     while next_offset is not None:
                         page = adapter.sessions(offset=next_offset, limit=100);rows.extend(page['items']);next_offset = page['next_offset']
+                elif source == 'claude:desktop':
+                    rows = desktop_rows
                 else:
                     with adapter.lock: rows = adapter.discover()
-                self.errors.pop(source, None)
+                if source != 'claude:desktop': self.errors.pop(source, None)
                 for row in rows:
                     items.append({**row, 'id': source+':'+row['id'], 'native_id': row.get('native_id', row['id']),
                                   'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': source,
@@ -106,10 +121,10 @@ class MultiStore:
         data = self.adapters[source].trajectory(native, *args, **kwargs)
         qualified = source+':'+native
         if qualified not in self.project_overrides: self.catalogue()
-        row = self.adapters[source].rows.get(native, {}) if source.startswith('antigravity:') else {}
+        row = getattr(self.adapters[source], 'rows', {}).get(native, {})
         return {**data, 'id': qualified, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': source,
                 'instance_id': source.split(':')[1], **self.project_overrides.get(qualified, {}),
-                'unavailable_reason': '此会话只有摘要记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None,
+                'unavailable_reason': row.get('unavailable_reason') or ('此会话只有摘要或索引记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None),
                 'capabilities': {'independent_results': source.split(':')[0] != 'antigravity'}}
 
     def detail(self, key, *args, **kwargs):

@@ -143,7 +143,9 @@ export type Request = <T>(
 ) => Promise<T>;
 export const sourceNames: Record<string, string> = {
   'codex:local': 'Codex',
-  'claude:local': 'Claude Code',
+  'claude:local': 'Claude Code CLI',
+  'claude:desktop': 'Claude Code Desktop',
+  'dsh:local': 'DeepSeek Harness',
   'antigravity:desktop': 'Antigravity',
   'antigravity:cli': 'Antigravity CLI',
 };

@@ -1,6 +1,6 @@
 # Agent Sessions
 
-用于管理本机 Codex、Claude Code、Antigravity、Antigravity CLI 会话的桌面应用与 Skill。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
+用于管理本机 Codex、Claude Code Desktop、Claude Code CLI、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
 
 ## 项目结构
 
@@ -18,7 +18,7 @@ frontend/
   public/                        DSH 样式、图标与第三方许可证
 backend/agent_sessions/
   api/                           本机 HTTP API 与静态资源服务
-  sources/                       Codex / Claude / Antigravity 与目录聚合
+  sources/                       Codex / Claude / Antigravity / DSH 与目录聚合
   context/                       定位、索引、原话、证据、CLI 与续接
   trajectory/                    执行时长投影、折叠摘要与圈选定位
   settings.py                    独立应用设置
@@ -33,7 +33,7 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 前端使用 React、TypeScript、Vite、Tailwind CSS 和 Lucide。React 管理界面与交互，纯投影函数决定聊天正文和折叠摘要；状态层处理版本、请求竞争和分页，组件不读取历史文件。DSH 的 MIT 轨迹样式保留为本地基础样式，应用布局和过渡使用 Tailwind 与相应组件样式。
 
-后台是 Python 包，没有第三方运行依赖。来源适配器将各 Agent 的原生记录映射为稳定引用，HTTP 层负责接口和资源，不混入前端模板。Tauri 管理窗口、常驻菜单、剪贴板和 sidecar 生命周期。构建输出不纳入源码版本控制。
+后台是 Python 包，DSH 压缩日志使用 `zstandard`，依赖固定在 `requirements.txt`。来源适配器将各 Agent 的原生记录映射为稳定引用，HTTP 层负责接口和资源，不混入前端模板。Tauri 管理窗口、常驻菜单、剪贴板和 sidecar 生命周期。构建输出不纳入源码版本控制。
 
 ## 开发
 
@@ -41,17 +41,20 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 ```bash
 npm ci
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 python3 scripts/trajectory_server.py --port 8765
 ```
 
-另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
+Windows 使用 `.venv\Scripts\Activate.ps1` 激活环境。另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
 
 ```bash
 npm run build:ui
 python3 scripts/trajectory_server.py --port 8765
 ```
 
-如果只使用上下文恢复 CLI，无需安装 Node 或构建前端。既有 `scripts/session_context.py` 命令与 `scripts/trajectory_server.py --read-session` 继续可用。所有 Python 内部导入从 `agent_sessions` 包进行，不依赖当前工作目录；兼容入口自行设置包路径。
+如果只使用上下文恢复 CLI，无需安装 Node 或构建前端；Codex 专用恢复不依赖 `zstandard`。既有 `scripts/session_context.py` 命令与 `scripts/trajectory_server.py --read-session` 继续可用。所有 Python 内部导入从 `agent_sessions` 包进行，不依赖当前工作目录；兼容入口自行设置包路径。
 
 ## 校验与桌面打包
 

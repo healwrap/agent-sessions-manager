@@ -21,6 +21,16 @@ def claude_root():
     return Path(os.environ.get('CLAUDE_CONFIG_DIR') or Path.home()/'.claude').expanduser()
 
 
+def claude_desktop_root(platform=None, home=None, environ=None):
+    platform = platform or sys.platform
+    home = home if home is not None else Path.home()
+    env = os.environ if environ is None else environ
+    if platform == 'darwin': base = home/'Library/Application Support'
+    elif platform == 'win32': base = type(home)(env.get('APPDATA') or home/'AppData/Roaming')
+    else: base = type(home)(env.get('XDG_CONFIG_HOME') or home/'.config')
+    return base/'Claude/claude-code-sessions'
+
+
 def file_uri_path(value, platform=None):
     parsed = urlparse(value)
     if parsed.scheme != 'file': return value

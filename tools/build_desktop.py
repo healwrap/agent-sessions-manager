@@ -22,6 +22,7 @@ def main():
         run(sys.executable, '-m', 'venv', ROOT/'.venv-desktop')
     if subprocess.run([str(python), '-c', 'import PyInstaller'], capture_output=True).returncode:
         run(python, '-m', 'pip', 'install', 'pyinstaller==6.22.3')
+    run(python, '-m', 'pip', 'install', '-r', ROOT/'requirements.txt')
     cli = ROOT/('node_modules/.bin/tauri.cmd' if windows else 'node_modules/.bin/tauri')
     npm = shutil.which('npm.cmd' if windows else 'npm') or 'npm'
     if not cli.exists(): run(npm, 'ci')

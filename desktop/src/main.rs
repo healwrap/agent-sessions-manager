@@ -146,7 +146,12 @@ fn main() {
             let restart = MenuItem::with_id(app, "restart", "重启后台", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &pause, &login, &restart, &quit])?;
-            TrayIconBuilder::new().icon(app.default_window_icon().unwrap().clone()).tooltip("Agent Sessions")
+            let tray_icon = if cfg!(target_os = "macos") {
+                tauri::include_image!("./icons/tray.png")
+            } else {
+                app.default_window_icon().unwrap().clone()
+            };
+            TrayIconBuilder::new().icon(tray_icon).icon_as_template(cfg!(target_os = "macos")).tooltip("Agent Sessions")
                 .menu(&menu).on_menu_event(move |app, event| match event.id.as_ref() {
                     "open" => show(app),
                     "pause" => {

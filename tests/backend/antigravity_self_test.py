@@ -24,6 +24,20 @@ def main():
             {'step_index': 9, 'type': 'PLANNER_RESPONSE', 'tool_calls': [{'id': 'native-id', 'name': 'run', 'args': {'command': 'second'}}]},
             {'step_index': 10, 'type': 'GENERIC', 'tool_call_id': 'native-id', 'content': 'NATIVE ORIGINAL'},
         ]
+        def output(path, start=1, end=10):
+            return f'Created At: 2026-09-30T23:04:04+08:00\nCompleted At: 2026-09-30T23:04:08+08:00\nFile Path: `file://{path}`\nTotal Lines: 20\nTotal Bytes: 100\nShowing lines {start} to {end}\nEXACT FILE OUTPUT'
+        rows += [
+            {'step_index': 11, 'type': 'PLANNER_RESPONSE', 'tool_calls': [{'name': 'view_file', 'args': {'AbsolutePath': '/tmp/a file.md', 'EndLine': 10}}, {'name': 'view_file', 'args': {'AbsolutePath': '/tmp/b.md', 'EndLine': 10}}]},
+            {'step_index': 12, 'type': 'GENERIC', 'content': output('/tmp/b.md')},
+            {'step_index': 13, 'type': 'GENERIC', 'content': output('/tmp/a%20file.md')},
+            {'step_index': 14, 'type': 'PLANNER_RESPONSE', 'tool_calls': [{'name': 'view_file', 'args': {'AbsolutePath': '/tmp/same.md', 'EndLine': 10}}, {'name': 'view_file', 'args': {'AbsolutePath': '/tmp/same.md', 'StartLine': 11, 'EndLine': 20}}]},
+            {'step_index': 15, 'type': 'GENERIC', 'content': output('/tmp/same.md', 11, 20)},
+            {'step_index': 16, 'type': 'GENERIC', 'content': output('/tmp/same.md')},
+            {'step_index': 17, 'type': 'PLANNER_RESPONSE', 'tool_calls': [{'name': 'view_file', 'args': {'AbsolutePath': '/tmp/other.md'}}]},
+            {'step_index': 18, 'type': 'GENERIC', 'content': output('/tmp/b.md')},
+            {'step_index': 19, 'type': 'PLANNER_RESPONSE', 'tool_calls': [{'name': 'view_file', 'args': {'AbsolutePath': '/tmp/b.md'}}, {'name': 'view_file', 'args': {'AbsolutePath': '/tmp/b.md'}}]},
+            {'step_index': 20, 'type': 'GENERIC', 'content': output('/tmp/b.md')},
+        ]
         paths = []
         for source in ['desktop', 'cli']:
             path = root/source/'brain/same/.system_generated/logs/transcript_full.jsonl'
@@ -46,6 +60,14 @@ def main():
         assert calls['S/7/C/1']['status'] == 'unmatched'
         assert any(e['ref'] == 'S/6' and e['status'] == 'error' for e in data['events'])
         assert store.detail(key, 'S/9/C/0', part='output')['text'] == 'NATIVE ORIGINAL'
+        assert store.detail(key, 'S/11/C/0', part='output')['text'] == output('/tmp/a%20file.md')
+        assert store.detail(key, 'S/11/C/1', part='output')['text'] == output('/tmp/b.md')
+        assert store.detail(key, 'S/13')['parent_ref'] == 'S/11/C/0'
+        assert store.detail(key, 'S/14/C/0', part='output')['text'] == output('/tmp/same.md')
+        assert store.detail(key, 'S/14/C/1', part='output')['text'] == output('/tmp/same.md', 11, 20)
+        assert not store.detail(key, 'S/17/C/0', part='output')['output_available']
+        assert not store.detail(key, 'S/19/C/0', part='output')['output_available']
+        assert not store.detail(key, 'S/19/C/1', part='output')['output_available']
         assert store.sessions(provider='antigravity:desktop')['total'] == 1
         assert store.sessions(provider='antigravity:cli')['total'] == 1
         assert store.sessions(provider='antigravity')['total'] == 2

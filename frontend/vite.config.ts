@@ -21,5 +21,5 @@ export default defineConfig({
     },
   },
   build: { outDir: 'dist', emptyOutDir: true },
-  test: { include: ['../tests/frontend/**/*.test.ts'] },
+  test: { include: ['../tests/frontend/**/*.test.{ts,tsx}'] },
 });

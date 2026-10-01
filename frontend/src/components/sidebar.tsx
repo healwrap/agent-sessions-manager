@@ -9,6 +9,7 @@ import {
 } from '../lib/selectors';
 import { sourceNames, type Session } from '../lib/types';
 import { Collapse, Icon, IconButton } from './primitives';
+import { StartupContent } from './startup-content';
 export function Sidebar({
   state,
   onManage,
@@ -115,10 +116,22 @@ export function Sidebar({
             />
           </div>
         </Collapse>
-        <nav className="session-list" aria-label="Agent 会话">
+        <nav
+          className="session-list"
+          aria-label="Agent 会话"
+          data-busy={state.catalogueLoading}
+        >
+          {state.initializing && !state.projects.length && (
+            <StartupContent sidebar />
+          )}
+          {state.query && state.catalogueLoading && (
+            <div role="status">正在搜索标题和内容…</div>
+          )}
           {groups.map((group) => {
             const key = group.project_id,
-              open = state.projectOpen.has(key),
+              open =
+                state.projectOpen.has(key) ||
+                (!!state.query && group.items.length > 0),
               expanded = state.projectExpanded.has(key);
             let visible =
               expanded || state.query ? group.items : group.items.slice(0, 5);
@@ -186,6 +199,17 @@ export function Sidebar({
                       个会话
                     </button>
                   )}
+                  {state.query &&
+                    group.count > visible.length &&
+                    state.projectPages[key] !== null && (
+                      <button
+                        className="more-sessions"
+                        disabled={state.projectLoading.has(key)}
+                        onClick={() => void sessionStore.loadProject(key)}
+                      >
+                        更多匹配会话
+                      </button>
+                    )}
                   {expanded && (
                     <>
                       <button

@@ -5,7 +5,7 @@
   "scripts": {
     "desktop:build": "python3 tools/build_desktop.py",
     "dev": "vite --config frontend/vite.config.ts",
-    "build:ui": "tsc --noEmit -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
+    "build:ui": "tsc --noEmit -p frontend/tsconfig.json && node tools/build_ui.mjs",
     "test:ui": "vitest run --config frontend/vite.config.ts",
     "test:backend": "python3 tools/test_backend.py",
     "test": "npm run test:backend && npm run test:ui",

@@ -12,6 +12,7 @@ import { TraceTable } from './components/trace-table';
 import { Timeline } from './components/timeline';
 import { DetailPanel } from './components/detail-panel';
 import { Dialog, Icon, IconButton } from './components/primitives';
+import { StartupContent } from './components/startup-content';
 export function App() {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
@@ -184,11 +185,17 @@ export function App() {
               {state.error}
             </div>
           )}
-          <div className="split" hidden={state.mode !== 'trace'}>
-            <TraceTable state={state} />
-            <DetailPanel state={state} />
-          </div>
-          <ChatPane state={state} />
+          {state.initializing && !view.data ? (
+            <StartupContent />
+          ) : (
+            <div className="session-content session-reveal">
+              <div className="split" hidden={state.mode !== 'trace'}>
+                <TraceTable state={state} />
+                <DetailPanel state={state} />
+              </div>
+              <ChatPane state={state} />
+            </div>
+          )}
           <div className="session-stats">
             {view.data
               ? `${view.data.turn_count} 轮 · ${view.data.event_count} 步 · ${view.data.tool_count} 个工具调用 · ${view.data.provider_label}`

@@ -51,6 +51,8 @@ const emptyPreferences = (): Preferences => ({
   projectAssignments: {},
 });
 export interface AppState {
+  initializing: boolean;
+  catalogueLoading: boolean;
   id: string | null;
   mode: 'trace' | 'chat';
   provider: string;
@@ -91,6 +93,8 @@ export class SessionStore {
   private scrollPositions = { trace: 0, chat: 0 };
   private refreshing = new Set<'trace' | 'chat'>();
   state: AppState = {
+    initializing: true,
+    catalogueLoading: false,
     id: null,
     mode: 'trace',
     provider: '',
@@ -173,6 +177,10 @@ export class SessionStore {
             '{}',
         );
       } catch {}
+      // Start independent catalogue and settings reads together while showing
+      // the pre-rendered shell. Attach a rejection handler immediately.
+      const catalogue = this.api<Catalogue>('/api/sessions');
+      void catalogue.catch(() => {});
       const [preferences, settings] = await Promise.all([
         this.api<{ saved: boolean; value: Preferences }>('/api/preferences'),
         this.api<SettingsResponse>('/api/settings'),
@@ -195,10 +203,12 @@ export class SessionStore {
         ]),
       );
       this.update({ preferences: p, settings: settings.value });
-      await this.loadSessions();
+      await this.loadSessions(true, catalogue);
     } catch (error) {
       this.update({ error: String(error) });
       this.notify(String(error));
+    } finally {
+      this.update({ initializing: false });
     }
   }
   async savePreferences(next: Preferences) {
@@ -214,14 +224,17 @@ export class SessionStore {
       .catch((error) => this.notify(String(error)));
     await this.preferenceSave;
   }
-  async loadSessions(preserve = true) {
+  async loadSessions(preserve = true, pending?: Promise<Catalogue>) {
     const generation = ++this.sessionsGeneration;
     const { query, provider } = this.state;
+    if (this.state.initializing || !preserve)
+      this.update({ catalogueLoading: true });
     try {
-      const data = await this.api<Catalogue>('/api/sessions', {
-        q: query,
-        provider,
-      });
+      const data = await ((pending && !query && !provider ? pending : null) ||
+        this.api<Catalogue>('/api/sessions', {
+          q: query,
+          provider,
+        }));
       if (generation !== this.sessionsGeneration) return;
       const known = new Map(
         (preserve && !query ? this.state.sessions : []).map((item) => [
@@ -250,6 +263,9 @@ export class SessionStore {
       }
     } catch (error) {
       this.notify(String(error));
+    } finally {
+      if (generation === this.sessionsGeneration)
+        this.update({ catalogueLoading: false });
     }
   }
   async loadProject(key: string) {

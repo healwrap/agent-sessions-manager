@@ -11,3 +11,6 @@ desktop/binaries/
 node_modules/
 *.spec
 desktop/gen/
+desktop/loader/assets/
+desktop/loader/icons.svg
+desktop/loader/index.html

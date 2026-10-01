@@ -55,7 +55,6 @@ class Store:
         self.catalogue_mtime = None
         self.catalogue_time = 0
         self.search_matches = {}
-        self.refresh_files()
 
     def refresh_files(self):
         files = {}
@@ -108,7 +107,7 @@ class Store:
         with self.lock:
             index_path = self.root / 'session_index.jsonl'
             current_mtime = index_path.stat().st_mtime_ns if index_path.exists() else None
-            if current_mtime != self.catalogue_mtime or time.monotonic() - self.catalogue_time > 5:
+            if not self.catalogue_time or current_mtime != self.catalogue_mtime or time.monotonic() - self.catalogue_time > 5:
                 self.refresh_files()
                 self.catalogue_mtime = current_mtime
             rows = unique_session_rows(read_session_index(self.root))

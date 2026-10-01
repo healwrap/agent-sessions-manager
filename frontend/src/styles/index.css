@@ -10,6 +10,7 @@
 @import './trajectory.css' layer(components);
 @import './settings.css' layer(components);
 @import './motion.css' layer(components);
+@import './startup.css' layer(components);
 @theme {
   --color-surface: var(--dsw-alias-bg-layer-2);
   --color-muted: var(--dsw-alias-label-tertiary);

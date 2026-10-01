@@ -61,6 +61,6 @@ npm run format:check
 npm run desktop:build
 ```
 
-`test` 运行 Python 和 Vitest 回归；`build:ui` 同时执行 TypeScript 检查。HTTP 资源测试需要先构建 UI。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，输出 App 和 DMG。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
+`test` 运行 Python 和 Vitest 回归；`build:ui` 同时执行 TypeScript 检查，并预渲染启动骨架供 React 水合接管。原生加载页面及资源自动生成在 `desktop/loader`，不手改生成文件。HTTP 资源测试需要先构建 UI。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，按宿主系统生成安装包（Mac app/dmg、Windows NSIS、Linux deb/AppImage）。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
 
 代码格式由 Prettier 管理前端；新增来源放入 `backend/agent_sessions/sources/` 并在聚合器登记。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。

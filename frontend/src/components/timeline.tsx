@@ -45,21 +45,31 @@ export function Timeline({ state }: { state: AppState }) {
     if (!node) return;
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
+      const width = node.clientWidth;
+      if (!width) return;
+      const unit =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width : 1;
+      // Shift wheels can arrive on either axis after the browser's conversion.
+      const horizontal =
+          event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY),
+        delta =
+          (horizontal && Math.abs(event.deltaX) > Math.abs(event.deltaY)
+            ? event.deltaX
+            : event.deltaY) * unit;
+      if (!delta) return;
       sessionStore.cancelFocus();
       const [start, end] = sessionStore.view.viewport || [0, 1],
         size = end - start,
-        ratio =
-          (event.clientX - node.getBoundingClientRect().left) /
-          node.clientWidth;
-      if (event.shiftKey) {
-        const delta = (event.deltaY / node.clientWidth) * size;
+        ratio = (event.clientX - node.getBoundingClientRect().left) / width;
+      if (horizontal) {
+        const offset = (delta / width) * size;
         sessionStore.updateView({
-          viewport: bounded(start + delta, end + delta),
+          viewport: bounded(start + offset, end + offset),
         });
       } else {
         const nextSize = Math.min(
           1,
-          Math.max(0.005, size * Math.exp(event.deltaY * 0.002)),
+          Math.max(0.005, size * Math.exp(delta * 0.002)),
         );
         const nextStart = start + ratio * (size - nextSize);
         sessionStore.updateView({
@@ -85,12 +95,13 @@ export function Timeline({ state }: { state: AppState }) {
         <div
           ref={ref}
           className="TrajectoryTimeline-track"
-          aria-label="时间线概览；拖动选择范围，滚轮缩放，右键拖动平移，双击复原"
+          aria-label="时间线概览；拖动选择范围，滚轮缩放，Shift＋滚轮或按住右键拖动平移，双击取消圈选并保留缩放位置"
+          title="滚轮缩放 · Shift＋滚轮或按住右键拖动平移 · 双击取消圈选"
           data-panning={panning}
           onContextMenu={(event) => event.preventDefault()}
           onDoubleClick={() => {
             sessionStore.cancelFocus();
-            sessionStore.updateView({ range: null, viewport: null });
+            sessionStore.updateView({ range: null });
             setDraft(null);
           }}
           onPointerDown={(event) => {

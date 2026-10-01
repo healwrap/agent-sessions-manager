@@ -32,6 +32,9 @@
   top: calc(7px + var(--trajectory-span-lane) * 14px);
   cursor: pointer;
 }
+.TrajectoryTimeline-track[data-panning='true'] .TrajectoryTimeline-span {
+  cursor: grabbing;
+}
 .timeline-selection {
   position: absolute;
   z-index: 2;

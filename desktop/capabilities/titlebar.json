@@ -1,0 +1,10 @@
+{
+  "identifier": "local-titlebar",
+  "description": "本机查看器顶部支持拖动和双击缩放窗口",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:*/*"] },
+  "permissions": [
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize"
+  ]
+}

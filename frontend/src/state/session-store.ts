@@ -385,10 +385,14 @@ export class SessionStore {
       }
       let events = first.events,
         next = first.next_offset;
+      // A view that already reached the live tail must keep reaching it as
+      // the transcript grows, rather than stopping at its old page length.
+      const refreshTail =
+        mode === 'chat' && !query && offset === undefined && view.next === null;
       while (
         !edge &&
         next !== null &&
-        events.length < Math.max(150, view.events.length)
+        (refreshTail || events.length < Math.max(150, view.events.length))
       ) {
         const page = await get(next);
         if (!valid()) return;
@@ -442,7 +446,7 @@ export class SessionStore {
     if (mode === this.state.mode) return;
     this.focusGeneration++;
     this.update({ mode });
-    if (!this.state.views[mode].data) void this.loadTrace(true);
+    void this.loadTrace(!this.state.views[mode].data);
   }
   async searchTrace(query: string) {
     this.focusGeneration++;

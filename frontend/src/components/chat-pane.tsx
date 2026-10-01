@@ -8,7 +8,15 @@ import { copyText } from '../lib/api';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Collapse, Icon } from './primitives';
 import { Markdown } from './markdown';
-function Message({ event, id }: { event: Event; id: string }) {
+function Message({
+  event,
+  id,
+  revision,
+}: {
+  event: Event;
+  id: string;
+  revision: string | number | null;
+}) {
   const [content, setContent] = useState<{
       detail: Detail;
       text: string;
@@ -38,7 +46,7 @@ function Message({ event, id }: { event: Event; id: string }) {
       current = false;
       observer.disconnect();
     };
-  }, [id, event.ref]);
+  }, [id, event.ref, revision]);
   const shown = requestText(content?.text || event.preview),
     time = Date.parse(event.timestamp);
   const copy = async () => {
@@ -206,6 +214,7 @@ export function ChatPane({ state }: { state: AppState }) {
   useHistoryScroll(ref, view, 'chat', state.mode === 'chat', state.id);
   const replies = chatReplyRefs(view.events, view.next !== null),
     rows = [];
+  const lastReply = Array.from(replies).at(-1);
   let process: Event[] = [];
   const flush = () => {
     if (process.length) {
@@ -217,7 +226,12 @@ export function ChatPane({ state }: { state: AppState }) {
     if (event.kind === 'user' || replies.has(event.ref)) {
       flush();
       rows.push(
-        <Message key={state.id + event.ref} id={state.id!} event={event} />,
+        <Message
+          key={state.id + event.ref}
+          id={state.id!}
+          event={event}
+          revision={event.ref === lastReply ? view.version : null}
+        />,
       );
     } else if (event.name === 'compaction') {
       flush();

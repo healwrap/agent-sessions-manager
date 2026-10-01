@@ -41,6 +41,66 @@ function harness(loaded = true, count = 1) {
   return { store, requests };
 }
 describe('timeline navigation', () => {
+  it('reads new chat records beyond the previously full last page without scrolling', async () => {
+    const events = Array.from({ length: 305 }, (_, position) => ({
+      ...event,
+      position,
+      ref: `A${position}`,
+    }));
+    const store = new SessionStore((async (_, params) => {
+      const start = Number(params?.offset || 0),
+        end = Math.min(start + 150, events.length);
+      return {
+        ...trajectory,
+        events: events.slice(start, end),
+        total: events.length,
+        version: 'new',
+        next_offset: end < events.length ? end : null,
+      };
+    }) as Request);
+    store.update({
+      id: 'session',
+      mode: 'chat',
+      projectClosed: new Set(['project']),
+    });
+    store.updateView({
+      data: trajectory,
+      version: 'old',
+      offset: 100,
+      events: events.slice(100, 250),
+      next: null,
+    });
+    await store.loadTrace();
+    expect(store.view.events).toEqual(events.slice(100));
+    expect(store.view.next).toBeNull();
+    expect(store.view.offset).toBe(100);
+  });
+  it('keeps a paged historical chat window instead of downloading the entire tail', async () => {
+    let requests = 0;
+    const store = new SessionStore((async () => {
+      requests++;
+      return {
+        ...trajectory,
+        events: Array(150).fill(event),
+        version: 'new',
+        next_offset: 150,
+      };
+    }) as Request);
+    store.update({
+      id: 'session',
+      mode: 'chat',
+      projectClosed: new Set(['project']),
+    });
+    store.updateView({
+      data: trajectory,
+      version: 'old',
+      events: Array(150).fill(event),
+      next: 150,
+    });
+    await store.loadTrace();
+    expect(requests).toBe(1);
+    expect(store.view.next).toBe(150);
+  });
   it('remembers separate scroll positions without rerendering subscribers', () => {
     const { store } = harness();
     let updates = 0;

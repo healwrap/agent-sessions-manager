@@ -19,12 +19,14 @@ export function useLiveSync(seconds: number, animations: boolean) {
     const a = setInterval(refresh, seconds * 1000),
       b = setInterval(catalogue, Math.max(15000, seconds * 1000));
     document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
     window.loadTrace = refresh;
     window.loadSessions = catalogue;
     return () => {
       clearInterval(a);
       clearInterval(b);
       document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
       delete window.loadTrace;
       delete window.loadSessions;
     };

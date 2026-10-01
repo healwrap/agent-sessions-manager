@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { usesRecordedDuration } from '../lib/recorded-time';
 import { sessionStore, type AppState } from '../state/session-store';
-import { positionOf } from '../lib/selectors';
+import {
+  timelineRange,
+  nearestTimelineEvent,
+} from '../lib/timeline-projection';
 function bounded(start: number, end: number): [number, number] {
   const size = Math.min(1, Math.max(0.005, end - start)),
     left = Math.max(0, Math.min(1 - size, start));
@@ -12,7 +16,8 @@ export function Timeline({ state }: { state: AppState }) {
     [width, setWidth] = useState(1),
     [draft, setDraft] = useState<[number, number] | null>(null),
     [panning, setPanning] = useState(false),
-    suppress = useRef(false);
+    suppress = useRef(false),
+    hoverLine = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     pointerId: number;
     x: number;
@@ -82,7 +87,13 @@ export function Timeline({ state }: { state: AppState }) {
   }, []);
   const range = draft || view.range,
     events = view.data?.overview || [],
-    total = view.data?.event_count || 1;
+    total = view.data?.event_count || 1,
+    duration = usesRecordedDuration(state.duration, view.data);
+  const turns = new Map<number, number>();
+  for (const event of events) {
+    const start = timelineRange(event, total, duration)[0];
+    turns.set(event.turn, Math.min(turns.get(event.turn) ?? Infinity, start));
+  }
   const left = (value: number) => ((value - viewport[0]) / size) * width;
   return (
     <div className="trajectory-timeline" aria-label="轨迹时间线">
@@ -123,6 +134,11 @@ export function Timeline({ state }: { state: AppState }) {
               event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={(event) => {
+            if (hoverLine.current) {
+              hoverLine.current.style.left =
+                left(position(event.clientX)) + 'px';
+              hoverLine.current.style.opacity = '1';
+            }
             const active = drag.current;
             if (!active || active.pointerId !== event.pointerId) return;
             if (Math.abs(event.clientX - active.x) >= 4) active.moved = true;
@@ -168,6 +184,7 @@ export function Timeline({ state }: { state: AppState }) {
               event.currentTarget.releasePointerCapture(event.pointerId);
           }}
           onPointerLeave={(event) => {
+            if (hoverLine.current) hoverLine.current.style.opacity = '0';
             if (!event.currentTarget.hasPointerCapture(event.pointerId))
               drag.current = null;
           }}
@@ -184,6 +201,21 @@ export function Timeline({ state }: { state: AppState }) {
                 viewport: active.viewport,
               });
           }}
+          onClick={(event) => {
+            if (event.target !== event.currentTarget || event.detail > 1)
+              return;
+            const nearest = nearestTimelineEvent(
+              events,
+              position(event.clientX),
+              total,
+              duration,
+            );
+            if (nearest)
+              void sessionStore.selectEvent(
+                nearest.parent_ref || nearest.ref,
+                true,
+              );
+          }}
           onClickCapture={(event) => {
             if (suppress.current) {
               event.stopPropagation();
@@ -191,6 +223,20 @@ export function Timeline({ state }: { state: AppState }) {
             }
           }}
         >
+          <div ref={hoverLine} className="timeline-hover-line" />
+          {[...turns]
+            .filter(
+              ([, start]) =>
+                start > 0 && start >= viewport[0] && start <= viewport[1],
+            )
+            .map(([turn, start]) => (
+              <div
+                key={turn}
+                className="timeline-turn-boundary"
+                data-turn={turn}
+                style={{ left: left(start) }}
+              />
+            ))}
           {range && (
             <div
               className="timeline-selection"
@@ -201,10 +247,7 @@ export function Timeline({ state }: { state: AppState }) {
             />
           )}
           {events.map((event) => {
-            const start = positionOf(event, total, state.duration),
-              end = state.duration
-                ? (event.timeline_end ?? start)
-                : start + 1 / Math.max(total, 1);
+            const [start, end] = timelineRange(event, total, duration);
             if (end < viewport[0] || start > viewport[1]) return null;
             const execution =
               event.kind === 'context' && event.name === '执行记录';
@@ -220,10 +263,8 @@ export function Timeline({ state }: { state: AppState }) {
                   : execution
                     ? 'tool'
                     : event.kind;
-            const spanWidth = state.duration
-              ? Math.max(2, left(end) - left(start))
-              : 8;
-            const pixelLeft = Math.min(width - spanWidth, left(start));
+            const spanWidth = Math.max(2, left(end) - left(start));
+            const pixelLeft = left(start);
             return (
               <button
                 key={event.ref}
@@ -233,7 +274,8 @@ export function Timeline({ state }: { state: AppState }) {
                     '--trajectory-span-lane': lane,
                     '--trajectory-span-left': pixelLeft + 'px',
                     '--trajectory-span-width': spanWidth + 'px',
-                    '--trajectory-span-gap': state.duration ? '1px' : '0px',
+                    '--trajectory-span-gap':
+                      Math.min(spanWidth * 0.08, 1) + 'px',
                   } as CSSProperties
                 }
                 data-timeline-span={kind}

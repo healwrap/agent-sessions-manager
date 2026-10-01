@@ -4,6 +4,7 @@ import { useSessionStore } from './hooks/use-session-store';
 import { useTheme } from './hooks/use-theme';
 import { useLiveSync } from './hooks/use-live-sync';
 import { useLayoutSlide } from './hooks/use-layout-slide';
+import { durationAvailable, usesRecordedDuration } from './lib/recorded-time';
 import { sessionTitle } from './lib/selectors';
 import { Sidebar } from './components/sidebar';
 import { SettingsDialog } from './components/settings-dialog';
@@ -126,7 +127,16 @@ export function App() {
                 <button
                   className="TrajectoryToolbar-toggle"
                   aria-label="使用实际时长"
-                  aria-pressed={state.duration}
+                  aria-pressed={usesRecordedDuration(
+                    state.duration,
+                    state.views.trace.data,
+                  )}
+                  disabled={!durationAvailable(state.views.trace.data)}
+                  title={
+                    durationAvailable(state.views.trace.data)
+                      ? '按记录的执行时长展示'
+                      : '会话未记录执行时长，按等宽区段展示'
+                  }
                   onClick={() => {
                     sessionStore.cancelFocus();
                     sessionStore.update({ duration: !state.duration });

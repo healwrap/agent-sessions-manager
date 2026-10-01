@@ -134,10 +134,10 @@ def main():
             assert focused['count'] == len([e for e in data['events'] if e['kind'] != 'subtool'])
             assert set(focused['first']) == {'ref', 'position'}  # Navigation never reads evidence.
             tool_event = next(e for e in data['events'] if e['ref'] == 'T001/C001')
-            point = tool_event['position'] / (data['event_count']-1)
+            point = (tool_event['position']+.5) / data['event_count']
             exact = get('/api/trajectory-focus', id=ID, start=point, end=point)
             assert exact['first']['ref'] == 'T001/C001' and exact['count'] == 1
-            assert get('/api/trajectory-focus', id=ID, start=.251, end=.252)['count'] == 0
+            assert get('/api/trajectory-focus', id=ID, start=point+.001, end=point+.002)['first']['ref'] == 'T001/C001'
             time_point = (tool_event['timeline_start']+tool_event['timeline_end'])/2
             assert get('/api/trajectory-focus', id=ID, start=time_point+.01, end=time_point-.01, mode='duration')['first']['ref'] == 'T001/C001'
             assert request('/api/trajectory-focus', {'id': ID, 'start': 'nan', 'end': 1})[0] == 400
@@ -160,7 +160,7 @@ def main():
             assert request('/api/event', {'id': ID, 'ref': 'T001/U01', 'page': 99})[0] == 400
             assert request('/api/event', {'id': ID, 'ref': 'missing'})[0] == 404
             assert request('/api/sessions', method='POST')[0] == 501
-            for path in ['/', '/icons.svg', '/harness-license.txt'] + ['/assets/'+p.name for p in (trajectory.ASSETS/'assets').iterdir()]:
+            for path in ['/', '/icons.svg', '/theme-boot.js', '/harness-license.txt'] + ['/assets/'+p.name for p in (trajectory.ASSETS/'assets').iterdir()]:
                 status, body, headers = request(path)
                 assert status == 200 and len(body) > 10
                 assert headers['Cache-Control'] == 'no-store'
@@ -184,7 +184,7 @@ def main():
             store.refresh_files()
             long_data = get('/api/trajectory', id=long_id)
             middle_position = 601
-            long_focus = get('/api/trajectory-focus', id=long_id, start=middle_position/799, end=middle_position/799)
+            long_focus = get('/api/trajectory-focus', id=long_id, start=(middle_position+.5)/800, end=(middle_position+.5)/800)
             assert long_focus['count'] == 1 and long_focus['first']['position'] == middle_position
             target_page = get('/api/trajectory', id=long_id, offset=600)
             assert any(e['ref'] == long_focus['first']['ref'] for e in target_page['events'])

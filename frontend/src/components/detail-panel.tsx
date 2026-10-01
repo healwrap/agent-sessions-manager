@@ -1,3 +1,4 @@
+import { formatRecordedDuration } from '../lib/recorded-time';
 import { Payload } from './detail/payload';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
@@ -150,12 +151,7 @@ export function DetailPanel({ state }: { state: AppState }) {
                       ['来源', detail.provider_label],
                       ['状态', statusLabels[event!.status] || event!.status],
                       ['引用', event!.ref],
-                      [
-                        '时长',
-                        event!.duration_ms === null
-                          ? '未记录'
-                          : (event!.duration_ms / 1000).toFixed(2) + ' 秒',
-                      ],
+                      ['时长', formatRecordedDuration(event!.duration_ms)],
                     ].map(([key, value]) => (
                       <div key={key}>
                         <dt>{key}</dt>
@@ -217,9 +213,7 @@ export function DetailPanel({ state }: { state: AppState }) {
                   <pre>
                     {event!.timestamp || '未记录时间'}
                     {'\n'}
-                    {event!.duration_ms !== null
-                      ? event!.duration_ms + ' 毫秒'
-                      : '未记录执行时长'}
+                    {formatRecordedDuration(event!.duration_ms, true)}
                   </pre>
                 </div>
               ) : tab === 'Schema' ? (

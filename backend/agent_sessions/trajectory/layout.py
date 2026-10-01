@@ -16,6 +16,7 @@ def layout(events):
     # invented model execution duration.
     spans = []
     for event in events:
+        event.setdefault('duration_ms', None)
         start = timestamp(event.get('timestamp'))
         if start is not None and event['kind'] != 'subtool':
             spans.append((start, start+max(0, event.get('duration_ms') or 0), event))
@@ -73,8 +74,8 @@ def focus(events, start, end, mode):
     matches = []
     for event in events:
         if event['kind'] == 'subtool': continue
-        lo = event['timeline_start'] if mode == 'duration' else event['position']/max(1, len(events)-1)
-        hi = event['timeline_end'] if mode == 'duration' else lo
+        lo = event['timeline_start'] if mode == 'duration' else event['position']/max(1, len(events))
+        hi = event['timeline_end'] if mode == 'duration' else (event['position']+1)/max(1, len(events))
         if lo <= end and hi >= start: matches.append(event)
     metadata = lambda e: {'ref': e['ref'], 'position': e['position']}
     return {'count': len(matches), 'span': matches[-1]['position']-matches[0]['position']+1 if matches else 0,

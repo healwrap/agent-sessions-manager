@@ -1,6 +1,8 @@
+import { usesRecordedDuration } from '../lib/recorded-time';
 import { useRef } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
-import { trajectoryRows, positionOf } from '../lib/selectors';
+import { timelineRange } from '../lib/timeline-projection';
+import { trajectoryRows } from '../lib/selectors';
 import { kindLabels, statusLabels } from '../lib/types';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Icon } from './primitives';
@@ -76,16 +78,13 @@ export function TraceTable({ state }: { state: AppState }) {
               '消息',
               'systemNeutral',
             ];
-            const start = positionOf(
+            const [start, end] = timelineRange(
               event,
               view.data?.event_count || 1,
-              state.duration,
+              usesRecordedDuration(state.duration, view.data),
             );
             const outside =
-              view.range &&
-              ((state.duration ? (event.timeline_end ?? start) : start) <
-                view.range[0] ||
-                start > view.range[1]);
+              view.range && (end < view.range[0] || start > view.range[1]);
             const select = () => void sessionStore.selectEvent(event.ref);
             return (
               <tr

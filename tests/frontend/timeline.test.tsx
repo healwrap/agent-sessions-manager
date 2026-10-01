@@ -64,7 +64,9 @@ function trackHarness(state = new SessionStore().state) {
     handlers.onClickCapture({ stopPropagation });
     return stopPropagation;
   };
-  const marker = handlers.children[1][0] as ReactElement<{
+  const marker = handlers.children[
+    handlers.children.length - 1
+  ][0] as ReactElement<{
     onClick: () => void;
   }>;
   return { handlers, node, pointer, click, marker, wheel, cleanups };

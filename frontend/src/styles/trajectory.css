@@ -171,8 +171,8 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background: var(--dsw-alias-label-tertiary);
+  width: 2px;
+  background: var(--dsw-alias-state-business-primary);
   opacity: 0;
   pointer-events: none;
   z-index: 3;

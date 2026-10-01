@@ -1,3 +1,4 @@
+import { usesRecordedDuration } from '../lib/recorded-time';
 import type { SessionStore } from './session-store';
 import type { Event, Detail, FocusResult } from '../lib/types';
 export function updateAddress(store: SessionStore, ref?: string) {
@@ -60,7 +61,7 @@ export function createNavigation(store: SessionStore) {
     store.updateView({ range });
     const token = ++focusGeneration,
       id = store.state.id,
-      duration = store.state.duration;
+      duration = usesRecordedDuration(store.state.duration, store.view.data);
     const current = () =>
       token === focusGeneration &&
       id === store.state.id &&

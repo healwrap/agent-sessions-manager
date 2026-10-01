@@ -35,6 +35,10 @@ def main():
         assert s.detail(c,calls[0]['ref'],part='output')['text']=='FIRST'
         assert s.detail(c,calls[1]['ref'],part='output')['text']=='SECOND token=exact'
         assert s.trajectory(c,0,150,'深处检索词')['total']==1
+        assert s.sessions(query='深处检索词')['items'][0]['id'] == c
+        assert s.sessions(query='原始回答')['items'][0]['id'] == a
+        assert s.sessions(query='HIDDEN-REASONING')['total'] == 0
+        assert s.sessions(query='深处检索词', provider='antigravity:desktop')['total'] == 0
         assert not any('HIDDEN' in e['preview'] for e in t['events'])
         at=s.trajectory(a);ac=next(e for e in at['events'] if e['kind']=='tool')
         assert not s.detail(a,ac['ref'],part='output')['output_available']
@@ -52,6 +56,8 @@ def main():
         assert s.trajectory(c)['event_count']==t['event_count']+1
         path.write_text(path.read_text().replace(json.dumps('新增记录'),json.dumps('更新记录')))
         assert s.trajectory(c)['events'][-1]['preview']=='更新记录'
+        assert s.sessions(query='更新记录')['total'] == 1
+        assert s.sessions(query='新增记录')['total'] == 0
         # Summary-only Antigravity sessions remain visible with an honest empty state.
         summary=sqlite3.connect(agy/'conversation_summaries.db')
         summary.execute('create table conversation_summaries(conversation_id,title,workspace_uris,last_modified_time,status,parent_conversation_id)')

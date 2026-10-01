@@ -62,6 +62,10 @@ class HistoryStore(Store):
         self.rows = {}
         self.indexes = {}
         self.search_full = False
+        self.search_matches = {}
+
+    def message_search_text(self, data, record):
+        return self.body(read_row(data['source'], record['offset']), record)
 
     def trajectory(self, key, offset=0, limit=150, query='', kind='all'):
         with self.lock:

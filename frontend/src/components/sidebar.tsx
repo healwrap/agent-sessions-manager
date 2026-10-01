@@ -108,8 +108,8 @@ export function Sidebar({
           <div className="session-search">
             <input
               type="search"
-              placeholder="搜索会话名称"
-              aria-label="搜索会话名称"
+              placeholder="搜索会话标题或内容"
+              aria-label="搜索会话标题或内容"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />

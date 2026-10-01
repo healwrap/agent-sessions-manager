@@ -72,8 +72,16 @@ class MultiStore:
 
     def sessions(self, query='', offset=0, limit=30, project_id='', provider=''):
         rows = self.catalogue()
-        selected = [r for r in rows if (not provider or r['provider'] == provider or r['source_id'] == provider) and
-                    (not query or query.casefold() in (r['title']+' '+r['project_label']).casefold())]
+        aliases = self.settings.read()['value'].get('aliases', {}) if hasattr(self, 'settings') else {}
+        selected = []
+        for row in rows:
+            if provider and row['provider'] != provider and row['source_id'] != provider: continue
+            if query and query.casefold() not in (row['title']+' '+row['project_label']+' '+aliases.get(row['id'], '')).casefold():
+                try:
+                    if not self.adapters[row['source_id']].matches_content(row['id'].split(':', 2)[2], query): continue
+                except (OSError, ValueError):
+                    continue
+            selected.append({**row, 'search_query': query} if query else row)
         projects = {}
         for row in selected:
             group = projects.setdefault(row['project_id'], {k: row[k] for k in ('project_id', 'project_label', 'project_path', 'project_source')})

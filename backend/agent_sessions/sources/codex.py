@@ -54,6 +54,7 @@ class Store:
         self.project_version = None
         self.catalogue_mtime = None
         self.catalogue_time = 0
+        self.search_matches = {}
         self.refresh_files()
 
     def refresh_files(self):
@@ -206,6 +207,29 @@ class Store:
             self.loaded[key] = (version, value)
             return value
 
+    def message_search_text(self, data, record):
+        return record.get('text', '')
+
+    def matches_content(self, key, query):
+        """Search visible dialogue only; keep just a versioned boolean cache."""
+        with self.lock:
+            path = self.files.get(key)
+            if path is None: return False
+            stat = path.stat()
+            version = (stat.st_size, stat.st_mtime_ns, query.casefold())
+            cached = self.search_matches.get(key)
+            if cached and cached[0] == version: return cached[1]
+            already_loaded = key in self.loaded
+            try:
+                data = self.session(key)
+                result = any(query.casefold() in self.message_search_text(data, data['lookup'][e['ref']][1]).casefold()
+                             for e in data['events'] if e['kind'] in ('user', 'assistant'))
+                self.search_matches[key] = (version, result)
+                return result
+            finally:
+                # Searching hundreds of sessions must not retain all their bodies.
+                if not already_loaded: self.loaded.pop(key, None)
+
     def trajectory(self, key, offset=0, limit=150, query='', kind='all'):
         with self.lock:
             data = self.session(key)
@@ -320,5 +344,3 @@ class Store:
                     'parent_ref': record['parent']['ref'] if category == 'nested' else None,
                     'parent_output_available': bool(record['parent'].get('output')) if category == 'nested' else None,
                     'input_truncated': category == 'nested' and record.get('input_chars', 0) > len(text) and part == 'input'}
-
-

@@ -224,7 +224,10 @@ export class SessionStore {
       });
       if (generation !== this.sessionsGeneration) return;
       const known = new Map(
-        (preserve ? this.state.sessions : []).map((item) => [item.id, item]),
+        (preserve && !query ? this.state.sessions : []).map((item) => [
+          item.id,
+          item,
+        ]),
       );
       for (const item of data.items) known.set(item.id, item);
       this.update({

@@ -6,6 +6,7 @@ export interface Project {
   count: number;
 }
 export interface Session extends Project {
+  search_query?: string;
   id: string;
   title: string;
   updated_at: string;

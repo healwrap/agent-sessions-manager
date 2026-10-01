@@ -51,6 +51,7 @@ export function projectGroups(
       (provider && sourceId(item) !== provider && item.provider !== provider) ||
       p.archived.includes(item.id) !== archive ||
       (query &&
+        item.search_query !== query &&
         !`${sessionTitle(item, p)} ${item.project_label}`
           .toLowerCase()
           .includes(query.toLowerCase()))

@@ -4,6 +4,7 @@ import {
   sourceId,
   requestText,
   trajectoryRows,
+  projectGroups,
 } from '../../frontend/src/lib/selectors';
 import type { Event, Session, Trajectory } from '../../frontend/src/lib/types';
 const message = (
@@ -56,6 +57,29 @@ describe('visible chat replies', () => {
     ).toEqual(['stopped']));
 });
 describe('provider and fold projection', () => {
+  it('retains a server content match even when the title does not contain the query', () => {
+    const item = {
+      id: 'claude:local:project/session',
+      title: '无关标题',
+      search_query: '正文词',
+      project_id: 'project',
+      project_label: '项目',
+      updated_at: '',
+    } as Session;
+    const preferences = {
+      pinned: [],
+      archived: [],
+      aliases: {},
+      metadata: {},
+      projectAssignments: {},
+    };
+    expect(
+      projectGroups([item], [], preferences, '', '正文词', false)[0].items,
+    ).toEqual([item]);
+    expect(
+      projectGroups([item], [], preferences, '', '另一个词', false),
+    ).toEqual([]);
+  });
   it('keeps desktop and CLI separate', () => {
     expect(sourceId({ id: 'antigravity:desktop:same' } as Session)).toBe(
       'antigravity:desktop',

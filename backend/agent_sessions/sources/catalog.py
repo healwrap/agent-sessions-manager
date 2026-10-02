@@ -5,7 +5,7 @@ import sqlite3
 import time
 from .codex import Store
 from .base import readonly_db
-from .claude import ClaudeStore, ClaudeDesktopStore
+from .claude import ClaudeDesktopStore
 from .antigravity import AntigravityStore
 from .dsh import DshStore
 
@@ -16,22 +16,24 @@ SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code CLI',
 class MultiStore:
     def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None):
         self.codex = Store(codex)
-        self.adapters = {'codex:local': self.codex, 'claude:local': ClaudeStore(claude),
+        desktop = ClaudeDesktopStore(claude_desktop or claude.parent/'claude-desktop', claude)
+        self.adapters = {'codex:local': self.codex, 'claude:local': desktop.shared,
                          'antigravity:desktop': AntigravityStore(antigravity, 'desktop'),
                          'antigravity:cli': AntigravityStore(antigravity_cli, 'cli'),
-                         'claude:desktop': ClaudeDesktopStore(claude_desktop or claude.parent/'claude-desktop', claude),
+                         'claude:desktop': desktop,
                          'dsh:local': DshStore(dsh or codex.parent/'dsh')}
         self.errors = {}; self.project_overrides = {}; self.disabled = set()
         self.catalogue_time = 0; self.catalogue_rows = []
 
     def sources(self):
         return {'items': [{'id': key, 'provider': key.split(':')[0], 'label': SOURCE_LABELS[key],
-                           'instance': key.split(':')[1], 'enabled': key not in self.disabled, 'path': str(a.root), 'available': a.root.exists(),
+                           'instance': key.split(':')[1], 'enabled': key not in self.disabled, 'path': str(a.root),
+                           'available': a.available() if key == 'claude:desktop' else a.root.exists(),
                            'error': self.errors.get(key), 'independent_results': key.split(':')[0] != 'antigravity'}
                           for key, a in self.adapters.items()]}
 
     def catalogue(self):
-        if time.monotonic()-self.catalogue_time < 3:
+        if self.catalogue_time and time.monotonic()-self.catalogue_time < 3:
             return self.catalogue_rows
         items = []
         desktop_rows = []
@@ -42,7 +44,7 @@ class MultiStore:
                 self.errors.pop('claude:desktop', None)
             except (OSError, ValueError) as error:
                 self.errors['claude:desktop'] = str(error)
-        self.adapters['claude:local'].desktop_ids = {r['native_id'] for r in desktop_rows if r['transcript_available']}
+        self.adapters['claude:local'].desktop_keys = {r['transcript_key'] for r in desktop_rows if r['transcript_available']}
         for source, adapter in self.adapters.items():
             if source in self.disabled: continue
             try:

@@ -9,10 +9,12 @@ from agent_sessions.context.text import compact_line
 from .codex import elapsed
 from .base import HistoryStore, as_text
 
+DESKTOP_ENTRYPOINTS = ('claude-desktop', 'claude-desktop-3p')
+
 class ClaudeStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'claude', 'local')
-        self.desktop_ids = set()
+        self.desktop_keys = set()
 
     def discover(self):
         self.files = {str(p.relative_to(self.root/'projects')).removesuffix('.jsonl'): p
@@ -27,15 +29,17 @@ class ClaudeStore(HistoryStore):
             self.rows[key] = {'id': key, 'native_id': native, 'title': title or first or path.stem,
                               'cwd': cwd, 'updated_at': datetime.fromtimestamp(path.stat().st_mtime).astimezone().isoformat(),
                               'is_subagent': '/subagents/' in '/'+key,
+                              'desktop_origin': any(r.get('entrypoint') in DESKTOP_ENTRYPOINTS for _, _, r in index['rows']),
                               **self.project(key, cwd)}
         self.rows = {k: v for k, v in self.rows.items() if k in self.files}
-        return [row for row in self.rows.values() if row['native_id'] not in self.desktop_ids]
+        return [row for row in self.rows.values() if row['id'] not in self.desktop_keys]
 
     def metadata(self, row):
         msg = row.get('message') or {}
         content = msg.get('content', []) if isinstance(msg, dict) else ''
         result = {'type': row.get('type'), 'uuid': row.get('uuid'), 'parent': row.get('parentUuid'),
                   'timestamp': row.get('timestamp'), 'cwd': row.get('cwd'), 'session_id': row.get('sessionId'),
+                  'entrypoint': row.get('entrypoint'),
                   'title': row.get('customTitle'), 'leaf': row.get('leafUuid'), 'sidechain': row.get('isSidechain'),
                   'role': row.get('type'), 'preview': compact_line(as_text(content), 420), 'blocks': []}
         for number, block in enumerate(content if isinstance(content, list) else []):
@@ -114,18 +118,27 @@ class ClaudeStore(HistoryStore):
 
 
 class ClaudeDesktopStore(ClaudeStore):
-    """Desktop's account/org session index points to shared CLI transcripts."""
+    """Desktop index or explicit transcript origin identifies shared histories."""
     def __init__(self, root, transcripts):
         super().__init__(root)
         self.instance = 'desktop'
         self.transcripts = transcripts.expanduser().resolve()
+        self.shared = ClaudeStore(self.transcripts)
+
+    def available(self):
+        return self.root.is_dir() or (self.transcripts/'projects').is_dir()
 
     def discover(self):
         files = {}; rows = {}
         paths = list(self.root.glob('*/*/*.json')) + list(self.root.glob('*.json'))
         by_id = {}
-        for transcript in (self.transcripts/'projects').glob('*/**/*.jsonl'):
+        with self.shared.lock:
+            self.shared.discover()
+            shared_rows = list(self.shared.rows.values())
+            shared_files = dict(self.shared.files)
+        for transcript in shared_files.values():
             by_id.setdefault(transcript.stem, []).append(transcript)
+        represented = set()
         for path in paths:
             if path.stat().st_size > 10*1024*1024: continue
             try: item = json.loads(path.read_text(encoding='utf-8'))
@@ -136,6 +149,7 @@ class ClaudeDesktopStore(ClaudeStore):
             matches = by_id.get(native, [])
             direct = self.transcripts/'projects'/re.sub(r'[^a-zA-Z0-9]', '-', item['cwd'])/(str(native)+'.jsonl')
             transcript = direct if direct in matches else matches[0] if len(matches) == 1 else None
+            if transcript: represented.add(transcript)
             files[key] = transcript or path
             cwd = item.get('originCwd') or item['cwd']
             title = item.get('title') or item.get('name') or '(无标题)'
@@ -143,8 +157,16 @@ class ClaudeDesktopStore(ClaudeStore):
             if isinstance(updated, (int, float)): updated = datetime.fromtimestamp(updated/1000).astimezone().isoformat()
             rows[key] = {'id': key, 'native_id': native or item['sessionId'], 'title': title, 'cwd': cwd,
                          'updated_at': str(updated), 'transcript_available': transcript is not None,
+                         'transcript_key': str(transcript.relative_to(self.transcripts/'projects')).removesuffix('.jsonl') if transcript else None,
                          'unavailable_reason': '找到多份同 ID 正文，且无法确认桌面会话目录。' if len(matches) > 1 and transcript is None else None,
                          **self.project(key, cwd)}
+        for row in shared_rows:
+            transcript = shared_files[row['id']]
+            if not row['desktop_origin'] or transcript in represented: continue
+            key = 'transcript/'+row['id']
+            files[key] = transcript
+            rows[key] = {**row, 'id': key, 'transcript_key': row['id'],
+                         'transcript_available': True, 'unavailable_reason': None}
         self.files, self.rows = files, rows
         return list(rows.values())
 
@@ -152,6 +174,12 @@ class ClaudeDesktopStore(ClaudeStore):
         with self.lock:
             self.discover()
             row = self.rows.get(key)
+            # Preserve a marker-based link after an independent desktop index appears.
+            if row is None and key.startswith('transcript/'):
+                relative = key.removeprefix('transcript/')
+                with self.shared.lock:
+                    if self.shared.rows.get(relative, {}).get('desktop_origin'):
+                        return self.shared.session(relative)
             if row and not row['transcript_available']:
                 stat = self.files[key].stat()
                 return {'source': self.files[key], 'events': [], 'lookup': {}, 'turns': [],

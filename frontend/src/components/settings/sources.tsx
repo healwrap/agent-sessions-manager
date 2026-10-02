@@ -62,12 +62,14 @@ export function SourceSettings({
                   (!source?.enabled
                     ? '已停用'
                     : source?.available
-                      ? '目录可用'
+                      ? key === 'claude:desktop'
+                        ? '本地会话来源可用'
+                        : '目录可用'
                       : '目录不存在')}
               {key.startsWith('antigravity')
                 ? ' · 读取本地导出的记录'
                 : key === 'claude:desktop'
-                  ? ' · 桌面会话索引，正文从 CLI 目录读取'
+                  ? ' · 读取桌面索引或带桌面来源标记的共享正文'
                   : key === 'dsh:local'
                     ? ' · 支持 JSONL 与 Zstandard 压缩日志'
                     : ''}

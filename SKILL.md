@@ -14,7 +14,7 @@ description: 管理 Codex、Claude Code Desktop / CLI、Antigravity Desktop / CL
 - 用户要续接其他 Agent 的会话：对话消息旁的剪贴板箭头图标复制本地读取指令；或用 `scripts/trajectory_server.py --read-session 来源会话ID --read-action outline`。按目录里的引用读取 `--read-action message --read-ref 引用`；工具结果使用 `--read-action evidence --read-ref 引用 --read-query 查询词`。`--read-page` 分页，`--read-through` 限定续接位置。目标 Agent 需能访问同一台电脑的文件。
 - 用户要调整或打包应用：项目组织与开发命令见 [README.md](README.md)，桌面运行和打包见 [references/desktop-app.md](references/desktop-app.md)。
 
-Codex 专用恢复入口只读 Codex；其他来源使用统一读取入口。来源键为 `provider:instance:native-key`；Claude 与 Antigravity 的桌面端和 CLI 分开。Claude 桌面索引指向共享 CLI 正文，按索引归属展示；DSH 支持本地 JSONL 与 Zstandard 日志。目录配置与格式边界见 [references/desktop-app.md](references/desktop-app.md)。旧 Codex UUID 与消息深链接仍兼容。
+Codex 专用恢复入口只读 Codex；其他来源使用统一读取入口。来源键为 `provider:instance:native-key`；Claude 与 Antigravity 的桌面端和 CLI 分开。Claude 按桌面索引或共享正文中的明确桌面来源标记识别归属；没有独立索引目录也能读取带标记的桌面对话。DSH 支持本地 JSONL 与 Zstandard 日志。目录配置与格式边界见 [references/desktop-app.md](references/desktop-app.md)。旧 Codex UUID 与消息深链接仍兼容。
 
 ## 读取边界
 

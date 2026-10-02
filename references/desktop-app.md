@@ -17,8 +17,8 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 | 来源 | 当前读取能力 | 边界 |
 | --- | --- | --- |
 | Codex Desktop / CLI | 可见对话、调用、按需结果、媒体引用、压缩位置 | 保留既有引用与深链接；隐藏推理、系统载荷不展示。 |
-| Claude Code CLI | 原生 UUID 消息、当前分支、工具参数与结果 | 按 `parentUuid` 追踪当前分支；仅原生调用 ID 唯一配对时提供独立结果。桌面索引明确归属的正文在桌面来源展示，旧 CLI 深链接仍可读取。附件渲染尚未实现。 |
-| Claude Code Desktop | 独立桌面列表、标题、项目，以及共享正文的消息、分支和工具轨迹 | 按 `claude-code-sessions/<account>/<org>/*.json` 的 `cliSessionId` 定位 CLI 目录中的正文。不读取 Chat 或 Cowork 缓存；只有桌面索引、没有本地正文的会话显示空态。当前本机没有桌面 Code 会话记录，归属、工具和路径适配通过受控 fixture 验证。 |
+| Claude Code CLI | 原生 UUID 消息、当前分支、工具参数与结果 | 按 `parentUuid` 追踪当前分支；仅原生调用 ID 唯一配对时提供独立结果。桌面索引或原生来源标记明确归属的正文在桌面来源展示；按具体正文文件区分归属，保留其他目录中同 ID 的 CLI 会话，旧 CLI 深链接仍可读取。附件渲染尚未实现。 |
+| Claude Code Desktop | 独立桌面列表、标题、项目，以及共享正文的消息、分支和工具轨迹 | 按 `claude-code-sessions/<account>/<org>/*.json` 的 `cliSessionId`，或 `~/.claude/projects` 正文中明确的 `entrypoint: claude-desktop / claude-desktop-3p` 识别。独立索引优先、按具体文件去重；无索引时保留原生标题，否则用第一条用户原话作为标题。不读取 Chat 或 Cowork 缓存；只有索引、没有本地正文时显示空态。本机已验证带 `claude-desktop-3p` 标记的真实对话可读；来源、工具、追加和路径适配另通过 fixture 验证。 |
 | DeepSeek Harness | 项目列表、可见对话、工作过程、原生工具参数与结果、轮次与压缩标记 | 读取 `~/.dsh/sessions/*/*/session[.vN].jsonl[.zstd]`。选择最高一代日志，支持 v0 至 v4 及连续 Zstandard 帧；未来版本显示不可用，不静默退回旧日志。按轮次、步骤、调用 ID 唯一配对；未关联结果保留独立记录。临时解压只写应用缓存，来源不修改。 |
 | Antigravity 桌面 / CLI | 会话摘要、可见正文、调用参数、执行记录、错误 | 两个实例保留独立键；按步骤最新快照读取。结果按唯一原生调用 ID，或连续执行块中完全一致的 search_web 查询、view_file 文件路径与行范围关联；支持同一步并行读不同文件和同文件不同范围，不按结果顺序猜测。缺少关联依据的执行输出单独展示。只有摘要的会话保留在列表，说明未保存 transcript。未解析二进制步骤载荷，不宣称完整工具结果支持。 |
 
@@ -28,7 +28,7 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 
 侧栏底部“设置”支持六个来源的数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。升级时保留原四个来源的自定义路径和开关，补充新增默认项。
 
-Claude Code CLI 默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~/.claude`。Claude 桌面会话索引默认目录：macOS 为 `~/Library/Application Support/Claude/claude-code-sessions`，Windows 为 `%APPDATA%/Claude/claude-code-sessions`，Linux 为 `$XDG_CONFIG_HOME/Claude/claude-code-sessions` 或 `~/.config/Claude/claude-code-sessions`。桌面索引目录与 CLI 正文目录在设置中分别配置；桌面与 CLI 可以续接同一份正文，因此不能仅按文件夹名称猜测来源。[Claude 官方说明](https://code.claude.com/docs/en/desktop#coming-from-the-cli)。DSH 默认根目录为 `~/.dsh`。
+Claude Code CLI 默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~/.claude`。Claude 桌面会话索引默认目录：macOS 为 `~/Library/Application Support/Claude/claude-code-sessions`，Windows 为 `%APPDATA%/Claude/claude-code-sessions`，Linux 为 `$XDG_CONFIG_HOME/Claude/claude-code-sessions` 或 `~/.config/Claude/claude-code-sessions`。桌面索引目录与 CLI 正文目录在设置中分别配置；索引目录不存在时仍检查配置的 Claude Code CLI 正文目录，以明确的桌面入口标记识别会话，不要求手动创建目录或搬动正文。桌面与 CLI 可以续接同一份正文，因此不能仅按文件夹名称猜测来源。[Claude 官方说明](https://code.claude.com/docs/en/desktop#coming-from-the-cli)。DSH 默认根目录为 `~/.dsh`。
 
 对话消息旁的剪贴板箭头图标复制本地只读指令。目标 Agent 在同一台电脑、有文件读取权限时，可执行应用自带的读取程序，按目录和引用恢复到所选消息。指令包含来源路径、会话 ID、续接位置、分页及证据读取方法；历史授权不继承。云端 Agent 不能直接访问本机文件。本功能恢复可见上下文，不搬运原 Agent 的隐藏运行状态。
 

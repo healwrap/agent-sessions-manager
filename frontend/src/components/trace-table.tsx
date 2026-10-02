@@ -20,6 +20,19 @@ export function TraceTable({ state }: { state: AppState }) {
     state.foldCalls,
     state.expandedCalls,
   );
+  const requestBoundaries = new Map<number, string>();
+  if (view.data?.provider_label === 'DeepSeek Harness') {
+    for (const event of view.data.overview || view.events) {
+      if (
+        event.request_number == null ||
+        requestBoundaries.has(event.request_number) ||
+        (['user', 'context'].includes(event.kind) &&
+          event.name !== '上下文压缩')
+      )
+        continue;
+      requestBoundaries.set(event.request_number, event.ref);
+    }
+  }
   let previousTurn: number | null = null;
   return (
     <section
@@ -110,9 +123,9 @@ export function TraceTable({ state }: { state: AppState }) {
               >
                 <td className="event">
                   {view.data?.provider_label === 'DeepSeek Harness' &&
-                    (event.kind === 'assistant' ||
-                      event.name === '上下文压缩') &&
-                    event.request_number != null && (
+                    event.request_number != null &&
+                    requestBoundaries.get(event.request_number) ===
+                      event.ref && (
                       <button
                         type="button"
                         className={

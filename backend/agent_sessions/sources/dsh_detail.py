@@ -80,10 +80,14 @@ def enrich_detail(store, key, result):
                               item['line'] <= event['line']), None)
             parent = assistant['ref'] if assistant else None
         fields['hierarchy_parent_ref'] = parent
-    if event['kind'] == 'assistant':
-        related = [item for item in data['events'] if (item['turn'], item.get('step')) == (event['turn'], event.get('step'))]
+    if event.get('request_number') is not None:
+        related = [item for item in data['events'] if (item['turn'], item.get('step')) ==
+                   (event['turn'], event.get('step'))]
         fields['request_tool_calls'] = sum(item['kind'] == 'tool' for item in related)
         fields['request_subtool_calls'] = sum(item['kind'] == 'subtool' for item in related)
+        assistant_result = next((item for item in related if item['kind'] == 'assistant'), None)
+        fields['request_result_ref'] = event['ref'] if event['name'] == '上下文压缩' else assistant_result['ref'] if assistant_result else None
+    if event['kind'] == 'assistant':
         blocks = blocks_at(store, data, loc)
         fields['tool_calls'] = tool_shortcuts(data, event, blocks)
         # Separate disclosures preserve original text without creating two rail cells.

@@ -145,12 +145,12 @@ def events(rows):
     ledger.sort(key=lambda e: e['line'])
     cumulative_usage = {}
     for event in ledger:
-        if event.get('request_number') is None or not (event['kind'] == 'assistant' or event['name'] == '上下文压缩'):
-            continue
-        for name, value in (event.get('usage') or {}).items():
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                cumulative_usage[name] = cumulative_usage.get(name, 0) + value
-        event['request_cumulative_usage'] = dict(cumulative_usage)
+        if event.get('request_number') is not None:
+            if event['kind'] == 'assistant' or event['name'] == '上下文压缩':
+                for name, value in (event.get('usage') or {}).items():
+                    if isinstance(value, (int, float)) and not isinstance(value, bool):
+                        cumulative_usage[name] = cumulative_usage.get(name, 0) + value
+            event['request_cumulative_usage'] = dict(cumulative_usage)
     for number, state in turns.items():
         last = next((e for e in reversed(ledger) if e['turn'] == number and e['kind'] in ('tool', 'assistant')), None)
         if state['status'] == 'completed' and last and last['kind'] == 'assistant' and last['phase'] not in ('reasoning', 'tool_calls'): last['phase'] = 'final_answer'

@@ -77,6 +77,9 @@ with tempfile.TemporaryDirectory() as directory:
     assert related['request_number'] == 1
     assert store.detail('project/native', 'E/5')['request_tool_calls'] == 1
     assert store.detail('project/native', 'E/5')['request_subtool_calls'] == 1
+    assert store.detail('project/native', 'E/6')['request_result_ref'] == 'E/5'
+    assert store.detail('project/native', 'E/16')['request_tool_calls'] == 1
+    assert store.detail('project/native', 'E/16')['request_result_ref'] is None
     assert len([e for e in view['events'] if e['kind'] == 'assistant' and e['step'] == 2]) == 1
     call = next(e for e in view['events'] if e['ref'] == 'E/6')
     assert call['duration_ms'] == 43 and call['output_preview'] == 'original result token=value'
@@ -146,6 +149,7 @@ with tempfile.TemporaryDirectory() as directory:
     compaction = store.detail('project/lifecycle','E/7')
     assert compaction['text']=='original summary' and compaction['event']['duration_ms']==1000
     assert compaction['event']['request_number'] == 2
+    assert compaction['request_result_ref'] == 'E/7'
     assert compaction['event']['request_cumulative_usage']['outputTokens'] == 5
     assert compaction['event']['model']=='summary-model' and trace['compactions']==1
 print('DSH lifecycle self-test: ok (retry belongs to model step, first attempt token retained, compaction summary and timing)')

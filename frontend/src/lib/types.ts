@@ -135,6 +135,7 @@ export interface Detail {
   retries?: Record<string, unknown>[];
   request_tool_calls?: number;
   request_subtool_calls?: number;
+  request_result_ref?: string | null;
   hierarchy_parent_ref?: string | null;
   event: Event;
   text: string;

@@ -61,6 +61,12 @@ export function RequestContent({
   const event = detail.event;
   const compaction = event.name === '上下文压缩';
   const options = detail.request_config;
+  const provider =
+    event.model_provider ||
+    (typeof options?.provider === 'string' ? options.provider : undefined);
+  const model =
+    event.model ||
+    (typeof options?.model === 'string' ? options.model : undefined);
   if (tab === '选项')
     return (
       <div className="detail-content">
@@ -97,16 +103,16 @@ export function RequestContent({
             <dd>压缩</dd>
           </div>
         )}
-        {event.model_provider && (
+        {provider && (
           <div>
             <dt>提供方</dt>
-            <dd>{event.model_provider}</dd>
+            <dd>{provider}</dd>
           </div>
         )}
-        {event.model && (
+        {model && (
           <div>
             <dt>模型</dt>
-            <dd>{event.model}</dd>
+            <dd>{model}</dd>
           </div>
         )}
         <div>
@@ -119,19 +125,25 @@ export function RequestContent({
             <dd>{detail.request_subtool_calls}</dd>
           </div>
         )}
-        <div>
-          <dt>结果</dt>
-          <dd>
-            <button
-              className="detail-source-link"
-              onClick={() =>
-                void sessionStore.selectEvent(event.ref, false, false)
-              }
-            >
-              {compaction ? '压缩后上下文' : '助手消息'} ›
-            </button>
-          </dd>
-        </div>
+        {detail.request_result_ref && (
+          <div>
+            <dt>结果</dt>
+            <dd>
+              <button
+                className="detail-source-link"
+                onClick={() =>
+                  void sessionStore.selectEvent(
+                    detail.request_result_ref!,
+                    false,
+                    false,
+                  )
+                }
+              >
+                {compaction ? '压缩后上下文' : '助手消息'} ›
+              </button>
+            </dd>
+          </div>
+        )}
       </dl>
       <div className="overview-sections">
         {options && (

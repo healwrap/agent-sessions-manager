@@ -221,6 +221,7 @@ describe('DSH detail and list parity', () => {
   it('keeps compaction request boundaries and purpose visible', () => {
     const compacted = {
       ...detail,
+      request_result_ref: 'E/361',
       event: {
         ...event,
         kind: 'context',
@@ -242,6 +243,22 @@ describe('DSH detail and list parity', () => {
     );
     expect(overview).toContain('用途');
     expect(overview).toContain('压缩后上下文');
+    const toolOnly = {
+      ...detail,
+      request_result_ref: null,
+      request_tool_calls: 1,
+      request_config: { provider: 'test-provider', model: 'test-model' },
+      event: { ...event, request_number: 3 },
+    } as Detail;
+    state.views.trace.events = [toolOnly.event];
+    const toolRow = renderToString(<TraceTable state={state} />);
+    expect(toolRow).toContain('请求 #3');
+    const toolRequest = renderToString(
+      <RequestContent detail={toolOnly} tab="概述" change={() => {}} />,
+    );
+    expect(toolRequest).toContain('test-provider');
+    expect(toolRequest).toContain('test-model');
+    expect(toolRequest).not.toContain('助手消息');
   });
   it('keeps visible thinking in a disclosure within the assistant record', () => {
     const html = renderToString(

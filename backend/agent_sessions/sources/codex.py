@@ -245,8 +245,7 @@ class Store:
                         continue
                     label = event['name']+' '+event['ref']+' '+event['preview']
                     record_type, record = data['lookup'][event['ref']]
-                    if record_type == 'message':
-                        label += ' '+record['text']
+                    label += ' '+self.trajectory_search_text(data, event, record_type, record)
                     if query.casefold() in label.casefold():
                         selected.append(event)
             overview = []
@@ -279,6 +278,9 @@ class Store:
                     'warnings': meta.get('unrecognized_record_types') or {},
                     'source_size': data['index'].get('source_size', 0),
                     'version': data['index'].get('source_mtime_ns')}
+
+    def trajectory_search_text(self, data, event, record_type, record):
+        return record.get('text', '') if record_type == 'message' else ''
 
     def focus(self, key, start, end, mode='position'):
         """Resolve against the full ledger, without reading message/tool bodies."""

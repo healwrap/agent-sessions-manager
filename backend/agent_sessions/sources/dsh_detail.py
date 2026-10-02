@@ -1,5 +1,6 @@
 """Historical tool definitions and content-addressed Harness attachments."""
 import hashlib
+import json
 import re
 from .base import read_row, as_text
 from agent_sessions.context.text import compact_line
@@ -30,6 +31,30 @@ def tool_shortcuts(data, event, blocks):
         shortcuts.append({'ref': matches[0]['ref'] if len(matches) == 1 else None,
                           'name': block.get('name') or '工具', 'preview': compact_line(as_text(block.get('arguments')), 420)})
     return shortcuts
+
+
+def source_blocks(blocks, shortcuts=()):
+    """Keep the source block order used by the native raw-content inspector."""
+    result = []; call_index = 0
+    for block in blocks:
+        if not isinstance(block, dict):
+            result.append({'type': 'unknown', 'content': json.dumps(block, ensure_ascii=False, indent=2)})
+            continue
+        kind = block.get('type', 'unknown')
+        if kind in ('text', 'reasoning') and isinstance(block.get('text'), str):
+            result.append({'type': 'thinking' if kind == 'reasoning' else kind, 'content': block['text']})
+        elif kind == 'tool-call':
+            args = block.get('arguments', '')
+            shortcut = shortcuts[call_index] if call_index < len(shortcuts) else None
+            call_index += 1
+            result.append({'type': kind, 'content': args if isinstance(args, str) else json.dumps(args, ensure_ascii=False, indent=2),
+                           'ref': shortcut.get('ref') if shortcut else None})
+        else:
+            entry = {'type': kind, 'content': json.dumps(block, ensure_ascii=False, indent=2)}
+            if kind in ('image', 'file') and isinstance(block.get('attachment'), dict):
+                entry['attachment'] = block['attachment']
+            result.append(entry)
+    return result
 
 
 def prompt_snapshot(source, system, header):
@@ -87,6 +112,14 @@ def enrich_detail(store, key, result):
         fields['request_subtool_calls'] = sum(item['kind'] == 'subtool' for item in related)
         assistant_result = next((item for item in related if item['kind'] == 'assistant'), None)
         fields['request_result_ref'] = event['ref'] if event['name'] == '上下文压缩' else assistant_result['ref'] if assistant_result else None
+        if loc.get('retries'):
+            retry = read_row(data['source'], loc['retries'][-1]['offset']).get('data', {})
+            failure = retry.get('failure') or {}
+            fields['request_retry'] = retry.get('retry')
+            fields['request_max_retries'] = retry.get('maxRetries') if retry.get('mode') == 'normal' else None
+            fields['request_retry_delay_ms'] = retry.get('delayMs')
+            fields['request_error'] = failure.get('message') if isinstance(failure, dict) else str(failure)
+            fields['request_error_code'] = failure.get('code') if isinstance(failure, dict) else None
     if event['kind'] == 'assistant':
         blocks = blocks_at(store, data, loc)
         fields['tool_calls'] = tool_shortcuts(data, event, blocks)
@@ -97,6 +130,11 @@ def enrich_detail(store, key, result):
         output_start = len(thinking)+2 if thinking and output else 0
         fields['output_text'] = output[max(0, start-output_start):max(0, end-output_start)]
         fields['retries'] = [read_row(data['source'], r['offset']).get('data', {}) for r in loc.get('retries', [])]
+    if result['part'] == 'raw' and event['kind'] in ('user', 'assistant', 'context'):
+        blocks = blocks_at(store, data, loc)
+        if blocks:
+            fields['source_blocks'] = source_blocks(blocks, fields.get('tool_calls', ()))
+            fields['pages'] = 1
     return {**result, **fields}
 
 

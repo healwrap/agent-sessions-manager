@@ -4,6 +4,7 @@ import { Payload } from './payload';
 import { Markdown } from '../markdown';
 import { sessionStore } from '../../state/session-store';
 import { Icon } from '../primitives';
+import { SourceBlocks } from './source-blocks';
 
 export function AttachmentList({ detail, id }: { detail: Detail; id: string }) {
   return (
@@ -61,7 +62,12 @@ export function RecordContent({
   preview?: boolean;
 }) {
   const [thinkingExpanded, setThinkingExpanded] = useState(true);
-  if (raw) return <Payload text={detail.text} raw />;
+  if (raw)
+    return detail.source_blocks?.length ? (
+      <SourceBlocks detail={detail} />
+    ) : (
+      <Payload text={detail.text} raw />
+    );
   const assistant =
     detail.event.kind === 'assistant' && detail.thinking_text != null;
   return (

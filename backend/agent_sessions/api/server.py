@@ -63,7 +63,7 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.store.trajectory(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 150, 1, 250), get('q'), get('kind', 'all'))
             elif parsed.path == '/api/event':
                 part = get('part', 'input')
-                if part not in {'input', 'output'}:
+                if part not in {'input', 'output'} and not (part == 'raw' and get('id').startswith('dsh:')):
                     raise ValueError('内容类型无效')
                 result = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
             elif parsed.path == '/api/attachment':

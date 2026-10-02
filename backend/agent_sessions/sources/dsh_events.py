@@ -134,6 +134,8 @@ def events(rows):
     for event in ledger:
         if event['kind'] in ('tool', 'subtool') and (event['turn'], event['step']) in request_numbers:
             event['request_number'] = request_numbers[(event['turn'], event['step'])]
+        if event.get('request_number') is not None and (event['turn'], event['step']) in retries:
+            lookup[event['ref']][1]['retries'] = list(retries[(event['turn'], event['step'])])
         if event['kind'] in ('tool', 'subtool') and event['status'] == 'pending':
             end = boundaries.get((event['turn'], event['step'])) or boundaries.get((event['turn'], None))
             if end:

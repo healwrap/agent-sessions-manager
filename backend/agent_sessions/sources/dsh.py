@@ -10,10 +10,10 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from agent_sessions.context.text import compact_line
-from .base import HistoryStore, as_text
+from .base import HistoryStore, as_text, read_row
 from .dsh_metadata import metadata, content
 from .dsh_events import events
-from .dsh_detail import enrich_detail, attachment_bytes
+from .dsh_detail import enrich_detail, attachment_bytes, blocks_at
 
 
 @contextmanager
@@ -141,6 +141,24 @@ class DshStore(HistoryStore):
     def detail(self, key, *args, **kwargs):
         result = super().detail(key, *args, **kwargs)
         return enrich_detail(self, key, result)
+
+    def trajectory_search_text(self, data, event, record_type, location):
+        source = data['source']
+        row = read_row(source, location['offset'])
+        values = [self.body(row, location)]
+        if location.get('output'):
+            output = location['output']
+            values.append(self.body(read_row(source, output['offset']), output))
+        if event['kind'] in ('user', 'assistant', 'context'):
+            message = row.get('data', {}).get('message', row.get('data', {}))
+            if isinstance(message, dict):
+                values.append(json.dumps(message.get('source'), ensure_ascii=False))
+            values.extend(json.dumps(block, ensure_ascii=False) for block in blocks_at(self, data, location))
+        if event['kind'] in ('tool', 'subtool') and location.get('header'):
+            header = read_row(source, location['header']['offset']).get('data', {}).get('header', {})
+            values.extend(json.dumps(tool, ensure_ascii=False) for tool in header.get('tools', [])
+                          if tool.get('name') == event['name'])
+        return ' '.join(values)
 
     def attachment(self, key, ref, index, part='output'):
         return attachment_bytes(self, key, ref, index, part)

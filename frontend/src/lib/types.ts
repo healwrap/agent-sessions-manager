@@ -121,12 +121,19 @@ export interface Attachment {
   bytes: number;
   name?: string;
 }
+export interface SourceBlock {
+  type: string;
+  content: string;
+  ref?: string | null;
+  attachment?: Attachment;
+}
 export interface Detail {
   part?: string;
   message_source?: unknown;
   prompt_snapshot?: PromptSnapshot;
   previous_prompt_snapshot?: PromptSnapshot;
   attachments?: Attachment[];
+  source_blocks?: SourceBlock[];
   tool_schema?: { name: string; description?: string; parameters: unknown };
   request_config?: Record<string, unknown>;
   thinking_text?: string;
@@ -136,6 +143,11 @@ export interface Detail {
   request_tool_calls?: number;
   request_subtool_calls?: number;
   request_result_ref?: string | null;
+  request_error?: string | null;
+  request_error_code?: string | null;
+  request_retry?: number | null;
+  request_max_retries?: number | null;
+  request_retry_delay_ms?: number | null;
   hierarchy_parent_ref?: string | null;
   event: Event;
   text: string;

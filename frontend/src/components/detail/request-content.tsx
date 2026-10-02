@@ -4,6 +4,7 @@ import { sessionStore } from '../../state/session-store';
 import { OverviewSection } from './overview-section';
 import { Payload } from './payload';
 import { RecordTiming } from './record-timing';
+import { formatRecordedDuration } from '../../lib/recorded-time';
 
 function Usage({ usage }: { usage?: Record<string, number> }) {
   if (!usage) return <p className="metadata-note">未记录用量。</p>;
@@ -123,6 +124,33 @@ export function RequestContent({
           <div>
             <dt>子工具调用</dt>
             <dd>{detail.request_subtool_calls}</dd>
+          </div>
+        )}
+        {detail.request_error && (
+          <div>
+            <dt>错误</dt>
+            <dd title={detail.request_error}>
+              {detail.request_error_code === 'AUTH'
+                ? '身份验证失败'
+                : detail.request_error}
+            </dd>
+          </div>
+        )}
+        {detail.request_retry != null && (
+          <div>
+            <dt>重试</dt>
+            <dd>
+              已计划 {detail.request_retry}
+              {detail.request_max_retries != null
+                ? `/${detail.request_max_retries}`
+                : ''}
+            </dd>
+          </div>
+        )}
+        {detail.request_retry_delay_ms != null && (
+          <div>
+            <dt>重试延迟</dt>
+            <dd>{formatRecordedDuration(detail.request_retry_delay_ms)}</dd>
           </div>
         )}
         {detail.request_result_ref && (

@@ -69,13 +69,19 @@ export function DetailPanel({ state }: { state: AppState }) {
   useEffect(() => {
     if (!view.detailsOpen || !view.selected || !state.id) return;
     let current = true;
+    const part =
+      tab === '结果'
+        ? 'output'
+        : tab === '原始内容' && view.data?.provider_label === 'DeepSeek Harness'
+          ? 'raw'
+          : 'input';
     setError('');
     setOutput(null);
     void sessionStore
       .api<Detail>('/api/event', {
         id: state.id,
         ref: view.selected,
-        part: tab === '结果' ? 'output' : 'input',
+        part,
         page,
       })
       .then(async (data) => {
@@ -95,7 +101,15 @@ export function DetailPanel({ state }: { state: AppState }) {
     return () => {
       current = false;
     };
-  }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
+  }, [
+    state.id,
+    view.selected,
+    view.detailsOpen,
+    tab,
+    page,
+    view.version,
+    view.data?.provider_label,
+  ]);
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
     requestOpen = view.requestOpen && detail?.event.request_number != null,
     tabs = requestOpen
@@ -108,10 +122,13 @@ export function DetailPanel({ state }: { state: AppState }) {
   };
   const event = detail?.event,
     [label, color] = eventLabel(event),
-    loaded =
-      detail &&
-      detail.part === (tab === '结果' ? 'output' : 'input') &&
-      detail.page === page;
+    loadedPart =
+      tab === '结果'
+        ? 'output'
+        : tab === '原始内容' && view.data?.provider_label === 'DeepSeek Harness'
+          ? 'raw'
+          : 'input',
+    loaded = detail && detail.part === loadedPart && detail.page === page;
   return (
     <div
       className="detail-slot"

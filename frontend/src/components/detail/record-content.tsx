@@ -88,7 +88,9 @@ export function RecordContent({
             </div>
           )}
           {detail.output_text && <Markdown text={detail.output_text} />}
-          {!detail.thinking_text && !detail.output_text && <p>{detail.text}</p>}
+          {!detail.thinking_text &&
+            !detail.output_text &&
+            !detail.tool_calls?.length && <p>{detail.text}</p>}
           {!!detail.tool_calls?.length && (
             <ul className="assistant-tool-calls">
               {detail.tool_calls.map((call, index) => (

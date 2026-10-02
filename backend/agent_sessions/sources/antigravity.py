@@ -5,7 +5,7 @@ import re
 import sqlite3
 from collections import Counter
 from datetime import datetime
-from agent_sessions.sources.codex import elapsed
+from .common import elapsed
 from agent_sessions.context.text import compact_line
 from agent_sessions.paths import file_uri_path
 from .base import HistoryStore, readonly_db, as_text
@@ -114,6 +114,7 @@ class AntigravityStore(HistoryStore):
                 typ = 'user' if kind == 'USER_INPUT' else 'assistant' if kind == 'PLANNER_RESPONSE' else 'context'
                 ref = 'S/'+step
                 event = {'ref': ref, 'turn': max(1, turn), 'kind': typ,
+                         'record_type': 'execution_result' if typ == 'context' else typ+'_message',
                          'name': '用户' if typ == 'user' else '助手' if typ == 'assistant' else '执行记录',
                          'preview': visible, 'timestamp': r['timestamp'], 'status': 'error' if r['error'] or kind == 'ERROR_MESSAGE' else status,
                          'line': line, 'turn_status': 'completed', 'phase': None, 'native_id': r['step'], 'duration_ms': None}
@@ -127,7 +128,9 @@ class AntigravityStore(HistoryStore):
                                'preview': call['preview'], 'timestamp': result_meta.get('execution_start') or r['timestamp'],
                                'status': ('error' if result_meta.get('error') or result_meta.get('execution_error') or result_meta.get('status') == 'ERROR' or result_meta.get('type') == 'ERROR_MESSAGE' else 'completed') if result else 'unmatched',
                                'line': line, 'turn_status': 'completed', 'duration_ms': elapsed(result_meta.get('execution_start'), result_meta.get('execution_end')),
-                               'result_note': None if result else '原始记录没有可验证的结果关联，执行记录单独展示。'})
+                               'output_preview': result_meta.get('preview') if result else None,
+                               'completed_at': result_meta.get('execution_end'),
+                               'record_type': 'tool_call', 'result_note': None if result else '原始记录没有可验证的结果关联，执行记录单独展示。'})
                 lookup[ref] = ('call', {'offset': offset, 'line': line, 'call': call['number'], 'part': 'args', 'output': output})
             if kind not in ('USER_INPUT', 'PLANNER_RESPONSE', 'GENERIC', 'ERROR_MESSAGE', 'SYSTEM_MESSAGE'):
                 warnings[kind or 'unknown'] += 1

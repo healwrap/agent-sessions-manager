@@ -1,6 +1,6 @@
 """Read Cursor Agent/Composer histories directly without exporting or rewriting."""
 from .base import HistoryStore
-from .codex import PAGE_CHARS
+from .common import PAGE_CHARS
 from .cursor_events import events
 from .cursor_storage import body, catalogue, conversation, database, fingerprint, workspace
 
@@ -55,7 +55,7 @@ class CursorStore(HistoryStore):
                 row['unavailable_reason'] = '此 Cursor 会话只有索引，或本地消息已缺失，当前没有可读取的对话。'
             else:
                 row.pop('unavailable_reason', None)
-            data = {'source': path, 'events': visible, 'lookup': lookup, 'turns': turns,
+            data = {'key': key, 'source': path, 'events': visible, 'lookup': lookup, 'turns': turns,
                     'index': {'meta': {'title': row['title'], 'cwd': row['cwd'], 'unrecognized_record_types': warnings},
                               'source_size': path.stat().st_size, 'source_mtime_ns': version}}
             # A few open histories may be cached; never retain all search bodies.
@@ -75,6 +75,11 @@ class CursorStore(HistoryStore):
             self.search_matches[key] = version, result
             self.loaded.pop(key, None)
             return result
+
+    def trajectory_search_text(self, data, event, record_type, record):
+        with database(data['source']) as db:
+            table = self.rows[data['key']]['_table']
+            return body(db, table, record, 'input')+' '+(body(db, table, record, 'output') if record['output_available'] else '')
 
     def detail(self, key, ref, page=1, part='input'):
         with self.lock:

@@ -1,3 +1,4 @@
+import { recordType } from '../../lib/record-presentation';
 import type { Detail } from '../../lib/types';
 import { statusLabels } from '../../lib/types';
 import { formatRecordedDuration } from '../../lib/recorded-time';
@@ -22,7 +23,7 @@ function sourceLabel(source: unknown) {
     : '未知';
 }
 
-export function DshRecordOverview({
+export function RecordOverview({
   detail,
   output,
   id,
@@ -35,11 +36,11 @@ export function DshRecordOverview({
 }) {
   const event = detail.event;
   const tool = event.kind === 'tool' || event.kind === 'subtool';
-  const compaction = event.name === '上下文压缩';
+  const compaction = recordType(event) === 'compaction';
   return (
     <>
       <dl className="overview">
-        {detail.message_source !== undefined && (
+        {(detail.message_source !== undefined || !tool) && (
           <div>
             <dt>来源</dt>
             <dd>
@@ -47,12 +48,15 @@ export function DshRecordOverview({
                 className="detail-source-link"
                 onClick={() => change('来源')}
               >
-                {sourceLabel(detail.message_source)} ›
+                {detail.message_source === undefined
+                  ? detail.provider_label
+                  : sourceLabel(detail.message_source)}{' '}
+                ›
               </button>
             </dd>
           </div>
         )}
-        {detail.hierarchy_parent_ref && (
+        {(detail.hierarchy_parent_ref || detail.parent_ref) && (
           <div>
             <dt>层级</dt>
             <dd>
@@ -60,7 +64,7 @@ export function DshRecordOverview({
                 className="detail-source-link"
                 onClick={() =>
                   void sessionStore.selectEvent(
-                    detail.hierarchy_parent_ref!,
+                    (detail.hierarchy_parent_ref || detail.parent_ref)!,
                     true,
                   )
                 }
@@ -109,6 +113,30 @@ export function DshRecordOverview({
                   )}
                 </OverviewSection>
               )}
+              {!detail.output_available &&
+                (event.result_note ||
+                  event.status === 'aborted' ||
+                  detail.parent_ref) && (
+                  <p className="metadata-note">
+                    {event.result_note ||
+                      (event.status === 'aborted'
+                        ? '调用已中止，未保存执行结果。'
+                        : '此调用没有独立关联的结果。')}
+                    {detail.parent_ref && (
+                      <button
+                        className="nested-link"
+                        onClick={() =>
+                          void sessionStore.selectEvent(
+                            detail.parent_ref!,
+                            true,
+                          )
+                        }
+                      >
+                        查看组合调用结果 ›
+                      </button>
+                    )}
+                  </p>
+                )}
               <OverviewSection label="Schema" onOpen={() => change('Schema')}>
                 <ToolSchema detail={detail} preview />
               </OverviewSection>
@@ -121,6 +149,15 @@ export function DshRecordOverview({
               <RecordContent detail={detail} id={id} preview />
             </OverviewSection>
           )}
+          {detail.nested?.map((item) => (
+            <button
+              key={item.ref}
+              className="nested-link"
+              onClick={() => void sessionStore.selectEvent(item.ref, true)}
+            >
+              {item.name} · {item.ref} ›
+            </button>
+          ))}
         </div>
       )}
     </>

@@ -6,48 +6,9 @@ import { eventLabel } from '../lib/event-presentation';
 import { IconButton } from './primitives';
 import { RequestContent } from './detail/request-content';
 
-export function detailTabs(detail: Detail | null): string[] {
-  const tool = detail && ['tool', 'subtool'].includes(detail.event.kind);
-  const dsh = detail?.provider_label === 'DeepSeek Harness';
-  if (dsh && detail?.prompt_snapshot) {
-    const tabs = [
-      ...(detail.previous_prompt_snapshot ? ['差异'] : []),
-      '系统提示词',
-      ...(detail.prompt_snapshot.tools === null ? [] : ['工具']),
-    ];
-    return tabs;
-  }
-  if (tool)
-    return dsh
-      ? [
-          '概述',
-          ...(detail.text ? ['参数'] : []),
-          ...(detail.output_available ? ['结果'] : []),
-          'Schema',
-          '计时',
-        ]
-      : ['概述', '参数', '结果', 'Schema', '计时', '来源'];
-  if (dsh && detail?.event.name === '上下文压缩') return ['概述', '原始内容'];
-  if (dsh && detail?.event.kind === 'assistant')
-    return ['概述', '预览', '原始内容'];
-  if (dsh)
-    return [
-      '概述',
-      '预览',
-      '原始内容',
-      ...(detail?.message_source === undefined ? [] : ['来源']),
-    ];
-  return detail?.event.kind === 'assistant'
-    ? [
-        '概述',
-        '预览',
-        '原始内容',
-        ...(detail.request_config ? ['请求配置'] : []),
-        '计时',
-        '来源',
-      ]
-    : ['概述', '预览', '原始内容', '来源'];
-}
+export { detailTabs } from './detail/detail-tabs';
+import { detailTabs } from './detail/detail-tabs';
+import { recordType } from '../lib/record-presentation';
 
 export function DetailPanel({ state }: { state: AppState }) {
   const view = state.views.trace,
@@ -70,11 +31,7 @@ export function DetailPanel({ state }: { state: AppState }) {
     if (!view.detailsOpen || !view.selected || !state.id) return;
     let current = true;
     const part =
-      tab === '结果'
-        ? 'output'
-        : tab === '原始内容' && view.data?.provider_label === 'DeepSeek Harness'
-          ? 'raw'
-          : 'input';
+      tab === '结果' ? 'output' : tab === '原始内容' ? 'raw' : 'input';
     setError('');
     setOutput(null);
     void sessionStore
@@ -101,15 +58,7 @@ export function DetailPanel({ state }: { state: AppState }) {
     return () => {
       current = false;
     };
-  }, [
-    state.id,
-    view.selected,
-    view.detailsOpen,
-    tab,
-    page,
-    view.version,
-    view.data?.provider_label,
-  ]);
+  }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
     requestOpen = view.requestOpen && detail?.event.request_number != null,
     tabs = requestOpen
@@ -123,11 +72,7 @@ export function DetailPanel({ state }: { state: AppState }) {
   const event = detail?.event,
     [label, color] = eventLabel(event),
     loadedPart =
-      tab === '结果'
-        ? 'output'
-        : tab === '原始内容' && view.data?.provider_label === 'DeepSeek Harness'
-          ? 'raw'
-          : 'input',
+      tab === '结果' ? 'output' : tab === '原始内容' ? 'raw' : 'input',
     loaded = detail && detail.part === loadedPart && detail.page === page;
   return (
     <div
@@ -193,7 +138,7 @@ export function DetailPanel({ state }: { state: AppState }) {
             {requestOpen ? (
               <span className="detailsLocation">
                 请求 #{event?.request_number}
-                {event?.name === '上下文压缩' ? ' · 压缩' : ''}
+                {event && recordType(event) === 'compaction' ? ' · 压缩' : ''}
               </span>
             ) : (
               <>
@@ -234,8 +179,8 @@ export function DetailPanel({ state }: { state: AppState }) {
             activeTab === '概述' &&
             (tool ||
               requestOpen ||
-              (detail?.provider_label === 'DeepSeek Harness' &&
-                event?.name !== '上下文压缩' &&
+              (detail &&
+                recordType(detail.event) !== 'compaction' &&
                 !detail.prompt_snapshot))
           }
         >

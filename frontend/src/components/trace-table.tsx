@@ -1,3 +1,4 @@
+import { recordType } from '../lib/record-presentation';
 import { usesRecordedDuration } from '../lib/recorded-time';
 import { useRef } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
@@ -21,13 +22,13 @@ export function TraceTable({ state }: { state: AppState }) {
     state.expandedCalls,
   );
   const requestBoundaries = new Map<number, string>();
-  if (view.data?.provider_label === 'DeepSeek Harness') {
-    for (const event of view.data.overview || view.events) {
+  {
+    for (const event of view.data?.overview || view.events) {
       if (
         event.request_number == null ||
         requestBoundaries.has(event.request_number) ||
         (['user', 'context'].includes(event.kind) &&
-          event.name !== '上下文压缩')
+          recordType(event) !== 'compaction')
       )
         continue;
       requestBoundaries.set(event.request_number, event.ref);
@@ -49,10 +50,9 @@ export function TraceTable({ state }: { state: AppState }) {
         <tbody>
           {rows.map((event) => {
             const initialSystem =
-              view.data?.provider_label === 'DeepSeek Harness' &&
+              !('summaryType' in event) &&
               previousTurn === null &&
-              event.kind === 'context' &&
-              event.name === '系统提示词';
+              recordType(event) === 'system_prompt';
             const first = !initialSystem && previousTurn !== event.turn;
             if (!initialSystem) previousTurn = event.turn;
             if ('summaryType' in event) {
@@ -92,7 +92,7 @@ export function TraceTable({ state }: { state: AppState }) {
             }
             const selected = event.ref === view.selected,
               tool = ['tool', 'subtool'].includes(event.kind),
-              execution = event.kind === 'context' && event.name === '执行记录';
+              execution = recordType(event) === 'execution_result';
             const [label, color] = eventLabel(event);
             const [start, end] = timelineRange(
               event,
@@ -122,8 +122,7 @@ export function TraceTable({ state }: { state: AppState }) {
                 }}
               >
                 <td className="event">
-                  {view.data?.provider_label === 'DeepSeek Harness' &&
-                    event.request_number != null &&
+                  {event.request_number != null &&
                     requestBoundaries.get(event.request_number) ===
                       event.ref && (
                       <button
@@ -134,9 +133,9 @@ export function TraceTable({ state }: { state: AppState }) {
                             ? ' requestBoundaryControlActive'
                             : '')
                         }
-                        aria-label={`请求 #${event.request_number}${event.name === '上下文压缩' ? ' · 压缩' : ''}`}
+                        aria-label={`请求 #${event.request_number}${recordType(event) === 'compaction' ? ' · 压缩' : ''}`}
                         aria-pressed={selected && view.requestOpen}
-                        data-label={`请求 #${event.request_number}${event.name === '上下文压缩' ? ' · 压缩' : ''}`}
+                        data-label={`请求 #${event.request_number}${recordType(event) === 'compaction' ? ' · 压缩' : ''}`}
                         data-request-status={event.status}
                         onClick={(e) => {
                           e.stopPropagation();

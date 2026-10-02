@@ -6,7 +6,7 @@ import tempfile
 import threading
 import shutil
 from pathlib import Path
-from agent_sessions.sources.codex import Store, PAGE_CHARS
+from .common import TrajectoryStore, PAGE_CHARS
 
 def as_text(value):
     if isinstance(value, str):
@@ -52,7 +52,7 @@ def readonly_db(path):
     raise OSError('会话数据库正在写入，请稍后重试')
 
 
-class HistoryStore(Store):
+class HistoryStore(TrajectoryStore):
     def __init__(self, root, provider, instance):
         self.root = root.expanduser().resolve()
         self.provider, self.instance = provider, instance
@@ -67,13 +67,13 @@ class HistoryStore(Store):
     def message_search_text(self, data, record):
         return self.body(read_row(data['source'], record['offset']), record)
 
-    def trajectory(self, key, offset=0, limit=150, query='', kind='all'):
-        with self.lock:
-            self.search_full = bool(query)
-            try:
-                return super().trajectory(key, offset, limit, query, kind)
-            finally:
-                self.search_full = False
+    def trajectory_search_text(self, data, event, record_type, record):
+        if record.get('alias'): return ''
+        values = [self.body(read_row(data['source'], record['offset']), record)]
+        if record.get('output'):
+            output = record['output']
+            values.append(self.body(read_row(data['source'], output['offset']), output))
+        return ' '.join(values)
 
     def project(self, key, cwd=None):
         cwd = cwd or self.rows.get(key, {}).get('cwd') or ''
@@ -137,10 +137,6 @@ class HistoryStore(Store):
             index = self.index(key)
             row = self.rows[key]
             events, lookup, turns, warnings = self.events(index['rows'])
-            if self.search_full:
-                for category, location in lookup.values():
-                    if category == 'message' and not location.get('alias'):
-                        location['text'] = self.body(read_row(self.files[key], location['offset']), location)
             for position, event in enumerate(events):
                 event['position'] = position
             return {'source': self.files[key], 'events': events, 'lookup': lookup, 'turns': turns,
@@ -169,7 +165,8 @@ class HistoryStore(Store):
                     'output_available': bool(record.get('output')), 'source': str(data['source']),
                     'line': location['line'] if location else event['line'], 'thread_id': key,
                     'nested': [], 'shared_output': False, 'parent_ref': None,
-                    'input_truncated': False, 'parent_output_available': False}
+                    'input_truncated': False, 'parent_output_available': False,
+                    'hierarchy_parent_ref': event.get('parent_ref')}
 
     def body(self, row, location):
         raise NotImplementedError

@@ -186,13 +186,13 @@
   cursor: default;
 }
 
-.dsh-assistant-preview {
+.message-preview {
   padding: 8px 14px 14px;
   color: var(--dsw-alias-label-primary);
   font: var(--dsw-font-xs-13);
 }
 
-.dsh-assistant-preview .thinking-disclosure {
+.message-preview .thinking-disclosure {
   border-left: 0;
   padding-left: 0;
 }

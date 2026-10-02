@@ -22,6 +22,9 @@ export interface Source {
   available: boolean;
   enabled: boolean;
   error?: string;
+  api_version?: number;
+  capabilities?: Record<string, boolean>;
+  paths?: { key: string; label: string; hint: string }[];
 }
 export type ThemePreference = 'light' | 'dark' | 'system';
 export interface Settings {
@@ -42,6 +45,7 @@ export interface Event {
   ref: string;
   turn: number;
   kind: string;
+  record_type?: string;
   name: string;
   preview: string;
   status: string;
@@ -90,6 +94,7 @@ export interface CallGroup {
   anchor_ref: string | null;
 }
 export interface Trajectory {
+  capabilities?: Record<string, boolean>;
   id: string;
   provider: string;
   provider_label: string;
@@ -125,7 +130,7 @@ export interface SourceBlock {
   type: string;
   content: string;
   ref?: string | null;
-  attachment?: Attachment;
+  attachment?: Omit<Attachment, 'index'>;
 }
 export interface Detail {
   part?: string;

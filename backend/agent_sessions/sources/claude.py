@@ -6,8 +6,9 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from agent_sessions.context.text import compact_line
-from .codex import elapsed
+from .common import elapsed
 from .base import HistoryStore, as_text
+from .claude_detail import enrich_detail, attachment_bytes, message_text
 
 DESKTOP_ENTRYPOINTS = ('claude-desktop', 'claude-desktop-3p')
 
@@ -36,11 +37,18 @@ class ClaudeStore(HistoryStore):
 
     def metadata(self, row):
         msg = row.get('message') or {}
+        if not isinstance(msg, dict): msg = {}
         content = msg.get('content', []) if isinstance(msg, dict) else ''
         result = {'type': row.get('type'), 'uuid': row.get('uuid'), 'parent': row.get('parentUuid'),
                   'timestamp': row.get('timestamp'), 'cwd': row.get('cwd'), 'session_id': row.get('sessionId'),
                   'entrypoint': row.get('entrypoint'),
-                  'title': row.get('customTitle'), 'leaf': row.get('leafUuid'), 'sidechain': row.get('isSidechain'),
+                  'title': row.get('customTitle'), 'subtype': row.get('subtype'), 'model': msg.get('model'),
+                  'usage': {target: msg['usage'][native] for native, target in
+                            [('input_tokens', 'inputTokens'), ('output_tokens', 'outputTokens'),
+                             ('cache_read_input_tokens', 'cacheReadTokens'), ('cache_creation_input_tokens', 'cacheWriteTokens')]
+                            if isinstance(msg.get('usage'), dict) and isinstance(msg['usage'].get(native), (int, float))},
+                  'thinking': compact_line(message_text(content, 'thinking'), 420),
+                  'images': sum(isinstance(b, dict) and b.get('type') == 'image' for b in content) if isinstance(content, list) else 0, 'leaf': row.get('leafUuid'), 'sidechain': row.get('isSidechain'),
                   'role': row.get('type'), 'preview': compact_line(as_text(content), 420), 'blocks': []}
         for number, block in enumerate(content if isinstance(content, list) else []):
             if not isinstance(block, dict):
@@ -49,7 +57,7 @@ class ClaudeStore(HistoryStore):
             if kind in ('tool_use', 'tool_result'):
                 result['blocks'].append({'number': number, 'type': kind, 'id': block.get('id') or block.get('tool_use_id'),
                                          'name': block.get('name'), 'error': block.get('is_error', False),
-                                         'preview': compact_line(as_text(block.get('input')), 420) if kind == 'tool_use' else ''})
+                                         'preview': compact_line(as_text(block.get('input') if kind == 'tool_use' else block.get('content')), 420)})
         return result
 
     def events(self, rows):
@@ -59,13 +67,14 @@ class ClaudeStore(HistoryStore):
         active = set(); cursor = leaf
         while cursor and cursor not in active:
             active.add(cursor); cursor = by_uuid.get(cursor, (0, 0, {}))[2].get('parent')
-        events = []; lookup = {}; turn = 0; counts = Counter(); calls = {}; outputs = {}
+        events = []; lookup = {}; turn = 0; counts = Counter(); calls = {}; outputs = {}; warnings = Counter()
         def add(ref, kind, name, preview, r, loc, phase=None):
             counts[(turn, kind)] += 1
             event = {'ref': ref, 'turn': max(1, turn), 'kind': kind, 'name': name, 'preview': preview,
                      'timestamp': r.get('timestamp'), 'status': 'pending' if kind == 'tool' else 'completed',
                      'line': loc['line'], 'turn_status': 'completed', 'phase': phase,
-                     'duration_ms': None, 'native_id': r.get('uuid'), 'native_parent_id': r.get('parent')}
+                     'duration_ms': None, 'model': r.get('model'), 'usage': r.get('usage'),
+                     'record_type': kind+'_message' if kind in ('user', 'assistant') else 'tool_call', 'native_id': r.get('uuid'), 'native_parent_id': r.get('parent')}
             events.append(event); lookup[ref] = ('message' if kind in ('user', 'assistant') else 'call', loc)
             if kind in ('user', 'assistant'): loc['text'] = preview
             return event
@@ -73,11 +82,19 @@ class ClaudeStore(HistoryStore):
             if r.get('uuid') and (r['uuid'] not in active or by_uuid[r['uuid']][0] != offset):
                 continue
             if r['type'] not in ('user', 'assistant', 'system'):
+                if r['type'] not in ('progress', 'file-history-snapshot', 'queue-operation', 'last-prompt', 'summary'):
+                    warnings[r['type'] or 'unknown'] += 1
                 continue
             if r['type'] == 'system':
+                if r.get('subtype') == 'compact_boundary':
+                    loc = {'offset': offset, 'line': line, 'part': 'compaction'}
+                    event = add('B/'+str(line), 'context', '上下文压缩', '上下文已压缩，历史可见记录保留', r, loc)
+                    event['record_type'] = 'compaction'
                 continue
-            visible = r['preview']
-            if r['type'] == 'user' and visible:
+            visible = r['preview'] or r['thinking'] or (f"{r['images']} 张图片" if r['images'] else '')
+            has_calls = any(b['type'] == 'tool_use' for b in r['blocks'])
+            if not visible and r['type'] == 'assistant' and has_calls: visible = '（仅工具调用）'
+            if r['type'] == 'user' and (r['preview'] or r['images']):
                 turn += 1
             uid = r.get('uuid') or str(line)
             loc = {'offset': offset, 'line': line, 'part': 'text'}
@@ -88,9 +105,10 @@ class ClaudeStore(HistoryStore):
                 if block['type'] == 'tool_use':
                     ref = 'C/'+uid+'/'+str(block['number'])
                     event = add(ref, 'tool', block['name'] or '工具', block['preview'], r, location)
+                    event.update(tool_call_id=block['id'], parent_ref='M/'+uid if visible else None)
                     calls.setdefault(block['id'], []).append((event, location, r))
                 else:
-                    outputs.setdefault(block['id'], []).append((location, block, r))
+                    outputs.setdefault(block['id'], []).append((location, block, {**r, 'visible_turn': max(1, turn)}))
         for key, matching in calls.items():
             results = outputs.get(key, [])
             if key and len(matching) == 1 and len(results) == 1:
@@ -98,6 +116,18 @@ class ClaudeStore(HistoryStore):
                 location['output'] = output
                 event['status'] = 'error' if result['error'] else 'completed'
                 event['duration_ms'] = elapsed(call.get('timestamp'), record.get('timestamp'))
+                event['completed_at'] = record.get('timestamp')
+                event['output_preview'] = result['preview'] or '无输出'
+            else:
+                for output, result, record in results:
+                    event = add('O/'+str(output['line'])+'/'+str(output['block']), 'context', '执行结果', result['preview'], record, output)
+                    event.update(turn=record.get('visible_turn', max(1, turn)), record_type='execution_result', status='error' if result['error'] else 'completed')
+        for key, results in outputs.items():
+            if key in calls: continue
+            for output, result, record in results:
+                event = add('O/'+str(output['line'])+'/'+str(output['block']), 'context', '执行结果', result['preview'], record, output)
+                event.update(turn=record.get('visible_turn', max(1, turn)), record_type='execution_result', status='error' if result['error'] else 'completed')
+        events.sort(key=lambda e: e['line'])
         turns = [{'status': 'completed'} for _ in range(max(1, turn))]
         # Explicitly show the final visible assistant text in each completed turn.
         for number in range(1, max(1, turn)+1):
@@ -107,14 +137,24 @@ class ClaudeStore(HistoryStore):
                 turns[number-1]['status'] = 'in_progress'
                 for e in events:
                     if e['turn'] == number: e['turn_status'] = 'in_progress'
-        return events, lookup, turns, {}
+        return events, lookup, turns, dict(warnings)
 
     def body(self, row, location):
+        if location.get('part') == 'compaction': return json.dumps(row, ensure_ascii=False, indent=2)
         content = (row.get('message') or {}).get('content', '')
         if 'block' not in location:
+            if row.get('type') == 'assistant':
+                return '\n\n'.join(filter(None, [message_text(content, 'thinking'), as_text(content)]))
             return as_text(content)
         block = content[location['block']]
         return as_text(block.get('input') if location['part'] == 'tool_use' else block.get('content'))
+
+    def detail(self, key, ref, page=1, part='input'):
+        with self.lock:
+            return enrich_detail(self, key, super().detail(key, ref, page, part))
+
+    def attachment(self, key, ref, index, part='output'):
+        return attachment_bytes(self, key, ref, index, part)
 
 
 class ClaudeDesktopStore(ClaudeStore):

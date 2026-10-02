@@ -3,7 +3,7 @@ import json
 import threading
 from pathlib import Path
 
-SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli', 'claude:desktop', 'dsh:local', 'cursor:desktop')
+from .sources.plugins import SOURCE_KEYS, path_fields
 
 def shared_claude_switch(enabled):
     enabled = dict(enabled)
@@ -25,7 +25,9 @@ class AppSettings:
         if len(roots) != len(SOURCE_KEYS):
             raise ValueError('会话来源目录数量无效')
         self.defaults = {'paths': {key: str(Path(root).expanduser().resolve()) for key, root in zip(SOURCE_KEYS, roots)},
-                         'enabled': {key: True for key in SOURCE_KEYS}, 'syncSeconds': 3, 'animations': True, 'theme': 'system'}
+                         'enabled': {key: True for key in path_fields()}, 'syncSeconds': 3, 'animations': True, 'theme': 'system'}
+        for key, field in path_fields().items():
+            self.defaults['paths'].setdefault(key, str(field.default().expanduser().resolve()))
 
     def read(self):
         with self.lock:
@@ -47,9 +49,9 @@ class AppSettings:
                      'enabled': {**value['enabled'], 'cursor:desktop': self.defaults['enabled']['cursor:desktop']}}
         if value['theme'] not in ('light', 'dark', 'system'):
             raise ValueError('外观应为浅色、深色或跟随系统')
-        if not isinstance(value['paths'], dict) or set(value['paths']) != set(SOURCE_KEYS):
+        if not isinstance(value['paths'], dict) or set(value['paths']) != set(self.defaults['paths']):
             raise ValueError('会话目录配置无效')
-        if not isinstance(value['enabled'], dict) or set(value['enabled']) != set(SOURCE_KEYS) or any(type(v) is not bool for v in value['enabled'].values()):
+        if not isinstance(value['enabled'], dict) or set(value['enabled']) != set(self.defaults['enabled']) or any(type(v) is not bool for v in value['enabled'].values()):
             raise ValueError('来源开关无效')
         if type(value['syncSeconds']) is not int or not 3 <= value['syncSeconds'] <= 60 or type(value['animations']) is not bool:
             raise ValueError('刷新间隔应为 3 到 60 秒')

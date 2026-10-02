@@ -5,7 +5,7 @@ import { OverviewSection } from './overview-section';
 import { RecordContent } from './record-content';
 import { RecordTiming } from './record-timing';
 
-export function DshAssistantOverview({
+export function MessageOverview({
   detail,
   id,
   change,
@@ -18,7 +18,7 @@ export function DshAssistantOverview({
   const usage = event.usage;
   const contentTokens =
     usage?.outputTokens != null && usage.reasoningTokens != null
-      ? usage.outputTokens - usage.reasoningTokens
+      ? Math.max(0, usage.outputTokens - usage.reasoningTokens)
       : null;
   const openRequest = () =>
     void sessionStore.selectEvent(event.ref, false, true);
@@ -31,6 +31,19 @@ export function DshAssistantOverview({
             <dd>
               <button className="detail-source-link" onClick={openRequest}>
                 {`请求 #${event.request_number} ›`}
+              </button>
+            </dd>
+          </div>
+        )}
+        {event.request_number == null && (
+          <div>
+            <dt>来源</dt>
+            <dd>
+              <button
+                className="detail-source-link"
+                onClick={() => change('来源')}
+              >
+                {detail.provider_label} ›
               </button>
             </dd>
           </div>
@@ -62,13 +75,23 @@ export function DshAssistantOverview({
       </dl>
       <div className="overview-sections">
         <OverviewSection label="预览" onOpen={() => change('预览')}>
-          <div className="dsh-assistant-preview">
+          <div className="message-preview">
             <RecordContent detail={detail} id={id} preview />
           </div>
         </OverviewSection>
-        {event.request_number != null && (
-          <OverviewSection label="请求计时" onOpen={openRequest}>
-            <RecordTiming event={event} request />
+        {(event.request_number != null ||
+          event.timestamp ||
+          event.duration_ms != null) && (
+          <OverviewSection
+            label={event.request_number != null ? '请求计时' : '计时'}
+            onOpen={
+              event.request_number != null ? openRequest : () => change('计时')
+            }
+          >
+            <RecordTiming
+              event={event}
+              request={event.request_number != null}
+            />
           </OverviewSection>
         )}
       </div>

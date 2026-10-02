@@ -1,6 +1,6 @@
 """Project durable Harness steps, tool lifecycles and prompt changes."""
 from collections import Counter
-from .codex import elapsed
+from .common import elapsed
 
 # Administrative records have no trajectory row in Harness. Source stream deltas
 # are session memory only; durable settlements carry their recorded timing.

@@ -20,7 +20,7 @@ frontend/
   public/                        图标与第三方许可证
 backend/agent_sessions/
   api/                           本机 HTTP API 与静态资源服务
-  sources/                       Codex / Claude / Cursor / Antigravity / DSH 与目录聚合
+  sources/                       来源插件注册、统一接口与各原生格式解析
   context/                       定位、索引、原话、证据、CLI 与续接
   trajectory/                    执行时长投影、折叠摘要与圈选定位
   settings.py                    独立应用设置
@@ -61,14 +61,15 @@ python3 scripts/trajectory_server.py --port 8765
 ## 校验与桌面打包
 
 ```bash
-npm run test
+npm run build:ui
+npm run check:size
 npm run format:check
 npm run desktop:build
 ```
 
-`test` 运行 Python 和 Vitest 回归；`build:ui` 同时执行 TypeScript 检查，并预渲染启动骨架供 React 水合接管。原生加载页面及资源自动生成在 `desktop/loader`，不手改生成文件。HTTP 资源测试需要先构建 UI。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，按宿主系统生成安装包（Mac app/dmg、Windows NSIS、Linux deb/AppImage）。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
+本项目默认不新增或修改测试文件，也不为普通修改运行整套测试。使用构建检查、源码对照与真实应用操作验证；现有测试保留供明确需要时使用。`build:ui` 同时执行 TypeScript 检查，并预渲染启动骨架供 React 水合接管。原生加载页面及资源自动生成在 `desktop/loader`，不手改生成文件。桌面构建会先构建 UI，再将 Python 包与 `frontend/dist` 打入 sidecar，按宿主系统生成安装包（Mac app/dmg、Windows NSIS、Linux deb/AppImage）。桌面安装、来源格式边界和本机验收见 [references/desktop-app.md](references/desktop-app.md)。
 
-代码格式由 Prettier 管理前端；`npm run check:size` 限制源码文件 400 行、CSS 300 行、测试文件 450 行，避免新功能再次堆成大文件。应按职责拆分，不机械切块；新增来源放入 `backend/agent_sessions/sources/` 并在聚合器登记。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。
+代码格式由 Prettier 管理前端；`npm run check:size` 限制源码文件 400 行、CSS 300 行、测试文件 450 行，避免新功能再次堆成大文件。应按职责拆分，不机械切块；新增来源实现统一接口并在 `sources/plugins.py` 登记，目录、设置和展示层自动使用注册信息。详细约定见 [来源插件接口](references/source-plugins.md)。新增交互优先拆为组件和纯投影，异步操作的过期响应不能覆盖当前会话。历史值不能被修改或替换；自动化测试使用临时目录，不写入真实 Agent 会话。
 
 ## 源码提交
 

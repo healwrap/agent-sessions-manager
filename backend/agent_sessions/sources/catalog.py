@@ -1,84 +1,69 @@
-"""Aggregate provider catalogues under qualified session and source IDs."""
+"""Aggregate registered source plugins without native-format knowledge."""
 from __future__ import annotations
 import os
 import sqlite3
+import threading
 import time
-from .codex import Store
-from .base import readonly_db
-from .claude import ClaudeDesktopStore
-from .antigravity import AntigravityStore
-from .dsh import DshStore
-from .cursor import CursorStore
+from pathlib import Path
+from .contract import SourceRegistry
+from .plugins import PLUGINS, SOURCE_KEYS, path_fields
+from .common import normalize_event
 
-SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code',
-                 'antigravity:desktop': 'Antigravity', 'antigravity:cli': 'Antigravity CLI',
-                 'claude:desktop': 'Claude Code', 'dsh:local': 'DeepSeek Harness', 'cursor:desktop': 'Cursor'}
 
 def public_source(source):
-    # Keep the old desktop IDs as read routes, with one public Claude source.
-    return 'claude:local' if source == 'claude:desktop' else source
+    return next((p.id for p in PLUGINS if source in p.aliases), source)
+
 
 class MultiStore:
-    def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None, cursor=None):
-        self.codex = Store(codex)
-        desktop = ClaudeDesktopStore(claude_desktop or claude.parent/'claude-desktop', claude)
-        self.adapters = {'codex:local': self.codex, 'claude:local': desktop.shared,
-                         'antigravity:desktop': AntigravityStore(antigravity, 'desktop'),
-                         'antigravity:cli': AntigravityStore(antigravity_cli, 'cli'),
-                         'claude:desktop': desktop,
-                         'dsh:local': DshStore(dsh or codex.parent/'dsh'),
-                         'cursor:desktop': CursorStore(cursor or codex.parent/'cursor')}
+    def __init__(self, codex=None, claude=None, antigravity=None, antigravity_cli=None,
+                 claude_desktop=None, dsh=None, cursor=None, *, paths=None, plugins=PLUGINS):
+        if paths is None:
+            roots = (codex, claude, antigravity, antigravity_cli, claude_desktop, dsh, cursor)
+            defaults = path_fields()
+            paths = {key: Path(root) if root is not None else defaults[key].default()
+                     for key, root in zip(SOURCE_KEYS, roots)}
+        self.registry = SourceRegistry(plugins, paths)
+        self.adapters = self.registry.adapters
+        self.codex = self.adapters.get('codex:local')
         self.errors = {}; self.project_overrides = {}; self.disabled = set()
         self.catalogue_time = 0; self.catalogue_rows = []
+        self.lock = threading.RLock()
 
     def sources(self):
-        return {'items': [{'id': key, 'provider': key.split(':')[0], 'label': SOURCE_LABELS[key],
-                           'instance': key.split(':')[1], 'enabled': key not in self.disabled, 'path': str(a.root),
-                           'available': self.adapters['claude:desktop'].available() if key == 'claude:local' else a.root.exists(),
-                           'error': self.errors.get(key) or (self.errors.get('claude:desktop') if key == 'claude:local' else None),
-                           'independent_results': key.split(':')[0] != 'antigravity'}
-                          for key, a in self.adapters.items() if key != 'claude:desktop']}
+        items = []
+        for key, plugin in self.registry.plugins.items():
+            adapter = self.adapters[key]
+            items.append({'id': key, 'provider': key.split(':')[0], 'label': plugin.label,
+                          'instance': key.split(':')[1], 'enabled': key not in self.disabled,
+                          'path': str(adapter.root), 'available': adapter.available(),
+                          'error': self.errors.get(key), 'api_version': plugin.api_version,
+                          'capabilities': plugin.capabilities,
+                          'paths': [{'key': f.key, 'label': f.label, 'hint': f.hint} for f in plugin.paths]})
+        return {'items': items}
 
     def catalogue(self):
+        with self.lock:
+            return self._catalogue()
+
+    def _catalogue(self):
         if self.catalogue_time and time.monotonic()-self.catalogue_time < 3:
             return self.catalogue_rows
         items = []
-        desktop_rows = []
-        if 'claude:local' not in self.disabled:
-            try:
-                desktop = self.adapters['claude:desktop']
-                with desktop.lock:
-                    seen = set()
-                    for row in desktop.discover():
-                        transcript = row.get('transcript_key')
-                        if transcript and transcript in seen: continue
-                        if transcript: seen.add(transcript)
-                        desktop_rows.append(row)
-                self.errors.pop('claude:desktop', None)
-            except (OSError, ValueError) as error:
-                self.errors['claude:desktop'] = str(error)
-        self.adapters['claude:local'].desktop_keys = {r['transcript_key'] for r in desktop_rows if r['transcript_available']}
         for source, adapter in self.adapters.items():
-            if public_source(source) in self.disabled: continue
+            if source in self.disabled: continue
             try:
-                if source == 'codex:local':
-                    first = adapter.sessions(limit=100)
-                    rows = list(first['items']); next_offset = first['next_offset']
-                    while next_offset is not None:
-                        page = adapter.sessions(offset=next_offset, limit=100);rows.extend(page['items']);next_offset = page['next_offset']
-                elif source == 'claude:desktop':
-                    rows = desktop_rows
-                else:
-                    with adapter.lock: rows = adapter.discover()
-                if source != 'claude:desktop': self.errors.pop(source, None)
+                with adapter.lock: rows = adapter.discover()
+                self.errors.pop(source, None)
                 for row in rows:
-                    items.append({**row, 'id': source+':'+row['id'], 'native_id': row.get('native_id', row['id']),
-                                  'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
-                                  'instance_id': public_source(source).split(':')[1]})
+                    public = {k: v for k, v in row.items() if k not in ('route_id', 'route_key')}
+                    items.append({**public, 'id': self.registry.qualify(source, row),
+                                  'native_id': row.get('native_id', row['id']),
+                                  'provider': source.split(':')[0],
+                                  'provider_label': self.registry.plugins[source].label,
+                                  'source_id': source, 'instance_id': source.split(':')[1]})
             except (OSError, ValueError, sqlite3.Error) as error:
                 self.errors[source] = str(error)
-        # Each adapter owns its project identity and label. A shared directory
-        # does not authorize borrowing a different Agent's named project.
+        # Project identity belongs to the source, never to a neighbouring adapter.
         self.catalogue_rows = sorted(items, key=lambda r: r['updated_at'], reverse=True)
         assignments = self.settings.read()['value'].get('projectAssignments', {}) if hasattr(self, 'settings') else {}
         for row in self.catalogue_rows:
@@ -91,7 +76,7 @@ class MultiStore:
         return self.catalogue_rows
 
     def sessions(self, query='', offset=0, limit=30, project_id='', provider=''):
-        provider = public_source(provider)
+        provider = self.registry.public_source(provider)
         rows = self.catalogue()
         aliases = self.settings.read()['value'].get('aliases', {}) if hasattr(self, 'settings') else {}
         selected = []
@@ -116,29 +101,37 @@ class MultiStore:
 
     def resolve(self, key):
         parts = key.split(':', 2)
-        if public_source(':'.join(parts[:2])) in self.disabled: raise ValueError('此会话来源已停用，请在设置中启用')
-        if len(parts) == 3 and ':'.join(parts[:2]) in self.adapters:
-            return ':'.join(parts[:2]), parts[2]
-        # Preserve old Codex links and view settings.
+        route = ':'.join(parts[:2])
+        source = self.registry.public_source(route)
+        if source in self.disabled: raise ValueError('此会话来源已停用，请在设置中启用')
+        if len(parts) == 3 and route in self.registry.routes:
+            return self.registry.resolve(route, parts[2])
+        # Preserve old unqualified Codex links at the routing boundary only.
         if 'codex:local' in self.disabled: raise ValueError('Codex 来源已停用，请在设置中启用')
         return 'codex:local', key
+
+    def identity(self, source):
+        return {'provider': source.split(':')[0], 'provider_label': self.registry.plugins[source].label,
+                'source_id': source, 'instance_id': source.split(':')[1]}
 
     def trajectory(self, key, *args, **kwargs):
         source, native = self.resolve(key)
         data = self.adapters[source].trajectory(native, *args, **kwargs)
-        qualified = source+':'+native
+        parts = key.split(':', 2)
+        qualified = key if len(parts) == 3 and ':'.join(parts[:2]) in self.registry.routes else source+':'+native
         if qualified not in self.project_overrides: self.catalogue()
         row = getattr(self.adapters[source], 'rows', {}).get(native, {})
-        return {**data, 'id': qualified, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
-                'instance_id': public_source(source).split(':')[1], **self.project_overrides.get(qualified, {}),
+        return {**data, 'id': qualified, **self.identity(source), **self.project_overrides.get(qualified, {}),
                 'unavailable_reason': row.get('unavailable_reason') or ('此会话只有摘要或索引记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None),
-                'capabilities': {'independent_results': source.split(':')[0] != 'antigravity'}}
+                'capabilities': self.registry.plugins[source].capabilities}
 
     def detail(self, key, *args, **kwargs):
         source, native = self.resolve(key)
         result = self.adapters[source].detail(native, *args, **kwargs)
-        return {**result, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
-                'instance_id': public_source(source).split(':')[1]}
+        normalize_event(result['event'])
+        for event in result.get('nested', []):
+            if 'kind' in event: normalize_event(event)
+        return {**result, **self.identity(source), 'capabilities': self.registry.plugins[source].capabilities}
 
     def focus(self, key, *args):
         source, native = self.resolve(key)
@@ -146,6 +139,4 @@ class MultiStore:
 
     def attachment(self, key, *args):
         source, native = self.resolve(key)
-        adapter = self.adapters[source]
-        if not hasattr(adapter, 'attachment'): raise FileNotFoundError('此来源没有可预览的附件')
-        return adapter.attachment(native, *args)
+        return self.adapters[source].attachment(native, *args)

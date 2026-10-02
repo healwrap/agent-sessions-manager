@@ -63,7 +63,7 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.store.trajectory(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 150, 1, 250), get('q'), get('kind', 'all'))
             elif parsed.path == '/api/event':
                 part = get('part', 'input')
-                if part not in {'input', 'output'} and not (part == 'raw' and get('id').startswith('dsh:')):
+                if part not in {'input', 'output', 'raw'}:
                     raise ValueError('内容类型无效')
                 result = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
             elif parsed.path == '/api/attachment':
@@ -121,9 +121,9 @@ class Handler(BaseHTTPRequestHandler):
 def configured_store(config, preferences):
     from agent_sessions.sources.catalog import MultiStore
     from agent_sessions.settings import SOURCE_KEYS
-    store = MultiStore(*(Path(config['paths'][key]) for key in SOURCE_KEYS))
+    store = MultiStore(paths={key: Path(path) for key, path in config['paths'].items()})
     store.settings = preferences
-    store.disabled = {key for key in SOURCE_KEYS if not config['enabled'][key]}
+    store.disabled = {store.registry.public_source(key) for key, enabled in config['enabled'].items() if not enabled}
     return store
 
 

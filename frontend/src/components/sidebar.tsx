@@ -70,7 +70,13 @@ export function Sidebar({
             }
           >
             <option value="">全部 Agent</option>
-            {Object.entries(sourceNames).map(([key, label]) => (
+            {(state.sources.length
+              ? state.sources
+              : Object.entries(sourceNames).map(([id, label]) => ({
+                  id,
+                  label,
+                }))
+            ).map(({ id: key, label }) => (
               <option value={key} key={key}>
                 {label}
               </option>
@@ -179,8 +185,9 @@ export function Sidebar({
                           />
                           {!state.provider && (
                             <span className="provider-tag">
-                              {sourceNames[sourceId(item)] ||
-                                item.provider_label}
+                              {state.sources.find(
+                                (source) => source.id === sourceId(item),
+                              )?.label || item.provider_label}
                             </span>
                           )}
                         </span>

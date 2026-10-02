@@ -2,7 +2,7 @@
 
 确认时间：2026-09-30。产品名由用户选定为 Agent Sessions，skill 名为 `agent-sessions`。
 
-本文保留早期改造方案与当时的验证记录。后续已增加六个来源、跨会话正文搜索、续接指令与更多结果关联；当前实现和边界以 [desktop-app.md](desktop-app.md) 为准。
+本文保留早期改造方案与当时的验证记录。后续已扩展来源支持（Claude 桌面端与 CLI 合并为一个来源）、跨会话正文搜索、续接指令与更多结果关联；当前实现和边界以 [desktop-app.md](desktop-app.md) 为准。
 
 ## 定位与当前状态
 

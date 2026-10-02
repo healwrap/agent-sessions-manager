@@ -9,9 +9,13 @@ from .claude import ClaudeDesktopStore
 from .antigravity import AntigravityStore
 from .dsh import DshStore
 
-SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code CLI',
+SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code',
                  'antigravity:desktop': 'Antigravity', 'antigravity:cli': 'Antigravity CLI',
-                 'claude:desktop': 'Claude Code Desktop', 'dsh:local': 'DeepSeek Harness'}
+                 'claude:desktop': 'Claude Code', 'dsh:local': 'DeepSeek Harness'}
+
+def public_source(source):
+    # Keep the old desktop IDs as read routes, with one public Claude source.
+    return 'claude:local' if source == 'claude:desktop' else source
 
 class MultiStore:
     def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None):
@@ -28,25 +32,32 @@ class MultiStore:
     def sources(self):
         return {'items': [{'id': key, 'provider': key.split(':')[0], 'label': SOURCE_LABELS[key],
                            'instance': key.split(':')[1], 'enabled': key not in self.disabled, 'path': str(a.root),
-                           'available': a.available() if key == 'claude:desktop' else a.root.exists(),
-                           'error': self.errors.get(key), 'independent_results': key.split(':')[0] != 'antigravity'}
-                          for key, a in self.adapters.items()]}
+                           'available': self.adapters['claude:desktop'].available() if key == 'claude:local' else a.root.exists(),
+                           'error': self.errors.get(key) or (self.errors.get('claude:desktop') if key == 'claude:local' else None),
+                           'independent_results': key.split(':')[0] != 'antigravity'}
+                          for key, a in self.adapters.items() if key != 'claude:desktop']}
 
     def catalogue(self):
         if self.catalogue_time and time.monotonic()-self.catalogue_time < 3:
             return self.catalogue_rows
         items = []
         desktop_rows = []
-        if 'claude:desktop' not in self.disabled:
+        if 'claude:local' not in self.disabled:
             try:
                 desktop = self.adapters['claude:desktop']
-                with desktop.lock: desktop_rows = desktop.discover()
+                with desktop.lock:
+                    seen = set()
+                    for row in desktop.discover():
+                        transcript = row.get('transcript_key')
+                        if transcript and transcript in seen: continue
+                        if transcript: seen.add(transcript)
+                        desktop_rows.append(row)
                 self.errors.pop('claude:desktop', None)
             except (OSError, ValueError) as error:
                 self.errors['claude:desktop'] = str(error)
         self.adapters['claude:local'].desktop_keys = {r['transcript_key'] for r in desktop_rows if r['transcript_available']}
         for source, adapter in self.adapters.items():
-            if source in self.disabled: continue
+            if public_source(source) in self.disabled: continue
             try:
                 if source == 'codex:local':
                     first = adapter.sessions(limit=100)
@@ -60,8 +71,8 @@ class MultiStore:
                 if source != 'claude:desktop': self.errors.pop(source, None)
                 for row in rows:
                     items.append({**row, 'id': source+':'+row['id'], 'native_id': row.get('native_id', row['id']),
-                                  'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': source,
-                                  'instance_id': source.split(':')[1]})
+                                  'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
+                                  'instance_id': public_source(source).split(':')[1]})
             except (OSError, ValueError, sqlite3.Error) as error:
                 self.errors[source] = str(error)
         # Each adapter owns its project identity and label. A shared directory
@@ -78,6 +89,7 @@ class MultiStore:
         return self.catalogue_rows
 
     def sessions(self, query='', offset=0, limit=30, project_id='', provider=''):
+        provider = public_source(provider)
         rows = self.catalogue()
         aliases = self.settings.read()['value'].get('aliases', {}) if hasattr(self, 'settings') else {}
         selected = []
@@ -85,7 +97,8 @@ class MultiStore:
             if provider and row['provider'] != provider and row['source_id'] != provider: continue
             if query and query.casefold() not in (row['title']+' '+row['project_label']+' '+aliases.get(row['id'], '')).casefold():
                 try:
-                    if not self.adapters[row['source_id']].matches_content(row['id'].split(':', 2)[2], query): continue
+                    source, native = self.resolve(row['id'])
+                    if not self.adapters[source].matches_content(native, query): continue
                 except (OSError, ValueError):
                     continue
             selected.append({**row, 'search_query': query} if query else row)
@@ -101,7 +114,7 @@ class MultiStore:
 
     def resolve(self, key):
         parts = key.split(':', 2)
-        if ':'.join(parts[:2]) in self.disabled: raise ValueError('此会话来源已停用，请在设置中启用')
+        if public_source(':'.join(parts[:2])) in self.disabled: raise ValueError('此会话来源已停用，请在设置中启用')
         if len(parts) == 3 and ':'.join(parts[:2]) in self.adapters:
             return ':'.join(parts[:2]), parts[2]
         # Preserve old Codex links and view settings.
@@ -114,16 +127,16 @@ class MultiStore:
         qualified = source+':'+native
         if qualified not in self.project_overrides: self.catalogue()
         row = getattr(self.adapters[source], 'rows', {}).get(native, {})
-        return {**data, 'id': qualified, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': source,
-                'instance_id': source.split(':')[1], **self.project_overrides.get(qualified, {}),
+        return {**data, 'id': qualified, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
+                'instance_id': public_source(source).split(':')[1], **self.project_overrides.get(qualified, {}),
                 'unavailable_reason': row.get('unavailable_reason') or ('此会话只有摘要或索引记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None),
                 'capabilities': {'independent_results': source.split(':')[0] != 'antigravity'}}
 
     def detail(self, key, *args, **kwargs):
         source, native = self.resolve(key)
         result = self.adapters[source].detail(native, *args, **kwargs)
-        return {**result, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': source,
-                'instance_id': source.split(':')[1]}
+        return {**result, 'provider': source.split(':')[0], 'provider_label': SOURCE_LABELS[source], 'source_id': public_source(source),
+                'instance_id': public_source(source).split(':')[1]}
 
     def focus(self, key, *args):
         source, native = self.resolve(key)

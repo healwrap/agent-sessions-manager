@@ -1,6 +1,6 @@
 # Agent Sessions Manager
 
-用于管理本机 Codex、Claude Code Desktop、Claude Code CLI、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
+用于管理本机 Codex、Claude Code、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。Claude Code 桌面端与 CLI 共用会话正文，在界面中合并展示。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
 
 ## 项目结构
 

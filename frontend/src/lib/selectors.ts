@@ -24,7 +24,8 @@ export function chatReplyRefs(events: Event[], hasMore = false) {
   return replies;
 }
 export function sourceId(item: Session) {
-  return item.source_id || item.id.split(':').slice(0, 2).join(':');
+  const source = item.source_id || item.id.split(':').slice(0, 2).join(':');
+  return source === 'claude:desktop' ? 'claude:local' : source;
 }
 export function sessionTitle(item: Session, p: Preferences) {
   return p.aliases[item.id] || item.title || '(无标题)';

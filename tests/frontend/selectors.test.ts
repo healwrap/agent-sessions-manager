@@ -88,6 +88,27 @@ describe('provider and fold projection', () => {
       'antigravity:cli',
     );
   });
+  it('includes previously archived desktop Claude sessions in the unified source', () => {
+    const item = {
+      id: 'claude:desktop:transcript/project/session',
+      source_id: 'claude:desktop',
+      project_id: 'project',
+      project_label: '项目',
+      updated_at: '',
+    } as Session;
+    expect(sourceId(item)).toBe('claude:local');
+    expect(sourceId({ id: item.id } as Session)).toBe('claude:local');
+    const preferences = {
+      pinned: [item.id],
+      archived: [item.id],
+      aliases: { [item.id]: '自定义名称' },
+      metadata: { [item.id]: item },
+      projectAssignments: {},
+    };
+    expect(
+      projectGroups([], [], preferences, 'claude:local', '', true)[0].items,
+    ).toEqual([item]);
+  });
   it('shows the original user text without request wrappers', () =>
     expect(
       requestText('<USER_REQUEST>原话</USER_REQUEST><ADDITIONAL_METADATA>meta'),

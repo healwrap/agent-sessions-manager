@@ -36,6 +36,9 @@ export function SourceSettings({
                     enabled: {
                       ...draft.enabled,
                       [key]: event.target.checked,
+                      ...(key === 'claude:local'
+                        ? { 'claude:desktop': event.target.checked }
+                        : {}),
                     },
                   })
                 }
@@ -62,18 +65,43 @@ export function SourceSettings({
                   (!source?.enabled
                     ? '已停用'
                     : source?.available
-                      ? key === 'claude:desktop'
-                        ? '本地会话来源可用'
-                        : '目录可用'
+                      ? '目录可用'
                       : '目录不存在')}
               {key.startsWith('antigravity')
                 ? ' · 读取本地导出的记录'
-                : key === 'claude:desktop'
-                  ? ' · 读取桌面索引或带桌面来源标记的共享正文'
+                : key === 'claude:local'
+                  ? ' · 桌面端与 CLI 共用的会话目录'
                   : key === 'dsh:local'
                     ? ' · 支持 JSONL 与 Zstandard 压缩日志'
                     : ''}
             </p>
+            {key === 'claude:local' && (
+              <details>
+                <summary className="settings-path-status">
+                  补充会话索引（可选）
+                </summary>
+                <label
+                  htmlFor="path-claude-index"
+                  className="settings-path-status"
+                >
+                  用于补充桌面会话标题，目录不存在也可读取共享正文。
+                </label>
+                <input
+                  id="path-claude-index"
+                  type="text"
+                  value={draft.paths['claude:desktop'] || ''}
+                  onChange={(event) =>
+                    onChange({
+                      ...draft,
+                      paths: {
+                        ...draft.paths,
+                        'claude:desktop': event.target.value,
+                      },
+                    })
+                  }
+                />
+              </details>
+            )}
           </div>
         );
       })}

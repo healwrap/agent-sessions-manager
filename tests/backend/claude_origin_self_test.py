@@ -45,13 +45,13 @@ with tempfile.TemporaryDirectory() as folder:
     assert not roots[4].exists()
     with patch('agent_sessions.sources.catalog.time.monotonic', return_value=0.5):
         desktop = store.sessions(provider='claude:desktop')
-    assert desktop['total'] == 2
-    assert store.sessions(provider='claude:local')['total'] == 2
+    assert desktop['total'] == 4
+    assert store.sessions(provider='claude:local')['items'] == desktop['items']
     key = 'claude:desktop:transcript/-tmp-desktop-project/desktop-marked'
     row = next(r for r in desktop['items'] if r['id'] == key)
     assert row['title'] == 'Model identity question' and row['project_label'] == 'desktop-project'
-    assert row['provider_label'] == 'Claude Code Desktop' and row['transcript_available']
-    assert next(s for s in store.sources()['items'] if s['id'] == 'claude:desktop')['available']
+    assert row['provider_label'] == 'Claude Code' and row['transcript_available']
+    assert next(s for s in store.sources()['items'] if s['id'] == 'claude:local')['available']
     trace = store.trajectory(key)
     assert trace['event_count'] == 3 and not trace['unavailable_reason']
     assert store.detail(key, 'M/u')['text'] == 'token=原值 用户问题'
@@ -66,13 +66,13 @@ with tempfile.TemporaryDirectory() as folder:
                           title='桌面索引名称', lastActivityAt=1700000000000)])
     store.catalogue_time = 0
     desktop = store.sessions(provider='claude:desktop')
-    assert desktop['total'] == 2
+    assert desktop['total'] == 4
     assert any(r['id'] == 'claude:desktop:account/org/indexed' for r in desktop['items'])
     assert not any(r['id'] == key for r in desktop['items'])
     assert store.detail(key, 'M/u')['text'] == 'token=原值 用户问题'
-    assert store.sessions(provider='claude:local')['total'] == 2
-    store.disabled = {'claude:desktop'}; store.catalogue_time = 0
     assert store.sessions(provider='claude:local')['total'] == 4
+    store.disabled = {'claude:local'}; store.catalogue_time = 0
+    assert store.sessions(provider='claude:desktop')['total'] == 0
     store.disabled = set()
 
     # A desktop marker can arrive after the first message; incremental indexes must update ownership.
@@ -80,19 +80,21 @@ with tempfile.TemporaryDirectory() as folder:
     initial = [message('later', 'u', 'user', '先出现的对话'), message('later', 'a', 'assistant', '已回答', 'u')]
     write(later, initial)
     store.catalogue_time = 0
-    assert store.sessions(provider='claude:local')['total'] == 3
+    assert store.sessions(provider='claude:local')['total'] == 5
     with later.open('a') as f:
         f.write(json.dumps(dict(type='attachment', uuid='origin', parentUuid='a', sessionId='later', entrypoint='claude-desktop-3p')))
     store.catalogue_time = 0
-    assert store.sessions(provider='claude:desktop')['total'] == 2
+    assert store.sessions(provider='claude:desktop')['total'] == 5
+    assert any(r['id'] == 'claude:local:project/later' for r in store.sessions(provider='claude:local')['items'])
     with later.open('a') as f:
         f.write('\n')
     store.catalogue_time = 0
-    assert store.sessions(provider='claude:desktop')['total'] == 3
-    assert store.sessions(provider='claude:local')['total'] == 2
+    assert store.sessions(provider='claude:desktop')['total'] == 5
+    assert store.sessions(provider='claude:local')['total'] == 5
+    assert store.detail('claude:local:project/later', 'M/u')['text'] == '先出现的对话'
     write(later, initial)
     store.catalogue_time = 0
-    assert store.sessions(provider='claude:desktop')['total'] == 2
-    assert store.sessions(provider='claude:local')['total'] == 3
+    assert store.sessions(provider='claude:desktop')['total'] == 5
+    assert store.sessions(provider='claude:local')['total'] == 5
 
 print('claude origin self-test: ok (native markers, missing index, exact ownership, results, old links, append, read-only)')

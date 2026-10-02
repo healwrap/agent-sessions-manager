@@ -34,7 +34,7 @@ export async function showAbout() {
     if (fallback) window.alert(fallback);
   } else {
     window.alert(
-      'Agent Sessions\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code Desktop / CLI、Antigravity Desktop / CLI 和 DeepSeek Harness。',
+      'Agent Sessions\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Antigravity Desktop / CLI 和 DeepSeek Harness。',
     );
   }
 }

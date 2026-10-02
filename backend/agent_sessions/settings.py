@@ -5,6 +5,13 @@ from pathlib import Path
 
 SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli', 'claude:desktop', 'dsh:local')
 
+def shared_claude_switch(enabled):
+    enabled = dict(enabled)
+    # Old split preferences: retain access when either entry was enabled.
+    shared = enabled.get('claude:local', True)
+    if 'claude:desktop' in enabled: shared = shared or enabled['claude:desktop']
+    return {**enabled, 'claude:local': shared, 'claude:desktop': shared}
+
 
 class AppSettings:
     def __init__(self, directory, roots):
@@ -23,9 +30,10 @@ class AppSettings:
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             theme = value.get('theme', 'system')
+            enabled = shared_claude_switch(value.get('enabled', {}))
             return {**self.defaults, **value, 'theme': theme if theme in ('light', 'dark', 'system') else 'system',
                     'paths': {key: value.get('paths', {}).get(key, default) for key, default in self.defaults['paths'].items()},
-                    'enabled': {key: value.get('enabled', {}).get(key, default) for key, default in self.defaults['enabled'].items()}}
+                    'enabled': {key: enabled.get(key, default) for key, default in self.defaults['enabled'].items()}}
 
     def validate(self, value):
         if isinstance(value, dict) and set(value) == set(self.defaults)-{'theme'}:
@@ -48,7 +56,7 @@ class AppSettings:
             if not path.is_absolute(): raise ValueError('请填写绝对目录或使用 ~/ 开头')
             if path.exists() and not path.is_dir(): raise ValueError('请选择目录，不能填写文件路径')
             paths[key] = str(path.resolve())
-        return {**value, 'paths': paths}
+        return {**value, 'paths': paths, 'enabled': {**value['enabled'], 'claude:desktop': value['enabled']['claude:local']}}
 
     def write(self, value):
         value = self.validate(value)

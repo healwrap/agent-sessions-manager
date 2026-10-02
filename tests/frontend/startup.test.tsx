@@ -3,6 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { App } from '../../frontend/src/app';
 import { SessionStore } from '../../frontend/src/state/session-store';
 import type { Request } from '../../frontend/src/lib/types';
+import { SourceSettings } from '../../frontend/src/components/settings/sources';
 
 describe('progressive startup', () => {
   it('pre-renders the actual application shell with loading placeholders', () => {
@@ -11,6 +12,25 @@ describe('progressive startup', () => {
     expect(html).toContain('skeleton-bar');
     expect(html).toContain('正在加载会话');
     expect(html).not.toContain('会话 · 对话 · 轨迹');
+    expect(html).toContain('value="claude:local"');
+    expect(html).not.toContain('value="claude:desktop"');
+    expect(html).not.toContain('Claude Code CLI');
+    expect(html).not.toContain('Claude Code Desktop');
+  });
+  it('shows one Claude settings switch and retains the optional index path', () => {
+    const store = new SessionStore();
+    const html = renderToString(
+      <SourceSettings
+        draft={store.state.settings}
+        data={null}
+        onChange={() => {}}
+      />,
+    );
+    expect(html.match(/role="switch"/g)).toHaveLength(5);
+    expect(html).toContain('启用 Claude Code');
+    expect(html).toContain('path-claude-index');
+    expect(html).not.toContain('Claude Code Desktop');
+    expect(html).not.toContain('Claude Code CLI');
   });
   it('starts catalogue, preferences and settings together and reuses the first catalogue response', async () => {
     const pending = new Map<string, (value: unknown) => void>();

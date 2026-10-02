@@ -59,11 +59,7 @@ export function TraceTable({ state }: { state: AppState }) {
               const expand = () =>
                 event.summaryType === 'turn'
                   ? sessionStore.toggleTurn(event.turn)
-                  : sessionStore.update({
-                      expandedCalls: new Set(state.expandedCalls).add(
-                        event.group!,
-                      ),
-                    });
+                  : sessionStore.toggleCall(event.group!);
               return (
                 <tr
                   key={event.ref}
@@ -107,15 +103,34 @@ export function TraceTable({ state }: { state: AppState }) {
                 key={event.ref}
                 data-ref={event.ref}
                 data-kind={event.kind}
+                data-request-only={event.request_only || undefined}
                 data-turn-start={first}
                 data-selected={selected}
                 data-error={event.status === 'error'}
                 data-timeline-focus={outside ? 'outside' : 'inside'}
                 tabIndex={0}
                 title={event.ref + ' · ' + event.name}
-                onClick={select}
+                onClick={event.request_only ? undefined : select}
+                onDoubleClick={(e) => {
+                  if (
+                    event.request_only ||
+                    view.query ||
+                    (e.target instanceof Element && e.target.closest('button'))
+                  )
+                    return;
+                  if (event.kind === 'assistant' && event.call_summary)
+                    sessionStore.toggleCall(event.call_summary);
+                  else if (
+                    first &&
+                    (view.data?.turn_summaries[event.turn]?.remaining || 0) > 0
+                  )
+                    sessionStore.toggleTurn(event.turn);
+                }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (
+                    !event.request_only &&
+                    (e.key === 'Enter' || e.key === ' ')
+                  ) {
                     e.preventDefault();
                     select();
                   }
@@ -143,9 +158,9 @@ export function TraceTable({ state }: { state: AppState }) {
                         }}
                       />
                     )}
-                  <span className="turnRail" />
+                  {!event.request_only && <span className="turnRail" />}
                   {selected && <span className="selectionRail" />}
-                  {first ? (
+                  {event.request_only ? null : first ? (
                     <button
                       className={
                         'turnLabel' + (selected ? ' turnLabelActive' : '')
@@ -165,40 +180,53 @@ export function TraceTable({ state }: { state: AppState }) {
                   ) : (
                     <span className="step-dot" />
                   )}
-                  <div className="eventInner">
-                    <span className="kindSlot">
-                      <span
-                        className={
-                          'kindTag ' + (execution ? 'toolAmber' : color)
-                        }
-                      >
-                        <Icon
-                          name={
-                            tool || execution
-                              ? 'wrench'
-                              : event.kind === 'user'
-                                ? 'user'
-                                : event.kind === 'assistant'
-                                  ? 'sparkle'
-                                  : 'context'
+                  {!event.request_only && (
+                    <div className="eventInner">
+                      <span className="kindSlot">
+                        <span
+                          className={
+                            'kindTag ' + (execution ? 'toolAmber' : color)
                           }
-                          className="kindTagIcon"
-                        />
-                        <span className="kindTagLabel">
-                          {execution ? '执行结果' : label}
+                        >
+                          <Icon
+                            name={
+                              tool || execution
+                                ? 'wrench'
+                                : event.kind === 'user'
+                                  ? 'user'
+                                  : event.kind === 'assistant'
+                                    ? 'sparkle'
+                                    : 'context'
+                            }
+                            className="kindTagIcon"
+                          />
+                          <span className="kindTagLabel">
+                            {execution ? '执行结果' : label}
+                          </span>
                         </span>
                       </span>
-                    </span>
-                  </div>
+                    </div>
+                  )}
                 </td>
                 <td className="content">
                   {tool ? (
                     <div className="resultPreview">
                       <div className="resultRequest">
                         <span className="toolCallNameTypeface">
+                          {event.program_summary != null && (
+                            <span className="programIcon">{'</>'}</span>
+                          )}
                           {event.name}
                         </span>
-                        <span className="toolCallPayload">{event.preview}</span>
+                        <span
+                          className={
+                            event.program_summary != null
+                              ? 'programSummary'
+                              : 'toolCallPayload'
+                          }
+                        >
+                          {event.program_summary ?? event.preview}
+                        </span>
                       </div>
                       {event.status !== 'unread' && (
                         <div className="inlineResult">

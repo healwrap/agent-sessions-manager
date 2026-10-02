@@ -5,6 +5,7 @@ import re
 from .base import read_row, as_text
 from agent_sessions.context.text import compact_line
 from .dsh_metadata import content
+from .program import recorded_program
 
 IMAGE_TYPES = {'image/png', 'image/jpeg', 'image/webp', 'image/gif'}
 
@@ -95,6 +96,10 @@ def enrich_detail(store, key, result):
         if event['kind'] in ('tool', 'subtool'):
             definitions = [t for t in request.get('tools', []) if t.get('name') == event['name']]
             if len(definitions) == 1: fields['tool_schema'] = definitions[0]
+    if event['kind'] in ('tool', 'subtool') and event['name'] == 'run_code':
+        original = store.body(read_row(data['source'], loc['offset']), loc)
+        program = recorded_program(original, fields.get('tool_schema'))
+        if program: fields['code_program'] = program
     if event['kind'] in ('tool', 'subtool'):
         fields['output_preview'] = event.get('output_preview')
         fields['nested'] = [e for e in data['events'] if e.get('parent_ref') == event['ref']]
@@ -110,7 +115,7 @@ def enrich_detail(store, key, result):
                    (event['turn'], event.get('step'))]
         fields['request_tool_calls'] = sum(item['kind'] == 'tool' for item in related)
         fields['request_subtool_calls'] = sum(item['kind'] == 'subtool' for item in related)
-        assistant_result = next((item for item in related if item['kind'] == 'assistant'), None)
+        assistant_result = next((item for item in related if item['kind'] == 'assistant' and not item.get('request_only')), None)
         fields['request_result_ref'] = event['ref'] if event['name'] == '上下文压缩' else assistant_result['ref'] if assistant_result else None
         if loc.get('retries'):
             retry = read_row(data['source'], loc['retries'][-1]['offset']).get('data', {})

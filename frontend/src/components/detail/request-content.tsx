@@ -18,7 +18,7 @@ function Usage({ usage }: { usage?: Record<string, number> }) {
       : undefined;
   const content =
     usage.outputTokens != null && usage.reasoningTokens != null
-      ? usage.outputTokens - usage.reasoningTokens
+      ? Math.max(0, usage.outputTokens - usage.reasoningTokens)
       : undefined;
   const rows = [
     ['输入', input],

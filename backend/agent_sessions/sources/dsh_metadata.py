@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from agent_sessions.context.text import compact_line
 from .base import as_text
+from .program import recorded_program
 import hashlib
 import json
 
@@ -67,4 +68,8 @@ def metadata(row):
                                   'chars': len(as_text(data.get('content', [])))}]
     if kind == 'request/header':
         result['tools_digest'] = hashlib.sha256(json.dumps(data.get('header', {}).get('tools', []), sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    if kind in ('tool/call', 'tool/ptc-dispatch-start') and data.get('name') == 'run_code':
+        arguments = data.get('arguments')
+        program = recorded_program(arguments if isinstance(arguments, str) else json.dumps(arguments, ensure_ascii=False))
+        if program: result['program_summary'] = compact_line(program['description'], 420)
     return result

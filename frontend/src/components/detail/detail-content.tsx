@@ -1,3 +1,4 @@
+import { ProgramInput, ProgramOutput } from './program-content';
 import type { Detail } from '../../lib/types';
 import { sessionStore } from '../../state/session-store';
 import { Payload } from './payload';
@@ -48,6 +49,10 @@ export function DetailContent({
         </pre>
       </div>
     );
+  if (tab === '源码' && detail.code_program)
+    return <ProgramInput program={detail.code_program} />;
+  if (tab === '结果' && detail.code_program)
+    return <ProgramOutput detail={detail} />;
   if (tab === '计时') return <RecordTiming event={event} />;
   if (tab === '请求配置')
     return (

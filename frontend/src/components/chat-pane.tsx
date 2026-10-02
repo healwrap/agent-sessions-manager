@@ -4,6 +4,7 @@ import type { AppState } from '../state/session-store';
 import { sessionStore } from '../state/session-store';
 import type { Detail, Event } from '../lib/types';
 import { chatReplyRefs, requestText } from '../lib/selectors';
+import { recordType } from '../lib/record-presentation';
 import { copyText } from '../lib/api';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Collapse, Icon } from './primitives';
@@ -223,6 +224,7 @@ export function ChatPane({ state }: { state: AppState }) {
     }
   };
   for (const event of view.events) {
+    if (event.request_only) continue;
     if (event.kind === 'user' || replies.has(event.ref)) {
       flush();
       rows.push(
@@ -233,7 +235,7 @@ export function ChatPane({ state }: { state: AppState }) {
           revision={event.ref === lastReply ? view.version : null}
         />,
       );
-    } else if (event.name === 'compaction') {
+    } else if (recordType(event) === 'compaction') {
       flush();
       rows.push(
         <button

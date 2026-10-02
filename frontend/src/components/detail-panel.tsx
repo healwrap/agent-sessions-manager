@@ -60,7 +60,9 @@ export function DetailPanel({ state }: { state: AppState }) {
     };
   }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
-    requestOpen = view.requestOpen && detail?.event.request_number != null,
+    requestOpen =
+      (view.requestOpen || detail?.event.request_only) &&
+      detail?.event.request_number != null,
     tabs = requestOpen
       ? ['概述', ...(detail?.request_config ? ['选项'] : []), '用量', '计时']
       : detailTabs(detail),
@@ -210,6 +212,7 @@ export function DetailPanel({ state }: { state: AppState }) {
                 />
               )}
               {detail.pages > 1 &&
+                !(detail.code_program && tab !== '结果') &&
                 !detail.prompt_snapshot &&
                 !requestOpen &&
                 !['来源', 'Schema', '计时', '请求配置'].includes(tab) && (

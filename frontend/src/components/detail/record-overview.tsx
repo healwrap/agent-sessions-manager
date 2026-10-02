@@ -1,3 +1,4 @@
+import { ProgramInput, ProgramOutput } from './program-content';
 import { recordType } from '../../lib/record-presentation';
 import type { Detail } from '../../lib/types';
 import { statusLabels } from '../../lib/types';
@@ -39,6 +40,9 @@ export function RecordOverview({
   const compaction = recordType(event) === 'compaction';
   return (
     <>
+      {detail.code_program?.description && (
+        <p className="programDescription">{detail.code_program.description}</p>
+      )}
       <dl className="overview">
         {(detail.message_source !== undefined || !tool) && (
           <div>
@@ -99,19 +103,30 @@ export function RecordOverview({
         <div className="overview-sections">
           {tool ? (
             <>
-              {detail.text && (
-                <OverviewSection label="参数" onOpen={() => change('参数')}>
-                  <Payload text={detail.text} label="参数 JSON" preview />
-                </OverviewSection>
+              {detail.code_program ? (
+                <ProgramInput
+                  program={detail.code_program}
+                  onOpen={() => change('源码')}
+                />
+              ) : (
+                detail.text && (
+                  <OverviewSection label="参数" onOpen={() => change('参数')}>
+                    <Payload text={detail.text} label="参数 JSON" preview />
+                  </OverviewSection>
+                )
               )}
-              {detail.output_available && (
-                <OverviewSection label="结果" onOpen={() => change('结果')}>
-                  {output ? (
-                    <RecordContent detail={output} id={id} preview />
-                  ) : (
-                    <p className="metadata-note">正在读取…</p>
-                  )}
-                </OverviewSection>
+              {detail.code_program && output ? (
+                <ProgramOutput detail={output} onOpen={() => change('结果')} />
+              ) : (
+                detail.output_available && (
+                  <OverviewSection label="结果" onOpen={() => change('结果')}>
+                    {output ? (
+                      <RecordContent detail={output} id={id} preview />
+                    ) : (
+                      <p className="metadata-note">正在读取…</p>
+                    )}
+                  </OverviewSection>
+                )
               )}
               {!detail.output_available &&
                 (event.result_note ||

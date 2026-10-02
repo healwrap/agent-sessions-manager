@@ -13,8 +13,11 @@ export function detailTabs(detail: Detail | null): string[] {
   if (['tool', 'subtool'].includes(event.kind))
     return [
       '概述',
-      ...(detail.text ? ['参数'] : []),
-      ...(detail.output_available || event.result_note || detail.parent_ref
+      ...(detail.code_program ? ['源码'] : detail.text ? ['参数'] : []),
+      ...(detail.output_available ||
+      detail.code_program ||
+      event.result_note ||
+      detail.parent_ref
         ? ['结果']
         : []),
       'Schema',

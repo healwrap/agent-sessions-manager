@@ -264,6 +264,13 @@ export class SessionStore {
     });
     await this.loadTrace(true);
   }
+  toggleCall(group: string) {
+    const expandedCalls = new Set(this.state.expandedCalls);
+    if (expandedCalls.has(group)) expandedCalls.delete(group);
+    else expandedCalls.add(group);
+    this.update({ expandedCalls });
+  }
+
   toggleTurn(turn: number) {
     const collapsed = new Set(this.state.collapsed);
     if (collapsed.has(turn)) collapsed.delete(turn);

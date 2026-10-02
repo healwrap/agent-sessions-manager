@@ -17,7 +17,7 @@ def events(rows):
     ledger = []; lookup = {}; turns = {}; calls = {}; outputs = {}; starts = {}; boundaries = {}; current = 1
     header = None; tools_digest = None; system_seen = False; warnings = Counter(); active_step = None
     system_prompt = None; waiting_prompts = []
-    first_times = {}; retries = {}; compactions = {}; request_numbers = {}; request_count = 0
+    first_times = {}; retries = {}; compactions = {}; request_numbers = {}; request_count = 0; requests = {}
 
     def add(r, offset, line, kind, name, preview, part='text', suffix=''):
         ref = 'E/'+str(r['seq'])+suffix
@@ -47,6 +47,7 @@ def events(rows):
         elif kind == 'step/start':
             starts[identity] = r['timestamp']; active_step = r['step']
             request_count += 1; request_numbers[identity] = request_count
+            requests[identity] = (offset, line, r, header)
         elif kind == 'step/end':
             boundaries[identity] = r['timestamp']; active_step = None
         elif kind == 'user/message':
@@ -70,6 +71,7 @@ def events(rows):
             nested = kind != 'tool/call'
             event, loc = add(r, offset, line, 'subtool' if nested else 'tool', r['name'] or '工具', r['input'], 'dispatch_arguments' if nested else 'arguments')
             event['call_id'] = r['call_id']
+            if 'program_summary' in r: event['program_summary'] = r['program_summary']
             calls.setdefault((*identity, r['call_id']), []).append((event, loc))
             if nested: event.update(parent_call_id=r['parent_id'], root_call_id=r['root_id'])
         elif kind in ('tool/result', 'tool/ptc-dispatch'):
@@ -119,6 +121,18 @@ def events(rows):
             retries.setdefault(identity, []).append({'offset': offset, 'line': line})
         elif kind not in ADMIN and not str(kind).startswith(('session-log-', 'session/')):
             warnings[kind] += 1
+    # Native Harness retains a request-only boundary when no model message settled.
+    represented = {(e['turn'], e['step']) for e in ledger if e['kind'] == 'assistant'}
+    running = {(e['turn'], e['step']) for e in ledger if e['kind'] == 'tool' and
+               (e['turn'], e['step']) not in boundaries and (e['turn'], None) not in boundaries}
+    for identity, (offset, line, record, request_header) in requests.items():
+        if identity in represented or identity in running: continue
+        event, loc = add(record, offset, line, 'assistant', '请求', '', suffix='/Q')
+        event.update(turn=identity[0], request_number=request_numbers[identity], record_type='request', request_only=True)
+        end = boundaries.get(identity) or boundaries.get((identity[0], None))
+        event.update(status='error' if end or retries.get(identity) else 'running', completed_at=end,
+                     duration_ms=elapsed(event['timestamp'], end), first_token_at=first_times.get(identity))
+        loc['header'] = request_header
     for identity, results in outputs.items():
         matching = calls.get(identity, [])
         if identity[2] and len(matching) == len(results) == 1:

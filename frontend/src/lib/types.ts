@@ -43,6 +43,7 @@ export interface Preferences {
   projectAssignments: Record<string, Project>;
 }
 export interface Event {
+  program_summary?: string;
   ref: string;
   turn: number;
   kind: string;
@@ -55,6 +56,7 @@ export interface Event {
   phase?: string | null;
   step?: number | null;
   request_number?: number;
+  request_only?: boolean;
   layer?: string | null;
   output_preview?: string;
   completed_at?: string | null;
@@ -133,7 +135,15 @@ export interface SourceBlock {
   ref?: string | null;
   attachment?: Omit<Attachment, 'index'>;
 }
+export interface CodeProgram {
+  raw_input: string;
+  source: string;
+  description: string;
+  arguments: Record<string, unknown>;
+  language?: 'typescript' | 'python';
+}
 export interface Detail {
+  code_program?: CodeProgram;
   part?: string;
   message_source?: unknown;
   prompt_snapshot?: PromptSnapshot;

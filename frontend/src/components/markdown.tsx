@@ -3,6 +3,26 @@ import { memo, type ReactNode } from 'react';
 import { copyText } from '../lib/api';
 import { sessionStore } from '../state/session-store';
 import { Icon } from './primitives';
+import { tokenStyle, useCodeTokens } from '../lib/code-highlighter';
+function CodeText({ code, language }: { code: string; language?: string }) {
+  const lines = useCodeTokens(code, language);
+  return (
+    <code>
+      {lines
+        ? lines.map((line, i) => (
+            <span key={i}>
+              {i > 0 && '\n'}
+              {line.map((token, j) => (
+                <span key={j} style={tokenStyle(token)}>
+                  {token.content}
+                </span>
+              ))}
+            </span>
+          ))
+        : code}
+    </code>
+  );
+}
 const safeHref = (href: string) =>
   /^(https?:|mailto:)/i.test(href) ? href : undefined;
 function tokens(items: Token[] = []): ReactNode[] {
@@ -102,7 +122,7 @@ function tokens(items: Token[] = []): ReactNode[] {
               </button>
             </div>
             <pre>
-              <code>{t.text}</code>
+              <CodeText code={t.text || ''} language={t.lang} />
             </pre>
           </div>
         );

@@ -1,5 +1,6 @@
 // Adapted from DeepSeek Harness JsonTree (MIT); see frontend/public/harness-license.txt.
 import clsx from 'clsx';
+import { copyText as writeClipboard } from '../../lib/api';
 import {
   useEffect,
   useRef,
@@ -114,7 +115,7 @@ export function JsonTree({
     copyStore.set(snapshot);
     let state: CopySnapshot['state'];
     try {
-      await navigator.clipboard.writeText(copyText(target, mode));
+      await writeClipboard(copyText(target, mode));
       state = 'copied';
     } catch {
       state = 'failed';

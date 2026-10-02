@@ -11,7 +11,7 @@ export function chatReplyRefs(events: Event[], hasMore = false) {
     finals = new Set<number>(),
     legacy = new Map<number, Event>();
   for (const event of events) {
-    if (event.kind !== 'assistant') continue;
+    if (event.kind !== 'assistant' || event.request_only) continue;
     if (['final', 'final_answer'].includes(event.phase || '')) {
       replies.add(event.ref);
       finals.add(event.turn);
@@ -142,7 +142,7 @@ export function trajectoryRows(
     }
     const key = e.call_group || e.call_summary,
       group = key && data?.call_groups[key];
-    if (foldCalls && group && !expanded.has(key!)) {
+    if (group && foldCalls !== expanded.has(key!)) {
       if (e.kind === 'assistant') rows.push(e);
       if (!calls.has(key!)) {
         rows.push({

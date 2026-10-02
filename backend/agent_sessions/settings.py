@@ -3,7 +3,7 @@ import json
 import threading
 from pathlib import Path
 
-SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli', 'claude:desktop', 'dsh:local')
+SOURCE_KEYS = ('codex:local', 'claude:local', 'antigravity:desktop', 'antigravity:cli', 'claude:desktop', 'dsh:local', 'cursor:desktop')
 
 def shared_claude_switch(enabled):
     enabled = dict(enabled)
@@ -15,12 +15,13 @@ def shared_claude_switch(enabled):
 
 class AppSettings:
     def __init__(self, directory, roots):
-        from agent_sessions.paths import claude_desktop_root
+        from agent_sessions.paths import claude_desktop_root, cursor_root
         self.path = Path(directory)/'settings.json'
         self.lock = threading.RLock()
         roots = tuple(roots)
         if len(roots) == 4:
             roots += (claude_desktop_root(), Path.home()/'.dsh')
+        if len(roots) == 6: roots += (cursor_root(),)
         if len(roots) != len(SOURCE_KEYS):
             raise ValueError('会话来源目录数量无效')
         self.defaults = {'paths': {key: str(Path(root).expanduser().resolve()) for key, root in zip(SOURCE_KEYS, roots)},
@@ -40,6 +41,10 @@ class AppSettings:
             value = {**value, 'theme': 'system'}
         if not isinstance(value, dict) or set(value) != set(self.defaults):
             raise ValueError('应用设置格式无效')
+        legacy = set(SOURCE_KEYS)-{'cursor:desktop'}
+        if isinstance(value.get('paths'), dict) and isinstance(value.get('enabled'), dict) and set(value['paths']) == set(value['enabled']) == legacy:
+            value = {**value, 'paths': {**value['paths'], 'cursor:desktop': self.defaults['paths']['cursor:desktop']},
+                     'enabled': {**value['enabled'], 'cursor:desktop': self.defaults['enabled']['cursor:desktop']}}
         if value['theme'] not in ('light', 'dark', 'system'):
             raise ValueError('外观应为浅色、深色或跟随系统')
         if not isinstance(value['paths'], dict) or set(value['paths']) != set(SOURCE_KEYS):

@@ -14,7 +14,7 @@ from agent_sessions.settings import AppSettings, ViewSettings
 from agent_sessions.context.handoff import prompt, read
 
 with tempfile.TemporaryDirectory() as folder:
-    root = Path(folder); roots = [root/'codex', root/'Claude histories', root/'agy', root/'cli', root/'desktop', root/'dsh']
+    root = Path(folder); roots = [root/'codex', root/'Claude histories', root/'agy', root/'cli', root/'desktop', root/'dsh', root/'cursor']
     file = roots[1]/'projects/project/one.jsonl';file.parent.mkdir(parents=True)
     rows = [{'uuid': 'u', 'parentUuid': None, 'type': 'user', 'cwd': '/tmp/a project', 'sessionId': 'one', 'message': {'content': 'value=exact'}},
             {'uuid': 'a', 'parentUuid': 'u', 'type': 'assistant', 'message': {'content': '回答原话'}},

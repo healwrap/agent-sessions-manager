@@ -60,7 +60,7 @@ fn show_about(app: tauri::AppHandle) -> Result<Option<String>, String> {
     #[cfg(not(target_os = "macos"))]
     {
         Ok(Some(format!(
-            "Agent Sessions\n版本 {}\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Antigravity 和 Antigravity CLI。",
+            "Agent Sessions\n版本 {}\n\n管理本地 Agent 会话、对话与轨迹。\n支持 Codex、Claude Code、Cursor、Antigravity、Antigravity CLI 和 DeepSeek Harness。",
             app.package_info().version
         )))
     }

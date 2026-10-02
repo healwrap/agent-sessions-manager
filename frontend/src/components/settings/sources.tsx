@@ -71,9 +71,11 @@ export function SourceSettings({
                 ? ' · 读取本地导出的记录'
                 : key === 'claude:local'
                   ? ' · 桌面端与 CLI 共用的会话目录'
-                  : key === 'dsh:local'
-                    ? ' · 支持 JSONL 与 Zstandard 压缩日志'
-                    : ''}
+                  : key === 'cursor:desktop'
+                    ? ' · 读取本地 Agent / Composer 会话数据库'
+                    : key === 'dsh:local'
+                      ? ' · 支持 JSONL 与 Zstandard 压缩日志'
+                      : ''}
             </p>
             {key === 'claude:local' && (
               <details>

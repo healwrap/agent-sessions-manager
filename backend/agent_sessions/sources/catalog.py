@@ -8,24 +8,26 @@ from .base import readonly_db
 from .claude import ClaudeDesktopStore
 from .antigravity import AntigravityStore
 from .dsh import DshStore
+from .cursor import CursorStore
 
 SOURCE_LABELS = {'codex:local': 'Codex', 'claude:local': 'Claude Code',
                  'antigravity:desktop': 'Antigravity', 'antigravity:cli': 'Antigravity CLI',
-                 'claude:desktop': 'Claude Code', 'dsh:local': 'DeepSeek Harness'}
+                 'claude:desktop': 'Claude Code', 'dsh:local': 'DeepSeek Harness', 'cursor:desktop': 'Cursor'}
 
 def public_source(source):
     # Keep the old desktop IDs as read routes, with one public Claude source.
     return 'claude:local' if source == 'claude:desktop' else source
 
 class MultiStore:
-    def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None):
+    def __init__(self, codex, claude, antigravity, antigravity_cli, claude_desktop=None, dsh=None, cursor=None):
         self.codex = Store(codex)
         desktop = ClaudeDesktopStore(claude_desktop or claude.parent/'claude-desktop', claude)
         self.adapters = {'codex:local': self.codex, 'claude:local': desktop.shared,
                          'antigravity:desktop': AntigravityStore(antigravity, 'desktop'),
                          'antigravity:cli': AntigravityStore(antigravity_cli, 'cli'),
                          'claude:desktop': desktop,
-                         'dsh:local': DshStore(dsh or codex.parent/'dsh')}
+                         'dsh:local': DshStore(dsh or codex.parent/'dsh'),
+                         'cursor:desktop': CursorStore(cursor or codex.parent/'cursor')}
         self.errors = {}; self.project_overrides = {}; self.disabled = set()
         self.catalogue_time = 0; self.catalogue_rows = []
 

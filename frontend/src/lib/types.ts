@@ -55,7 +55,7 @@ export interface Event {
   call_group?: string;
   call_summary?: string;
   parent_ref?: string;
-  line?: number;
+  line?: number | null;
   output_chars?: number;
   result_note?: string;
   count?: number;
@@ -111,7 +111,8 @@ export interface Detail {
   total_chars: number;
   output_available: boolean;
   source: string;
-  line: number;
+  line: number | null;
+  source_key?: string;
   thread_id: string;
   provider_label: string;
   parent_ref?: string;
@@ -146,6 +147,7 @@ export type Request = <T>(
 export const sourceNames: Record<string, string> = {
   'codex:local': 'Codex',
   'claude:local': 'Claude Code',
+  'cursor:desktop': 'Cursor',
   'dsh:local': 'DeepSeek Harness',
   'antigravity:desktop': 'Antigravity',
   'antigravity:cli': 'Antigravity CLI',

@@ -204,7 +204,20 @@ export function DetailPanel({ state }: { state: AppState }) {
                 <div className="detail-content">
                   <pre>
                     {detail.source}
-                    {'\n'}第 {detail.line} 行{'\n'}
+                    {detail.line != null && (
+                      <>
+                        {' '}
+                        {'\n'}第 {detail.line} 行
+                      </>
+                    )}
+                    {detail.source_key && (
+                      <>
+                        {' '}
+                        {'\n'}
+                        {detail.source_key}
+                      </>
+                    )}
+                    {'\n'}
                     {detail.thread_id}
                   </pre>
                 </div>

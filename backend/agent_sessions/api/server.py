@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse, unquote
 from agent_sessions.sources.codex import Store, PAGE_CHARS, timestamp_ms
 from agent_sessions.context.locator import codex_root
-from agent_sessions.paths import claude_root, claude_desktop_root, state_root
+from agent_sessions.paths import claude_root, claude_desktop_root, cursor_root, state_root
 
 ASSETS = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[3])) / 'frontend' / 'dist'
 
@@ -128,6 +128,7 @@ def main():
     parser.add_argument('--claude-home', type=Path, default=claude_root())
     parser.add_argument('--claude-desktop-home', type=Path, default=claude_desktop_root())
     parser.add_argument('--dsh-home', type=Path, default=Path.home()/'.dsh')
+    parser.add_argument('--cursor-home', type=Path, default=cursor_root())
     parser.add_argument('--antigravity-home', type=Path, default=Path.home()/'.gemini/antigravity')
     parser.add_argument('--antigravity-cli-home', type=Path, default=Path.home()/'.gemini/antigravity-cli')
     parser.add_argument('--codex-only', action='store_true')
@@ -142,7 +143,7 @@ def main():
     args = parser.parse_args()
     from agent_sessions.settings import ViewSettings, AppSettings
     preferences = ViewSettings(args.state_home)
-    app_settings = AppSettings(args.state_home, (args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home, args.claude_desktop_home, args.dsh_home))
+    app_settings = AppSettings(args.state_home, (args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home, args.claude_desktop_home, args.dsh_home, args.cursor_home))
     store = Store(args.codex_home) if args.codex_only else configured_store(app_settings.read(), preferences)
     if args.read_session:
         if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')

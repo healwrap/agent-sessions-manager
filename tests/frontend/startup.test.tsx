@@ -13,6 +13,7 @@ describe('progressive startup', () => {
     expect(html).toContain('正在加载会话');
     expect(html).not.toContain('会话 · 对话 · 轨迹');
     expect(html).toContain('value="claude:local"');
+    expect(html).toContain('value="cursor:desktop"');
     expect(html).not.toContain('value="claude:desktop"');
     expect(html).not.toContain('Claude Code CLI');
     expect(html).not.toContain('Claude Code Desktop');
@@ -26,7 +27,7 @@ describe('progressive startup', () => {
         onChange={() => {}}
       />,
     );
-    expect(html.match(/role="switch"/g)).toHaveLength(5);
+    expect(html.match(/role="switch"/g)).toHaveLength(6);
     expect(html).toContain('启用 Claude Code');
     expect(html).toContain('path-claude-index');
     expect(html).not.toContain('Claude Code Desktop');

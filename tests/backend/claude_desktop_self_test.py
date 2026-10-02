@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory() as folder:
     assert desktop['items'] == cli['items']
     assert any(row['id'] == 'claude:local:-tmp-project/cli-code' for row in cli['items'])
     sources = store.sources()['items']
-    assert len(sources) == 5 and [s['label'] for s in sources if s['provider'] == 'claude'] == ['Claude Code']
+    assert len(sources) == 6 and [s['label'] for s in sources if s['provider'] == 'claude'] == ['Claude Code']
     assert all(row['source_id'] == 'claude:local' and row['provider_label'] == 'Claude Code' for row in cli['items'])
     key = 'claude:desktop:account/org/desktop-code'
     assert store.trajectory(key)['provider_label'] == 'Claude Code'

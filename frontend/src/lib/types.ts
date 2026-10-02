@@ -48,6 +48,13 @@ export interface Event {
   timestamp: string;
   position: number;
   phase?: string | null;
+  step?: number | null;
+  layer?: string | null;
+  output_preview?: string;
+  completed_at?: string | null;
+  first_token_at?: string | null;
+  model?: string | null;
+  usage?: Record<string, number>;
   turn_status?: string;
   duration_ms: number | null;
   timeline_start?: number;
@@ -88,6 +95,7 @@ export interface Trajectory {
   events: Event[];
   total: number;
   event_count: number;
+  step_count?: number | null;
   turn_count: number;
   tool_count: number;
   next_offset: number | null;
@@ -103,7 +111,22 @@ export interface Trajectory {
   call_groups: Record<string, CallGroup>;
   unavailable_reason?: string;
 }
+export interface Attachment {
+  index: number;
+  attachmentId: string;
+  mediaType: string;
+  bytes: number;
+  name?: string;
+}
 export interface Detail {
+  part?: string;
+  attachments?: Attachment[];
+  tool_schema?: { name: string; description?: string; parameters: unknown };
+  request_config?: Record<string, unknown>;
+  thinking_text?: string;
+  output_text?: string;
+  tool_calls?: { ref: string | null; name: string; preview: string }[];
+  retries?: Record<string, unknown>[];
   event: Event;
   text: string;
   page: number;

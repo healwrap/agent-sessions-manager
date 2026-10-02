@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usesRecordedDuration } from '../lib/recorded-time';
+import { assistantWaitRatio } from '../lib/event-presentation';
 import { sessionStore, type AppState } from '../state/session-store';
 import {
   timelineRange,
@@ -249,20 +250,24 @@ export function Timeline({ state }: { state: AppState }) {
           {events.map((event) => {
             const [start, end] = timelineRange(event, total, duration);
             if (end < viewport[0] || start > viewport[1]) return null;
-            const execution =
-              event.kind === 'context' && event.name === '执行记录';
+            const execution = ['执行记录', '执行结果'].includes(event.name);
+            const compaction = event.name === '上下文压缩';
+            const system = ['系统提示词', '工具定义'].includes(event.name);
+            const waitRatio = assistantWaitRatio(event);
             const lane =
-                event.kind === 'assistant'
+                event.kind === 'assistant' || compaction
                   ? 1
                   : ['tool', 'subtool'].includes(event.kind) || execution
                     ? 2
                     : 0,
               kind =
-                event.kind === 'assistant'
+                event.kind === 'assistant' || compaction
                   ? 'message'
-                  : execution
-                    ? 'tool'
-                    : event.kind;
+                  : system
+                    ? 'system'
+                    : execution
+                      ? 'tool'
+                      : event.kind;
             const spanWidth = Math.max(2, left(end) - left(start));
             const pixelLeft = left(start);
             return (
@@ -272,6 +277,8 @@ export function Timeline({ state }: { state: AppState }) {
                 style={
                   {
                     '--trajectory-span-lane': lane,
+                    '--trajectory-assistant-ttft':
+                      waitRatio == null ? undefined : waitRatio + '%',
                     '--trajectory-span-left': pixelLeft + 'px',
                     '--trajectory-span-width': spanWidth + 'px',
                     '--trajectory-span-gap':
@@ -279,6 +286,7 @@ export function Timeline({ state }: { state: AppState }) {
                   } as CSSProperties
                 }
                 data-timeline-span={kind}
+                data-assistant-timing={waitRatio != null}
                 data-current={
                   event.ref === view.selected ||
                   !!view.events.find(

@@ -11,7 +11,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from agent_sessions.context.text import compact_line
 from .base import HistoryStore, as_text
-from .codex import elapsed
+from .dsh_metadata import metadata, content
+from .dsh_events import events
+from .dsh_detail import enrich_detail, attachment_bytes
 
 
 @contextmanager
@@ -32,6 +34,7 @@ def transcript_stream(path):
 class DshStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'dsh', 'local')
+        self.full_overview = True
         self.raw_files = {}; self.decoded = {}; self.headers = {}; self.failures = {}; self.titles = {}; self.workspaces = {}
         self.temporary = tempfile.TemporaryDirectory(prefix='agent-sessions-dsh-')
 
@@ -137,7 +140,10 @@ class DshStore(HistoryStore):
 
     def detail(self, key, *args, **kwargs):
         result = super().detail(key, *args, **kwargs)
-        return {**result, 'source': str(self.raw_files[key])}
+        return enrich_detail(self, key, result)
+
+    def attachment(self, key, ref, index, part='output'):
+        return attachment_bytes(self, key, ref, index, part)
 
     def matches_content(self, key, query):
         # Compressed source versions, rather than disposable decoded paths, own freshness.
@@ -153,93 +159,22 @@ class DshStore(HistoryStore):
             return self.search_matches[key][1]
 
     def metadata(self, row):
-        data = row.get('data') or {}; kind = row.get('type')
-        message = data.get('message', data)
-        content = message.get('content', [])
-        result = {'type': kind, 'seq': row.get('seq'), 'turn': data.get('turn'), 'step': data.get('step'),
-                  'timestamp': datetime.fromtimestamp(row['time']/1000, timezone.utc).isoformat() if isinstance(row.get('time'), (int, float)) else None,
-                  'source_kind': message.get('source', {}).get('kind') if isinstance(message.get('source'), dict) else None,
-                  'preview': compact_line(as_text(content), 420), 'reasoning': compact_line(self.content(content, 'reasoning'), 420),
-                  'name': data.get('name'), 'call_id': data.get('callId'), 'input': compact_line(str(data.get('arguments', '')), 420),
-                  'results': [], 'reason': data.get('reason'), 'title': data.get('title')}
-        if kind == 'tool/result':
-            if message.get('toolCallId'):
-                result['results'].append({'id': message['toolCallId'], 'error': bool(message.get('isError')), 'block': None,
-                                          'preview': compact_line(as_text(content), 420), 'chars': len(as_text(content))})
-            else:
-                result['results'] = [{'id': b.get('toolCallId'), 'error': bool(b.get('isError')), 'block': i,
-                                      'preview': compact_line(as_text(b.get('content')), 420), 'chars': len(as_text(b.get('content')))}
-                                     for i, b in enumerate(content) if isinstance(b, dict) and b.get('type') == 'tool-result']
-        return result
-
-    @staticmethod
-    def content(blocks, kind):
-        if isinstance(blocks, str): return blocks if kind == 'text' else ''
-        return '\n'.join(str(b.get('text', '')) for b in (blocks or []) if isinstance(b, dict) and b.get('type') == kind)
+        return metadata(row)
 
     def events(self, rows):
-        events = []; lookup = {}; turns = {}; calls = {}; outputs = {}; current = 1
-        def add(r, offset, line, kind, name, preview, part='text', suffix=''):
-            ref = 'E/'+str(r['seq'])+suffix
-            event = {'ref': ref, 'turn': r.get('turn') or current, 'kind': kind, 'name': name, 'preview': preview,
-                     'timestamp': r['timestamp'], 'status': 'pending' if kind == 'tool' else 'completed',
-                     'line': line, 'duration_ms': None, 'phase': 'reasoning' if part == 'reasoning' else None}
-            location = {'offset': offset, 'line': line, 'part': part, 'text': preview}
-            events.append(event); lookup[ref] = ('message' if kind in ('user', 'assistant') else 'call', location)
-            return event, location
-        for offset, line, r in rows:
-            kind = r['type']
-            if kind == 'session': continue
-            if kind == 'turn/start':
-                next_turn = r.get('turn') or current
-                if next_turn != current and turns.get(current, {}).get('status') == 'in_progress':
-                    turns[current]['status'] = 'aborted'
-                current = next_turn; turns[current] = {'status': 'in_progress'}
-            elif kind == 'turn/end':
-                reason = r.get('reason') or {}; reason = reason.get('kind') if isinstance(reason, dict) else reason
-                turns[r.get('turn') or current] = {'status': 'completed' if reason == 'completed' else 'aborted'}
-            elif kind == 'user/message':
-                user = r['source_kind'] in (None, 'user')
-                add(r, offset, line, 'user' if user else 'context', '用户' if user else '上下文', r['preview'])
-            elif kind == 'assistant/message':
-                if r['reasoning']: add(r, offset, line, 'assistant', '助手', r['reasoning'], 'reasoning', '/R')
-                if r['preview']: add(r, offset, line, 'assistant', '助手', r['preview'])
-            elif kind == 'tool/call':
-                event, loc = add(r, offset, line, 'tool', r['name'] or '工具', r['input'], 'arguments')
-                calls.setdefault((event['turn'], r['step'], r['call_id']), []).append((event, loc))
-            elif kind == 'tool/result':
-                for output in r['results']:
-                    loc = {'offset': offset, 'line': line, 'part': 'result', 'block': output['block']}
-                    outputs.setdefault((r.get('turn') or current, r['step'], output['id']), []).append((loc, output, r))
-            elif kind == 'system/message': add(r, offset, line, 'context', '系统提示词', r['preview'])
-            elif kind == 'compaction/end': add(r, offset, line, 'context', '上下文压缩', '上下文已压缩，历史可见记录仍可查看')
-        for identity, results in outputs.items():
-            matching = calls.get(identity, [])
-            if identity[2] and len(matching) == len(results) == 1:
-                event, loc = matching[0]; output, metadata, record = results[0]
-                loc['output'] = output; event['status'] = 'error' if metadata['error'] else 'completed'
-                event['output_chars'] = metadata['chars']
-                event['duration_ms'] = elapsed(event['timestamp'], record['timestamp'])
-            else:
-                for output, metadata, record in results:
-                    event, location = add(record, output['offset'], output['line'], 'media', '执行结果', metadata['preview'],
-                                          'result', '/'+str(metadata['block'] or 0))
-                    event['turn'] = identity[0]
-                    event['status'] = 'error' if metadata['error'] else 'completed'
-                    location['block'] = metadata['block']
-        events.sort(key=lambda e: e['line'])
-        for event in events:
-            state = turns.get(event['turn'], {'status': 'in_progress'})['status']
-            event['turn_status'] = state
-        for number, state in turns.items():
-            last = next((e for e in reversed(events) if e['turn'] == number and e['kind'] in ('tool', 'assistant')), None)
-            if state['status'] == 'completed' and last and last['kind'] == 'assistant' and last['phase'] != 'reasoning': last['phase'] = 'final_answer'
-        return events, lookup, [turns[n] for n in sorted(turns)], {}
+        return events(rows)
 
     def body(self, row, location):
         data = row.get('data') or {}; message = data.get('message', data)
         if location['part'] == 'arguments': return str(data.get('arguments', ''))
+        if location['part'] == 'dispatch_arguments': return json.dumps(data.get('arguments'), ensure_ascii=False)
+        if location['part'] == 'dispatch_result': return as_text(data.get('content', []))
+        if location['part'] == 'header': return json.dumps(data.get('header', {}), ensure_ascii=False, indent=2)
+        if location['part'] == 'summary': return as_text(data.get('summary'))
+        if row.get('type') == 'llm/retry': return json.dumps(data, ensure_ascii=False, indent=2)
         if location['part'] == 'result' and location.get('block') is not None:
             return as_text(message['content'][location['block']].get('content'))
         if location['part'] == 'result': return as_text(message.get('content'))
-        return self.content(message.get('content', []), location['part'])
+        if row.get('type') == 'assistant/message' and location['part'] == 'text':
+            return '\n\n'.join(filter(None, [content(message.get('content', []), 'reasoning'), content(message.get('content', []), 'text')])) or location.get('placeholder', '')
+        return content(message.get('content', []), location['part']) or location.get('placeholder', '')

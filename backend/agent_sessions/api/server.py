@@ -66,6 +66,12 @@ class Handler(BaseHTTPRequestHandler):
                 if part not in {'input', 'output'}:
                     raise ValueError('内容类型无效')
                 result = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
+            elif parsed.path == '/api/attachment':
+                part = get('part', 'output')
+                if part not in {'input', 'output'}: raise ValueError('内容类型无效')
+                body, mime = self.server.store.attachment(get('id'), get('ref'), integer('index', 0, 0, 10000), part)
+                self.respond(200, body, mime)
+                return
             elif parsed.path == '/api/trajectory-focus':
                 result = self.server.store.focus(get('id'), float(get('start')), float(get('end')), get('mode', 'position'))
             else:

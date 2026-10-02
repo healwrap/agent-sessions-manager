@@ -24,7 +24,7 @@
   top: 14px;
 }
 .table .inlineResultText {
-  color: var(--dsw-alias-label-caption);
+  color: var(--dsw-alias-label-secondary);
 }
 .TrajectoryTimeline-span {
   border: 0;

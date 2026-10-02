@@ -18,7 +18,7 @@ def layout(events):
     for event in events:
         event.setdefault('duration_ms', None)
         start = timestamp(event.get('timestamp'))
-        if start is not None and event['kind'] != 'subtool':
+        if start is not None and (event['kind'] != 'subtool' or event.get('step') is not None):
             spans.append((start, start+max(0, event.get('duration_ms') or 0), event))
     removed = 0; covered = None
     for start, end, event in sorted(spans, key=lambda s: (s[0], s[1])):
@@ -63,17 +63,19 @@ def layout(events):
         remaining = [e for e in records if e['position'] > anchor['position']]
         summaries[str(turn)] = {'anchor_ref': anchor['ref'], 'anchor_position': anchor['position'], 'first_position': records[0]['position'],
                                'last_position': records[-1]['position'],
-                               'steps': sum(e['kind'] in ('assistant', 'tool') or e['kind'] == 'context' and e['name'] == '执行记录' for e in remaining),
+                               'steps': len({e['step'] for e in remaining if e.get('step') is not None and e['kind'] in ('assistant', 'tool')}) if any(e.get('step') is not None for e in remaining) else sum(e['kind'] in ('assistant', 'tool') or e['kind'] == 'context' and e['name'] == '执行记录' for e in remaining),
                                'calls': sum(e['kind'] in ('tool', 'subtool') for e in remaining),
                                'remaining': len(remaining)}
-    return {'active_duration_ms': total, 'turn_summaries': summaries, 'call_groups': groups}
+    recorded_steps = {(e['turn'], e['step']) for e in events if e.get('step') is not None and e['kind'] in ('assistant', 'tool')}
+    return {'active_duration_ms': total, 'step_count': len(recorded_steps) if recorded_steps else None,
+            'turn_summaries': summaries, 'call_groups': groups}
 
 
 def focus(events, start, end, mode):
     layout(events)
     matches = []
     for event in events:
-        if event['kind'] == 'subtool': continue
+        if event['kind'] == 'subtool' and event.get('step') is None: continue
         lo = event['timeline_start'] if mode == 'duration' else event['position']/max(1, len(events))
         hi = event['timeline_end'] if mode == 'duration' else (event['position']+1)/max(1, len(events))
         if lo <= end and hi >= start: matches.append(event)

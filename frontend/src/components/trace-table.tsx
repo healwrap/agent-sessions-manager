@@ -3,9 +3,10 @@ import { useRef } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
 import { timelineRange } from '../lib/timeline-projection';
 import { trajectoryRows } from '../lib/selectors';
-import { kindLabels, statusLabels } from '../lib/types';
+import { statusLabels } from '../lib/types';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Icon } from './primitives';
+import { eventLabel } from '../lib/event-presentation';
 export function TraceTable({ state }: { state: AppState }) {
   const ref = useRef<HTMLElement>(null),
     view = state.views.trace;
@@ -74,10 +75,7 @@ export function TraceTable({ state }: { state: AppState }) {
             const selected = event.ref === view.selected,
               tool = ['tool', 'subtool'].includes(event.kind),
               execution = event.kind === 'context' && event.name === '执行记录';
-            const [label, color] = kindLabels[event.kind] || [
-              '消息',
-              'systemNeutral',
-            ];
+            const [label, color] = eventLabel(event);
             const [start, end] = timelineRange(
               event,
               view.data?.event_count || 1,
@@ -165,18 +163,23 @@ export function TraceTable({ state }: { state: AppState }) {
                       </div>
                       {event.status !== 'unread' && (
                         <div className="inlineResult">
-                          <Icon name="right" className="arrow" />
+                          {event.output_preview != null ? (
+                            <span className="arrow">→</span>
+                          ) : (
+                            <Icon name="right" className="arrow" />
+                          )}
                           <span
                             className={
                               'inlineResultText' +
                               (event.status === 'error' ? ' error' : '')
                             }
                           >
-                            {event.kind === 'subtool' &&
-                            event.status === 'unmatched'
-                              ? '查看组合调用'
-                              : statusLabels[event.status] || event.status}
-                            {event.output_chars
+                            {event.output_preview ??
+                              (event.kind === 'subtool' &&
+                              event.status === 'unmatched'
+                                ? '查看组合调用'
+                                : statusLabels[event.status] || event.status)}
+                            {event.output_preview == null && event.output_chars
                               ? ` · ${event.output_chars.toLocaleString()} 字符`
                               : ''}
                           </span>

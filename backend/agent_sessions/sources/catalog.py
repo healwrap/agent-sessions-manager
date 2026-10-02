@@ -143,3 +143,9 @@ class MultiStore:
     def focus(self, key, *args):
         source, native = self.resolve(key)
         return self.adapters[source].focus(native, *args)
+
+    def attachment(self, key, *args):
+        source, native = self.resolve(key)
+        adapter = self.adapters[source]
+        if not hasattr(adapter, 'attachment'): raise FileNotFoundError('此来源没有可预览的附件')
+        return adapter.attachment(native, *args)

@@ -214,7 +214,7 @@ export function App() {
           )}
           <div className="session-stats">
             {view.data
-              ? `${view.data.turn_count} 轮 · ${view.data.event_count} 步 · ${view.data.tool_count} 个工具调用 · ${view.data.provider_label}`
+              ? `${view.data.turn_count} 轮 · ${view.data.step_count != null ? `${view.data.step_count} 步` : `${view.data.event_count} 条记录`} · ${view.data.tool_count} 个工具调用 · ${view.data.provider_label}`
               : '本地会话'}
           </div>
         </main>

@@ -177,7 +177,12 @@ describe('timeline navigation', () => {
     expect(store.view.selected).toBe(event.ref);
   });
   it('loads and unfolds an off-page tool before jumping to its marker', async () => {
-    const tool = { ...event, kind: 'tool', ref: 'T002/C05' };
+    const tool = {
+      ...event,
+      kind: 'tool',
+      ref: 'T002/C05',
+      call_group: 'T002/A05',
+    };
     const offsets: number[] = [];
     const store = new SessionStore((async (path, params) => {
       if (path === '/api/event') return { event: tool };
@@ -195,7 +200,8 @@ describe('timeline navigation', () => {
     expect(store.view.selected).toBe(tool.ref);
     expect(store.view.events).toEqual([tool]);
     expect(store.state.collapsed.has(tool.turn)).toBe(true);
-    expect(store.state.foldCalls).toBe(false);
+    expect(store.state.foldCalls).toBe(true);
+    expect([...store.state.expandedCalls]).toEqual(['T002/A05']);
     expect(store.view.navigation).toMatchObject({
       ref: tool.ref,
       block: 'center',

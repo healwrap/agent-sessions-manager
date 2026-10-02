@@ -59,3 +59,5 @@ Markdown 分词使用本地随附的 Marked `17.0.5`（MIT），随 Vite 从 npm
 ## Antigravity 执行结果
 
 桌面端与 CLI 在来源筛选、会话标签和设置中分开。导出的 PLANNER_RESPONSE 常没有调用 ID：仅当下一条 GENERIC 的完整 search_web 查询与唯一调用完全一致、步骤连续时，才归并为该调用的结果；有唯一原生 ID 时使用 ID。不同查询、多调用或只包含 503 错误的记录不能靠顺序配对，保留为“执行结果”。旧 `S/结果步骤` 深链接仍解析到已关联的调用，原文按需读取。
+
+DSH 原生轨迹的对齐规则、修正与验证见 [dsh-parity.md](dsh-parity.md)。

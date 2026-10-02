@@ -252,10 +252,10 @@ class Store:
             overview = []
             matched_refs = {e['ref'] for e in selected}
             matched_refs.update(e['parent_ref'] for e in selected if e.get('parent_ref'))
-            stride = max(1, (len(events)+249)//250)
+            stride = 1 if getattr(self, 'full_overview', False) else max(1, (len(events)+249)//250)
             for start in range(0, len(events), stride):
                 chunk = events[start:start+stride]
-                for category in ('user', 'assistant', 'tool', 'media', 'context'):
+                for category in ('user', 'assistant', 'tool', 'media', 'context', *(['subtool'] if getattr(self, 'full_overview', False) else [])):
                     members = [e for e in chunk if e['kind'] == category]
                     if members:
                         overview.append({'position': members[0]['position'], 'kind': category, 'ref': members[0]['ref'], 'name': members[0]['name'],
@@ -263,6 +263,7 @@ class Store:
                                          'search_match': any(e['ref'] in matched_refs for e in members),
                                          'count': len(members), 'turn': members[0]['turn'],
                                          'timestamp': members[0]['timestamp'], 'status': members[0]['status'],
+                                         'first_token_at': members[0].get('first_token_at'), 'completed_at': members[0].get('completed_at'),
                                          'duration_ms': members[0].get('duration_ms'),
                                          'timeline_start': min(e['timeline_start'] for e in members),
                                          'timeline_end': max(e['timeline_end'] for e in members)})

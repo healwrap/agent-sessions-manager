@@ -16,8 +16,14 @@ export function createNavigation(store: SessionStore) {
   function unfold(event: Event) {
     if (store.state.foldTurns !== store.state.collapsed.has(event.turn))
       store.toggleTurn(event.turn);
-    if (['tool', 'subtool'].includes(event.kind) && store.state.foldCalls)
-      store.update({ foldCalls: false });
+    if (
+      ['tool', 'subtool'].includes(event.kind) &&
+      store.state.foldCalls &&
+      event.call_group
+    )
+      store.update({
+        expandedCalls: new Set(store.state.expandedCalls).add(event.call_group),
+      });
   }
   async function selectEvent(ref: string, jump = false) {
     const id = store.state.id;

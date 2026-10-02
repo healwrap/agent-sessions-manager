@@ -16,6 +16,7 @@ export interface Session extends Project {
   provider_label: string;
 }
 export interface Source {
+  aliases?: string[];
   id: string;
   label: string;
   path: string;

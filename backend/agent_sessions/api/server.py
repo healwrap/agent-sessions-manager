@@ -120,7 +120,6 @@ class Handler(BaseHTTPRequestHandler):
 
 def configured_store(config, preferences):
     from agent_sessions.sources.catalog import MultiStore
-    from agent_sessions.settings import SOURCE_KEYS
     store = MultiStore(paths={key: Path(path) for key, path in config['paths'].items()})
     store.settings = preferences
     store.disabled = {store.registry.public_source(key) for key, enabled in config['enabled'].items() if not enabled}
@@ -137,6 +136,7 @@ def main():
     parser.add_argument('--cursor-home', type=Path, default=cursor_root())
     parser.add_argument('--antigravity-home', type=Path, default=Path.home()/'.gemini/antigravity')
     parser.add_argument('--antigravity-cli-home', type=Path, default=Path.home()/'.gemini/antigravity-cli')
+    parser.add_argument('--source-path', action='append', default=[], metavar='SOURCE=PATH')
     parser.add_argument('--codex-only', action='store_true')
     parser.add_argument('--desktop', action='store_true')
     parser.add_argument('--state-home', type=Path, default=state_root())
@@ -150,7 +150,14 @@ def main():
     from agent_sessions.settings import ViewSettings, AppSettings
     preferences = ViewSettings(args.state_home)
     app_settings = AppSettings(args.state_home, (args.codex_home, args.claude_home, args.antigravity_home, args.antigravity_cli_home, args.claude_desktop_home, args.dsh_home, args.cursor_home))
-    store = Store(args.codex_home) if args.codex_only else configured_store(app_settings.read(), preferences)
+    config = app_settings.read()
+    for assignment in args.source_path:
+        source, separator, raw = assignment.partition('=')
+        if not separator or source not in config['paths']: parser.error('来源目录参数格式应为已注册的 SOURCE=PATH')
+        path = Path(raw).expanduser()
+        if not raw or not path.is_absolute(): parser.error('来源目录必须为绝对路径或 ~/ 开头')
+        config['paths'][source] = str(path.resolve())
+    store = Store(args.codex_home) if args.codex_only else configured_store(config, preferences)
     if args.read_session:
         if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
         if not 1 <= args.read_page <= 1_000_000: parser.error('页码无效')

@@ -22,7 +22,8 @@ class MultiStore:
             defaults = path_fields()
             paths = {key: Path(root) if root is not None else defaults[key].default()
                      for key, root in zip(SOURCE_KEYS, roots)}
-        self.registry = SourceRegistry(plugins, paths)
+        self.paths = {key: Path(path) for key, path in paths.items()}
+        self.registry = SourceRegistry(plugins, self.paths)
         self.adapters = self.registry.adapters
         self.codex = self.adapters.get('codex:local')
         self.errors = {}; self.project_overrides = {}; self.disabled = set()
@@ -37,6 +38,7 @@ class MultiStore:
                           'instance': key.split(':')[1], 'enabled': key not in self.disabled,
                           'path': str(adapter.root), 'available': adapter.available(),
                           'error': self.errors.get(key), 'api_version': plugin.api_version,
+                          'aliases': list(plugin.aliases),
                           'capabilities': plugin.capabilities,
                           'paths': [{'key': f.key, 'label': f.label, 'hint': f.hint} for f in plugin.paths]})
         return {'items': items}

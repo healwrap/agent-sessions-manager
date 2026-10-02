@@ -1,4 +1,11 @@
-import type { Event, Session, Preferences, Project, Trajectory } from './types';
+import type {
+  Event,
+  Session,
+  Preferences,
+  Project,
+  Trajectory,
+  Source,
+} from './types';
 export function chatReplyRefs(events: Event[], hasMore = false) {
   const replies = new Set<string>(),
     finals = new Set<number>(),
@@ -23,9 +30,13 @@ export function chatReplyRefs(events: Event[], hasMore = false) {
       replies.add(event.ref);
   return replies;
 }
-export function sourceId(item: Session) {
+export function sourceId(item: Session, sources: Source[] = []) {
   const source = item.source_id || item.id.split(':').slice(0, 2).join(':');
-  return source === 'claude:desktop' ? 'claude:local' : source;
+  return (
+    sources.find(
+      (entry) => entry.id === source || entry.aliases?.includes(source),
+    )?.id || source
+  );
 }
 export function sessionTitle(item: Session, p: Preferences) {
   return p.aliases[item.id] || item.title || '(无标题)';
@@ -37,6 +48,7 @@ export function projectGroups(
   provider: string,
   query: string,
   archive: boolean,
+  sources: Source[] = [],
 ) {
   const known = new Map(sessions.map((s) => [s.id, s]));
   for (const item of Object.values(p.metadata))
@@ -49,7 +61,9 @@ export function projectGroups(
   );
   for (const item of known.values()) {
     if (
-      (provider && sourceId(item) !== provider && item.provider !== provider) ||
+      (provider &&
+        sourceId(item, sources) !== provider &&
+        item.provider !== provider) ||
       p.archived.includes(item.id) !== archive ||
       (query &&
         item.search_query !== query &&

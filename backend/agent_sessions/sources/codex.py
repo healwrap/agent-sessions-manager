@@ -21,6 +21,7 @@ UUID = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', re.I)
 class Store(TrajectoryStore):
     def __init__(self, root):
         self.root = root.resolve()
+        self.rows = {}
         self.lock = threading.RLock()
         self.files = {}
         self.loaded = {}
@@ -116,7 +117,9 @@ class Store(TrajectoryStore):
         while True:
             page = self.sessions(offset=offset, limit=100)
             rows.extend(page['items'])
-            if page['next_offset'] is None: return rows
+            if page['next_offset'] is None:
+                self.rows = {row['id']: row for row in rows}
+                return rows
             offset = page['next_offset']
 
     def session(self, key):

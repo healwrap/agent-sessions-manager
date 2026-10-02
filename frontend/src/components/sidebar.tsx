@@ -37,6 +37,7 @@ export function Sidebar({
     state.provider,
     state.query,
     state.archive,
+    state.sources,
   );
   return (
     <div className="sidebar-slot" data-closed={state.sidebarClosed}>
@@ -186,7 +187,8 @@ export function Sidebar({
                           {!state.provider && (
                             <span className="provider-tag">
                               {state.sources.find(
-                                (source) => source.id === sourceId(item),
+                                (source) =>
+                                  source.id === sourceId(item, state.sources),
                               )?.label || item.provider_label}
                             </span>
                           )}

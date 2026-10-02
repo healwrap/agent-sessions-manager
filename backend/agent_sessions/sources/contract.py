@@ -1,12 +1,13 @@
 """The only interface the catalogue/API need from a local source plugin."""
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Callable, ContextManager, Protocol
 
 
 class SourceAdapter(Protocol):
     root: Path
     rows: dict
+    lock: ContextManager
 
     def available(self) -> bool: ...
     def discover(self) -> list[dict]: ...
@@ -51,6 +52,11 @@ class SourceRegistry:
         required = ('available', 'discover', 'trajectory', 'detail', 'focus', 'matches_content', 'attachment')
         if any(not callable(getattr(adapter, name, None)) for name in required):
             raise ValueError('会话来源未实现完整的标准接口')
+        if not isinstance(getattr(adapter, 'root', None), Path) or not isinstance(getattr(adapter, 'rows', None), dict):
+            raise ValueError('会话来源未提供标准目录与会话索引')
+        lock = getattr(adapter, 'lock', None)
+        if not callable(getattr(lock, '__enter__', None)) or not callable(getattr(lock, '__exit__', None)):
+            raise ValueError('会话来源未提供目录读取锁')
         self.plugins[plugin.id] = plugin; self.adapters[plugin.id] = adapter
         self.routes[plugin.id] = (plugin.id, '')
         self.routes.update({key: (plugin.id, prefix) for key, prefix in plugin.aliases.items()})

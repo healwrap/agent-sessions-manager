@@ -23,6 +23,10 @@
 | 系统提示词被画成绿色上下文 | 系统与工具定义更新使用系统标记；上下文压缩归入模型导轨。 |
 | 参数、结果与 Schema 被画成 `Object / Array` 通用树 | 按 DSH `JsonTree` 的数据、行内预览和交互规则展示 JSON：只默认展开根节点，嵌套节点按需展开，区分属性、字符串、数字和关键字颜色，并支持逐项复制。对应 `packages/client/ui-primitives/src/JsonTree.tsx` 与 `JsonTree.module.css`。 |
 | 工具概述使用折叠块，无法从标题进入完整页签 | 按 DSH `OverviewSection` 显示参数、结果、Schema、计时的独立可滚动预览；标题打开对应页签。WebKit 对原版 `max-height: max-content` 的收缩计算会把预览压成零高，因此在桌面版按内容高度排列并限制长区块的预览高度。对应 `packages/client/ui-trajectory/src/client/TrajectoryTable.tsx`。 |
+| “来源”误显示本地日志路径，工具调用还多了来源页签 | 从消息的原始 `source` 字段读取完整来源对象，以 JSON 检查器展示；仅消息确有来源时显示来源页签，工具详情按原版只保留概述、参数、结果、Schema、计时。 |
+| 子工具与压缩记录沿用普通工具、上下文标签 | 按 DSH 原始 `kind.subtool` 和 `kind.compacted` 分别显示“子工具”“已压缩”，并使用各自标签颜色；普通工具与助手标签的尺寸和背景保持原版 CSS 规则。 |
+| 系统提示词事件当普通消息打开，工具目录和历史变化看不到 | 关联当时的 `system/message` 与 `request/header`，分别展示“系统提示词”“工具”及更新时的“差异”；工具目录展开后仍用同一 JSON 检查器展示原始参数定义。 |
+| 轨迹、详情和侧边栏沿用系统默认滚动条，深色模式下颜色与宽度不一致 | 引入 DSH 原版 5px 全局滚动条规则及亮/暗色四个颜色 token；轨迹分栏使用 L2 色阶，侧边栏移除会覆盖 WebKit 自定义滚动条的 `scrollbar-width: thin`。 |
 
 ## 验证
 

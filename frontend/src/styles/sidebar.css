@@ -120,7 +120,6 @@
   overflow-y: auto;
   min-height: 0;
   flex: 1;
-  scrollbar-width: thin;
 }
 .session-item {
   position: relative;

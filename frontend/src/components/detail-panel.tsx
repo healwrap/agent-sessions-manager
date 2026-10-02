@@ -161,7 +161,7 @@ export function DetailPanel({ state }: { state: AppState }) {
             </button>
           ))}
         </nav>
-        <div className="detailBody">
+        <div className="detailBody" data-overview={tab === '概述' && !!tool}>
           {error ? (
             <p className="metadata-note" role="alert">
               {error}

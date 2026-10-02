@@ -1,0 +1,117 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.detailBody[data-overview='true'] {
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  padding-bottom: calc(12px + var(--dsh-trajectory-bottom-clearance, 0px));
+  overflow: hidden;
+}
+
+.detailBody[data-overview='true'] > .overview {
+  flex: 0 1 auto;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.overview-preview {
+  --dsh-scrollbar-thumb: transparent;
+  --dsh-scrollbar-thumb-hover: transparent;
+}
+
+.overview-preview:hover,
+.overview-preview:focus-within {
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+.overview-sections {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow-y: auto;
+  border-top: 0;
+}
+
+.overview-section {
+  display: flex;
+  flex: 0 0 auto;
+  max-height: min(45vh, 420px);
+  min-height: 24px;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.overview-section + .overview-section {
+  padding-top: 2px;
+}
+
+.overview-heading {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  box-sizing: border-box;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  padding: 0 0 3px 14px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-1);
+  font: var(--dsw-font-xs-strong-13);
+  user-select: none;
+}
+
+.overview-title {
+  display: inline-flex;
+  flex: none;
+  width: max-content;
+  height: auto;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  gap: 3px;
+  line-height: 1;
+  user-select: none;
+}
+
+.overview-title-icon {
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+}
+
+.overview-title:hover .overview-title-icon {
+  color: var(--dsw-alias-label-primary);
+}
+
+.overview-title:focus-visible {
+  outline: 1px solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.overview-title:focus-visible .overview-title-icon {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.overview-preview {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.overview-preview[data-scroll-more] {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
+}
+
+.overview-preview > :last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}

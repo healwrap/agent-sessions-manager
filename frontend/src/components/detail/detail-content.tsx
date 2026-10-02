@@ -3,6 +3,7 @@ import { statusLabels } from '../../lib/types';
 import { sessionStore } from '../../state/session-store';
 import { formatRecordedDuration } from '../../lib/recorded-time';
 import { Payload } from './payload';
+import { OverviewSection } from './overview-section';
 import { RecordContent } from './record-content';
 import { RecordTiming } from './record-timing';
 
@@ -77,17 +78,15 @@ export function DetailContent({
             </div>
           ))}
         </dl>
-        <div className="detail-content">
+        <div className={tool ? 'overview-sections' : 'detail-content'}>
           {tool ? (
             <>
-              <details className="record-section" open>
-                <summary>参数</summary>
-                <Payload text={detail.text} />
-              </details>
-              <details className="record-section" open>
-                <summary>结果</summary>
+              <OverviewSection label="参数" onOpen={() => change('参数')}>
+                <Payload text={detail.text} label="参数 JSON" preview />
+              </OverviewSection>
+              <OverviewSection label="结果" onOpen={() => change('结果')}>
                 {output ? (
-                  <RecordContent detail={output} id={id} />
+                  <RecordContent detail={output} id={id} preview />
                 ) : (
                   <p className="metadata-note">
                     {detail.output_available
@@ -106,17 +105,15 @@ export function DetailContent({
                     查看完整结果 ›
                   </button>
                 )}
-              </details>
+              </OverviewSection>
               {detail.tool_schema && (
-                <details className="record-section" open>
-                  <summary>Schema</summary>
-                  <ToolSchema detail={detail} />
-                </details>
+                <OverviewSection label="Schema" onOpen={() => change('Schema')}>
+                  <ToolSchema detail={detail} preview />
+                </OverviewSection>
               )}
-              <details className="record-section" open>
-                <summary>计时</summary>
+              <OverviewSection label="计时" onOpen={() => change('计时')}>
                 <RecordTiming event={event} />
-              </details>
+              </OverviewSection>
             </>
           ) : (
             <>
@@ -159,22 +156,38 @@ export function DetailContent({
           )}
         </>
       ) : tab === '参数' ? (
-        <Payload text={detail.text} />
+        <Payload text={detail.text} label="参数 JSON" />
       ) : (
         <RecordContent detail={detail} id={id} raw={tab === '原始内容'} />
       )}
     </div>
   );
 }
-function ToolSchema({ detail }: { detail: Detail }) {
+function ToolSchema({
+  detail,
+  preview = false,
+}: {
+  detail: Detail;
+  preview?: boolean;
+}) {
   return detail.tool_schema ? (
-    <>
-      <strong>{detail.tool_schema.name}</strong>
-      {detail.tool_schema.description && (
-        <p>{detail.tool_schema.description}</p>
-      )}
-      <Payload text={JSON.stringify(detail.tool_schema.parameters, null, 2)} />
-    </>
+    <div className="tool-schema" data-preview={preview}>
+      <header className="schema-intro">
+        <h3>{detail.tool_schema.name}</h3>
+        {detail.tool_schema.description && (
+          <p>{detail.tool_schema.description}</p>
+        )}
+      </header>
+      <section>
+        <h4 className="schema-parameters-title">参数</h4>
+        <Payload
+          text={JSON.stringify(detail.tool_schema.parameters)}
+          preview={preview}
+          label={`${detail.tool_schema.name} 参数 JSON`}
+          className="schema-tree"
+        />
+      </section>
+    </div>
   ) : (
     <p className="metadata-note">原始记录未保存工具 Schema。</p>
   );

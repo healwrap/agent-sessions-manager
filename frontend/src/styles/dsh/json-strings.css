@@ -1,0 +1,92 @@
+/* Adapted from DeepSeek Harness JsonTree, MIT; see frontend/public/harness-license.txt. */
+.json-tree-stringValue {
+  color: var(--json-tree-string);
+}
+
+.json-tree-stringField {
+  position: relative;
+  z-index: 1;
+  display: flow-root;
+}
+
+.json-tree-stringText {
+  display: block;
+  max-height: calc(var(--json-tree-collapsed-lines) * 16px);
+  padding-left: 12px;
+  overflow: hidden;
+  text-indent: -12px;
+  word-break: break-all;
+}
+
+.json-tree-root pre.json-tree-stringRaw {
+  margin: 4px 0 0 12px;
+  overflow: auto;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  overflow-wrap: normal;
+  white-space: pre;
+  word-break: normal;
+}
+
+.json-tree-stringActions {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: fit-content;
+  height: 16px;
+}
+
+.json-tree-root pre.json-tree-stringRaw[data-wrap='true'] {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.json-tree-stringActions > .json-tree-copySlot {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.json-tree-stringToggleSlot {
+  display: flex;
+  float: right;
+  align-items: flex-end;
+  height: calc(var(--json-tree-collapsed-lines) * 16px);
+  margin-left: 2px;
+  shape-outside: inset(calc((var(--json-tree-collapsed-lines) - 1) * 16px) 0 0);
+  pointer-events: none;
+}
+
+.json-tree-stringToggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  font: inherit;
+  text-indent: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.json-tree-stringToggle:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.json-tree-stringToggle:focus-visible {
+  outline: 1px solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 1px;
+}
+
+.json-tree-row:has(> .json-tree-stringField) {
+  --json-tree-row-height: 100%;
+}

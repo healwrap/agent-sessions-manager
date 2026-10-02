@@ -21,6 +21,8 @@
 | 重试被忽略或另加一行 | 请求重试归属模型步骤，保留首次尝试的首 token 时间和原始失败详情。 |
 | 压缩记录只有一句提示 | 关联压缩开始、摘要和结束记录，展示摘要、模型、用量及真实时长。 |
 | 系统提示词被画成绿色上下文 | 系统与工具定义更新使用系统标记；上下文压缩归入模型导轨。 |
+| 参数、结果与 Schema 被画成 `Object / Array` 通用树 | 按 DSH `JsonTree` 的数据、行内预览和交互规则展示 JSON：只默认展开根节点，嵌套节点按需展开，区分属性、字符串、数字和关键字颜色，并支持逐项复制。对应 `packages/client/ui-primitives/src/JsonTree.tsx` 与 `JsonTree.module.css`。 |
+| 工具概述使用折叠块，无法从标题进入完整页签 | 按 DSH `OverviewSection` 显示参数、结果、Schema、计时的独立可滚动预览；标题打开对应页签。WebKit 对原版 `max-height: max-content` 的收缩计算会把预览压成零高，因此在桌面版按内容高度排列并限制长区块的预览高度。对应 `packages/client/ui-trajectory/src/client/TrajectoryTable.tsx`。 |
 
 ## 验证
 
@@ -29,6 +31,7 @@
 - 通过官方 Computer Use 实际检查两个桌面窗口，确认 DSH 原生 64 步统计、思考展开、工具快捷入口；新版应用另行统计 142 条记录。
 - 本机 11 条 DSH 会话解析无未知记录警告，11 次 PTC 子调用均有可验证父调用。
 - 隔离回归覆盖 v0–v4、Zstandard 拼接帧、跨步骤同 ID、歧义保留、历史 Schema 更新、附件校验、长文本分页、独立导轨和跨页搜索。测试使用合成数据，不提交用户历史。
+- 从 DSH 官方 `JsonTree` 测试迁移 15 项交互断言，并增加 9 项详情接入断言；桌面窗口实测 Cursor `todo_write` 的嵌套数组展开、概述标题跳转，以及 DSH 第 55 步 `read_image` 的 Schema 颜色、括号、内联预览和字段结构。
 
 ## 读取边界
 

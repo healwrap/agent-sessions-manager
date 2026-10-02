@@ -52,10 +52,12 @@ export function RecordContent({
   detail,
   id,
   raw = false,
+  preview = false,
 }: {
   detail: Detail;
   id: string;
   raw?: boolean;
+  preview?: boolean;
 }) {
   if (raw) return <Payload text={detail.text} raw />;
   const assistant =
@@ -95,7 +97,11 @@ export function RecordContent({
           ))}
         </>
       ) : ['tool', 'subtool'].includes(detail.event.kind) ? (
-        <Payload text={detail.text} />
+        <Payload
+          text={detail.text}
+          preview={preview}
+          label={detail.part === 'output' ? '结果 JSON' : '参数 JSON'}
+        />
       ) : (
         <Markdown text={detail.text} />
       )}

@@ -92,33 +92,6 @@
   border-radius: 4px;
   color: inherit;
 }
-.json-tree {
-  font: 12px/1.65 var(--ds-font-family-code);
-  overflow-wrap: anywhere;
-}
-.json-tree details {
-  margin-left: 12px;
-}
-.json-tree > details {
-  margin-left: 0;
-}
-.json-tree summary {
-  cursor: pointer;
-  color: var(--dsw-alias-label-secondary);
-}
-.json-leaf {
-  margin-left: 12px;
-  white-space: pre-wrap;
-}
-.json-key {
-  color: var(--dsw-alias-label-secondary);
-}
-.json-string {
-  color: var(--asm-json-string);
-}
-.json-number {
-  color: var(--asm-json-number);
-}
 .metadata-note {
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;

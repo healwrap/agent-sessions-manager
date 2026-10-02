@@ -3,8 +3,6 @@ body {
   --asm-sidebar-field: rgba(255, 255, 255, 0.5);
   --asm-sidebar-search: rgba(255, 255, 255, 0.65);
   --asm-sidebar-selected: rgba(132, 158, 166, 0.13);
-  --asm-json-string: #368b54;
-  --asm-json-number: #7971c9;
   --dsh-content-font-delta: 0px;
 }
 body[data-ds-dark-theme] {
@@ -12,8 +10,6 @@ body[data-ds-dark-theme] {
   --asm-sidebar-field: rgba(255, 255, 255, 0.06);
   --asm-sidebar-search: rgba(255, 255, 255, 0.08);
   --asm-sidebar-selected: rgba(255, 255, 255, 0.12);
-  --asm-json-string: #80cba0;
-  --asm-json-number: #bab0fa;
 }
 .appearance-card {
   min-width: 110px;

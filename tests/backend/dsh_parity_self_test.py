@@ -70,10 +70,20 @@ with tempfile.TemporaryDirectory() as directory:
     assert tool_shortcuts({'events': [related, other_step]}, model, blocks)[0]['ref'] == 'E/6'
     assert tool_shortcuts({'events': [related, {**related, 'ref': 'duplicate'}]}, model, blocks)[0]['ref'] is None
     assert model['duration_ms'] == 200 and timestamp(model['first_token_at']) == 1700000001100
+    assert model['request_number'] == 1
+    assert model['request_cumulative_usage']['outputTokens'] == 8
+    assert next(e for e in view['events'] if e['ref'] == 'E/13')['request_number'] == 2
+    assert next(e for e in view['events'] if e['ref'] == 'E/13')['request_cumulative_usage']['outputTokens'] == 50
+    assert related['request_number'] == 1
+    assert store.detail('project/native', 'E/5')['request_tool_calls'] == 1
+    assert store.detail('project/native', 'E/5')['request_subtool_calls'] == 1
     assert len([e for e in view['events'] if e['kind'] == 'assistant' and e['step'] == 2]) == 1
     call = next(e for e in view['events'] if e['ref'] == 'E/6')
     assert call['duration_ms'] == 43 and call['output_preview'] == 'original result token=value'
     first = store.detail('project/native', 'E/6')
+    assert first['hierarchy_parent_ref'] == 'E/5'
+    assert store.detail('project/native', 'E/7')['hierarchy_parent_ref'] == 'E/6'
+    assert store.detail('project/native', 'E/16')['hierarchy_parent_ref'] is None
     assert first['tool_schema']['description'] == 'historical original definition'
     assert first['request_config']['model'] == 'original-model'
     assert store.detail('project/native', 'E/16')['tool_schema']['description'] == 'new definition'
@@ -135,6 +145,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert detail['retries'][0]['failure']['message'] == 'original retry error'
     compaction = store.detail('project/lifecycle','E/7')
     assert compaction['text']=='original summary' and compaction['event']['duration_ms']==1000
+    assert compaction['event']['request_number'] == 2
+    assert compaction['event']['request_cumulative_usage']['outputTokens'] == 5
     assert compaction['event']['model']=='summary-model' and trace['compactions']==1
 print('DSH lifecycle self-test: ok (retry belongs to model step, first attempt token retained, compaction summary and timing)')
 

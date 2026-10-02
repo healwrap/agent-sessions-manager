@@ -102,8 +102,7 @@
 .record-section {
   margin: 8px 0 16px;
 }
-.record-section > summary,
-.thinking-disclosure > summary {
+.record-section > summary {
   cursor: pointer;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
@@ -130,14 +129,85 @@
   padding-left: 10px;
   margin-bottom: 14px;
 }
+.thinking-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: var(--dsw-alias-label-tertiary);
+  background: transparent;
+  cursor: pointer;
+  font: var(--dsw-font-xs-13);
+  gap: 3px;
+}
+.thinking-chevron {
+  transition: transform 120ms var(--ds-ease-in-out);
+}
+.thinking-toggle[aria-expanded='true'] .thinking-chevron {
+  transform: rotate(90deg);
+}
+.assistant-tool-calls {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.assistant-tool-calls li + li {
+  margin-top: 3px;
+}
 .assistant-tool-link {
+  display: flex;
+  align-items: center;
   width: 100%;
-  overflow-wrap: anywhere;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  padding: 8px;
-  margin: 6px 0;
+  min-width: 0;
+  padding: 3px 2px;
+  border: 0;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  cursor: pointer;
+  font: var(--dsw-font-xs-13);
+  gap: 5px;
+  text-align: left;
+}
+.assistant-tool-link:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.assistant-tool-icon {
+  flex: none;
+}
+.assistant-tool-arguments {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--ds-font-family-code);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .assistant-tool-link:disabled {
   cursor: default;
+}
+
+.dsh-assistant-preview {
+  padding: 8px 14px 14px;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-13);
+}
+
+.dsh-assistant-preview .thinking-disclosure {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.requestTokenDetail dt,
+.requestTokenDetail dd {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.request-usage-panel section + section {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+.request-usage-panel h4 {
+  margin: 0;
+  padding: 12px 14px 3px;
+  color: var(--dsw-alias-label-secondary);
+  font: var(--dsw-font-xs-strong-13);
 }

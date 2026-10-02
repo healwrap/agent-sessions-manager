@@ -49,12 +49,15 @@ export interface Event {
   position: number;
   phase?: string | null;
   step?: number | null;
+  request_number?: number;
   layer?: string | null;
   output_preview?: string;
   completed_at?: string | null;
   first_token_at?: string | null;
   model?: string | null;
+  model_provider?: string | null;
   usage?: Record<string, number>;
+  request_cumulative_usage?: Record<string, number>;
   turn_status?: string;
   duration_ms: number | null;
   timeline_start?: number;
@@ -130,6 +133,9 @@ export interface Detail {
   output_text?: string;
   tool_calls?: { ref: string | null; name: string; preview: string }[];
   retries?: Record<string, unknown>[];
+  request_tool_calls?: number;
+  request_subtool_calls?: number;
+  hierarchy_parent_ref?: string | null;
   event: Event;
   text: string;
   page: number;

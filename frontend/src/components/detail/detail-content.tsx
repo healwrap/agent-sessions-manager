@@ -7,19 +7,9 @@ import { OverviewSection } from './overview-section';
 import { RecordContent } from './record-content';
 import { RecordTiming } from './record-timing';
 import { PromptContent } from './prompt-content';
-
-function messageSourceLabel(source: unknown): string {
-  if (!source || typeof source !== 'object' || Array.isArray(source))
-    return '未知';
-  const value = source as Record<string, unknown>;
-  if (value.kind === 'user') return '用户';
-  if (value.kind === 'goal')
-    return typeof value.round === 'number' && value.round > 0
-      ? `目标 · 第 ${value.round} 轮`
-      : '目标';
-  if (typeof value.kind !== 'string' || !value.kind) return '未知';
-  return value.kind[0].toUpperCase() + value.kind.slice(1);
-}
+import { DshAssistantOverview } from './dsh-assistant-overview';
+import { DshRecordOverview } from './dsh-record-overview';
+import { ToolSchema } from './tool-schema';
 
 export function DetailContent({
   detail,
@@ -76,12 +66,22 @@ export function DetailContent({
       </div>
     );
   if (tab === '概述') {
+    if (
+      detail.provider_label === 'DeepSeek Harness' &&
+      event.kind === 'assistant'
+    )
+      return <DshAssistantOverview detail={detail} id={id} change={change} />;
+    if (detail.provider_label === 'DeepSeek Harness')
+      return (
+        <DshRecordOverview
+          detail={detail}
+          output={output}
+          id={id}
+          change={change}
+        />
+      );
     const entries = [
-      ...(detail.provider_label === 'DeepSeek Harness'
-        ? detail.message_source === undefined
-          ? []
-          : [['来源', messageSourceLabel(detail.message_source)]]
-        : [['来源', detail.provider_label]]),
+      ['来源', detail.provider_label],
       ...(event.layer ? [['层级', event.layer]] : []),
       ['状态', statusLabels[event.status] || event.status],
       ['引用', event.ref],
@@ -107,19 +107,7 @@ export function DetailContent({
           {entries.map(([key, value]) => (
             <div key={key}>
               <dt>{key}</dt>
-              <dd title={value}>
-                {key === '来源' &&
-                detail.provider_label === 'DeepSeek Harness' ? (
-                  <button
-                    className="detail-source-link"
-                    onClick={() => change('来源')}
-                  >
-                    {value}
-                  </button>
-                ) : (
-                  value
-                )}
-              </dd>
+              <dd title={value}>{value}</dd>
             </div>
           ))}
         </dl>
@@ -206,34 +194,5 @@ export function DetailContent({
         <RecordContent detail={detail} id={id} raw={tab === '原始内容'} />
       )}
     </div>
-  );
-}
-function ToolSchema({
-  detail,
-  preview = false,
-}: {
-  detail: Detail;
-  preview?: boolean;
-}) {
-  return detail.tool_schema ? (
-    <div className="tool-schema" data-preview={preview}>
-      <header className="schema-intro">
-        <h3>{detail.tool_schema.name}</h3>
-        {detail.tool_schema.description && (
-          <p>{detail.tool_schema.description}</p>
-        )}
-      </header>
-      <section>
-        <h4 className="schema-parameters-title">参数</h4>
-        <Payload
-          text={JSON.stringify(detail.tool_schema.parameters)}
-          preview={preview}
-          label={`${detail.tool_schema.name} 参数 JSON`}
-          className="schema-tree"
-        />
-      </section>
-    </div>
-  ) : (
-    <p className="metadata-note">原始记录未保存工具 Schema。</p>
   );
 }

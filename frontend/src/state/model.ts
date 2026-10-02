@@ -16,6 +16,7 @@ export interface View {
   query: string;
   selected: string | null;
   detailsOpen: boolean;
+  requestOpen: boolean;
   version: string | null;
   loading: boolean;
   range: [number, number] | null;
@@ -31,6 +32,7 @@ export const emptyView = (): View => ({
   query: '',
   selected: null,
   detailsOpen: false,
+  requestOpen: false,
   version: null,
   loading: false,
   range: null,

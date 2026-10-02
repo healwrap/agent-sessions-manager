@@ -17,7 +17,7 @@ def events(rows):
     ledger = []; lookup = {}; turns = {}; calls = {}; outputs = {}; starts = {}; boundaries = {}; current = 1
     header = None; tools_digest = None; system_seen = False; warnings = Counter(); active_step = None
     system_prompt = None; waiting_prompts = []
-    first_times = {}; retries = {}; compactions = {}
+    first_times = {}; retries = {}; compactions = {}; request_numbers = {}; request_count = 0
 
     def add(r, offset, line, kind, name, preview, part='text', suffix=''):
         ref = 'E/'+str(r['seq'])+suffix
@@ -46,12 +46,15 @@ def events(rows):
             boundaries[(r.get('turn') or current, None)] = r['timestamp']
         elif kind == 'step/start':
             starts[identity] = r['timestamp']; active_step = r['step']
+            request_count += 1; request_numbers[identity] = request_count
         elif kind == 'step/end':
             boundaries[identity] = r['timestamp']; active_step = None
         elif kind == 'user/message':
             user = r['source_kind'] in (None, 'user')
             add(r, offset, line, 'user' if user else 'context', '用户' if user else '上下文', r['preview'] or (f"{r['image_count']} 张图片" if r['image_count'] else ''))
         elif kind == 'assistant/message':
+            if identity not in request_numbers:
+                request_count += 1; request_numbers[identity] = request_count
             # Harness renders one model cell, with thinking and output inside it.
             preview = r['preview'] or r['reasoning'] or ('（仅工具调用）' if r['has_tools'] else f"{r['image_count']} 张图片" if r['image_count'] else '')
             part = 'reasoning' if r['reasoning'] and not r['preview'] else 'text'
@@ -59,7 +62,7 @@ def events(rows):
             loc['placeholder'] = preview if not r['preview'] and not r['reasoning'] else ''
             event.update(timestamp=starts.get(identity) or r['timestamp'], first_token_at=first_times.get(identity) or r['first_token_at'],
                          duration_ms=elapsed(starts.get(identity), r['timestamp']), usage=r['usage'],
-                         model=r['model'], model_provider=r['model_provider'])
+                         model=r['model'], model_provider=r['model_provider'], request_number=request_numbers[identity])
             loc['retries'] = list(retries.get(identity, []))
             if r['has_tools'] and not r['preview'] and not r['reasoning']: event['phase'] = 'tool_calls'
             if r['interrupted']: event['status'] = 'aborted'
@@ -93,7 +96,9 @@ def events(rows):
             tools_digest = r.get('tools_digest')
             header = {'offset': offset, 'line': line}
         elif kind == 'compaction/start':
+            request_count += 1
             event, loc = add(r, offset, line, 'context', '上下文压缩', '正在压缩上下文')
+            event['request_number'] = request_count
             event['status'] = 'running'
             loc['placeholder'] = event['preview']
             compactions[r.get('compaction_id')] = (event, loc)
@@ -127,6 +132,8 @@ def events(rows):
                 event, loc = add(record, output['offset'], output['line'], 'media', '执行结果', metadata['preview'], output['part'], '/'+str(metadata['block'] or 0))
                 event['turn'] = identity[0]; event['status'] = 'error' if metadata['error'] else 'completed'; loc['block'] = metadata['block']
     for event in ledger:
+        if event['kind'] in ('tool', 'subtool') and (event['turn'], event['step']) in request_numbers:
+            event['request_number'] = request_numbers[(event['turn'], event['step'])]
         if event['kind'] in ('tool', 'subtool') and event['status'] == 'pending':
             end = boundaries.get((event['turn'], event['step'])) or boundaries.get((event['turn'], None))
             if end:
@@ -136,6 +143,14 @@ def events(rows):
             if len(roots) == 1 and roots[0][0] is not event: event['parent_ref'] = roots[0][0]['ref']
         event['turn_status'] = turns.get(event['turn'], {'status': 'in_progress'})['status']
     ledger.sort(key=lambda e: e['line'])
+    cumulative_usage = {}
+    for event in ledger:
+        if event.get('request_number') is None or not (event['kind'] == 'assistant' or event['name'] == '上下文压缩'):
+            continue
+        for name, value in (event.get('usage') or {}).items():
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                cumulative_usage[name] = cumulative_usage.get(name, 0) + value
+        event['request_cumulative_usage'] = dict(cumulative_usage)
     for number, state in turns.items():
         last = next((e for e in reversed(ledger) if e['turn'] == number and e['kind'] in ('tool', 'assistant')), None)
         if state['status'] == 'completed' and last and last['kind'] == 'assistant' and last['phase'] not in ('reasoning', 'tool_calls'): last['phase'] = 'final_answer'

@@ -4,6 +4,7 @@ import { sessionStore, type AppState } from '../state/session-store';
 import { type Detail } from '../lib/types';
 import { eventLabel } from '../lib/event-presentation';
 import { IconButton } from './primitives';
+import { RequestContent } from './detail/request-content';
 
 export function detailTabs(detail: Detail | null): string[] {
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind);
@@ -27,6 +28,8 @@ export function detailTabs(detail: Detail | null): string[] {
         ]
       : ['概述', '参数', '结果', 'Schema', '计时', '来源'];
   if (dsh && detail?.event.name === '上下文压缩') return ['概述', '原始内容'];
+  if (dsh && detail?.event.kind === 'assistant')
+    return ['概述', '预览', '原始内容'];
   if (dsh)
     return [
       '概述',
@@ -94,7 +97,10 @@ export function DetailPanel({ state }: { state: AppState }) {
     };
   }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
-    tabs = detailTabs(detail),
+    requestOpen = view.requestOpen && detail?.event.request_number != null,
+    tabs = requestOpen
+      ? ['概述', ...(detail?.request_config ? ['选项'] : []), '用量', '计时']
+      : detailTabs(detail),
     activeTab = tabs.includes(tab) ? tab : (tabs[0] ?? tab);
   const change = (tab: string) => {
     setTab(tab);
@@ -167,13 +173,22 @@ export function DetailPanel({ state }: { state: AppState }) {
         />
         <div className="detailsHeader">
           <div className="detailsTitle">
-            <span className={'kindTag ' + color}>{label}</span>
-            <span className="detailsLocation">
-              第 {event?.turn || ''} 轮 ·{' '}
-              {event?.step != null
-                ? `第 ${event.step} 步`
-                : event?.name || view.selected || '消息'}
-            </span>
+            {requestOpen ? (
+              <span className="detailsLocation">
+                请求 #{event?.request_number}
+                {event?.name === '上下文压缩' ? ' · 压缩' : ''}
+              </span>
+            ) : (
+              <>
+                <span className={'kindTag ' + color}>{label}</span>
+                <span className="detailsLocation">
+                  第 {event?.turn || ''} 轮 ·{' '}
+                  {event?.step != null
+                    ? `第 ${event.step} 步`
+                    : event?.name || view.selected || '消息'}
+                </span>
+              </>
+            )}
           </div>
           <IconButton
             icon="close"
@@ -195,7 +210,18 @@ export function DetailPanel({ state }: { state: AppState }) {
             </button>
           ))}
         </nav>
-        <div className="detailBody" data-overview={tab === '概述' && !!tool}>
+        <div
+          key={`${view.selected}:${requestOpen}:${activeTab}:${page}`}
+          className="detailBody"
+          data-overview={
+            activeTab === '概述' &&
+            (tool ||
+              requestOpen ||
+              (detail?.provider_label === 'DeepSeek Harness' &&
+                event?.name !== '上下文压缩' &&
+                !detail.prompt_snapshot))
+          }
+        >
           {error ? (
             <p className="metadata-note" role="alert">
               {error}
@@ -206,15 +232,24 @@ export function DetailPanel({ state }: { state: AppState }) {
             </p>
           ) : (
             <>
-              <DetailContent
-                detail={detail}
-                output={output}
-                tab={activeTab}
-                id={state.id!}
-                change={change}
-              />
+              {requestOpen ? (
+                <RequestContent
+                  detail={detail}
+                  tab={activeTab}
+                  change={change}
+                />
+              ) : (
+                <DetailContent
+                  detail={detail}
+                  output={output}
+                  tab={activeTab}
+                  id={state.id!}
+                  change={change}
+                />
+              )}
               {detail.pages > 1 &&
                 !detail.prompt_snapshot &&
+                !requestOpen &&
                 !['来源', 'Schema', '计时', '请求配置'].includes(tab) && (
                   <div className="detail-pager">
                     <button

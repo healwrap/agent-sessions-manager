@@ -25,7 +25,7 @@ export function createNavigation(store: SessionStore) {
         expandedCalls: new Set(store.state.expandedCalls).add(event.call_group),
       });
   }
-  async function selectEvent(ref: string, jump = false) {
+  async function selectEvent(ref: string, jump = false, request = false) {
     const id = store.state.id;
     if (!id) return;
     const token = ++selectionGeneration;
@@ -37,7 +37,11 @@ export function createNavigation(store: SessionStore) {
       const detail = await store.api<Detail>('/api/event', { id, ref });
       if (!current()) return;
       const canonical = detail.event.ref || ref;
-      store.updateView({ selected: canonical, detailsOpen: true });
+      store.updateView({
+        selected: canonical,
+        detailsOpen: true,
+        requestOpen: request,
+      });
       updateAddress(store, canonical);
       if (jump) {
         if (!store.view.events.some((e) => e.ref === canonical)) {

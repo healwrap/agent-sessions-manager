@@ -4,6 +4,7 @@ import type { Detail, Event } from '../../frontend/src/lib/types';
 import { DetailContent } from '../../frontend/src/components/detail/detail-content';
 import { detailTabs } from '../../frontend/src/components/detail-panel';
 import { RecordTiming } from '../../frontend/src/components/detail/record-timing';
+import { RequestContent } from '../../frontend/src/components/detail/request-content';
 import { TraceTable } from '../../frontend/src/components/trace-table';
 import { SessionStore } from '../../frontend/src/state/session-store';
 import {
@@ -39,6 +40,7 @@ const detail = {
     parameters: { type: 'object', properties: { path: { type: 'string' } } },
   },
   nested: [],
+  hierarchy_parent_ref: 'E/5',
 } as Detail;
 const output = {
   ...detail,
@@ -71,6 +73,8 @@ describe('DSH detail and list parity', () => {
     expect(html).toContain('Historical image schema');
     expect(html).toContain('43 毫秒');
     expect(html).toContain('助手消息');
+    expect(html).not.toContain('引用');
+    expect(html).not.toContain('E/361');
     expect(html).toContain('/api/attachment?');
     expect(html).toContain('index=1');
     expect(html).toContain('part=output');
@@ -100,7 +104,7 @@ describe('DSH detail and list parity', () => {
       },
       source: '/private/session.jsonl',
     };
-    expect(detailTabs(message)).toEqual(['概述', '预览', '原始内容', '来源']);
+    expect(detailTabs(message)).toEqual(['概述', '预览', '原始内容']);
     const html = renderToString(
       <DetailContent
         detail={message}
@@ -122,6 +126,27 @@ describe('DSH detail and list parity', () => {
         event: { ...event, kind: 'context', name: '上下文压缩' },
       }),
     ).toEqual(['概述', '原始内容']);
+  });
+  it('shows DSH user and context records as status, duration and preview', () => {
+    const user = {
+      ...detail,
+      event: { ...event, kind: 'user', name: '用户' },
+      text: 'Original user message',
+      message_source: { kind: 'user' },
+    } as Detail;
+    const html = renderToString(
+      <DetailContent
+        detail={user}
+        output={null}
+        tab="概述"
+        id="dsh:local:project/session"
+        change={() => {}}
+      />,
+    );
+    expect(html).toContain('Original user message');
+    expect(html).toContain('0.04 秒');
+    expect(html).toContain('用户');
+    expect(html).not.toContain('引用');
   });
   it('uses the native system prompt and tool catalog tabs with a recorded diff', () => {
     const prompt = {
@@ -193,6 +218,31 @@ describe('DSH detail and list parity', () => {
     expect(html).toContain('→');
     expect(html).not.toContain('999 字符');
   });
+  it('keeps compaction request boundaries and purpose visible', () => {
+    const compacted = {
+      ...detail,
+      event: {
+        ...event,
+        kind: 'context',
+        name: '上下文压缩',
+        request_number: 2,
+      },
+    } as Detail;
+    const state = new SessionStore().state;
+    state.views.trace.data = {
+      provider_label: 'DeepSeek Harness',
+      turn_summaries: {},
+      call_groups: {},
+    } as typeof state.views.trace.data;
+    state.views.trace.events = [compacted.event];
+    const row = renderToString(<TraceTable state={state} />);
+    expect(row).toContain('请求 #2 · 压缩');
+    const overview = renderToString(
+      <RequestContent detail={compacted} tab="概述" change={() => {}} />,
+    );
+    expect(overview).toContain('用途');
+    expect(overview).toContain('压缩后上下文');
+  });
   it('keeps visible thinking in a disclosure within the assistant record', () => {
     const html = renderToString(
       <DetailContent
@@ -214,7 +264,7 @@ describe('DSH detail and list parity', () => {
     expect(html).toContain('thinking-disclosure');
     expect(html).toContain('recorded thinking');
     expect(html).toContain('recorded answer');
-    expect(html).toContain('open=""');
+    expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('打开工具调用概述');
     expect(html).toContain('original arguments');
   });
@@ -232,6 +282,12 @@ describe('DSH detail and list parity', () => {
     expect(html).toContain('1000 毫秒');
     expect(html).toContain('2000 毫秒');
     expect(html).toContain('20.00 token / 秒');
+    const requestHtml = renderToString(
+      <RecordTiming event={assistant} request />,
+    );
+    expect(requestHtml).toContain('总时长');
+    expect(requestHtml).toContain('3.00 秒');
+    expect(requestHtml).toContain('20.0 tok/s');
     expect(assistantWaitRatio(assistant)).toBeCloseTo(100 / 3);
     expect(
       assistantWaitRatio({ ...assistant, first_token_at: null }),
@@ -246,5 +302,40 @@ describe('DSH detail and list parity', () => {
     expect(
       eventLabel({ ...event, kind: 'context', name: '上下文压缩' }),
     ).toEqual(['已压缩', 'compacted']);
+  });
+  it('shows the native assistant request link, output tokens, preview and timing sections', () => {
+    const assistant = {
+      ...detail,
+      event: {
+        ...event,
+        kind: 'assistant',
+        request_number: 1,
+        usage: { outputTokens: 457 },
+      },
+      thinking_text: 'recorded thinking',
+      output_text: 'recorded answer',
+      request_tool_calls: 2,
+      request_config: { provider: 'test-provider' },
+    };
+    const html = renderToString(
+      <DetailContent
+        detail={assistant}
+        output={null}
+        tab="概述"
+        id="dsh:local:project/session"
+        change={() => {}}
+      />,
+    );
+    expect(html).toContain('请求 #1');
+    expect(html).toContain('457 tok');
+    expect(html).toContain('预览');
+    expect(html).toContain('请求计时');
+    expect(html).not.toContain('引用');
+    const requestHtml = renderToString(
+      <RequestContent detail={assistant} tab="概述" change={() => {}} />,
+    );
+    expect(requestHtml).toContain('工具调用');
+    expect(requestHtml).toContain('选项');
+    expect(requestHtml).toContain('用量');
   });
 });

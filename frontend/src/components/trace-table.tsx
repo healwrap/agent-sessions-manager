@@ -35,8 +35,13 @@ export function TraceTable({ state }: { state: AppState }) {
         </colgroup>
         <tbody>
           {rows.map((event) => {
-            const first = previousTurn !== event.turn;
-            previousTurn = event.turn;
+            const initialSystem =
+              view.data?.provider_label === 'DeepSeek Harness' &&
+              previousTurn === null &&
+              event.kind === 'context' &&
+              event.name === '系统提示词';
+            const first = !initialSystem && previousTurn !== event.turn;
+            if (!initialSystem) previousTurn = event.turn;
             if ('summaryType' in event) {
               const expand = () =>
                 event.summaryType === 'turn'
@@ -104,6 +109,28 @@ export function TraceTable({ state }: { state: AppState }) {
                 }}
               >
                 <td className="event">
+                  {view.data?.provider_label === 'DeepSeek Harness' &&
+                    (event.kind === 'assistant' ||
+                      event.name === '上下文压缩') &&
+                    event.request_number != null && (
+                      <button
+                        type="button"
+                        className={
+                          'requestBoundaryControl' +
+                          (selected && view.requestOpen
+                            ? ' requestBoundaryControlActive'
+                            : '')
+                        }
+                        aria-label={`请求 #${event.request_number}${event.name === '上下文压缩' ? ' · 压缩' : ''}`}
+                        aria-pressed={selected && view.requestOpen}
+                        data-label={`请求 #${event.request_number}${event.name === '上下文压缩' ? ' · 压缩' : ''}`}
+                        data-request-status={event.status}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void sessionStore.selectEvent(event.ref, false, true);
+                        }}
+                      />
+                    )}
                   <span className="turnRail" />
                   {selected && <span className="selectionRail" />}
                   {first ? (

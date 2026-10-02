@@ -35,6 +35,20 @@
   white-space: nowrap;
 }
 
+.detail-source-link {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.detail-source-link:hover,
+.detail-source-link:focus-visible {
+  color: var(--dsw-alias-state-business-primary);
+}
+
 .markdownPayload {
   color: var(--dsw-alias-label-primary);
 }

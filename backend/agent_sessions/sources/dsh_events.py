@@ -16,6 +16,7 @@ ADMIN.update({'model/selection', 'assistant/chunk', 'reasoning-chunks', 'text-ch
 def events(rows):
     ledger = []; lookup = {}; turns = {}; calls = {}; outputs = {}; starts = {}; boundaries = {}; current = 1
     header = None; tools_digest = None; system_seen = False; warnings = Counter(); active_step = None
+    system_prompt = None; waiting_prompts = []
     first_times = {}; retries = {}; compactions = {}
 
     def add(r, offset, line, kind, name, preview, part='text', suffix=''):
@@ -73,12 +74,22 @@ def events(rows):
                 loc = {'offset': offset, 'line': line, 'part': 'dispatch_result' if kind == 'tool/ptc-dispatch' else 'result', 'block': output['block']}
                 outputs.setdefault((*identity, output['id']), []).append((loc, output, r))
         elif kind == 'system/message':
-            add(r, offset, line, 'context', '系统提示词', '系统提示词已更新' if system_seen else '初始系统提示词')
+            _, loc = add(r, offset, line, 'context', '系统提示词', '系统提示词已更新' if system_seen else '初始系统提示词')
+            loc['previous_system'] = system_prompt
+            loc['previous_header'] = header
+            loc['prompt_header'] = None
+            waiting_prompts.append(loc)
+            system_prompt = {'offset': offset, 'line': line}
             system_seen = True
         elif kind == 'request/header':
             # Header facts are shared until the next header, even across turns.
             if header is not None and tools_digest != r.get('tools_digest'):
-                add(r, offset, line, 'context', '工具定义', '工具已更新', 'header')
+                _, loc = add(r, offset, line, 'context', '工具定义', '工具已更新', 'header')
+                loc.update(prompt_header={'offset': offset, 'line': line},
+                           previous_header=header, prompt_system=system_prompt)
+            for loc in waiting_prompts:
+                loc['prompt_header'] = {'offset': offset, 'line': line}
+            waiting_prompts.clear()
             tools_digest = r.get('tools_digest')
             header = {'offset': offset, 'line': line}
         elif kind == 'compaction/start':

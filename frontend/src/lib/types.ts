@@ -120,6 +120,9 @@ export interface Attachment {
 }
 export interface Detail {
   part?: string;
+  message_source?: unknown;
+  prompt_snapshot?: PromptSnapshot;
+  previous_prompt_snapshot?: PromptSnapshot;
   attachments?: Attachment[];
   tool_schema?: { name: string; description?: string; parameters: unknown };
   request_config?: Record<string, unknown>;
@@ -142,6 +145,10 @@ export interface Detail {
   parent_output_available?: boolean;
   nested: Event[];
   input_truncated?: boolean;
+}
+export interface PromptSnapshot {
+  system: string;
+  tools: { name: string; description?: string; parameters?: unknown }[] | null;
 }
 export interface Catalogue {
   items: Session[];
@@ -179,7 +186,7 @@ export const kindLabels: Record<string, [string, string]> = {
   user: ['用户', 'user'],
   assistant: ['助手', 'assistantVioletBright'],
   tool: ['工具', 'toolAmber'],
-  subtool: ['工具', 'toolAmber'],
+  subtool: ['子工具', 'subtoolAmber'],
   media: ['上下文', 'contextGreen'],
   context: ['上下文', 'contextGreen'],
 };

@@ -1,5 +1,7 @@
 import { kindLabels, type Event } from './types';
 export function eventLabel(event?: Event) {
+  if (event?.name === '上下文压缩' && event.kind === 'context')
+    return ['已压缩', 'compacted'];
   if (
     event?.kind === 'context' &&
     ['系统提示词', '工具定义'].includes(event.name)

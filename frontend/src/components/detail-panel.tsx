@@ -4,6 +4,48 @@ import { sessionStore, type AppState } from '../state/session-store';
 import { type Detail } from '../lib/types';
 import { eventLabel } from '../lib/event-presentation';
 import { IconButton } from './primitives';
+
+export function detailTabs(detail: Detail | null): string[] {
+  const tool = detail && ['tool', 'subtool'].includes(detail.event.kind);
+  const dsh = detail?.provider_label === 'DeepSeek Harness';
+  if (dsh && detail?.prompt_snapshot) {
+    const tabs = [
+      ...(detail.previous_prompt_snapshot ? ['差异'] : []),
+      '系统提示词',
+      ...(detail.prompt_snapshot.tools === null ? [] : ['工具']),
+    ];
+    return tabs;
+  }
+  if (tool)
+    return dsh
+      ? [
+          '概述',
+          ...(detail.text ? ['参数'] : []),
+          ...(detail.output_available ? ['结果'] : []),
+          'Schema',
+          '计时',
+        ]
+      : ['概述', '参数', '结果', 'Schema', '计时', '来源'];
+  if (dsh && detail?.event.name === '上下文压缩') return ['概述', '原始内容'];
+  if (dsh)
+    return [
+      '概述',
+      '预览',
+      '原始内容',
+      ...(detail?.message_source === undefined ? [] : ['来源']),
+    ];
+  return detail?.event.kind === 'assistant'
+    ? [
+        '概述',
+        '预览',
+        '原始内容',
+        ...(detail.request_config ? ['请求配置'] : []),
+        '计时',
+        '来源',
+      ]
+    : ['概述', '预览', '原始内容', '来源'];
+}
+
 export function DetailPanel({ state }: { state: AppState }) {
   const view = state.views.trace,
     [detail, setDetail] = useState<Detail | null>(null),
@@ -52,18 +94,8 @@ export function DetailPanel({ state }: { state: AppState }) {
     };
   }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
-    tabs = tool
-      ? ['概述', '参数', '结果', 'Schema', '计时', '来源']
-      : detail?.event.kind === 'assistant'
-        ? [
-            '概述',
-            '预览',
-            '原始内容',
-            ...(detail.request_config ? ['请求配置'] : []),
-            '计时',
-            '来源',
-          ]
-        : ['概述', '预览', '原始内容', '来源'];
+    tabs = detailTabs(detail),
+    activeTab = tabs.includes(tab) ? tab : (tabs[0] ?? tab);
   const change = (tab: string) => {
     setTab(tab);
     setPage(1);
@@ -153,8 +185,10 @@ export function DetailPanel({ state }: { state: AppState }) {
           {tabs.map((item) => (
             <button
               key={item}
-              className={'detailTab' + (item === tab ? ' detailTabActive' : '')}
-              aria-selected={item === tab}
+              className={
+                'detailTab' + (item === activeTab ? ' detailTabActive' : '')
+              }
+              aria-selected={item === activeTab}
               onClick={() => change(item)}
             >
               {item}
@@ -175,11 +209,12 @@ export function DetailPanel({ state }: { state: AppState }) {
               <DetailContent
                 detail={detail}
                 output={output}
-                tab={tab}
+                tab={activeTab}
                 id={state.id!}
                 change={change}
               />
               {detail.pages > 1 &&
+                !detail.prompt_snapshot &&
                 !['来源', 'Schema', '计时', '请求配置'].includes(tab) && (
                   <div className="detail-pager">
                     <button

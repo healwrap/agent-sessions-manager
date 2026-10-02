@@ -6,6 +6,20 @@ import { Payload } from './payload';
 import { OverviewSection } from './overview-section';
 import { RecordContent } from './record-content';
 import { RecordTiming } from './record-timing';
+import { PromptContent } from './prompt-content';
+
+function messageSourceLabel(source: unknown): string {
+  if (!source || typeof source !== 'object' || Array.isArray(source))
+    return '未知';
+  const value = source as Record<string, unknown>;
+  if (value.kind === 'user') return '用户';
+  if (value.kind === 'goal')
+    return typeof value.round === 'number' && value.round > 0
+      ? `目标 · 第 ${value.round} 轮`
+      : '目标';
+  if (typeof value.kind !== 'string' || !value.kind) return '未知';
+  return value.kind[0].toUpperCase() + value.kind.slice(1);
+}
 
 export function DetailContent({
   detail,
@@ -22,6 +36,21 @@ export function DetailContent({
 }) {
   const event = detail.event,
     tool = ['tool', 'subtool'].includes(event.kind);
+  if (detail.prompt_snapshot)
+    return <PromptContent detail={detail} tab={tab} />;
+  if (tab === '来源' && detail.provider_label === 'DeepSeek Harness')
+    return (
+      <div className="detail-content">
+        {detail.message_source === undefined ? (
+          <p className="metadata-note">原始记录未保存消息来源。</p>
+        ) : (
+          <Payload
+            text={JSON.stringify(detail.message_source)}
+            label="消息来源 JSON"
+          />
+        )}
+      </div>
+    );
   if (tab === '来源')
     return (
       <div className="detail-content">
@@ -48,7 +77,11 @@ export function DetailContent({
     );
   if (tab === '概述') {
     const entries = [
-      ['来源', detail.provider_label],
+      ...(detail.provider_label === 'DeepSeek Harness'
+        ? detail.message_source === undefined
+          ? []
+          : [['来源', messageSourceLabel(detail.message_source)]]
+        : [['来源', detail.provider_label]]),
       ...(event.layer ? [['层级', event.layer]] : []),
       ['状态', statusLabels[event.status] || event.status],
       ['引用', event.ref],
@@ -74,7 +107,19 @@ export function DetailContent({
           {entries.map(([key, value]) => (
             <div key={key}>
               <dt>{key}</dt>
-              <dd title={value}>{value}</dd>
+              <dd title={value}>
+                {key === '来源' &&
+                detail.provider_label === 'DeepSeek Harness' ? (
+                  <button
+                    className="detail-source-link"
+                    onClick={() => change('来源')}
+                  >
+                    {value}
+                  </button>
+                ) : (
+                  value
+                )}
+              </dd>
             </div>
           ))}
         </dl>

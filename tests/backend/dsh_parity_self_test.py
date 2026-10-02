@@ -60,6 +60,10 @@ with tempfile.TemporaryDirectory() as directory:
     assert model['preview'] == '（仅工具调用）' and model['phase'] == 'tool_calls'
     shortcut = store.detail('project/native', 'E/5')['tool_calls'][0]
     assert shortcut == {'ref': 'E/6', 'name': 'read_image', 'preview': '{"path":"exact token=value"}'}
+    assert store.detail('project/native', 'E/2')['message_source'] == {'kind': 'user'}
+    assert store.detail('project/native', 'E/5')['message_source'] == {
+        'kind': 'model', 'provider': 'test', 'model': 'original-model'}
+    assert 'message_source' not in store.detail('project/native', 'E/6')
     other_step = {**next(e for e in view['events'] if e['ref'] == 'E/6'), 'ref': 'another-step', 'step': 99}
     blocks = [{'type': 'tool-call', 'id': 'c1', 'name': 'read_image', 'arguments': 'original args'}]
     related = next(e for e in view['events'] if e['ref'] == 'E/6')
@@ -133,3 +137,26 @@ with tempfile.TemporaryDirectory() as directory:
     assert compaction['text']=='original summary' and compaction['event']['duration_ms']==1000
     assert compaction['event']['model']=='summary-model' and trace['compactions']==1
 print('DSH lifecycle self-test: ok (retry belongs to model step, first attempt token retained, compaction summary and timing)')
+
+with tempfile.TemporaryDirectory() as directory:
+    root = Path(directory); folder = root/'sessions/project/prompts'; folder.mkdir(parents=True)
+    records = [{'type':'session','version':4,'id':'prompts'},
+        row('system/message',1,{'message': {'content':[text('original system')], 'source':{'kind':'system'}}}),
+        row('request/header',2,header('original tool')),
+        row('system/message',3,{'message': {'content':[text('updated system')], 'source':{'kind':'system'}}}),
+        row('request/header',4,header('updated tool'))]
+    folder.joinpath('session.v4.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in records))
+    store = DshStore(root)
+    initial = store.detail('project/prompts','E/1')
+    assert initial['prompt_snapshot']['system'] == 'original system'
+    assert initial['prompt_snapshot']['tools'][0]['description'] == 'original tool'
+    assert 'previous_prompt_snapshot' not in initial
+    updated = store.detail('project/prompts','E/3')
+    assert updated['prompt_snapshot']['system'] == 'updated system'
+    assert updated['prompt_snapshot']['tools'][0]['description'] == 'updated tool'
+    assert updated['previous_prompt_snapshot']['system'] == 'original system'
+    assert updated['previous_prompt_snapshot']['tools'][0]['description'] == 'original tool'
+    tools_change = store.detail('project/prompts','E/4')
+    assert tools_change['prompt_snapshot']['system'] == 'updated system'
+    assert tools_change['previous_prompt_snapshot']['tools'][0]['description'] == 'original tool'
+print('DSH prompt snapshot self-test: ok (historical system and tool definitions, previous state)')

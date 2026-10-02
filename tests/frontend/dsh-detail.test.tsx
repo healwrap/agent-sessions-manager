@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import type { Detail, Event } from '../../frontend/src/lib/types';
 import { DetailContent } from '../../frontend/src/components/detail/detail-content';
+import { detailTabs } from '../../frontend/src/components/detail-panel';
 import { RecordTiming } from '../../frontend/src/components/detail/record-timing';
 import { TraceTable } from '../../frontend/src/components/trace-table';
 import { SessionStore } from '../../frontend/src/state/session-store';
@@ -81,6 +82,91 @@ describe('DSH detail and list parity', () => {
     expect(render('结果')).toContain('<img');
     expect(render('结果')).toContain('original image result');
   });
+  it('uses native DSH tabs and exact message source instead of a file path', () => {
+    expect(detailTabs(detail)).toEqual([
+      '概述',
+      '参数',
+      '结果',
+      'Schema',
+      '计时',
+    ]);
+    const message = {
+      ...detail,
+      event: { ...event, kind: 'assistant' },
+      message_source: {
+        kind: 'model',
+        provider: 'original provider',
+        model: 'original model',
+      },
+      source: '/private/session.jsonl',
+    };
+    expect(detailTabs(message)).toEqual(['概述', '预览', '原始内容', '来源']);
+    const html = renderToString(
+      <DetailContent
+        detail={message}
+        output={null}
+        tab="来源"
+        id="dsh:local:project/session"
+        change={() => {}}
+      />,
+    );
+    expect(html).toContain('original provider');
+    expect(html).toContain('original model');
+    expect(html).not.toContain('/private/session.jsonl');
+    expect(detailTabs({ ...message, message_source: undefined })).not.toContain(
+      '来源',
+    );
+    expect(
+      detailTabs({
+        ...message,
+        event: { ...event, kind: 'context', name: '上下文压缩' },
+      }),
+    ).toEqual(['概述', '原始内容']);
+  });
+  it('uses the native system prompt and tool catalog tabs with a recorded diff', () => {
+    const prompt = {
+      ...detail,
+      event: { ...event, kind: 'context', name: '系统提示词' },
+      prompt_snapshot: {
+        system: 'updated system',
+        tools: [
+          {
+            name: 'read_image',
+            description: 'updated tool',
+            parameters: { type: 'object' },
+          },
+        ],
+      },
+      previous_prompt_snapshot: {
+        system: 'original system',
+        tools: [
+          {
+            name: 'read_image',
+            description: 'original tool',
+            parameters: { type: 'object' },
+          },
+        ],
+      },
+    } as Detail;
+    expect(detailTabs(prompt)).toEqual(['差异', '系统提示词', '工具']);
+    const tab = (name: string) =>
+      renderToString(
+        <DetailContent
+          detail={prompt}
+          output={null}
+          tab={name}
+          id="dsh:local:project/session"
+          change={() => {}}
+        />,
+      );
+    expect(tab('系统提示词')).toContain('updated system');
+    expect(tab('工具')).toContain('updated tool');
+    expect(tab('差异')).toContain('original system');
+    expect(tab('差异')).toContain('updated tool');
+    expect(
+      detailTabs({ ...prompt, previous_prompt_snapshot: undefined }),
+    ).toEqual(['系统提示词', '工具']);
+  });
   it('preserves tool output line breaks and literal markup instead of interpreting Markdown', () => {
     const html = renderToString(
       <DetailContent
@@ -153,5 +239,12 @@ describe('DSH detail and list parity', () => {
     expect(
       eventLabel({ ...event, kind: 'context', name: '系统提示词' }),
     ).toEqual(['系统', 'systemNeutral']);
+    expect(eventLabel({ ...event, kind: 'subtool' })).toEqual([
+      '子工具',
+      'subtoolAmber',
+    ]);
+    expect(
+      eventLabel({ ...event, kind: 'context', name: '上下文压缩' }),
+    ).toEqual(['已压缩', 'compacted']);
   });
 });

@@ -203,3 +203,21 @@
   color: var(--dsw-alias-state-warn-label);
   background: var(--dsw-alias-state-warn-tertiary);
 }
+
+.subtoolAmber {
+  color: color-mix(
+    in srgb,
+    var(--dsw-alias-state-warn-label) 62%,
+    var(--dsw-alias-label-tertiary)
+  );
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-warn-tertiary) 58%,
+    var(--dsw-alias-bg-layer-1)
+  );
+}
+
+.compacted {
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+}

@@ -32,10 +32,36 @@ def tool_shortcuts(data, event, blocks):
     return shortcuts
 
 
+def prompt_snapshot(source, system, header):
+    prompt = ''
+    if system:
+        row = read_row(source, system['offset'])
+        message = row.get('data', {}).get('message', {})
+        prompt = content(message.get('content', []), 'text')
+    tools = None
+    if header:
+        row = read_row(source, header['offset'])
+        tools = row.get('data', {}).get('header', {}).get('tools', [])
+    return {'system': prompt, 'tools': tools}
+
+
 def enrich_detail(store, key, result):
     data = store.session(key); event = result['event']; loc = data['lookup'][event['ref']][1]
     selected = loc.get('output') if result['part'] == 'output' else loc
     fields = {'source': str(store.raw_files[key]), 'attachments': attachments(blocks_at(store, data, selected)) if selected else []}
+    if event['kind'] in ('user', 'assistant', 'context'):
+        row = read_row(data['source'], loc['offset'])
+        payload = row.get('data', {})
+        message = payload.get('message', payload)
+        if isinstance(message, dict) and 'source' in message:
+            fields['message_source'] = message['source']
+    if event['name'] in ('系统提示词', '工具定义'):
+        system = loc if event['name'] == '系统提示词' else loc.get('prompt_system')
+        fields['prompt_snapshot'] = prompt_snapshot(data['source'], system, loc.get('prompt_header'))
+        previous_system = loc.get('previous_system', system)
+        previous_header = loc.get('previous_header')
+        if previous_system or previous_header:
+            fields['previous_prompt_snapshot'] = prompt_snapshot(data['source'], previous_system, previous_header)
     # Select the header effective when the operation started, never today's tools.
     header = loc.get('header')
     if header:

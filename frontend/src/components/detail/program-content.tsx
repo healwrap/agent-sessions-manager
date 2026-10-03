@@ -6,6 +6,7 @@ import { tokenStyle, useCodeTokens } from '../../lib/code-highlighter';
 import { Icon } from '../primitives';
 import { Payload } from './payload';
 import { OverviewSection } from './overview-section';
+import { stringWrapping } from '../../lib/string-wrapping';
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [state, setState] = useState('idle');
@@ -37,7 +38,7 @@ export function ProgramInput({
   program: CodeProgram;
   onOpen?: () => void;
 }) {
-  const [wrapped, setWrapped] = useState(onOpen != null);
+  const [wrapped, setWrapped] = useState(stringWrapping.getDefault);
   const [showJson, setShowJson] = useState(false);
   const displaySource = program.source.endsWith('\n')
     ? program.source.slice(0, -1)
@@ -55,7 +56,10 @@ export function ProgramInput({
           title="自动换行"
           aria-label="自动换行"
           aria-pressed={wrapped}
-          onClick={() => setWrapped(!wrapped)}
+          onClick={() => {
+            setWrapped(!wrapped);
+            stringWrapping.setDefault(!wrapped);
+          }}
         >
           <WrapText size={12} />
         </button>

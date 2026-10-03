@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { JsonTree } from '../json-tree/json-tree';
 import type { JsonTreeLabels } from '../json-tree/types';
+import { stringWrapping } from '../../lib/string-wrapping';
 
 const labels: JsonTreeLabels = {
   copyValue: '复制值',
@@ -13,14 +14,6 @@ const labels: JsonTreeLabels = {
   collapseNode: '收起',
   expandNode: '展开',
   copyButtonTitle: (action) => `${action}（右键查看更多复制选项）`,
-};
-let wrapStrings = false;
-const stringWrapping = {
-  label: '自动换行',
-  getDefault: () => wrapStrings,
-  setDefault: (wrapped: boolean) => {
-    wrapStrings = wrapped;
-  },
 };
 
 export function Payload({

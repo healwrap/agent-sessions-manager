@@ -18,12 +18,10 @@ export function createNavigation(store: SessionStore) {
       store.toggleTurn(event.turn);
     if (
       ['tool', 'subtool'].includes(event.kind) &&
-      store.state.foldCalls &&
-      event.call_group
+      event.call_group &&
+      store.state.foldCalls !== store.state.expandedCalls.has(event.call_group)
     )
-      store.update({
-        expandedCalls: new Set(store.state.expandedCalls).add(event.call_group),
-      });
+      store.toggleCall(event.call_group);
   }
   async function selectEvent(ref: string, jump = false, request = false) {
     const id = store.state.id;
@@ -41,6 +39,9 @@ export function createNavigation(store: SessionStore) {
         selected: canonical,
         detailsOpen: true,
         requestOpen: request,
+        ...(jump || request
+          ? { summaryNonce: store.view.summaryNonce + 1 }
+          : {}),
       });
       updateAddress(store, canonical);
       if (jump) {
@@ -61,7 +62,7 @@ export function createNavigation(store: SessionStore) {
         });
       }
     } catch (error) {
-      store.notify(String(error));
+      if (current()) store.notify(String(error));
     }
   }
   function cancelFocus() {
@@ -120,6 +121,20 @@ export function createNavigation(store: SessionStore) {
   }
   return {
     selectEvent,
+    clearSelection(clearRange = false) {
+      selectionGeneration++;
+      if (clearRange) focusGeneration++;
+      store.updateView(
+        {
+          selected: null,
+          detailsOpen: false,
+          requestOpen: false,
+          ...(clearRange ? { range: null } : {}),
+        },
+        'trace',
+      );
+      updateAddress(store);
+    },
     cancelFocus,
     focusRange,
     invalidate() {

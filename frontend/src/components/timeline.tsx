@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usesRecordedDuration } from '../lib/recorded-time';
 import { assistantWaitRatio } from '../lib/event-presentation';
+import { recordType } from '../lib/record-presentation';
+import { useTimelineTooltip } from '../hooks/use-timeline-tooltip';
+import { TimelineTooltip } from './timeline-tooltip';
 import { sessionStore, type AppState } from '../state/session-store';
 import {
   timelineRange,
@@ -29,6 +32,10 @@ export function Timeline({ state }: { state: AppState }) {
     range: [number, number] | null;
   } | null>(null);
   const viewport = view.viewport || [0, 1],
+    tooltip = useTimelineTooltip(
+      JSON.stringify([state.id, view.version, viewport]),
+      panning || draft !== null,
+    ),
     size = viewport[1] - viewport[0],
     position = (x: number) =>
       Math.max(
@@ -51,6 +58,7 @@ export function Timeline({ state }: { state: AppState }) {
     if (!node) return;
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
+      tooltip.dismiss();
       const width = node.clientWidth;
       if (!width) return;
       const unit =
@@ -85,9 +93,10 @@ export function Timeline({ state }: { state: AppState }) {
     };
     node.addEventListener('wheel', wheel, { passive: false });
     return () => node.removeEventListener('wheel', wheel);
-  }, []);
+  }, [tooltip.dismiss]);
   const range = draft || view.range,
     events = view.data?.overview || [],
+    selected = view.events.find((event) => event.ref === view.selected),
     total = view.data?.event_count || 1,
     duration = usesRecordedDuration(state.duration, view.data);
   const turns = new Map<number, number>();
@@ -107,9 +116,17 @@ export function Timeline({ state }: { state: AppState }) {
         <div
           ref={ref}
           className="TrajectoryTimeline-track"
+          tabIndex={0}
           aria-label="时间线概览；拖动选择范围，滚轮缩放，Shift＋滚轮或按住右键拖动平移，双击取消圈选并保留缩放位置"
           title="滚轮缩放 · Shift＋滚轮或按住右键拖动平移 · 双击取消圈选"
           data-panning={panning}
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape' || !range) return;
+            event.preventDefault();
+            sessionStore.cancelFocus();
+            sessionStore.updateView({ range: null });
+            setDraft(null);
+          }}
           onContextMenu={(event) => event.preventDefault()}
           onDoubleClick={() => {
             sessionStore.cancelFocus();
@@ -118,6 +135,7 @@ export function Timeline({ state }: { state: AppState }) {
           }}
           onPointerDown={(event) => {
             if (event.button !== 0 && event.button !== 2) return;
+            tooltip.dismiss();
             sessionStore.cancelFocus();
             suppress.current = false;
             drag.current = {
@@ -238,21 +256,28 @@ export function Timeline({ state }: { state: AppState }) {
                 style={{ left: left(start) }}
               />
             ))}
-          {range && (
-            <div
-              className="timeline-selection"
-              style={{
-                left: left(range[0]),
-                width: left(range[1]) - left(range[0]),
-              }}
-            />
-          )}
+          {range &&
+            ['timeline-selection', 'timeline-selection-edges'].map(
+              (className) => (
+                <div
+                  key={className}
+                  className={className}
+                  data-dragging={draft !== null || undefined}
+                  aria-hidden="true"
+                  style={{
+                    left: left(range[0]),
+                    width: left(range[1]) - left(range[0]),
+                  }}
+                />
+              ),
+            )}
           {events.map((event) => {
             const [start, end] = timelineRange(event, total, duration);
             if (end < viewport[0] || start > viewport[1]) return null;
-            const execution = ['执行记录', '执行结果'].includes(event.name);
-            const compaction = event.name === '上下文压缩';
-            const system = ['系统提示词', '工具定义'].includes(event.name);
+            const type = recordType(event),
+              execution = type === 'execution_result',
+              compaction = type === 'compaction',
+              system = type === 'system_prompt' || type === 'tool_definitions';
             const waitRatio = assistantWaitRatio(event);
             const lane =
                 event.kind === 'assistant' || compaction
@@ -289,38 +314,44 @@ export function Timeline({ state }: { state: AppState }) {
                 data-assistant-timing={waitRatio != null}
                 data-current={
                   event.ref === view.selected ||
-                  !!view.events.find(
-                    (e) =>
-                      e.ref === view.selected &&
-                      (e.parent_ref === event.ref ||
-                        (e.kind === event.kind &&
-                          e.position >= event.position &&
-                          e.position <=
-                            (event.end_position ?? event.position))),
-                  )
+                  (!!selected &&
+                    (selected.parent_ref === event.ref ||
+                      (selected.kind === event.kind &&
+                        selected.position >= event.position &&
+                        selected.position <=
+                          (event.end_position ?? event.position))))
                 }
                 data-selected={!range || (end >= range[0] && start <= range[1])}
                 data-error={event.status === 'error'}
                 data-search-match={!view.query || event.search_match !== false}
-                title={
-                  event.ref +
-                  (event.count && event.count > 1
-                    ? ` · ${event.count} 条记录`
-                    : '') +
-                  (event.name ? ' · ' + event.name : '')
-                }
                 aria-label={'定位 ' + event.ref}
-                onClick={() =>
+                onMouseEnter={(action) =>
+                  tooltip.show(action.currentTarget, event)
+                }
+                onMouseLeave={tooltip.dismiss}
+                onFocus={(action) => {
+                  if (action.currentTarget.matches(':focus-visible'))
+                    tooltip.show(action.currentTarget, event, 0);
+                }}
+                onBlur={tooltip.dismiss}
+                aria-describedby={
+                  tooltip.hint?.record === event.ref
+                    ? tooltip.hint.id
+                    : undefined
+                }
+                onClick={() => {
+                  tooltip.dismiss();
                   void sessionStore.selectEvent(
                     event.parent_ref || event.ref,
                     true,
-                  )
-                }
+                  );
+                }}
               />
             );
           })}
         </div>
       </div>
+      <TimelineTooltip hint={tooltip.hint} />
     </div>
   );
 }

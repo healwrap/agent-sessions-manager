@@ -1,6 +1,6 @@
 import { recordType } from '../lib/record-presentation';
 import { usesRecordedDuration } from '../lib/recorded-time';
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
 import { timelineRange } from '../lib/timeline-projection';
 import { trajectoryRows } from '../lib/selectors';
@@ -8,6 +8,8 @@ import { statusLabels } from '../lib/types';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Icon } from './primitives';
 import { eventLabel } from '../lib/event-presentation';
+import { requestBoundaryLayout } from '../lib/trace-layout';
+import { HistoryLoadRow } from './history-load-row';
 export function TraceTable({ state }: { state: AppState }) {
   const ref = useRef<HTMLElement>(null),
     view = state.views.trace;
@@ -21,19 +23,11 @@ export function TraceTable({ state }: { state: AppState }) {
     state.foldCalls,
     state.expandedCalls,
   );
-  const requestBoundaries = new Map<number, string>();
-  {
-    for (const event of view.data?.overview || view.events) {
-      if (
-        event.request_number == null ||
-        requestBoundaries.has(event.request_number) ||
-        (['user', 'context'].includes(event.kind) &&
-          recordType(event) !== 'compaction')
-      )
-        continue;
-      requestBoundaries.set(event.request_number, event.ref);
-    }
-  }
+  const overview = view.data?.overview || view.events,
+    { boundaries, offsets } = requestBoundaryLayout(overview, rows),
+    activeTurn = view.detailsOpen
+      ? overview.find((event) => event.ref === view.selected)?.turn
+      : undefined;
   let previousTurn: number | null = null;
   return (
     <section
@@ -41,6 +35,10 @@ export function TraceTable({ state }: { state: AppState }) {
       className="tablePane"
       id="table-pane"
       aria-label="轨迹记录"
+      onClick={(event) => {
+        if (event.target === event.currentTarget)
+          sessionStore.clearSelection(true);
+      }}
     >
       <table className="table" data-scroll-ready="true">
         <colgroup>
@@ -48,7 +46,10 @@ export function TraceTable({ state }: { state: AppState }) {
           <col className="contentColumn" />
         </colgroup>
         <tbody>
-          {rows.map((event) => {
+          {view.offset > 0 && (
+            <HistoryLoadRow direction="before" loading={view.loading} />
+          )}
+          {rows.map((event, index) => {
             const initialSystem =
               !('summaryType' in event) &&
               previousTurn === null &&
@@ -65,7 +66,9 @@ export function TraceTable({ state }: { state: AppState }) {
                   key={event.ref}
                   className="summary-row"
                   tabIndex={0}
-                  data-collapsed-summary={event.summaryType}
+                  data-collapsed-summary={
+                    event.summaryType === 'call' ? 'assistant' : 'turn'
+                  }
                   onClick={expand}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -75,7 +78,9 @@ export function TraceTable({ state }: { state: AppState }) {
                   }}
                 >
                   <td className="event">
-                    <span className="step-dot" />
+                    {activeTurn === event.turn && (
+                      <span className="turnRail" aria-hidden="true" />
+                    )}
                   </td>
                   <td className="content">
                     <button className="fold-summary" title="展开记录">
@@ -86,7 +91,13 @@ export function TraceTable({ state }: { state: AppState }) {
                 </tr>
               );
             }
-            const selected = event.ref === view.selected,
+            const selected =
+                event.ref === view.selected &&
+                !view.requestOpen &&
+                !event.request_only,
+              requestSelected =
+                event.ref === view.selected &&
+                (view.requestOpen || event.request_only),
               tool = ['tool', 'subtool'].includes(event.kind),
               execution = recordType(event) === 'execution_result';
             const [label, color] = eventLabel(event);
@@ -104,11 +115,15 @@ export function TraceTable({ state }: { state: AppState }) {
                 data-ref={event.ref}
                 data-kind={event.kind}
                 data-request-only={event.request_only || undefined}
+                data-terminal-request-boundary={
+                  (event.request_only && index === rows.length - 1) || undefined
+                }
                 data-turn-start={first}
+                data-turn-end={rows[index + 1]?.turn !== event.turn}
                 data-selected={selected}
                 data-error={event.status === 'error'}
                 data-timeline-focus={outside ? 'outside' : 'inside'}
-                tabIndex={0}
+                tabIndex={event.request_only ? -1 : 0}
                 title={event.ref + ' · ' + event.name}
                 onClick={event.request_only ? undefined : select}
                 onDoubleClick={(e) => {
@@ -138,33 +153,46 @@ export function TraceTable({ state }: { state: AppState }) {
               >
                 <td className="event">
                   {event.request_number != null &&
-                    requestBoundaries.get(event.request_number) ===
-                      event.ref && (
+                    boundaries.get(event.request_number) === event.ref && (
                       <button
                         type="button"
                         className={
                           'requestBoundaryControl' +
-                          (selected && view.requestOpen
+                          (requestSelected
                             ? ' requestBoundaryControlActive'
                             : '')
                         }
                         aria-label={`请求 #${event.request_number}${recordType(event) === 'compaction' ? ' · 压缩' : ''}`}
-                        aria-pressed={selected && view.requestOpen}
+                        aria-pressed={requestSelected}
+                        data-request-run-index={
+                          (offsets.get(event.ref) || 0) / 8
+                        }
+                        style={
+                          {
+                            '--request-boundary-offset':
+                              (offsets.get(event.ref) || 0) + 'px',
+                          } as CSSProperties
+                        }
                         data-label={`请求 #${event.request_number}${recordType(event) === 'compaction' ? ' · 压缩' : ''}`}
                         data-request-status={event.status}
                         onClick={(e) => {
                           e.stopPropagation();
                           void sessionStore.selectEvent(event.ref, false, true);
                         }}
+                        onDoubleClick={(event) => event.stopPropagation()}
                       />
                     )}
-                  {!event.request_only && <span className="turnRail" />}
+                  {!initialSystem && activeTurn === event.turn && (
+                    <span className="turnRail" aria-hidden="true" />
+                  )}
                   {selected && <span className="selectionRail" />}
                   {event.request_only ? null : first ? (
                     <button
                       className={
-                        'turnLabel' + (selected ? ' turnLabelActive' : '')
+                        'turnLabel' +
+                        (activeTurn === event.turn ? ' turnLabelActive' : '')
                       }
+                      aria-label={`第 ${event.turn} 轮`}
                       title={
                         state.foldTurns !== state.collapsed.has(event.turn)
                           ? '展开轮次'
@@ -175,11 +203,14 @@ export function TraceTable({ state }: { state: AppState }) {
                         sessionStore.toggleTurn(event.turn);
                       }}
                     >
-                      第 {event.turn} 轮
+                      <span className="turnLabelFull" aria-hidden="true">
+                        第 {event.turn} 轮
+                      </span>
+                      <span className="turnLabelCompact" aria-hidden="true">
+                        #{event.turn}
+                      </span>
                     </button>
-                  ) : (
-                    <span className="step-dot" />
-                  )}
+                  ) : null}
                   {!event.request_only && (
                     <div className="eventInner">
                       <span className="kindSlot">
@@ -187,19 +218,27 @@ export function TraceTable({ state }: { state: AppState }) {
                           className={
                             'kindTag ' + (execution ? 'toolAmber' : color)
                           }
+                          data-role-kind={
+                            event.kind === 'assistant' ? 'message' : event.kind
+                          }
                         >
-                          <Icon
-                            name={
-                              tool || execution
-                                ? 'wrench'
-                                : event.kind === 'user'
-                                  ? 'user'
-                                  : event.kind === 'assistant'
-                                    ? 'sparkle'
-                                    : 'context'
-                            }
+                          <span
                             className="kindTagIcon"
-                          />
+                            aria-hidden="true"
+                            title={label}
+                          >
+                            <Icon
+                              name={
+                                tool || execution
+                                  ? 'wrench'
+                                  : event.kind === 'user'
+                                    ? 'user'
+                                    : event.kind === 'assistant'
+                                      ? 'sparkle'
+                                      : 'context'
+                              }
+                            />
+                          </span>
                           <span className="kindTagLabel">
                             {execution ? '执行结果' : label}
                           </span>
@@ -260,6 +299,9 @@ export function TraceTable({ state }: { state: AppState }) {
               </tr>
             );
           })}
+          {view.next !== null && (
+            <HistoryLoadRow direction="after" loading={view.loading} />
+          )}
         </tbody>
       </table>
       {!rows.length && (

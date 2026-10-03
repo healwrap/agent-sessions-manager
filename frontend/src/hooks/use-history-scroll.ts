@@ -39,10 +39,29 @@ export function useHistoryScroll(
         pane.querySelectorAll<HTMLElement>('[data-ref]'),
       ).find((row) => row.dataset.ref === view.navigation!.ref);
       navigation.current = view.navigation.nonce;
-      row?.scrollIntoView({
-        block: view.navigation.block,
-        behavior: sessionStore.state.settings.animations ? 'smooth' : 'instant',
-      });
+      if (row) {
+        const top =
+          pane.scrollTop +
+          row.getBoundingClientRect().top -
+          pane.getBoundingClientRect().top -
+          pane.clientTop;
+        const bottom = top + row.offsetHeight;
+        const target =
+          view.navigation.block === 'center'
+            ? top - (pane.clientHeight - row.offsetHeight) / 2
+            : top < pane.scrollTop
+              ? top
+              : bottom > pane.scrollTop + pane.clientHeight
+                ? bottom - pane.clientHeight
+                : pane.scrollTop;
+        // Only move the ledger, never its clipped split or application shell.
+        pane.scrollTo({
+          top: target,
+          behavior: sessionStore.state.settings.animations
+            ? 'smooth'
+            : 'instant',
+        });
+      }
     }
     previous.current = {
       id: id || '',

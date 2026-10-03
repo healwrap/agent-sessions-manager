@@ -1,0 +1,29 @@
+/* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.timeline-tooltip {
+  position: fixed;
+  z-index: 100;
+  width: max-content;
+  max-width: 50vw;
+  padding: 3px 7px;
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-static-neutral-bluish-850);
+  color: var(--dsw-static-neutral-bluish-00);
+  font: var(--dsw-font-xxxs-11);
+  white-space: pre-line;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  animation: timeline-tooltip-in 150ms var(--ds-ease-in-out);
+}
+[data-ds-dark-theme] .timeline-tooltip {
+  background: var(--dsw-static-neutral-bluish-750);
+}
+@keyframes timeline-tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-tooltip {
+    animation: none;
+  }
+}

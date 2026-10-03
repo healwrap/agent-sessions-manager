@@ -1,14 +1,11 @@
 import { kindLabels, type Event } from './types';
+import { recordType } from './record-presentation';
 export function eventLabel(event?: Event) {
-  if (event?.name === '上下文压缩' && event.kind === 'context')
-    return ['已压缩', 'compacted'];
-  if (
-    event?.kind === 'context' &&
-    ['系统提示词', '工具定义'].includes(event.name)
-  )
+  const type = event && recordType(event);
+  if (type === 'compaction') return ['已压缩', 'compacted'];
+  if (type === 'system_prompt' || type === 'tool_definitions')
     return ['系统', 'systemNeutral'];
-  if (event?.name === '执行结果' || event?.name === '执行记录')
-    return ['执行结果', 'toolAmber'];
+  if (type === 'execution_result') return ['执行结果', 'toolAmber'];
   return kindLabels[event?.kind || ''] || ['消息', 'systemNeutral'];
 }
 export function assistantWaitRatio(event: Event) {

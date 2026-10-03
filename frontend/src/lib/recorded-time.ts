@@ -14,5 +14,8 @@ export function formatRecordedDuration(
 ) {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
     return '未记录';
-  return milliseconds ? `${value} 毫秒` : `${(value / 1000).toFixed(2)} 秒`;
+  if (milliseconds) return `${Math.round(value).toLocaleString('en-US')} 毫秒`;
+  return value < 1000
+    ? `${Math.round(value)} 毫秒`
+    : `${(value / 1000).toFixed(value < 10000 ? 2 : 1)} 秒`;
 }

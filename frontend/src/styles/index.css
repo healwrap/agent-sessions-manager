@@ -10,6 +10,7 @@
 @import './markdown.css' layer(components);
 @import './chat.css' layer(components);
 @import './trajectory.css' layer(components);
+@import './dsh/tooltip.css' layer(components);
 @import './dsh/json-layout.css' layer(components);
 @import './dsh/json-strings.css' layer(components);
 @import './dsh/json-actions.css' layer(components);

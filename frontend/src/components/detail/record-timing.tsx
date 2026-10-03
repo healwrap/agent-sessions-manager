@@ -24,15 +24,16 @@ export function RecordTiming({
   const output = event.usage?.outputTokens;
   const throughput =
     generation != null && generation > 0 && output != null
-      ? request
-        ? ((output / generation) * 1000).toFixed(1) + ' tok/s'
-        : ((output / generation) * 1000).toFixed(2) + ' token / 秒'
+      ? ((output / generation) * 1000).toFixed(1) + ' tok/s'
       : '未记录';
   const entries = [
     ['开始时间', formatTimestamp(event.timestamp)],
     [
       request ? '总时长' : '时长',
-      formatRecordedDuration(event.duration_ms, !request),
+      formatRecordedDuration(
+        event.duration_ms,
+        !request && event.kind !== 'assistant',
+      ),
     ],
     ...(event.kind === 'assistant'
       ? [
@@ -40,10 +41,10 @@ export function RecordTiming({
             '首 token 延迟',
             formatRecordedDuration(
               delta(event.first_token_at, event.timestamp),
-              !request,
+              false,
             ),
           ],
-          ['生成', formatRecordedDuration(generation, !request)],
+          ['生成', formatRecordedDuration(generation)],
           ['吞吐量', throughput],
         ]
       : []),

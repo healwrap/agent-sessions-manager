@@ -1,10 +1,15 @@
 import { DetailContent } from './detail/detail-content';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
-import { type Detail } from '../lib/types';
 import { eventLabel } from '../lib/event-presentation';
 import { IconButton } from './primitives';
 import { RequestContent } from './detail/request-content';
+import { useEventDetail } from '../hooks/use-event-detail';
+import {
+  useInspectorTabs,
+  useSettledInspectorTabs,
+} from '../hooks/use-inspector-tabs';
+import { useDetailResize } from '../hooks/use-detail-resize';
 
 export { detailTabs } from './detail/detail-tabs';
 import { detailTabs } from './detail/detail-tabs';
@@ -12,53 +17,20 @@ import { recordType } from '../lib/record-presentation';
 
 export function DetailPanel({ state }: { state: AppState }) {
   const view = state.views.trace,
-    [detail, setDetail] = useState<Detail | null>(null),
-    [output, setOutput] = useState<Detail | null>(null),
-    [tab, setTab] = useState('概述'),
-    [page, setPage] = useState(1),
-    [error, setError] = useState('');
-  const lastRef = useRef<string | null>(null),
-    drag = useRef<{ x: number; width: number } | null>(null);
-  useEffect(() => {
-    if (lastRef.current !== view.selected) {
-      lastRef.current = view.selected;
-      setTab('概述');
-      setPage(1);
-      setDetail(null);
-    }
-  }, [view.selected]);
-  useEffect(() => {
-    if (!view.detailsOpen || !view.selected || !state.id) return;
-    let current = true;
-    const part =
-      tab === '结果' ? 'output' : tab === '原始内容' ? 'raw' : 'input';
-    setError('');
-    setOutput(null);
-    void sessionStore
-      .api<Detail>('/api/event', {
-        id: state.id,
-        ref: view.selected,
-        part,
-        page,
-      })
-      .then(async (data) => {
-        if (!current) return;
-        setDetail(data);
-        if (tab === '概述' && data.output_available) {
-          const result = await sessionStore.api<Detail>('/api/event', {
-            id: state.id!,
-            ref: view.selected!,
-            part: 'output',
-            page: 1,
-          });
-          if (current) setOutput(result);
-        }
-      })
-      .catch((e) => current && setError(String(e)));
-    return () => {
-      current = false;
-    };
-  }, [state.id, view.selected, view.detailsOpen, tab, page, view.version]);
+    { tab, page, change, setPage, settle } = useInspectorTabs(
+      view.selected,
+      view.summaryNonce,
+    ),
+    { detail, output, error, loaded } = useEventDetail(
+      state.id,
+      view.selected,
+      view.detailsOpen,
+      view.version,
+      tab,
+      page,
+    ),
+    resize = useDetailResize(state),
+    panelId = useId();
   const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
     requestOpen =
       (view.requestOpen || detail?.event.request_only) &&
@@ -67,15 +39,15 @@ export function DetailPanel({ state }: { state: AppState }) {
       ? ['概述', ...(detail?.request_config ? ['选项'] : []), '用量', '计时']
       : detailTabs(detail),
     activeTab = tabs.includes(tab) ? tab : (tabs[0] ?? tab);
-  const change = (tab: string) => {
-    setTab(tab);
-    setPage(1);
-  };
+  useSettledInspectorTabs(
+    view.selected,
+    view.summaryNonce,
+    detail,
+    Boolean(requestOpen),
+    settle,
+  );
   const event = detail?.event,
-    [label, color] = eventLabel(event),
-    loadedPart =
-      tab === '结果' ? 'output' : tab === '原始内容' ? 'raw' : 'input',
-    loaded = detail && detail.part === loadedPart && detail.page === page;
+    [label, color] = eventLabel(event);
   return (
     <div
       className="detail-slot"
@@ -94,54 +66,29 @@ export function DetailPanel({ state }: { state: AppState }) {
           tabIndex={0}
           aria-label="调整事件详情宽度"
           aria-orientation="vertical"
-          aria-valuemin={280}
-          aria-valuemax={800}
+          aria-valuemin={320}
+          aria-valuemax={720}
           aria-valuenow={state.detailWidth}
-          onDoubleClick={() => sessionStore.update({ detailWidth: 400 })}
-          onKeyDown={(e) => {
-            if (['ArrowLeft', 'ArrowRight'].includes(e.key)) {
-              e.preventDefault();
-              sessionStore.update({
-                detailWidth: Math.max(
-                  280,
-                  Math.min(
-                    800,
-                    state.detailWidth + (e.key === 'ArrowLeft' ? 20 : -20),
-                  ),
-                ),
-              });
-            }
-          }}
-          onPointerDown={(e) => {
-            drag.current = { x: e.clientX, width: state.detailWidth };
-            e.currentTarget.setPointerCapture(e.pointerId);
-          }}
-          onPointerMove={(e) => {
-            if (drag.current)
-              sessionStore.update({
-                detailWidth: Math.max(
-                  280,
-                  Math.min(
-                    800,
-                    drag.current.width + drag.current.x - e.clientX,
-                  ),
-                ),
-              });
-          }}
-          onPointerUp={() => {
-            drag.current = null;
-          }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
+          {...resize}
         />
         <div className="detailsHeader">
           <div className="detailsTitle">
             {requestOpen ? (
-              <span className="detailsLocation">
-                请求 #{event?.request_number}
-                {event && recordType(event) === 'compaction' ? ' · 压缩' : ''}
-              </span>
+              <>
+                <span className="requestDetailsDot" aria-hidden="true" />
+                <span className="requestDetailsName">
+                  请求 #{event?.request_number}
+                </span>
+                <span className="detailsLocation">
+                  第 {event?.turn} 轮
+                  {event && recordType(event) === 'compaction' ? ' · 压缩' : ''}
+                </span>
+              </>
+            ) : detail?.prompt_snapshot ? (
+              <>
+                <span className="kindTag systemNeutral">系统</span>
+                <span className="detailsLocation">{event?.name}</span>
+              </>
             ) : (
               <>
                 <span className={'kindTag ' + color}>{label}</span>
@@ -157,13 +104,17 @@ export function DetailPanel({ state }: { state: AppState }) {
           <IconButton
             icon="close"
             label="关闭详情"
-            onClick={() => sessionStore.updateView({ detailsOpen: false })}
+            onClick={() => sessionStore.clearSelection()}
           />
         </div>
-        <nav className="detailTabs" aria-label="事件详情页签">
+        <nav className="detailTabs" role="tablist" aria-label="事件详情页签">
           {tabs.map((item) => (
             <button
               key={item}
+              type="button"
+              role="tab"
+              id={`${panelId}-tab-${item}`}
+              aria-controls={`${panelId}-body`}
               className={
                 'detailTab' + (item === activeTab ? ' detailTabActive' : '')
               }
@@ -177,6 +128,9 @@ export function DetailPanel({ state }: { state: AppState }) {
         <div
           key={`${view.selected}:${requestOpen}:${activeTab}:${page}`}
           className="detailBody"
+          id={`${panelId}-body`}
+          role="tabpanel"
+          aria-labelledby={`${panelId}-tab-${activeTab}`}
           data-overview={
             activeTab === '概述' &&
             (tool ||

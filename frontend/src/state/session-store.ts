@@ -24,6 +24,7 @@ export class SessionStore {
   private navigation = createNavigation(this);
   loadTrace = this.trace.loadTrace;
   selectEvent = this.navigation.selectEvent;
+  clearSelection = this.navigation.clearSelection;
   cancelFocus = this.navigation.cancelFocus;
   focusRange = this.navigation.focusRange;
   private listeners = new Set<() => void>();

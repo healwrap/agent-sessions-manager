@@ -62,6 +62,17 @@
   background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
 }
 
+.requestBoundaryControlActive::before,
+.requestBoundaryControlActive:hover::before,
+.requestBoundaryControlActive:focus-visible::before {
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-brand-primary-new-colorprimary-new-color) 18%,
+    var(--dsw-alias-bg-layer-1)
+  );
+  box-shadow: 0 0 0 1.5px var(--dsw-alias-state-business-primary);
+}
+
 .requestBoundaryControl[data-request-status='error']::before,
 .requestBoundaryControl[data-request-status='error']:hover::before,
 .requestBoundaryControl[data-request-status='error']:focus-visible::before {

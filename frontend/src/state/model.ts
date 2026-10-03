@@ -17,6 +17,7 @@ export interface View {
   selected: string | null;
   detailsOpen: boolean;
   requestOpen: boolean;
+  summaryNonce: number;
   version: string | null;
   loading: boolean;
   range: [number, number] | null;
@@ -33,6 +34,7 @@ export const emptyView = (): View => ({
   selected: null,
   detailsOpen: false,
   requestOpen: false,
+  summaryNonce: 0,
   version: null,
   loading: false,
   range: null,
@@ -78,6 +80,7 @@ export interface AppState {
   collapsed: Set<number>;
   expandedCalls: Set<string>;
   detailWidth: number;
+  toolRequestOffset: number | null;
 }
 export const initialState = (): AppState => ({
   initializing: true,
@@ -116,4 +119,5 @@ export const initialState = (): AppState => ({
   collapsed: new Set(),
   expandedCalls: new Set(),
   detailWidth: 400,
+  toolRequestOffset: null,
 });

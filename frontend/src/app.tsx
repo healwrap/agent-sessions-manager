@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { sessionStore } from './state/session-store';
 import { useSessionStore } from './hooks/use-session-store';
 import { useTheme } from './hooks/use-theme';
@@ -95,10 +101,9 @@ export function App() {
                 }
                 onClick={() => {
                   if (state.mode === 'chat') sessionStore.switchMode('trace');
-                  sessionStore.updateView(
-                    { detailsOpen: !state.views.trace.detailsOpen },
-                    'trace',
-                  );
+                  if (state.views.trace.detailsOpen)
+                    sessionStore.clearSelection();
+                  else sessionStore.updateView({ detailsOpen: true }, 'trace');
                 }}
               />
             </div>
@@ -205,9 +210,19 @@ export function App() {
             <StartupContent />
           ) : (
             <div className="session-content session-reveal">
-              <div className="split" hidden={state.mode !== 'trace'}>
+              <div
+                className="split"
+                hidden={state.mode !== 'trace'}
+                style={
+                  state.toolRequestOffset === null
+                    ? undefined
+                    : ({
+                        '--trajectory-tool-request-width': `calc(58cqw - ${state.toolRequestOffset}px)`,
+                      } as CSSProperties)
+                }
+              >
                 <TraceTable state={state} />
-                <DetailPanel state={state} />
+                <DetailPanel key={state.id} state={state} />
               </div>
               <ChatPane state={state} />
             </div>

@@ -96,7 +96,6 @@ export function Timeline({ state }: { state: AppState }) {
   }, [tooltip.dismiss]);
   const range = draft || view.range,
     events = view.data?.overview || [],
-    selected = view.events.find((event) => event.ref === view.selected),
     total = view.data?.event_count || 1,
     duration = usesRecordedDuration(state.duration, view.data);
   const turns = new Map<number, number>();
@@ -230,10 +229,7 @@ export function Timeline({ state }: { state: AppState }) {
               duration,
             );
             if (nearest)
-              void sessionStore.selectEvent(
-                nearest.parent_ref || nearest.ref,
-                true,
-              );
+              void sessionStore.selectEvent(nearest.ref, true);
           }}
           onClickCapture={(event) => {
             if (suppress.current) {
@@ -312,15 +308,7 @@ export function Timeline({ state }: { state: AppState }) {
                 }
                 data-timeline-span={kind}
                 data-assistant-timing={waitRatio != null}
-                data-current={
-                  event.ref === view.selected ||
-                  (!!selected &&
-                    (selected.parent_ref === event.ref ||
-                      (selected.kind === event.kind &&
-                        selected.position >= event.position &&
-                        selected.position <=
-                          (event.end_position ?? event.position))))
-                }
+                data-current={event.ref === view.selected || undefined}
                 data-selected={!range || (end >= range[0] && start <= range[1])}
                 data-error={event.status === 'error'}
                 data-search-match={!view.query || event.search_match !== false}
@@ -341,10 +329,7 @@ export function Timeline({ state }: { state: AppState }) {
                 }
                 onClick={() => {
                   tooltip.dismiss();
-                  void sessionStore.selectEvent(
-                    event.parent_ref || event.ref,
-                    true,
-                  );
+                  void sessionStore.selectEvent(event.ref, true);
                 }}
               />
             );

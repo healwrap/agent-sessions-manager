@@ -99,7 +99,11 @@ class ClaudeStore(HistoryStore):
             uid = r.get('uuid') or str(line)
             loc = {'offset': offset, 'line': line, 'part': 'text'}
             if visible:
-                add('M/'+uid, r['type'], '用户' if r['type'] == 'user' else '助手', visible, r, loc)
+                event = add('M/'+uid, r['type'], '用户' if r['type'] == 'user' else '助手', visible, r, loc)
+                if r['type'] == 'assistant':
+                    event['has_reasoning'] = bool(r['thinking'])
+                    if not r['preview']:
+                        event['phase'] = 'reasoning' if r['thinking'] else 'tool_calls' if has_calls else None
             for block in r['blocks']:
                 location = {'offset': offset, 'line': line, 'block': block['number'], 'part': block['type']}
                 if block['type'] == 'tool_use':

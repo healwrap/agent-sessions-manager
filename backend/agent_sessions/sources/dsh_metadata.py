@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from agent_sessions.context.text import compact_line
 from .base import as_text
 from .program import recorded_program
+from .tool_summary import argument_summary
 import hashlib
 import json
 
@@ -72,4 +73,6 @@ def metadata(row):
         arguments = data.get('arguments')
         program = recorded_program(arguments if isinstance(arguments, str) else json.dumps(arguments, ensure_ascii=False))
         if program: result['program_summary'] = compact_line(program['description'], 420)
+    if kind in ('tool/call', 'tool/ptc-dispatch-start'):
+        result['argument_summary'] = argument_summary(data.get('arguments'))
     return result

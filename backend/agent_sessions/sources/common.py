@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from datetime import datetime
 from agent_sessions.trajectory.layout import layout, focus as layout_focus
+from .tool_summary import argument_summary
 
 PAGE_CHARS = 7000
 
@@ -40,6 +41,9 @@ def record_type(event):
 
 def normalize_event(event):
     event['record_type'] = record_type(event)
+    if event['kind'] in ('tool', 'subtool') and not event.get('argument_summary'):
+        summary = argument_summary(event['preview'])
+        if summary: event['argument_summary'] = summary
     return event
 
 

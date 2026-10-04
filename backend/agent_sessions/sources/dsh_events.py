@@ -38,11 +38,13 @@ def events(rows):
         if kind == 'turn/start':
             next_turn = r.get('turn') or current
             if next_turn != current and turns.get(current, {}).get('status') == 'in_progress': turns[current]['status'] = 'aborted'
-            current = next_turn; active_step = None; turns[current] = {'status': 'in_progress'}
+            current = next_turn; active_step = None
+            turns[current] = {'status': 'in_progress', 'started_at': r['timestamp']}
         elif kind == 'turn/end':
             reason = r.get('reason') or {}; reason = reason.get('kind') if isinstance(reason, dict) else reason
             state = 'completed' if reason == 'completed' else 'error' if reason == 'error' else 'aborted'
-            turns[r.get('turn') or current] = {'status': state}
+            number = r.get('turn') or current
+            turns[number] = {**turns.get(number, {}), 'status': state, 'completed_at': r['timestamp']}
             boundaries[(r.get('turn') or current, None)] = r['timestamp']
         elif kind == 'step/start':
             starts[identity] = r['timestamp']; active_step = r['step']
@@ -63,7 +65,8 @@ def events(rows):
             loc['placeholder'] = preview if not r['preview'] and not r['reasoning'] else ''
             event.update(timestamp=starts.get(identity) or r['timestamp'], first_token_at=first_times.get(identity) or r['first_token_at'],
                          duration_ms=elapsed(starts.get(identity), r['timestamp']), usage=r['usage'],
-                         model=r['model'], model_provider=r['model_provider'], request_number=request_numbers[identity])
+                         model=r['model'], model_provider=r['model_provider'], request_number=request_numbers[identity],
+                         has_reasoning=bool(r['reasoning']))
             loc['retries'] = list(retries.get(identity, []))
             if r['has_tools'] and not r['preview'] and not r['reasoning']: event['phase'] = 'tool_calls'
             if r['interrupted']: event['status'] = 'aborted'
@@ -71,6 +74,7 @@ def events(rows):
             nested = kind != 'tool/call'
             event, loc = add(r, offset, line, 'subtool' if nested else 'tool', r['name'] or '工具', r['input'], 'dispatch_arguments' if nested else 'arguments')
             event['call_id'] = r['call_id']
+            event['argument_summary'] = r.get('argument_summary', '')
             if 'program_summary' in r: event['program_summary'] = r['program_summary']
             calls.setdefault((*identity, r['call_id']), []).append((event, loc))
             if nested: event.update(parent_call_id=r['parent_id'], root_call_id=r['root_id'])
@@ -157,16 +161,23 @@ def events(rows):
         if event['kind'] == 'subtool':
             roots = calls.get((event['turn'], event['step'], event.get('parent_call_id')), [])
             if len(roots) == 1 and roots[0][0] is not event: event['parent_ref'] = roots[0][0]['ref']
-        event['turn_status'] = turns.get(event['turn'], {'status': 'in_progress'})['status']
+        turn = turns.get(event['turn'], {'status': 'in_progress'})
+        event.update(turn_status=turn['status'], turn_started_at=turn.get('started_at'),
+                     turn_completed_at=turn.get('completed_at'),
+                     turn_duration_ms=elapsed(turn.get('started_at'), turn.get('completed_at')))
     ledger.sort(key=lambda e: e['line'])
-    cumulative_usage = {}
+    cumulative_usage = {}; turn_usage = {}
     for event in ledger:
         if event.get('request_number') is not None:
             if event['kind'] == 'assistant' or event['name'] == '上下文压缩':
                 for name, value in (event.get('usage') or {}).items():
                     if isinstance(value, (int, float)) and not isinstance(value, bool):
                         cumulative_usage[name] = cumulative_usage.get(name, 0) + value
+                        usage = turn_usage.setdefault(event['turn'], {})
+                        usage[name] = usage.get(name, 0) + value
             event['request_cumulative_usage'] = dict(cumulative_usage)
+    for event in ledger:
+        if event['turn'] in turn_usage: event['turn_usage'] = turn_usage[event['turn']]
     for number, state in turns.items():
         last = next((e for e in reversed(ledger) if e['turn'] == number and e['kind'] in ('tool', 'assistant')), None)
         if state['status'] == 'completed' and last and last['kind'] == 'assistant' and last['phase'] not in ('reasoning', 'tool_calls'): last['phase'] = 'final_answer'

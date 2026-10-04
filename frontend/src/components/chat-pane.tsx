@@ -9,6 +9,7 @@ import { Icon } from './primitives';
 import { Message } from './chat/message';
 import { Process } from './chat/process';
 import { Compaction } from './chat/compaction';
+import { RecordSyncContext } from './chat/use-record';
 
 export function ChatPane({ state }: { state: AppState }) {
   const ref = useRef<HTMLDivElement>(null),
@@ -96,34 +97,49 @@ export function ChatPane({ state }: { state: AppState }) {
       }
     >
       <div ref={ref} className="chat-pane" aria-label="对话记录">
-        <div className="chat-messages">
-          {view.offset > 0 && (
-            <button
-              className="chat-history-load"
-              disabled={view.loading}
-              onClick={() => void sessionStore.loadTrace(false, 'before')}
-            >
-              {view.loading ? '正在读取历史记录…' : '加载更早记录'}
-            </button>
-          )}
-          {rows}
-          {view.next !== null && (
-            <button
-              className="chat-history-load"
-              disabled={view.loading}
-              onClick={() => void sessionStore.loadTrace(false, 'after')}
-            >
-              {view.loading ? '正在读取历史记录…' : '加载后续记录'}
-            </button>
-          )}
-          {!rows.length && (
-            <p className="empty-message">
-              {view.loading
-                ? '正在读取会话…'
-                : view.data?.unavailable_reason || '该会话暂无对话。'}
-            </p>
-          )}
-        </div>
+        <RecordSyncContext.Provider
+          value={{
+            version: view.version,
+            turn: view.data?.overview.at(-1)?.turn,
+          }}
+        >
+          <div className="chat-messages">
+            {view.offset > 0 && (
+              <button
+                className="chat-history-load"
+                disabled={view.loading}
+                onClick={() => void sessionStore.loadTrace(false, 'before')}
+              >
+                {view.loading ? '正在读取历史记录…' : '加载更早记录'}
+              </button>
+            )}
+            {rows}
+            {view.next === null &&
+              ['in_progress', 'running'].includes(
+                view.data?.current_status || '',
+              ) && (
+                <p className="chat-live-status" role="status">
+                  <Icon name="think" /> 正在工作…
+                </p>
+              )}
+            {view.next !== null && (
+              <button
+                className="chat-history-load"
+                disabled={view.loading}
+                onClick={() => void sessionStore.loadTrace(false, 'after')}
+              >
+                {view.loading ? '正在读取历史记录…' : '加载后续记录'}
+              </button>
+            )}
+            {!rows.length && (
+              <p className="empty-message">
+                {view.loading
+                  ? '正在读取会话…'
+                  : view.data?.unavailable_reason || '该会话暂无对话。'}
+              </p>
+            )}
+          </div>
+        </RecordSyncContext.Provider>
       </div>
       {!atBottom && (
         <button

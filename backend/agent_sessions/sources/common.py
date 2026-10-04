@@ -4,6 +4,7 @@ import math
 from datetime import datetime
 from agent_sessions.trajectory.layout import layout, focus as layout_focus
 from .tool_summary import argument_summary
+from .revision import file_revision
 
 PAGE_CHARS = 7000
 
@@ -51,6 +52,18 @@ class TrajectoryStore:
     """Shared services operate on normalized ledgers; subclasses parse native data."""
     def available(self):
         return self.root.is_dir()
+
+    def revision(self, key):
+        with self.lock:
+            path = self.files.get(key)
+            if path is None or not path.is_file():
+                self.discover()
+                path = self.files.get(key)
+            if path is None:
+                if key not in self.rows: raise FileNotFoundError('没有找到该来源的会话记录')
+                # An index-only conversation may later acquire a transcript.
+                return str(self.rows[key].get('updated_at', ''))
+            return file_revision([path])
 
     def attachment(self, key, ref, index, part='output'):
         raise FileNotFoundError('此来源没有可预览的附件')

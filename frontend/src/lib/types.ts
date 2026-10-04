@@ -106,6 +106,7 @@ export interface CallGroup {
   anchor_ref: string | null;
 }
 export interface Trajectory {
+  current_status: string;
   capabilities?: Record<string, boolean>;
   id: string;
   provider: string;

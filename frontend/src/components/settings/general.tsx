@@ -53,8 +53,8 @@ export function GeneralSettings({
       </div>
       <div className="settings-row">
         <div className="settings-row-label">
-          <label htmlFor="settings-sync">自动刷新</label>
-          <p>检查当前会话与项目列表的更新</p>
+          <label htmlFor="settings-sync">闲置同步间隔</label>
+          <p>工作中的会话会加快同步，更新已保存的消息和工具结果</p>
         </div>
         <select
           id="settings-sync"

@@ -10,9 +10,9 @@ export function createTraceLoader(store: SessionStore) {
     current: () => boolean = () => true,
   ) {
     const { id, mode } = store.state;
-    if (!id) return;
+    if (!id) return false;
     const background = !force && !edge && !!store.state.views[mode].data;
-    if (background && refreshing.has(mode)) return;
+    if (background && refreshing.has(mode)) return false;
     if (background) refreshing.add(mode);
     const generation = ++generations[mode],
       view = store.state.views[mode],
@@ -40,10 +40,10 @@ export function createTraceLoader(store: SessionStore) {
         start,
         edge === 'before' ? view.offset - start : 150,
       );
-      if (!valid()) return;
+      if (!valid()) return false;
       if (!force && !edge && first.version === view.version) {
         if (store.state.error) store.update({ error: '' });
-        return;
+        return true;
       }
       if (
         mode === 'chat' &&
@@ -54,21 +54,21 @@ export function createTraceLoader(store: SessionStore) {
       ) {
         start = Math.max(0, first.total - 150);
         first = await get(start);
-        if (!valid()) return;
+        if (!valid()) return false;
       }
       let events = first.events,
         next = first.next_offset;
       // A view that already reached the live tail must keep reaching it as
       // the transcript grows, rather than stopping at its old page length.
       const refreshTail =
-        mode === 'chat' && !query && offset === undefined && view.next === null;
+        !!view.data && !query && offset === undefined && view.next === null;
       while (
         !edge &&
         next !== null &&
         (refreshTail || events.length < Math.max(150, view.events.length))
       ) {
         const page = await get(next);
-        if (!valid()) return;
+        if (!valid()) return false;
         events = events.concat(page.events);
         next = page.next_offset;
       }
@@ -104,11 +104,13 @@ export function createTraceLoader(store: SessionStore) {
         void store.loadProject(first.project_id);
       }
       if (store.state.error) store.update({ error: '' });
+      return true;
     } catch (error) {
       if (valid()) {
         store.update({ error: String(error) });
         store.notify(String(error));
       }
+      return false;
     } finally {
       if (background) refreshing.delete(mode);
       if (!background && generation === generations[mode])

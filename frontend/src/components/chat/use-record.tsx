@@ -1,6 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Detail, Event } from '../../lib/types';
 import { sessionStore } from '../../state/session-store';
+
+export const RecordSyncContext = createContext<{
+  version: string | null;
+  turn?: number;
+}>({ version: null });
+
+function appendPage(detail: Detail, next: Detail): Detail {
+  return {
+    ...detail,
+    page: next.page,
+    pages: next.pages,
+    text: detail.text + next.text,
+    thinking_text:
+      detail.thinking_text == null
+        ? undefined
+        : detail.thinking_text + (next.thinking_text || ''),
+    output_text:
+      detail.output_text == null
+        ? undefined
+        : detail.output_text + (next.output_text || ''),
+  };
+}
 
 export function useRecord(
   id: string,
@@ -15,6 +37,17 @@ export function useRecord(
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const generation = useRef(0);
+  const loadedPages = useRef(1);
+  const sync = useContext(RecordSyncContext);
+  const contentVersion = JSON.stringify([
+    revision,
+    event.status,
+    event.turn_status,
+    event.preview,
+    event.output_preview,
+    event.output_chars,
+    sync.turn === event.turn ? sync.version : null,
+  ]);
   useEffect(() => {
     const token = ++generation.current;
     if (!enabled) return;
@@ -41,6 +74,20 @@ export function useRecord(
                 ref: event.ref,
                 page: value.output_page,
               });
+            for (
+              let i = 1;
+              i < loadedPages.current && value.page < value.pages;
+              i++
+            ) {
+              if (token !== generation.current) return;
+              const next = await sessionStore.api<Detail>('/api/event', {
+                id,
+                ref: event.ref,
+                page: value.page + 1,
+                ...(part ? { part } : {}),
+              });
+              value = appendPage(value, next);
+            }
             if (token === generation.current) {
               setDetail(value);
               setError('');
@@ -60,7 +107,7 @@ export function useRecord(
       generation.current++;
       observer.disconnect();
     };
-  }, [id, event.ref, revision, enabled, part, preferOutput]);
+  }, [id, event.ref, contentVersion, enabled, part, preferOutput]);
   const loadMore = async () => {
     if (!detail || busy || detail.page >= detail.pages) return;
     const token = generation.current;
@@ -72,21 +119,10 @@ export function useRecord(
         page: detail.page + 1,
         ...(part ? { part } : {}),
       });
-      if (token === generation.current)
-        setDetail({
-          ...detail,
-          page: next.page,
-          pages: next.pages,
-          text: detail.text + next.text,
-          thinking_text:
-            detail.thinking_text == null
-              ? undefined
-              : detail.thinking_text + (next.thinking_text || ''),
-          output_text:
-            detail.output_text == null
-              ? undefined
-              : detail.output_text + (next.output_text || ''),
-        });
+      if (token === generation.current) {
+        loadedPages.current++;
+        setDetail(appendPage(detail, next));
+      }
     } catch (failure) {
       if (token === generation.current) setError(String(failure));
     } finally {

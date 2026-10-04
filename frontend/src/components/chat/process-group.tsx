@@ -1,4 +1,6 @@
 import type { Event } from '../../lib/types';
+import { useRef } from 'react';
+import { useFollowOutput } from '../../hooks/use-follow-output';
 import { Icon } from '../primitives';
 import { AssistantProcess, ToolProcess } from './process-record';
 import {
@@ -25,6 +27,8 @@ export function ProcessGroup({
 }) {
   const first = events[0] || reasoningEvent!;
   const [open, toggle] = useDisclosure(`${id}:group:${first.ref}`);
+  const body = useRef<HTMLDivElement>(null);
+  useFollowOutput(body, live && (open || liveDetail), events);
   return (
     <div className="chat-process-group">
       <button
@@ -37,29 +41,31 @@ export function ProcessGroup({
         <span>{live ? liveActivityTitle(events) : activityTitle(events)}</span>
       </button>
       {(open || (live && liveDetail)) && (
-        <div className="chat-process-group-body">
-          {events
-            .filter((event) => event.kind !== 'subtool')
-            .map((event) =>
-              event.kind === 'assistant' ? (
-                <AssistantProcess
-                  key={event.ref}
-                  event={event}
-                  id={id}
-                  preview={preview}
-                />
-              ) : (
-                <ToolProcess key={event.ref} event={event} id={id} />
-              ),
+        <div ref={body} className="chat-process-group-body">
+          <div className="chat-process-group-content">
+            {events
+              .filter((event) => event.kind !== 'subtool')
+              .map((event) =>
+                event.kind === 'assistant' ? (
+                  <AssistantProcess
+                    key={event.ref}
+                    event={event}
+                    id={id}
+                    preview={preview}
+                  />
+                ) : (
+                  <ToolProcess key={event.ref} event={event} id={id} />
+                ),
+              )}
+            {reasoningEvent && (
+              <AssistantProcess
+                event={reasoningEvent}
+                id={id}
+                reasoningOnly
+                preview={preview}
+              />
             )}
-          {reasoningEvent && (
-            <AssistantProcess
-              event={reasoningEvent}
-              id={id}
-              reasoningOnly
-              preview={preview}
-            />
-          )}
+          </div>
         </div>
       )}
     </div>

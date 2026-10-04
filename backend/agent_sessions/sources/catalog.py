@@ -128,6 +128,10 @@ class MultiStore:
                 'unavailable_reason': row.get('unavailable_reason') or ('此会话只有摘要或索引记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None),
                 'capabilities': self.registry.plugins[source].capabilities}
 
+    def revision(self, key):
+        source, native = self.resolve(key)
+        return self.adapters[source].revision(native)
+
     def detail(self, key, *args, **kwargs):
         source, native = self.resolve(key)
         result = self.adapters[source].detail(native, *args, **kwargs)

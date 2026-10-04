@@ -3,6 +3,7 @@ import type { Detail, Event } from '../../lib/types';
 import { copyText } from '../../lib/api';
 import { sessionStore } from '../../state/session-store';
 import { RecordPages, useRecord } from './use-record';
+import { useFollowOutput } from '../../hooks/use-follow-output';
 
 function resultBody(text: string, markers: boolean) {
   if (!markers) return { text, status: '' };
@@ -44,6 +45,8 @@ export function TerminalCard({
     terminal.exit_markers && output.detail?.page === output.detail?.pages,
   );
   const running = ['running', 'in_progress'].includes(event.status);
+  const outputPane = useRef<HTMLDivElement>(null);
+  useFollowOutput(outputPane, running, output.detail?.text);
   const state =
     result.status || event.status === 'error'
       ? 'error'
@@ -121,7 +124,7 @@ export function TerminalCard({
         </button>
       </div>
       {(input.output_available || !running) && (
-        <div className="chat-terminal-output">
+        <div ref={outputPane} className="chat-terminal-output">
           {output.detail ? (
             <pre>
               {result.text.endsWith('\n')

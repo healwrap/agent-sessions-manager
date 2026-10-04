@@ -182,8 +182,10 @@ class Store(TrajectoryStore):
                     events.append(item)
                     lookup[boundary['ref']] = ('context', boundary)
             events.sort(key=lambda e: (e['line'], e['ref']))
+            statuses = {turn['seq']: turn['status'] for turn in turns}
             for position, event in enumerate(events):
                 event['position'] = position
+                event['turn_status'] = statuses[event['turn']]
             value = {'index': index, 'source': source, 'turns': turns, 'events': events, 'lookup': lookup,
                      'nested_results': {}}
             # Keep only a handful of active parsed sessions in the HTTP process.

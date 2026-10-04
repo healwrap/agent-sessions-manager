@@ -37,6 +37,10 @@ class ClaudeSourceStore:
         adapter, native = self.target(key)
         return adapter.trajectory(native, *args, **kwargs)
 
+    def revision(self, key):
+        adapter, native = self.target(key)
+        return adapter.revision(native)
+
     def detail(self, key, *args, **kwargs):
         adapter, native = self.target(key)
         return adapter.detail(native, *args, **kwargs)

@@ -93,14 +93,16 @@
   font-size: var(--dsh-content-font-size, 14px);
 }
 .chat-process-group-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   max-height: min(400px, 50vh);
   overflow-y: auto;
   scrollbar-gutter: stable;
   margin-top: 4px;
   overscroll-behavior: contain;
+}
+.chat-process-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .chat-process-message .markdown-body,
 .chat-reasoning-body .markdown-body {
@@ -118,6 +120,18 @@
 .chat-tool-body {
   display: flex;
   flex-direction: column;
+}
+.chat-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+}
+.chat-live-status .dsh-icon {
+  width: 16px;
+  height: 16px;
 }
 .chat-tool-row[data-status='error'] .chat-line-preview {
   color: var(--dsw-alias-state-error-primary);

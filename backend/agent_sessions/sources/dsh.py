@@ -14,6 +14,7 @@ from .base import HistoryStore, as_text, read_row
 from .dsh_metadata import metadata, content
 from .dsh_events import events
 from .dsh_detail import enrich_detail, attachment_bytes, blocks_at
+from .revision import file_revision
 
 
 @contextmanager
@@ -87,6 +88,14 @@ class DshStore(HistoryStore):
         self.rows, self.raw_files, self.failures = rows, raw_files, failures
         self.files = {key: self.decoded[key][1] if key in self.decoded else path for key, path in raw_files.items()}
         return list(rows.values())
+
+    def revision(self, key):
+        with self.lock:
+            if key not in self.raw_files: self.discover()
+            path = self.raw_files.get(key)
+            if path is None: raise FileNotFoundError('没有找到该来源的会话记录')
+            # Watch source generations, not our decoded temporary copy.
+            return file_revision(list(path.parent.glob('session*.jsonl*')))
 
     def project(self, native, cwd=None):
         directory = super().project(native, cwd)

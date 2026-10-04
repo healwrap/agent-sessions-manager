@@ -11,6 +11,8 @@ export function createTraceLoader(store: SessionStore) {
   ) {
     const { id, mode } = store.state;
     if (!id) return false;
+    // Polling and pagination must not supersede a foreground navigation.
+    if (!force && store.state.views[mode].loading) return false;
     const background = !force && !edge && !!store.state.views[mode].data;
     if (background && refreshing.has(mode)) return false;
     if (background) refreshing.add(mode);
@@ -19,7 +21,8 @@ export function createTraceLoader(store: SessionStore) {
       query = view.query;
     const valid = () =>
       generation === generations[mode] && id === store.state.id && current();
-    if (!background) store.updateView({ loading: true }, mode);
+    if (!background)
+      store.updateView({ loading: true, loadingEdge: edge || null }, mode);
     try {
       let start =
         offset ??
@@ -41,7 +44,12 @@ export function createTraceLoader(store: SessionStore) {
         edge === 'before' ? view.offset - start : 150,
       );
       if (!valid()) return false;
-      if (!force && !edge && first.version === view.version) {
+      if (
+        !force &&
+        !edge &&
+        first.version === view.version &&
+        (view.events.length > 0 || first.total === 0)
+      ) {
         if (store.state.error) store.update({ error: '' });
         return true;
       }
@@ -114,7 +122,7 @@ export function createTraceLoader(store: SessionStore) {
     } finally {
       if (background) refreshing.delete(mode);
       if (!background && generation === generations[mode])
-        store.updateView({ loading: false }, mode);
+        store.updateView({ loading: false, loadingEdge: null }, mode);
     }
   }
   return {

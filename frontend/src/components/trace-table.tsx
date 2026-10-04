@@ -10,6 +10,7 @@ import { Icon } from './primitives';
 import { eventLabel } from '../lib/event-presentation';
 import { requestBoundaryLayout } from '../lib/trace-layout';
 import { HistoryLoadRow } from './history-load-row';
+import { TrajectoryLoading } from './trajectory-loading';
 export function TraceTable({ state }: { state: AppState }) {
   const ref = useRef<HTMLElement>(null),
     view = state.views.trace;
@@ -35,19 +36,27 @@ export function TraceTable({ state }: { state: AppState }) {
       className="tablePane"
       id="table-pane"
       aria-label="轨迹记录"
+      aria-busy={view.loading}
       onClick={(event) => {
         if (event.target === event.currentTarget)
           sessionStore.clearSelection(true);
       }}
     >
+      {!!rows.length && view.loading && !view.loadingEdge && (
+        <TrajectoryLoading />
+      )}
       <table className="table" data-scroll-ready="true">
         <colgroup>
           <col className="eventColumn" />
           <col className="contentColumn" />
         </colgroup>
         <tbody>
-          {view.offset > 0 && (
-            <HistoryLoadRow direction="before" loading={view.loading} />
+          {!!rows.length && view.offset > 0 && (
+            <HistoryLoadRow
+              direction="before"
+              loading={view.loading}
+              active={view.loading && view.loadingEdge === 'before'}
+            />
           )}
           {rows.map((event, index) => {
             const initialSystem =
@@ -299,18 +308,33 @@ export function TraceTable({ state }: { state: AppState }) {
               </tr>
             );
           })}
-          {view.next !== null && (
-            <HistoryLoadRow direction="after" loading={view.loading} />
+          {!!rows.length && view.next !== null && (
+            <HistoryLoadRow
+              direction="after"
+              loading={view.loading}
+              active={view.loading && view.loadingEdge === 'after'}
+            />
           )}
         </tbody>
       </table>
-      {!rows.length && (
-        <div className="empty-message">
-          {view.loading
-            ? '正在读取轨迹…'
-            : view.data?.unavailable_reason || '没有匹配的轨迹记录。'}
-        </div>
-      )}
+      {!rows.length &&
+        (view.loading ? (
+          <TrajectoryLoading empty />
+        ) : (
+          <div className="empty-message">
+            {state.error ||
+              view.data?.unavailable_reason ||
+              '没有匹配的轨迹记录。'}
+            {state.error && (
+              <button
+                className="trajectory-retry"
+                onClick={() => void sessionStore.loadTrace(true)}
+              >
+                重新加载
+              </button>
+            )}
+          </div>
+        ))}
     </section>
   );
 }

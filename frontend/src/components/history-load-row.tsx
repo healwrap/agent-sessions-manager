@@ -2,9 +2,11 @@ import { sessionStore } from '../state/session-store';
 export function HistoryLoadRow({
   direction,
   loading,
+  active,
 }: {
   direction: 'before' | 'after';
   loading: boolean;
+  active: boolean;
 }) {
   return (
     <tr data-history-load="true">
@@ -14,11 +16,16 @@ export function HistoryLoadRow({
           disabled={loading}
           onClick={() => void sessionStore.loadTrace(false, direction)}
         >
-          {loading
-            ? '正在读取历史记录…'
-            : direction === 'before'
-              ? '加载更早记录'
-              : '加载后续记录'}
+          {active ? (
+            <span className="history-load-status" role="status">
+              <i className="loading-dot" aria-hidden="true" />
+              正在读取历史记录…
+            </span>
+          ) : direction === 'before' ? (
+            '加载更早记录'
+          ) : (
+            '加载后续记录'
+          )}
         </button>
       </td>
     </tr>

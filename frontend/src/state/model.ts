@@ -20,9 +20,15 @@ export interface View {
   summaryNonce: number;
   version: string | null;
   loading: boolean;
+  loadingEdge: 'before' | 'after' | null;
   range: [number, number] | null;
   viewport: [number, number] | null;
-  navigation: { ref: string; block: 'start' | 'center'; nonce: number } | null;
+  navigation: {
+    ref: string;
+    block: 'start' | 'center';
+    nonce: number;
+    paged?: boolean;
+  } | null;
   change: 'reset' | 'before' | 'after' | 'refresh';
 }
 export const emptyView = (): View => ({
@@ -37,6 +43,7 @@ export const emptyView = (): View => ({
   summaryNonce: 0,
   version: null,
   loading: false,
+  loadingEdge: null,
   range: null,
   viewport: null,
   navigation: null,

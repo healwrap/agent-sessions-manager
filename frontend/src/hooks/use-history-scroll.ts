@@ -57,9 +57,11 @@ export function useHistoryScroll(
         // Only move the ledger, never its clipped split or application shell.
         pane.scrollTo({
           top: target,
-          behavior: sessionStore.state.settings.animations
-            ? 'smooth'
-            : 'instant',
+          // The native WebView can leave stale scroll tiles after replacing a page.
+          behavior:
+            sessionStore.state.settings.animations && !view.navigation.paged
+              ? 'smooth'
+              : 'instant',
         });
       }
     }

@@ -45,8 +45,9 @@ export function createNavigation(store: SessionStore) {
       });
       updateAddress(store, canonical);
       if (jump) {
-        if (!store.view.events.some((e) => e.ref === canonical)) {
-          store.updateView({ query: '', events: [] });
+        const paged = !store.view.events.some((e) => e.ref === canonical);
+        if (paged) {
+          store.updateView({ query: '' });
           await store.loadTrace(
             true,
             undefined,
@@ -58,7 +59,12 @@ export function createNavigation(store: SessionStore) {
         const event = store.view.events.find((e) => e.ref === canonical);
         if (event) unfold(event);
         store.updateView({
-          navigation: { ref: canonical, block: 'center', nonce: Date.now() },
+          navigation: {
+            ref: canonical,
+            block: 'center',
+            nonce: Date.now(),
+            paged,
+          },
         });
       }
     } catch (error) {
@@ -92,11 +98,11 @@ export function createNavigation(store: SessionStore) {
       }
       const tall = data.span * 32 > height,
         target = tall ? data.first : data.middle;
-      if (
-        store.view.query ||
-        !store.view.events.some((e) => e.ref === target.ref)
-      ) {
-        store.updateView({ query: '', events: [] });
+      const paged = !!(
+        store.view.query || !store.view.events.some((e) => e.ref === target.ref)
+      );
+      if (paged) {
+        store.updateView({ query: '' });
         await store.loadTrace(
           true,
           undefined,
@@ -113,6 +119,7 @@ export function createNavigation(store: SessionStore) {
           ref: target.ref,
           block: tall ? 'start' : 'center',
           nonce: Date.now(),
+          paged,
         },
       });
     } catch (error) {

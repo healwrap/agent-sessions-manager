@@ -39,6 +39,7 @@ export function useLiveSync(seconds: number, animations: boolean) {
           );
           if (
             current() &&
+            !sessionStore.view.loading &&
             (seen.id !== id ||
               seen.mode !== mode ||
               seen.revision !== value.revision ||

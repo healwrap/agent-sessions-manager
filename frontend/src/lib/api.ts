@@ -7,19 +7,29 @@ export const request: Request = async <T>(
   const query = new URLSearchParams(
     Object.entries(params).map(([k, v]) => [k, String(v)]),
   ).toString();
-  const response = await fetch(
-    path + (query ? '?' + query : ''),
-    body === undefined
-      ? {}
-      : {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-  );
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || '读取失败');
-  return data;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch(
+      path + (query ? '?' + query : ''),
+      body === undefined
+        ? { signal: controller.signal }
+        : {
+            signal: controller.signal,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '读取失败');
+    return data;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('读取超时，请重试。');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 export async function copyText(text: string) {
   if (window.__TAURI__?.clipboardManager)

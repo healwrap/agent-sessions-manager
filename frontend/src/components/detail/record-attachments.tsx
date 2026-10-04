@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { FileIcon, FileImage, FileVideo } from 'lucide-react';
 import type { Attachment, Detail } from '../../lib/types';
+import { ImagePreview } from '../image-preview';
 
 function metadata(item: Attachment) {
   const bytes = item.bytes;
@@ -38,20 +38,17 @@ function FileGlyph({ item, image }: { item: Attachment; image: boolean }) {
 }
 
 function AttachmentImage({ name, src }: { name: string; src: string }) {
-  const [failed, setFailed] = useState(false);
-  return failed ? (
-    <span className="metadata-note" role="status">
-      图片附件无法读取：{name}
-    </span>
-  ) : (
-    <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${name}`}>
-      <img
-        src={src}
-        alt={name}
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
-    </a>
+  return (
+    <ImagePreview
+      key={src}
+      src={src}
+      alt={name}
+      fallback={
+        <span className="metadata-note" role="status">
+          图片附件无法读取：{name}
+        </span>
+      }
+    />
   );
 }
 

@@ -1,36 +1,30 @@
-import { useState } from 'react';
+import { ImagePreview } from './image-preview';
 
 export function MarkdownImage({
   src,
   alt,
   href,
+  inLink = false,
 }: {
   src?: string;
   alt: string;
   href?: string;
+  inLink?: boolean;
 }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed)
-    return (
-      <span className="markdown-image-alt" title={href}>
-        图片无法预览 · {alt || '图片'}
-      </span>
-    );
+  const fallback = (
+    <span className="markdown-image-alt" title={href}>
+      图片无法预览 · {alt || '图片'}
+    </span>
+  );
+  if (!src) return fallback;
   return (
-    <a
+    <ImagePreview
+      key={src}
       className="markdown-image"
-      href={src}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`打开${alt || '图片'}`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        onError={() => setFailed(true)}
-      />
-    </a>
+      src={src}
+      alt={alt}
+      fallback={fallback}
+      preview={!inLink}
+    />
   );
 }

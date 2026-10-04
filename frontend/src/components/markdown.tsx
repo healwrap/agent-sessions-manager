@@ -5,7 +5,11 @@ import { MarkdownImage } from './markdown-image';
 type Images = { href: string; src: string }[];
 const safeHref = (href: string) =>
   /^(https?:|mailto:)/i.test(href) ? href : undefined;
-function tokens(items: Token[] = [], images: Images = []): ReactNode[] {
+function tokens(
+  items: Token[] = [],
+  images: Images = [],
+  inLink = false,
+): ReactNode[] {
   return items.map((token, index) => {
     const t = token as Token & {
       tokens?: Token[];
@@ -20,7 +24,7 @@ function tokens(items: Token[] = [], images: Images = []): ReactNode[] {
       ordered?: boolean;
       start?: number;
     };
-    const nested = () => tokens(t.tokens, images);
+    const nested = () => tokens(t.tokens, images, inLink);
     let node: ReactNode;
     switch (t.type) {
       case 'space':
@@ -63,7 +67,7 @@ function tokens(items: Token[] = [], images: Images = []): ReactNode[] {
       case 'link':
         node = (
           <a href={safeHref(t.href || '')} target="_blank" rel="noreferrer">
-            {nested()}
+            {tokens(t.tokens, images, true)}
           </a>
         );
         break;
@@ -74,6 +78,7 @@ function tokens(items: Token[] = [], images: Images = []): ReactNode[] {
             href={t.href}
             alt={t.text || ''}
             src={images.find((image) => image.href === t.href)?.src}
+            inLink={inLink}
           />
         );
         break;

@@ -16,7 +16,7 @@
   border: 0.5px solid var(--dsw-alias-border-l2-darkmode-thin);
   border-radius: var(--dsw-radius-lg);
 }
-.record-attachment-row > a,
+.record-attachment-row > .image-preview,
 .record-attachment-icon {
   display: grid;
   flex: 0 0 48px;

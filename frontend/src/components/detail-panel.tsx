@@ -21,7 +21,7 @@ export function DetailPanel({ state }: { state: AppState }) {
       view.selected,
       view.summaryNonce,
     ),
-    { detail, output, error, loaded } = useEventDetail(
+    { metadata, detail, output, error, loaded } = useEventDetail(
       state.id,
       view.selected,
       view.detailsOpen,
@@ -31,22 +31,22 @@ export function DetailPanel({ state }: { state: AppState }) {
     ),
     resize = useDetailResize(state),
     panelId = useId();
-  const tool = detail && ['tool', 'subtool'].includes(detail.event.kind),
+  const tool = metadata && ['tool', 'subtool'].includes(metadata.event.kind),
     requestOpen =
-      (view.requestOpen || detail?.event.request_only) &&
-      detail?.event.request_number != null,
+      (view.requestOpen || metadata?.event.request_only) &&
+      metadata?.event.request_number != null,
     tabs = requestOpen
-      ? ['概述', ...(detail?.request_config ? ['选项'] : []), '用量', '计时']
-      : detailTabs(detail),
+      ? ['概述', ...(metadata?.request_config ? ['选项'] : []), '用量', '计时']
+      : detailTabs(metadata),
     activeTab = tabs.includes(tab) ? tab : (tabs[0] ?? tab);
   useSettledInspectorTabs(
     view.selected,
     view.summaryNonce,
-    detail,
+    metadata,
     Boolean(requestOpen),
     settle,
   );
-  const event = detail?.event,
+  const event = metadata?.event,
     [label, color] = eventLabel(event);
   return (
     <div
@@ -84,7 +84,7 @@ export function DetailPanel({ state }: { state: AppState }) {
                   {event && recordType(event) === 'compaction' ? ' · 压缩' : ''}
                 </span>
               </>
-            ) : detail?.prompt_snapshot ? (
+            ) : metadata?.prompt_snapshot ? (
               <>
                 <span className="kindTag systemNeutral">系统</span>
                 <span className="detailsLocation">{event?.name}</span>

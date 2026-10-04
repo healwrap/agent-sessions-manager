@@ -158,6 +158,12 @@ export interface CodeProgram {
   language?: 'typescript' | 'python';
 }
 export interface Detail {
+  terminal?: {
+    command: string;
+    cwd: string | null;
+    description: string | null;
+    exit_markers: boolean;
+  };
   code_program?: CodeProgram;
   part?: string;
   message_source?: unknown;

@@ -1,0 +1,119 @@
+/* TerminalBlock and ToolRow geometry from Harness (MIT; harness-license.txt). */
+.chat-terminal {
+  --terminal-line-height: 18px;
+  position: relative;
+  margin: 4px 0 4px 4px;
+  padding-left: 30px;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-lg);
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-markdown-code-block);
+  font: 12px/var(--terminal-line-height) var(--ds-font-family-code);
+  overflow: hidden;
+}
+.chat-terminal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-left: -30px;
+  padding: 9px 14px 9px 30px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.chat-terminal-header:has(+ .chat-terminal-output) {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+.chat-terminal-prompt {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.chat-terminal-prompt-line {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  line-height: var(--terminal-line-height);
+}
+.chat-terminal-state {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-caption);
+}
+.chat-terminal[data-status='completed'] .chat-terminal-state {
+  background: var(--dsw-alias-state-success-primary);
+}
+.chat-terminal[data-status='error'] .chat-terminal-state {
+  background: var(--dsw-alias-state-error-primary);
+}
+.chat-terminal[data-status='aborted'] .chat-terminal-state {
+  background: var(--dsw-alias-state-warn-primary);
+}
+.chat-terminal[data-status='running'] .chat-terminal-state {
+  background: var(--dsw-alias-state-business-primary);
+}
+.chat-terminal-cwd {
+  flex: none;
+  max-width: 25%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+  color: var(--dsw-alias-label-tertiary);
+}
+.chat-terminal-command {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+.chat-terminal-copy,
+.chat-terminal-status {
+  position: sticky;
+  top: 0;
+  flex: none;
+  white-space: nowrap;
+  line-height: var(--terminal-line-height);
+}
+.chat-terminal-copy {
+  border: 0;
+  background: var(--dsw-alias-markdown-code-block);
+  color: var(--dsw-alias-label-secondary);
+  margin: 0;
+  padding: 0;
+  font: 13px/var(--terminal-line-height) var(--dsw-font-family);
+}
+.chat-terminal-status {
+  color: var(--dsw-alias-state-error-primary);
+  font-family: var(--dsw-font-family);
+}
+.chat-terminal-output {
+  max-height: 224px;
+  overflow: auto;
+  padding: 12px 14px 12px 0;
+}
+.chat-terminal-output pre {
+  min-height: var(--terminal-line-height);
+  margin: 0;
+  white-space: pre;
+  font: inherit;
+}
+.chat-terminal-placeholder {
+  color: var(--dsw-alias-label-tertiary);
+}
+.chat-terminal-header::-webkit-scrollbar-thumb,
+.chat-terminal-output::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--dsw-radius-sm);
+}
+.chat-terminal-header::-webkit-scrollbar-track,
+.chat-terminal-output::-webkit-scrollbar-track {
+  margin: 6px;
+}

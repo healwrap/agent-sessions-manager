@@ -8,6 +8,7 @@ from pathlib import Path
 from .contract import SourceRegistry
 from .plugins import PLUGINS, SOURCE_KEYS, path_fields
 from .common import normalize_event
+from .terminal import terminal_input
 
 
 def public_source(source):
@@ -133,6 +134,9 @@ class MultiStore:
         normalize_event(result['event'])
         for event in result.get('nested', []):
             if 'kind' in event: normalize_event(event)
+        cwd = self.adapters[source].rows.get(native, {}).get('cwd', '')
+        terminal = terminal_input(result, cwd)
+        if terminal: result = {**result, 'terminal': terminal}
         return {**result, **self.identity(source), 'capabilities': self.registry.plugins[source].capabilities}
 
     def focus(self, key, *args):

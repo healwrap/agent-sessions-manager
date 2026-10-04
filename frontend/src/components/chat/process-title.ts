@@ -17,6 +17,8 @@ const names: Record<string, string> = {
   exec_command: 'commands',
   write_stdin: 'commands',
   run_command: 'commands',
+  run_terminal_cmd: 'commands',
+  run_terminal_command: 'commands',
   run_code: 'code',
   exec: 'code',
   web_search: 'webSearch',
@@ -50,6 +52,8 @@ const toolTitles: Record<string, string> = {
   pwsh: '运行命令',
   exec_command: '运行命令',
   run_command: '运行命令',
+  run_terminal_cmd: '运行命令',
+  run_terminal_command: '运行命令',
   read: '读取',
   read_file: '读取文件',
   view_file: '读取文件',
@@ -67,7 +71,10 @@ const toolTitles: Record<string, string> = {
   exec: '运行代码',
 };
 export function toolTitle(event: Event) {
-  return toolTitles[event.name.split('__').at(-1) || event.name] || '工具调用';
+  return (
+    toolTitles[(event.name.split('__').at(-1) || event.name).toLowerCase()] ||
+    '工具调用'
+  );
 }
 export function toolSummary(event: Event) {
   const summary =
@@ -82,7 +89,7 @@ function activities(events: Event[]) {
   const counts = new Map<string, number>();
   for (const event of events) {
     if (!['tool', 'subtool'].includes(event.kind)) continue;
-    const name = event.name.split('__').at(-1) || event.name;
+    const name = (event.name.split('__').at(-1) || event.name).toLowerCase();
     const kind =
       names[name] ||
       (/^terminal_/.test(name)
@@ -130,7 +137,8 @@ export function activityTitle(events: Event[]) {
 export function liveActivityTitle(events: Event[]) {
   const last = events.at(-1);
   if (!last || last.kind === 'assistant') return '正在分析';
-  const kind = names[last.name.split('__').at(-1) || last.name] || 'tools';
+  const kind =
+    names[(last.name.split('__').at(-1) || last.name).toLowerCase()] || 'tools';
   return (
     {
       read: '正在读取文件',

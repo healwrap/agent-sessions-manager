@@ -12,15 +12,21 @@ function formatTimestamp(value: string | null | undefined) {
 export function RecordTiming({
   event,
   request = false,
+  preview = false,
 }: {
   event: Event;
   request?: boolean;
+  preview?: boolean;
 }) {
   const [showUnix, setShowUnix] = useState(false);
   const started = event.timestamp ? Date.parse(event.timestamp) : NaN;
   const delta = (end?: string | null, start?: string | null) =>
     end && start ? Date.parse(end) - Date.parse(start) : null;
   const generation = delta(event.completed_at, event.first_token_at);
+  const assistantMetrics =
+    event.kind === 'assistant' &&
+    !event.request_only &&
+    (event.request_number != null || !!event.first_token_at);
   const output = event.usage?.outputTokens;
   const throughput =
     generation != null && generation > 0 && output != null
@@ -29,13 +35,13 @@ export function RecordTiming({
   const entries = [
     ['开始时间', formatTimestamp(event.timestamp)],
     [
-      request ? '总时长' : '时长',
+      assistantMetrics ? '总时长' : '时长',
       formatRecordedDuration(
         event.duration_ms,
         !request && event.kind !== 'assistant',
       ),
     ],
-    ...(event.kind === 'assistant'
+    ...(assistantMetrics
       ? [
           [
             '首 token 延迟',
@@ -46,6 +52,18 @@ export function RecordTiming({
           ],
           ['生成', formatRecordedDuration(generation)],
           ['吞吐量', throughput],
+        ]
+      : []),
+    ...(!preview && !assistantMetrics
+      ? [
+          [
+            '计时来源',
+            event.duration_ms != null && Number.isFinite(event.duration_ms)
+              ? '会话时间戳'
+              : request && Number.isFinite(started) && !event.completed_at
+                ? '会话时间戳（运行中）'
+                : '不可用',
+          ],
         ]
       : []),
   ];

@@ -45,8 +45,6 @@ def normalize_event(event):
 
 class TrajectoryStore:
     """Shared services operate on normalized ledgers; subclasses parse native data."""
-    full_overview = True
-
     def available(self):
         return self.root.is_dir()
 
@@ -95,25 +93,17 @@ class TrajectoryStore:
                     label += ' '+self.trajectory_search_text(data, event, record_type, record)
                     if query.casefold() in label.casefold():
                         selected.append(event)
-            overview = []
             matched_refs = {e['ref'] for e in selected}
             matched_refs.update(e['parent_ref'] for e in selected if e.get('parent_ref'))
-            stride = 1 if getattr(self, 'full_overview', False) else max(1, (len(events)+249)//250)
-            for start in range(0, len(events), stride):
-                chunk = events[start:start+stride]
-                for category in ('user', 'assistant', 'tool', 'media', 'context', *(['subtool'] if getattr(self, 'full_overview', False) else [])):
-                    members = [e for e in chunk if e['kind'] == category]
-                    if members:
-                        overview.append({'position': members[0]['position'], 'kind': category, 'ref': members[0]['ref'], 'name': members[0]['name'],
-                                         'end_position': members[-1]['position'], 'record_type': members[0]['record_type'],
-                                         'request_number': members[0].get('request_number'),
-                                         'search_match': any(e['ref'] in matched_refs for e in members),
-                                         'count': len(members), 'turn': members[0]['turn'],
-                                         'timestamp': members[0]['timestamp'], 'status': members[0]['status'],
-                                         'first_token_at': members[0].get('first_token_at'), 'completed_at': members[0].get('completed_at'),
-                                         'duration_ms': members[0].get('duration_ms'),
-                                         'timeline_start': min(e['timeline_start'] for e in members),
-                                         'timeline_end': max(e['timeline_end'] for e in members)})
+            # Keep request boundaries for the table, but mark them explicitly so
+            # they never become assistant spans. Every visible record is exact.
+            fields = ('position', 'timeline_position', 'kind', 'ref', 'name', 'record_type',
+                      'request_number', 'request_only', 'turn', 'timestamp', 'status',
+                      'first_token_at', 'completed_at', 'duration_ms', 'timeline_start', 'timeline_end')
+            overview = [{**{field: event[field] for field in fields if field in event},
+                         'search_match': event['ref'] in matched_refs,
+                         'count': 1, 'end_position': event['position']}
+                        for event in events]
             meta = data['index']['meta']
             return {'id': key, 'title': meta.get('title') or '(无标题)', 'cwd': meta.get('cwd'),
                     **self.project(key, meta.get('cwd')),
@@ -138,4 +128,3 @@ class TrajectoryStore:
         with self.lock:
             events = self.session(key)['events']
             return layout_focus(events, start, end, mode)
-

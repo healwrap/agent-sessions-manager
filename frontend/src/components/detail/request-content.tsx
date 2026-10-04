@@ -187,7 +187,7 @@ export function RequestContent({
           <Usage usage={event.usage} />
         </OverviewSection>
         <OverviewSection label="计时" onOpen={() => change('计时')}>
-          <RecordTiming event={event} request />
+          <RecordTiming event={event} request preview />
         </OverviewSection>
       </div>
     </>

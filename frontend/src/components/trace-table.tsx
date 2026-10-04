@@ -103,7 +103,7 @@ export function TraceTable({ state }: { state: AppState }) {
             const [label, color] = eventLabel(event);
             const [start, end] = timelineRange(
               event,
-              view.data?.event_count || 1,
+              view.data?.timeline_count ?? view.data?.event_count ?? 1,
               usesRecordedDuration(state.duration, view.data),
             );
             const outside =

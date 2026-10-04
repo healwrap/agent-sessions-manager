@@ -91,6 +91,7 @@ export function MessageOverview({
             <RecordTiming
               event={event}
               request={event.request_number != null}
+              preview
             />
           </OverviewSection>
         )}

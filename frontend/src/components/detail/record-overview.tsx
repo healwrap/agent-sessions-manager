@@ -156,7 +156,7 @@ export function RecordOverview({
                 <ToolSchema detail={detail} preview />
               </OverviewSection>
               <OverviewSection label="计时" onOpen={() => change('计时')}>
-                <RecordTiming event={event} />
+                <RecordTiming event={event} preview />
               </OverviewSection>
             </>
           ) : (

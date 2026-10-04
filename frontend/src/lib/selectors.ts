@@ -164,7 +164,7 @@ export function trajectoryRows(
 export const positionOf = (e: Event, total: number, duration: boolean) =>
   duration && Number.isFinite(e.timeline_start)
     ? e.timeline_start!
-    : e.position / Math.max(1, total);
+    : (e.timeline_position ?? e.position) / Math.max(1, total);
 export function relativeDate(raw: string) {
   const hours = Math.floor((Date.now() - Date.parse(raw)) / 3600000);
   return !Number.isFinite(hours)

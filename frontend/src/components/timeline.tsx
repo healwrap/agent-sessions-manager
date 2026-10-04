@@ -95,8 +95,8 @@ export function Timeline({ state }: { state: AppState }) {
     return () => node.removeEventListener('wheel', wheel);
   }, [tooltip.dismiss]);
   const range = draft || view.range,
-    events = view.data?.overview || [],
-    total = view.data?.event_count || 1,
+    events = (view.data?.overview || []).filter((event) => !event.request_only),
+    total = view.data?.timeline_count ?? view.data?.event_count ?? 1,
     duration = usesRecordedDuration(state.duration, view.data);
   const turns = new Map<number, number>();
   for (const event of events) {
@@ -228,8 +228,7 @@ export function Timeline({ state }: { state: AppState }) {
               total,
               duration,
             );
-            if (nearest)
-              void sessionStore.selectEvent(nearest.ref, true);
+            if (nearest) void sessionStore.selectEvent(nearest.ref, true);
           }}
           onClickCapture={(event) => {
             if (suppress.current) {

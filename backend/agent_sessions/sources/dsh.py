@@ -34,7 +34,6 @@ def transcript_stream(path):
 class DshStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'dsh', 'local')
-        self.full_overview = True
         self.raw_files = {}; self.decoded = {}; self.headers = {}; self.failures = {}; self.titles = {}; self.workspaces = {}
         self.temporary = tempfile.TemporaryDirectory(prefix='agent-sessions-dsh-')
 

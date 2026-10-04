@@ -9,13 +9,10 @@ export function timelineRange(
     const start = positionOf(event, total, true);
     return [start, event.timeline_end ?? start];
   }
-  // DSH's sequence projection allocates one equal interval per ledger record.
-  // Aggregated overview markers occupy all of the records they represent.
+  // Sequence projection allocates one equal interval per visible record.
   const count = Math.max(1, total);
-  return [
-    event.position / count,
-    ((event.end_position ?? event.position) + 1) / count,
-  ];
+  const position = event.timeline_position ?? event.position;
+  return [position / count, (position + (event.count ?? 1)) / count];
 }
 export function nearestTimelineEvent(
   events: Event[],

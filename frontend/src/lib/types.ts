@@ -53,6 +53,7 @@ export interface Event {
   status: string;
   timestamp: string;
   position: number;
+  timeline_position?: number;
   phase?: string | null;
   step?: number | null;
   request_number?: number;
@@ -106,6 +107,7 @@ export interface Trajectory {
   events: Event[];
   total: number;
   event_count: number;
+  timeline_count?: number;
   step_count?: number | null;
   turn_count: number;
   tool_count: number;

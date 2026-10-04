@@ -14,11 +14,14 @@ def layout(events):
     # Match Harness duration mode: preserve recorded execution intervals and
     # remove gaps outside their union. Missing timing stays a point, never an
     # invented model execution duration.
-    spans = []
+    spans = []; sequence = 0
     for event in events:
         event.setdefault('duration_ms', None)
+        event['timeline_position'] = sequence
+        if event.get('request_only'): continue
+        sequence += 1
         start = timestamp(event.get('timestamp'))
-        if start is not None and (event['kind'] != 'subtool' or event.get('step') is not None):
+        if start is not None:
             spans.append((start, start+max(0, event.get('duration_ms') or 0), event))
     removed = 0; covered = None
     for start, end, event in sorted(spans, key=lambda s: (s[0], s[1])):
@@ -36,7 +39,7 @@ def layout(events):
             event['timeline_end'] = (event.pop('active_end')-lower)/total
         else:
             event.pop('active_start', None); event.pop('active_end', None)
-            event['timeline_start'] = event['timeline_end'] = event['position']/max(1, len(events)-1)
+            event['timeline_start'] = event['timeline_end'] = event['timeline_position']/max(1, sequence-1)
     turns = defaultdict(list)
     groups = {}; run = []; previous = None
     def finish():
@@ -67,17 +70,17 @@ def layout(events):
                                'calls': sum(e['kind'] in ('tool', 'subtool') for e in remaining),
                                'remaining': len(remaining)}
     recorded_steps = {(e['turn'], e['step']) for e in events if e.get('step') is not None and e['kind'] in ('assistant', 'tool')}
-    return {'active_duration_ms': total, 'step_count': len(recorded_steps) if recorded_steps else None,
+    return {'active_duration_ms': total, 'timeline_count': sequence, 'step_count': len(recorded_steps) if recorded_steps else None,
             'turn_summaries': summaries, 'call_groups': groups}
 
 
 def focus(events, start, end, mode):
-    layout(events)
+    projection = layout(events)
     matches = []
     for event in events:
-        if event['kind'] == 'subtool' and event.get('step') is None: continue
-        lo = event['timeline_start'] if mode == 'duration' else event['position']/max(1, len(events))
-        hi = event['timeline_end'] if mode == 'duration' else (event['position']+1)/max(1, len(events))
+        if event.get('request_only'): continue
+        lo = event['timeline_start'] if mode == 'duration' else event['timeline_position']/max(1, projection['timeline_count'])
+        hi = event['timeline_end'] if mode == 'duration' else (event['timeline_position']+1)/max(1, projection['timeline_count'])
         if lo <= end and hi >= start: matches.append(event)
     metadata = lambda e: {'ref': e['ref'], 'position': e['position']}
     return {'count': len(matches), 'span': matches[-1]['position']-matches[0]['position']+1 if matches else 0,

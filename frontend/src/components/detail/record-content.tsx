@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Detail } from '../../lib/types';
 import { Payload } from './payload';
 import { Markdown } from '../markdown';
+import { RecordMarkdown } from '../record-markdown';
 import { sessionStore } from '../../state/session-store';
 import { Icon } from '../primitives';
 import { SourceBlocks } from './source-blocks';
@@ -43,7 +44,9 @@ export function RecordContent({
               {thinkingExpanded && <Markdown text={detail.thinking_text} />}
             </div>
           )}
-          {detail.output_text && <Markdown text={detail.output_text} />}
+          {detail.output_text && (
+            <RecordMarkdown text={detail.output_text} detail={detail} id={id} />
+          )}
           {!detail.thinking_text &&
             !detail.output_text &&
             !detail.tool_calls?.length && <p>{detail.text}</p>}
@@ -82,7 +85,7 @@ export function RecordContent({
           label={detail.part === 'output' ? '结果 JSON' : '参数 JSON'}
         />
       ) : (
-        <Markdown text={detail.text} />
+        <RecordMarkdown text={detail.text} detail={detail} id={id} />
       )}
       <AttachmentList detail={detail} id={id} />
     </>

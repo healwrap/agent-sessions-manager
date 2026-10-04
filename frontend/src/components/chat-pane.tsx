@@ -7,7 +7,7 @@ import { recordType } from '../lib/record-presentation';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Icon } from './primitives';
 import { Message } from './chat/message';
-import { Process } from './chat/process';
+import { Process, ProcessSummary } from './chat/process';
 import { Compaction } from './chat/compaction';
 import { RecordSyncContext } from './chat/use-record';
 
@@ -37,9 +37,16 @@ export function ChatPane({ state }: { state: AppState }) {
   const lastUser = [...view.events]
     .reverse()
     .find((event) => event.kind === 'user')?.ref;
+  const messageRefs = new Set(
+    view.events
+      .filter((event) => ['user', 'assistant'].includes(event.kind))
+      .map((event) => event.ref),
+  );
   let process: Event[] = [];
+  const summarized = new Set<number>();
   const flush = (reasoningEvent?: Event) => {
     if (process.length || reasoningEvent) {
+      const turn = (process[0] || reasoningEvent!).turn;
       rows.push(
         <Process
           key={`${state.id}:process:${process[0]?.ref || reasoningEvent!.ref}`}
@@ -47,8 +54,10 @@ export function ChatPane({ state }: { state: AppState }) {
           id={state.id!}
           mode={state.settings.chatDetail}
           reasoningEvent={reasoningEvent}
+          summary={!summarized.has(turn)}
         />,
       );
+      summarized.add(turn);
       process = [];
     }
   };
@@ -58,6 +67,21 @@ export function ChatPane({ state }: { state: AppState }) {
     if (event.kind === 'user' || replies.has(event.ref)) {
       const ownsReasoning = replies.has(event.ref) && event.has_reasoning;
       flush(ownsReasoning ? event : undefined);
+      if (
+        event.kind !== 'user' &&
+        !summarized.has(event.turn) &&
+        ['completed', 'aborted', 'error'].includes(event.turn_status || '') &&
+        Number.isFinite(event.turn_duration_ms)
+      ) {
+        rows.push(
+          <ProcessSummary
+            key={`${state.id}:status:${event.turn}`}
+            events={[event]}
+            disabled
+          />,
+        );
+        summarized.add(event.turn);
+      }
       rows.push(
         <Message
           key={state.id + event.ref}
@@ -74,6 +98,7 @@ export function ChatPane({ state }: { state: AppState }) {
         <Compaction key={state.id + event.ref} event={event} id={state.id!} />,
       );
     } else if (event.kind === 'media') {
+      if (event.parent_ref && messageRefs.has(event.parent_ref)) continue;
       flush();
       rows.push(
         <Message key={state.id + event.ref} event={event} id={state.id!} />,

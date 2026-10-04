@@ -11,7 +11,7 @@ from .cursor import CursorStore
 
 PLUGINS = (
     SourcePlugin('codex:local', 'Codex', lambda p: Store(p['codex:local']),
-                 (PathField('codex:local', '会话目录', codex_root),)),
+                 (PathField('codex:local', '会话目录', codex_root),), capabilities={'attachments': True}),
     SourcePlugin('claude:local', 'Claude Code',
                  lambda p: ClaudeSourceStore(p['claude:local'], p['claude:desktop']),
                  (PathField('claude:local', '会话目录', claude_root, '桌面端与 CLI 共用的会话目录'),

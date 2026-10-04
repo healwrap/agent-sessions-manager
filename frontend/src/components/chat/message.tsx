@@ -1,7 +1,7 @@
 import type { Detail, Event } from '../../lib/types';
 import { requestText } from '../../lib/selectors';
 import { sessionStore } from '../../state/session-store';
-import { Markdown } from '../markdown';
+import { RecordMarkdown } from '../record-markdown';
 import { AttachmentList } from '../detail/record-attachments';
 import { MessageActions } from './message-actions';
 import { RecordPages, useRecord } from './use-record';
@@ -29,9 +29,14 @@ export function Message({
       event.kind === 'assistant',
     ),
     { detail } = record;
-  const user = event.kind === 'user';
+  const user = event.kind === 'user' || event.attachment_role === 'user';
   // Split fields are authoritative. A blank output page may contain only thinking.
-  const text = detail ? (detail.output_text ?? detail.text) : event.preview;
+  const text =
+    event.kind === 'media'
+      ? ''
+      : detail
+        ? (detail.output_text ?? detail.text)
+        : event.preview;
   const shown = requestText(text);
   const command = shown.text.match(/^(\/[a-z][a-z\d_-]*)(?=\s)/i);
   const attachments = detail && (
@@ -89,7 +94,7 @@ export function Message({
                 shown.text
               )
             ) : (
-              <Markdown text={text} />
+              <RecordMarkdown text={text} detail={detail} id={id} />
             )}
           </div>
         )}
@@ -102,7 +107,9 @@ export function Message({
             className="chat-expand"
             onClick={() => void sessionStore.selectEvent(event.ref, true)}
           >
-            附带上下文与附件 ›
+            {detail?.attachments?.length
+              ? '附带上下文 ›'
+              : '附带上下文与附件 ›'}
           </button>
         )}
         <RecordPages record={record} />

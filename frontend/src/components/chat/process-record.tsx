@@ -2,6 +2,7 @@ import type { Event } from '../../lib/types';
 import { CodeXml } from 'lucide-react';
 import { sessionStore } from '../../state/session-store';
 import { Markdown } from '../markdown';
+import { RecordMarkdown } from '../record-markdown';
 import { Icon } from '../primitives';
 import { AttachmentList } from '../detail/record-attachments';
 import { Payload } from '../detail/payload';
@@ -80,7 +81,7 @@ export function AssistantProcess({
         />
       )}
       {!reasoningOnly && output && output !== '（仅工具调用）' && (
-        <Markdown text={output} />
+        <RecordMarkdown text={output} detail={detail} id={id} />
       )}
       {!reasoningOnly && detail && (
         <AttachmentList detail={detail} id={id} presentation="chat" />

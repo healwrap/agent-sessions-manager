@@ -12,6 +12,10 @@ function appendPage(detail: Detail, next: Detail): Detail {
     ...detail,
     page: next.page,
     pages: next.pages,
+    inline_images: [
+      ...(detail.inline_images || []),
+      ...(next.inline_images || []),
+    ],
     text: detail.text + next.text,
     thinking_text:
       detail.thinking_text == null

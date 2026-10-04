@@ -168,9 +168,11 @@ export function turnTitle(events: Event[]) {
   const seconds = Math.max(1, Math.floor(ms / 1000));
   const duration =
     seconds >= 3600
-      ? `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分${seconds % 60}秒`
+      ? `${Math.floor(seconds / 3600)}小时 ${Math.floor((seconds % 3600) / 60)}分钟 ${seconds % 60}秒`
       : seconds >= 60
-        ? `${Math.floor(seconds / 60)}分${seconds % 60}秒`
+        ? `${Math.floor(seconds / 60)}分钟 ${seconds % 60}秒`
         : `${seconds}秒`;
-  return `${label}，用时 ${duration}`;
+  return state === 'completed'
+    ? `用时 ${duration}`
+    : `${label}，用时 ${duration}`;
 }

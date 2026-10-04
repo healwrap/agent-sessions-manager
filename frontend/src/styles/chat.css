@@ -201,6 +201,7 @@
 }
 .chat-user-row .chat-attachments {
   justify-content: flex-end;
+  max-width: 100%;
 }
 .chat-attachments .record-attachment-row {
   width: 240px;
@@ -238,6 +239,17 @@
 }
 .chat-attachments .record-image .record-attachment-info {
   display: none;
+}
+.chat-user-row .chat-attachments .record-image {
+  flex: 0 0 100px;
+  width: 100px;
+  height: 100px;
+  max-width: 100px;
+}
+.chat-user-row .chat-attachments .record-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 @media (hover: none) {
   .chat-user-row .chat-message-actions:not([data-last-user='true']) {

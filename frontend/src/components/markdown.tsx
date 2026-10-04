@@ -1,9 +1,11 @@
 import { marked, type Token } from 'marked';
 import { memo, type ReactNode } from 'react';
 import { MarkdownCode } from './markdown-code';
+import { MarkdownImage } from './markdown-image';
+type Images = { href: string; src: string }[];
 const safeHref = (href: string) =>
   /^(https?:|mailto:)/i.test(href) ? href : undefined;
-function tokens(items: Token[] = []): ReactNode[] {
+function tokens(items: Token[] = [], images: Images = []): ReactNode[] {
   return items.map((token, index) => {
     const t = token as Token & {
       tokens?: Token[];
@@ -18,7 +20,7 @@ function tokens(items: Token[] = []): ReactNode[] {
       ordered?: boolean;
       start?: number;
     };
-    const nested = () => tokens(t.tokens);
+    const nested = () => tokens(t.tokens, images);
     let node: ReactNode;
     switch (t.type) {
       case 'space':
@@ -67,9 +69,12 @@ function tokens(items: Token[] = []): ReactNode[] {
         break;
       case 'image':
         node = (
-          <span className="markdown-image-alt" title={t.href}>
-            图片无法预览 · {t.text || '图片'}
-          </span>
+          <MarkdownImage
+            key={t.href}
+            href={t.href}
+            alt={t.text || ''}
+            src={images.find((image) => image.href === t.href)?.src}
+          />
         );
         break;
       case 'list': {
@@ -86,7 +91,7 @@ function tokens(items: Token[] = []): ReactNode[] {
                     aria-label={item.checked ? '已完成' : '未完成'}
                   />
                 )}
-                {tokens(item.tokens)}
+                {tokens(item.tokens, images)}
               </li>
             ))}
           </Tag>
@@ -115,7 +120,7 @@ function tokens(items: Token[] = []): ReactNode[] {
                       key={i}
                       style={{ textAlign: t.align?.[i] || undefined }}
                     >
-                      {tokens(cell.tokens)}
+                      {tokens(cell.tokens, images)}
                     </th>
                   ))}
                 </tr>
@@ -128,7 +133,7 @@ function tokens(items: Token[] = []): ReactNode[] {
                         key={j}
                         style={{ textAlign: t.align?.[j] || undefined }}
                       >
-                        {tokens(cell.tokens)}
+                        {tokens(cell.tokens, images)}
                       </td>
                     ))}
                   </tr>
@@ -148,6 +153,14 @@ function tokens(items: Token[] = []): ReactNode[] {
     );
   });
 }
-export const Markdown = memo(function Markdown({ text }: { text: string }) {
-  return <div className="markdown-body">{tokens(marked.lexer(text))}</div>;
+export const Markdown = memo(function Markdown({
+  text,
+  images,
+}: {
+  text: string;
+  images?: Images;
+}) {
+  return (
+    <div className="markdown-body">{tokens(marked.lexer(text), images)}</div>
+  );
 });

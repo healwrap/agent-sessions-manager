@@ -9,9 +9,15 @@ import type {
 export function chatReplyRefs(events: Event[], hasMore = false) {
   const replies = new Set<string>(),
     finals = new Set<number>(),
-    legacy = new Map<number, Event>();
+    legacy = new Map<number, Event>(),
+    interrupted = new Map<number, Event>();
   for (const event of events) {
     if (event.kind !== 'assistant' || event.request_only) continue;
+    if (
+      ['aborted', 'error'].includes(event.turn_status || '') &&
+      event.phase !== 'reasoning'
+    )
+      interrupted.set(event.turn, event);
     if (['final', 'final_answer'].includes(event.phase || '')) {
       replies.add(event.ref);
       finals.add(event.turn);
@@ -27,6 +33,9 @@ export function chatReplyRefs(events: Event[], hasMore = false) {
       event.turn_status !== 'in_progress' &&
       !(hasMore && turn === events.at(-1)?.turn)
     )
+      replies.add(event.ref);
+  for (const [turn, event] of interrupted)
+    if (!finals.has(turn) && !(hasMore && turn === events.at(-1)?.turn))
       replies.add(event.ref);
   return replies;
 }

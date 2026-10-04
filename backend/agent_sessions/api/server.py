@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlparse, unquote
 from agent_sessions.sources.codex import Store, PAGE_CHARS, timestamp_ms
 from agent_sessions.context.locator import codex_root
 from agent_sessions.paths import claude_root, claude_desktop_root, cursor_root, state_root
+from agent_sessions.sources.message_images import image_links, message_image_bytes
 
 ASSETS = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[3])) / 'frontend' / 'dist'
 
@@ -68,6 +69,14 @@ class Handler(BaseHTTPRequestHandler):
                 if part not in {'input', 'output', 'raw'}:
                     raise ValueError('内容类型无效')
                 result = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
+                result = {**result, 'inline_images': image_links(result)}
+            elif parsed.path == '/api/message-image':
+                part = get('part', 'input')
+                if part not in {'input', 'output'}: raise ValueError('内容类型无效')
+                detail = self.server.store.detail(get('id'), get('ref'), integer('page', 1, 1, 1_000_000), part)
+                body, mime = message_image_bytes(detail, get('href'))
+                self.respond(200, body, mime)
+                return
             elif parsed.path == '/api/attachment':
                 part = get('part', 'output')
                 if part not in {'input', 'output'}: raise ValueError('内容类型无效')

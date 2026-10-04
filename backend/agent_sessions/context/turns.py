@@ -46,6 +46,7 @@ def build_turns(index: dict[str, Any]) -> list[dict[str, Any]]:
             turn["media"].append(media)
         elif kind == "turn_end":
             turn["status"] = record.get("status", "completed")
+            turn["completed_at"] = record.get("timestamp")
         elif kind == 'context_boundary':
             turn['boundaries'].append(dict(record))
 

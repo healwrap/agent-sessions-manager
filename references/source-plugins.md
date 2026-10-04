@@ -36,6 +36,8 @@
 - `tool_schema`：调用发生时的原生定义，不能套用今天的定义。
 - `request_number / request_config / usage`：请求入口、选项和记录下来的用量。
 - `attachments`：附件引用与预览；不要求其他来源使用 DSH 的存储方式。
+- `parent_ref / attachment_role`：独立媒体记录对应的可见消息及其用户/助手归属；对话不重复展示已归属的附件，轨迹保留原引用。
+- `turn_started_at / turn_completed_at / turn_duration_ms`：原始轮次边界与用时；没有结束记录时保持缺失。
 - `code_program`：明确记录的可回放源码及语言提示，按通用代码视图展示。
 
 缺失数据保持缺失，不估算首 token 时间、用量、请求次数或独立结果。原始值不得替换；长正文按页读取，原始块按需加载。
@@ -45,6 +47,8 @@
 附件提供 `index / attachmentId` 及可选的 `kind: image | file`、`name`、`mediaType`、`bytes`、`width / height`。没有 MIME 的文件按扩展名展示；没有大小或尺寸时不填零。`available: false` 与 `unavailable_reason` 表示本地仅保留引用，公共组件不发起无效图片请求。原始内容块可关联同一附件描述，但原始 JSON 保持原值。
 
 来源内部实现 `attachment()`：DSH 读取历史引用的内容寻址图片，Claude Code 读取原生内嵌图片，Cursor 读取消息已保存路径指向的自有图片缓存。端点只接受记录引用和附件序号，不接受任意文件路径，也不自动下载外部媒体。纯媒体消息是否可见仍遵守来源本身的可渲染标记。
+
+Codex 同样实现标准 `attachment()`，用户图片优先读取历史中的嵌入副本。可见 Markdown 的本地图片走公共 `/api/message-image`：请求带来源、记录、页码及原始引用，后台核对该页实际引用并检查图片格式和大小后读取，不按 Agent 名称选择渲染器。`/api/event` 返回的 `inline_images` 标明图片所属正文页，展开更多页及自动刷新时保留对应关系。
 
 视频遵循 DSH 文件卡片行为，展示类型图标和已有元数据。插件声明附件能力不表示每条记录都有可读取实体，也不表示已实现视频播放；当前本机样本未验证视频附件实体。
 

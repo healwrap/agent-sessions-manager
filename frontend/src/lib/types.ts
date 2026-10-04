@@ -81,6 +81,7 @@ export interface Event {
   call_group?: string;
   call_summary?: string;
   parent_ref?: string;
+  attachment_role?: 'user' | 'assistant';
   line?: number | null;
   output_chars?: number;
   result_note?: string;
@@ -171,6 +172,7 @@ export interface Detail {
   prompt_snapshot?: PromptSnapshot;
   previous_prompt_snapshot?: PromptSnapshot;
   attachments?: Attachment[];
+  inline_images?: { href: string; page: number }[];
   source_blocks?: SourceBlock[];
   tool_schema?: { name: string; description?: string; parameters: unknown };
   request_config?: Record<string, unknown>;

@@ -5,16 +5,42 @@ import { useDisclosure } from './use-disclosure';
 import { turnTitle } from './process-title';
 import { ProcessGroup } from './process-group';
 
+export function ProcessSummary({
+  events,
+  expanded = false,
+  disabled = false,
+  toggle,
+}: {
+  events: Event[];
+  expanded?: boolean;
+  disabled?: boolean;
+  toggle?: () => void;
+}) {
+  return (
+    <button
+      className="chat-process-summary"
+      aria-expanded={expanded}
+      disabled={disabled}
+      onClick={toggle}
+    >
+      <span>{turnTitle(events)}</span>
+      {!disabled && <Icon name="down" className="process-chevron" />}
+    </button>
+  );
+}
+
 export function Process({
   events,
   id,
   mode,
   reasoningEvent,
+  summary = true,
 }: {
   events: Event[];
   id: string;
   mode: Settings['chatDetail'];
   reasoningEvent?: Event;
+  summary?: boolean;
 }) {
   const evidence = [...events, ...(reasoningEvent ? [reasoningEvent] : [])];
   const state = evidence.find((event) => event.turn_status)?.turn_status;
@@ -47,7 +73,7 @@ export function Process({
         preview={preview}
       />,
     );
-  const expanded = open || alwaysOpen;
+  const expanded = open || alwaysOpen || !summary;
   const groups: Event[][] = [];
   for (const event of events) {
     const last = groups.at(-1);
@@ -64,16 +90,13 @@ export function Process({
   if (!groups.length && reasoningEvent) groups.push([]);
   return (
     <div className="chat-process">
-      {!live && (
-        <button
-          className="chat-process-summary"
-          aria-expanded={expanded}
+      {!live && summary && (
+        <ProcessSummary
+          events={evidence}
+          expanded={expanded}
           disabled={alwaysOpen}
-          onClick={toggle}
-        >
-          <span>{turnTitle(evidence)}</span>
-          {!alwaysOpen && <Icon name="down" className="process-chevron" />}
-        </button>
+          toggle={toggle}
+        />
       )}
       {expanded && (
         <div className="chat-process-body">

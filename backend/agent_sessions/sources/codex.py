@@ -16,6 +16,7 @@ from agent_sessions.context.nested_results import match_nested_results, nested_r
 from agent_sessions.context.locator import codex_root, read_session_index, read_session_meta, unique_session_rows
 from agent_sessions.context.text import compact_line
 from .common import TrajectoryStore, PAGE_CHARS, elapsed, timestamp_ms, timeline_bounds
+from .codex_media import owner as media_owner, records as media_records, describe as describe_media, attachment_bytes
 
 UUID = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', re.I)
 class Store(TrajectoryStore):
@@ -169,10 +170,12 @@ class Store(TrajectoryStore):
                         events.append(child)
                         lookup[child['ref']] = ('nested', {**nested, 'parent': call})
                 for media in turn['media']:
+                    owner = media_owner(turn, media)
                     item = {'ref': media['ref'], 'turn': turn['seq'], 'kind': 'media', 'name': media['media_kind'],
                             'preview': compact_line(media.get('original_path') or media.get('path') or media.get('url') or '嵌入媒体', 420),
                             'timestamp': turn.get('timestamp'), 'status': 'metadata',
-                            'line': media.get('line_number', 0)}
+                            'line': media.get('line_number', 0), 'parent_ref': owner['ref'] if owner else None,
+                            'attachment_role': 'user'}
                     events.append(item)
                     lookup[media['ref']] = ('media', media)
                 for boundary in turn.get('boundaries', []):
@@ -182,10 +185,13 @@ class Store(TrajectoryStore):
                     events.append(item)
                     lookup[boundary['ref']] = ('context', boundary)
             events.sort(key=lambda e: (e['line'], e['ref']))
-            statuses = {turn['seq']: turn['status'] for turn in turns}
+            by_turn = {turn['seq']: turn for turn in turns}
             for position, event in enumerate(events):
+                turn = by_turn[event['turn']]
                 event['position'] = position
-                event['turn_status'] = statuses[event['turn']]
+                event.update(turn_status=turn['status'], turn_started_at=turn['timestamp'],
+                             turn_completed_at=turn.get('completed_at'),
+                             turn_duration_ms=elapsed(turn['timestamp'], turn.get('completed_at')))
             value = {'index': index, 'source': source, 'turns': turns, 'events': events, 'lookup': lookup,
                      'nested_results': {}}
             # Keep only a handful of active parsed sessions in the HTTP process.
@@ -240,6 +246,8 @@ class Store(TrajectoryStore):
                         event['status'] = 'unmatched'
                 else:
                     text = record.get('input_excerpt', '')
+            elif category == 'media' and part != 'raw':
+                text = ''
             else:
                 text = json.dumps({k: v for k, v in record.items()
                                    if k not in {'offset', 'raw_len'}}, ensure_ascii=False, indent=2)
@@ -255,4 +263,11 @@ class Store(TrajectoryStore):
                     'result_match': event.get('result_match'),
                     'parent_ref': record['parent']['ref'] if category == 'nested' else None,
                     'parent_output_available': bool(record['parent'].get('output')) if category == 'nested' else None,
+                    'attachments': describe_media(media_records(data, ref)),
                     'input_truncated': category == 'nested' and record.get('input_chars', 0) > len(text) and part == 'input'}
+
+    def attachment(self, key, ref, index, part='input'):
+        with self.lock:
+            data = self.session(key)
+            if ref not in data['lookup']: raise FileNotFoundError('事件不存在')
+            return attachment_bytes(data, ref, index)

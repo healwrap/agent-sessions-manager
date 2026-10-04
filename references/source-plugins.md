@@ -26,6 +26,8 @@
 
 标准事件包含 `ref / turn / kind / record_type / timestamp / status / position`。语义类型包括 `user_message`、`assistant_message`、`context_message`、`tool_call`、`subtool_call`、`execution_result`、`system_prompt`、`tool_definitions`、`compaction` 和 `request`。新解析器应直接填写 `record_type`；旧记录的兼容转换集中在 `common.py` 与前端 `record-presentation.ts`。
 
+`position` 是完整记录位置，用于分页和稳定定位。公共布局提供 `timeline_position` 与 `timeline_count` 作为可见顺序导轨的序号和总数；`request_only` 保留请求入口，不生成模型跨度，也不参与圈选。每条可见记录有独立导轨引用，不聚合抽样。
+
 所有来源共用消息概述、工具概述、Markdown、内容块、JSON 树、Schema、计时、工具跳转、附件及请求组件。可选字段决定是否展示相应元素：
 
 - `thinking_text / output_text / tool_calls`：思考折叠、正文和关联工具入口。
@@ -36,6 +38,14 @@
 - `code_program`：明确记录的可回放源码及语言提示，按通用代码视图展示。
 
 缺失数据保持缺失，不估算首 token 时间、用量、请求次数或独立结果。原始值不得替换；长正文按页读取，原始块按需加载。
+
+### 附件数据
+
+附件提供 `index / attachmentId` 及可选的 `kind: image | file`、`name`、`mediaType`、`bytes`、`width / height`。没有 MIME 的文件按扩展名展示；没有大小或尺寸时不填零。`available: false` 与 `unavailable_reason` 表示本地仅保留引用，公共组件不发起无效图片请求。原始内容块可关联同一附件描述，但原始 JSON 保持原值。
+
+来源内部实现 `attachment()`：DSH 读取历史引用的内容寻址图片，Claude Code 读取原生内嵌图片，Cursor 读取消息已保存路径指向的自有图片缓存。端点只接受记录引用和附件序号，不接受任意文件路径，也不自动下载外部媒体。纯媒体消息是否可见仍遵守来源本身的可渲染标记。
+
+视频遵循 DSH 文件卡片行为，展示类型图标和已有元数据。插件声明附件能力不表示每条记录都有可读取实体，也不表示已实现视频播放；当前本机样本未验证视频附件实体。
 
 ## 兼容边界
 

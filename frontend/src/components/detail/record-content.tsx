@@ -5,51 +5,7 @@ import { Markdown } from '../markdown';
 import { sessionStore } from '../../state/session-store';
 import { Icon } from '../primitives';
 import { SourceBlocks } from './source-blocks';
-
-export function AttachmentList({ detail, id }: { detail: Detail; id: string }) {
-  return (
-    <div className="record-attachments">
-      {detail.attachments?.map((item) => {
-        const query = new URLSearchParams({
-          id,
-          ref: detail.event.ref,
-          index: String(item.index),
-          part: detail.part || 'input',
-        });
-        return item.mediaType.startsWith('image/') ? (
-          <AttachmentImage
-            key={detail.event.ref + ':' + item.index + ':' + item.attachmentId}
-            name={item.name || '图片'}
-            src={'/api/attachment?' + query}
-          />
-        ) : (
-          <p key={item.index} className="metadata-note">
-            {item.name || '文件'} · {item.mediaType} · {item.bytes} 字节
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-function AttachmentImage({ name, src }: { name: string; src: string }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <figure className="record-image">
-      {failed ? (
-        <p className="metadata-note">图片附件无法读取：{name}</p>
-      ) : (
-        <a href={src} target="_blank" rel="noreferrer">
-          <img
-            src={src}
-            alt={name}
-            loading="lazy"
-            onError={() => setFailed(true)}
-          />
-        </a>
-      )}
-    </figure>
-  );
-}
+import { AttachmentList } from './record-attachments';
 export function RecordContent({
   detail,
   id,

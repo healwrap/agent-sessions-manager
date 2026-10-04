@@ -18,7 +18,7 @@ def blocks_at(store, data, location):
 
 
 def attachments(blocks):
-    return [{'index': i, **block['attachment']} for i, block in enumerate(blocks)
+    return [{'index': i, 'kind': block['type'], **block['attachment']} for i, block in enumerate(blocks)
             if isinstance(block, dict) and block.get('type') in ('image', 'file') and isinstance(block.get('attachment'), dict)]
 
 
@@ -53,7 +53,7 @@ def source_blocks(blocks, shortcuts=()):
         else:
             entry = {'type': kind, 'content': json.dumps(block, ensure_ascii=False, indent=2)}
             if kind in ('image', 'file') and isinstance(block.get('attachment'), dict):
-                entry['attachment'] = block['attachment']
+                entry['attachment'] = {'kind': kind, **block['attachment']}
             result.append(entry)
     return result
 

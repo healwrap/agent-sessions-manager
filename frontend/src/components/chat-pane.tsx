@@ -9,6 +9,7 @@ import { copyText } from '../lib/api';
 import { useHistoryScroll } from '../hooks/use-history-scroll';
 import { Collapse, Icon } from './primitives';
 import { Markdown } from './markdown';
+import { AttachmentList } from './detail/record-attachments';
 function Message({
   event,
   id,
@@ -48,7 +49,8 @@ function Message({
       observer.disconnect();
     };
   }, [id, event.ref, revision]);
-  const shown = requestText(content?.text || event.preview),
+  const text = content ? content.text : event.preview;
+  const shown = requestText(text),
     time = Date.parse(event.timestamp);
   const copy = async () => {
     try {
@@ -88,13 +90,12 @@ function Message({
       data-message-ref={event.ref}
     >
       <div className={user ? 'chat-user-stack' : 'chat-assistant-stack'}>
-        <div className={user ? 'chat-user-bubble' : 'chat-assistant-body'}>
-          {user ? (
-            shown.text
-          ) : (
-            <Markdown text={content?.text || event.preview} />
-          )}
-        </div>
+        {text && (
+          <div className={user ? 'chat-user-bubble' : 'chat-assistant-body'}>
+            {user ? shown.text : <Markdown text={text} />}
+          </div>
+        )}
+        {content && <AttachmentList detail={content.detail} id={id} />}
         {user && shown.wrapped && (
           <button
             className="chat-expand"

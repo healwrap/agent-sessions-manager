@@ -9,7 +9,10 @@ function Block({ block, index }: { block: SourceBlock; index: number }) {
       <details className="source-attachment">
         <summary>
           <span className="source-block-label">{label}</span>
-          <span>{block.attachment.name || '图片'}</span>
+          <span>
+            {block.attachment.name ||
+              (block.attachment.kind === 'file' ? '文件' : '图片')}
+          </span>
         </summary>
         <pre className="source-block-content">{block.content}</pre>
       </details>

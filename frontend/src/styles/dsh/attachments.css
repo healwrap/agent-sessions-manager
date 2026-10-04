@@ -1,0 +1,66 @@
+/* Adapted from Harness RecordAttachments, MIT; see harness-license.txt. */
+.record-attachments {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 14px;
+  padding: 0;
+  gap: 8px;
+  list-style: none;
+}
+.record-attachment-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  gap: 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2-darkmode-thin);
+  border-radius: var(--dsw-radius-lg);
+}
+.record-attachment-row > a,
+.record-attachment-icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+}
+.record-attachment-icon {
+  padding: 10px;
+}
+.record-attachment-media-icon {
+  color: rgb(139, 118, 246);
+}
+.record-attachment-unavailable {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+.record-attachment-row img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.record-attachment-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+.record-attachment-name,
+.record-attachment-metadata {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.record-attachment-name {
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+.record-attachment-metadata {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}

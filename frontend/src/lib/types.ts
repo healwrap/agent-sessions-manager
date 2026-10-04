@@ -127,9 +127,14 @@ export interface Trajectory {
 export interface Attachment {
   index: number;
   attachmentId: string;
-  mediaType: string;
-  bytes: number;
+  mediaType?: string;
+  kind?: 'image' | 'file';
+  bytes?: number | null;
+  available?: boolean;
+  unavailable_reason?: string | null;
   name?: string;
+  width?: number;
+  height?: number;
 }
 export interface SourceBlock {
   type: string;

@@ -40,7 +40,7 @@ def attachments(blocks):
         if image:
             content, mime = image
             result.append({'index': index, 'attachmentId': 'sha256:'+hashlib.sha256(content).hexdigest(),
-                           'mediaType': mime, 'bytes': len(content)})
+                           'kind': 'image', 'mediaType': mime, 'bytes': len(content)})
     return result
 
 
@@ -59,7 +59,8 @@ def enrich_detail(store, key, result):
                                for e in data['events'] if e['kind'] == 'tool' and e.get('parent_ref') == event['ref']]
     if result['part'] == 'raw' and event['kind'] in ('user', 'assistant', 'context') and blocks:
         raw = []
-        for block in blocks:
+        images = {item['index']: {k: v for k, v in item.items() if k != 'index'} for item in fields['attachments']}
+        for index, block in enumerate(blocks):
             if not isinstance(block, dict):
                 raw.append({'type': 'unknown', 'content': json.dumps(block, ensure_ascii=False)})
                 continue
@@ -71,7 +72,8 @@ def enrich_detail(store, key, result):
                 raw.append({'type': 'tool-call', 'content': as_text(block.get('input')),
                             'ref': matches[0]['ref'] if len(matches) == 1 else None})
             else:
-                raw.append({'type': kind, 'content': json.dumps(block, ensure_ascii=False, indent=2)})
+                raw.append({'type': kind, 'content': json.dumps(block, ensure_ascii=False, indent=2),
+                            **({'attachment': images[index]} if index in images else {})})
         fields.update(source_blocks=raw, pages=1)
     return {**result, **fields}
 

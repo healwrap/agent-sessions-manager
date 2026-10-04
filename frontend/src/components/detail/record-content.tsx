@@ -97,7 +97,7 @@ export function RecordContent({
                     }
                   >
                     <Icon name="wrench" className="assistant-tool-icon" />
-                    <strong>{call.name}</strong>
+                    <strong title={call.name}>{call.name}</strong>
                     <span className="assistant-tool-arguments">
                       {call.preview}
                     </span>

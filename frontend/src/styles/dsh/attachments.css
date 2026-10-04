@@ -7,6 +7,13 @@
   gap: 8px;
   list-style: none;
 }
+/* These hosts delegate their inset to the content, including attachment siblings. */
+.overview-preview > .record-attachments,
+.message-preview:has(> .assistant-content) > .record-attachments,
+.detail-content:has(> :is(.json-tree-root, .assistant-content))
+  > .record-attachments {
+  margin-inline: 14px;
+}
 .record-attachment-row {
   display: flex;
   align-items: center;
@@ -31,6 +38,7 @@
   color: rgb(139, 118, 246);
 }
 .record-attachment-unavailable {
+  overflow-wrap: anywhere;
   color: var(--dsw-alias-label-tertiary);
   font-size: 11px;
   line-height: 16px;

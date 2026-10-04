@@ -127,12 +127,19 @@
 }
 .nested-link {
   display: block;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
   border: 0;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   padding: 4px 0;
   text-align: left;
   font: 12px var(--ds-font-family-code);
+  overflow-wrap: anywhere;
+}
+.overview-sections > .nested-link {
+  margin-inline: 14px;
 }
 .nested-link:hover {
   color: var(--dsw-alias-state-business-primary);

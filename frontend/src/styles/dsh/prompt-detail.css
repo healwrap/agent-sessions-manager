@@ -11,7 +11,7 @@
 }
 .prompt-tool-summary {
   display: grid;
-  grid-template-columns: 12px 12px max-content minmax(0, 1fr);
+  grid-template-columns: 12px 12px minmax(0, max-content) minmax(0, 1fr);
   align-items: center;
   box-sizing: border-box;
   min-height: 30px;
@@ -39,6 +39,10 @@
   transform: rotate(90deg);
 }
 .prompt-tool-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--dsw-alias-label-primary);
   font: 500 12px/18px var(--ds-font-family-code);
 }

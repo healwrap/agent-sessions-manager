@@ -6,6 +6,7 @@
   overflow-y: auto;
   padding-bottom: var(--dsh-trajectory-bottom-clearance, 0px);
   scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
 }
 
 .overview {
@@ -153,6 +154,12 @@
 .assistant-tool-icon {
   flex: none;
 }
+.assistant-tool-link strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .assistant-tool-arguments {
   min-width: 0;
   overflow: hidden;
@@ -165,7 +172,7 @@
 }
 
 .message-preview {
-  padding: 8px 14px 14px;
+  padding: 2px 14px 8px;
   color: var(--dsw-alias-label-primary);
   font: var(--dsw-font-xs-13);
 }
@@ -208,6 +215,7 @@
   display: flex;
   align-items: center;
   width: max-content;
+  max-width: 100%;
   margin-bottom: 3px;
   gap: 3px;
 }
@@ -220,6 +228,7 @@
 }
 
 .source-block-label {
+  min-width: 0;
   color: var(--dsw-alias-label-tertiary);
   font: 11px/16px var(--ds-font-family-code);
 }

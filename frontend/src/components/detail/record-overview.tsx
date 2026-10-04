@@ -161,7 +161,9 @@ export function RecordOverview({
             </>
           ) : (
             <OverviewSection label="预览" onOpen={() => change('预览')}>
-              <RecordContent detail={detail} id={id} preview />
+              <div className="message-preview">
+                <RecordContent detail={detail} id={id} preview />
+              </div>
             </OverviewSection>
           )}
           {detail.nested?.map((item) => (

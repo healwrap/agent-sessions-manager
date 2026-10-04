@@ -31,7 +31,8 @@ PLUGINS = (
                             '支持 JSONL 与 Zstandard 压缩日志'),),
                  capabilities={'source_blocks': True, 'attachments': True, 'requests': True, 'prompt_snapshots': True}),
     SourcePlugin('cursor:desktop', 'Cursor', lambda p: CursorStore(p['cursor:desktop']),
-                 (PathField('cursor:desktop', '会话目录', cursor_root, '读取本地 Agent / Composer 会话数据库'),)),
+                 (PathField('cursor:desktop', '会话目录', cursor_root, '读取本地 Agent / Composer 会话数据库'),),
+                 capabilities={'source_blocks': True, 'attachments': True}),
 )
 
 

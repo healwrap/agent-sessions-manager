@@ -146,7 +146,10 @@ def bubble(db, table, location):
     text = fields(db, table, location['key'], (base+'.text',))[0]
     args = fields(db, table, location['key'], (base+'.toolFormerData.rawArgs', base+'.toolFormerData.params'))
     output = db.execute('select json_type(value,?) from '+table+' where key=? and json_valid(value)', (base+'.toolFormerData.result', location['key'])).fetchone()[0]
-    return dict(zip(names, row), text=text if isinstance(text, str) else '', args=args[0] if args[0] is not None else args[1], output_available=output not in (None, 'null'))
+    media = db.execute('select '+','.join('json_array_length(value,?)' for _ in range(3))+' from '+table+' where key=? and json_valid(value)',
+                       (base+'.images', base+'.context.selectedImages', base+'.context.selectedVideos', location['key'])).fetchone()
+    return dict(zip(names, row), text=text if isinstance(text, str) else '', args=next((v for v in args if v is not None and v != ''), ''),
+                output_available=output not in (None, 'null'), media_count=sum(value or 0 for value in media))
 
 
 def body(db, table, location, part):
@@ -154,5 +157,5 @@ def body(db, table, location, part):
     paths = (base+'.toolFormerData.result',) if part == 'output' else ((base+'.toolFormerData.rawArgs', base+'.toolFormerData.params') if location['kind'] == 'tool' else (base+'.text',))
     row = fields(db, table, location['key'], paths)
     if not row: raise FileNotFoundError('此 Cursor 消息已不存在')
-    value = next((v for v in row if v is not None), '')
+    value = next((v for v in row if v is not None and v != ''), '')
     return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)

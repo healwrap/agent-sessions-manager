@@ -22,7 +22,7 @@ def events(db, table, status, locations, initial_warnings):
         if role == 1: turn += 1
         kind = 'tool' if role == 2 and record['toolFormerData.name'] else 'user' if role == 1 else 'assistant'
         text = record['args'] if kind == 'tool' else record['text']
-        if not text and kind != 'tool': continue
+        if not text and kind != 'tool' and not record['media_count']: continue
         uid = location['bubble_id']
         ref = ('C/' if kind == 'tool' else 'M/')+uid
         if ref in lookup:
@@ -33,7 +33,7 @@ def events(db, table, status, locations, initial_warnings):
         state = {'cancelled': 'aborted', 'canceled': 'aborted', 'failed': 'error', 'generating': 'running', 'loading': 'running'}.get(state, state or 'pending')
         event = {'ref': ref, 'turn': max(1, turn), 'kind': kind,
                  'name': record['toolFormerData.name'] if kind == 'tool' else '用户' if kind == 'user' else '助手',
-                 'preview': compact_line(text or '', 420),
+                 'preview': compact_line(text or '媒体附件', 420),
                  'timestamp': timestamp(record['createdAt'] or location['header'].get('createdAt')),
                  'status': state, 'line': None, 'native_id': uid, 'tool_call_id': record['toolFormerData.toolCallId'],
                  'duration_ms': None, 'turn_status': 'completed', 'phase': None, 'position': len(visible)}

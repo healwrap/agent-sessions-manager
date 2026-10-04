@@ -3,6 +3,7 @@ from .base import HistoryStore
 from .common import PAGE_CHARS
 from .cursor_events import events
 from .cursor_storage import body, catalogue, conversation, database, fingerprint, workspace
+from .cursor_media import enrich_detail, attachment_bytes
 
 
 class CursorStore(HistoryStore):
@@ -93,9 +94,13 @@ class CursorStore(HistoryStore):
                 with database(data['source']) as db: text = body(db, row['_table'], record, part)
             pages = max(1, (len(text)+PAGE_CHARS-1)//PAGE_CHARS)
             if page < 1 or page > pages: raise ValueError('页码超过内容长度')
-            return {'event': next(e for e in data['events'] if e['ref'] == ref),
+            result = {'event': next(e for e in data['events'] if e['ref'] == ref),
                     'text': text[(page-1)*PAGE_CHARS:page*PAGE_CHARS], 'page': page, 'pages': pages,
                     'total_chars': len(text), 'part': part, 'output_available': output,
                     'source': str(data['source']), 'line': None, 'source_key': record['key'],
                     'thread_id': key, 'nested': [], 'shared_output': False, 'parent_ref': None,
                     'input_truncated': False, 'parent_output_available': False}
+            return enrich_detail(self, key, record, result)
+
+    def attachment(self, key, ref, index, part='input'):
+        return attachment_bytes(self, key, ref, index, part)

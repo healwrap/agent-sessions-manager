@@ -52,3 +52,13 @@
 Claude 桌面索引与 CLI 正文的合并和去重在 `claude_source.py` 内完成。旧 `claude:desktop` 链接通过插件声明的别名路由读取，会话名称、收藏及归档 ID 保持兼容。旧无来源前缀的 Codex UUID 在目录路由边界兼容，其他读取器不借用 Codex 的项目身份。
 
 能力声明用于发现来源功能，具体记录是否具备数据仍以详情字段为准。来源接口和浏览器都只访问本机，应用设置与历史文件分离保存。
+
+### 对话投影的可选字段
+
+- `has_reasoning` 与 `thinking_text / output_text`：让过程和最终正文分别显示，避免根据 Agent 名称推断。
+- `output_page`：正文在原始分页拼接内容中的起始页；只有原始分块明确时提供，不读取全部思考来寻找正文。
+- `turn_started_at / turn_completed_at / turn_duration_ms / turn_status`：原生日志的整轮状态和计时。缺失时只显示状态，不把最后一条消息的请求时长当作整轮时长。
+- `turn_usage`：整轮已记录请求用量的累加，与单条 `usage` 和跨轮累计 `request_cumulative_usage` 分开。
+- `argument_summary`：原生工具参数中的描述、路径、命令或查询摘要。通用归一化服务仅从可解析的已有参数生成摘要；DSH 在裁剪列表预览之前提取，长正文仍按需读取。
+
+所有来源通过同一套对话布局、过程、思考、工具、Markdown、附件和操作组件呈现。展示模式及字号存入应用自己的设置目录，旧设置缺少新增字段时沿用默认值。

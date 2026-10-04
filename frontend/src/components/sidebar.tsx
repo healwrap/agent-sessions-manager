@@ -23,13 +23,21 @@ export function Sidebar({
 }) {
   const [search, setSearch] = useState(state.query);
   useEffect(() => {
-    if (search === sessionStore.state.query) return;
+    if (!state.searchOpen || search === sessionStore.state.query) return;
     const timer = setTimeout(
       () => void sessionStore.filter(sessionStore.state.provider, search),
       250,
     );
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, state.searchOpen]);
+  const toggleSearch = () => {
+    const open = !state.searchOpen;
+    sessionStore.update({ searchOpen: open });
+    if (!open) {
+      setSearch('');
+      if (state.query) void sessionStore.filter(state.provider, '');
+    }
+  };
   const groups = projectGroups(
     state.sessions,
     state.projects,
@@ -96,10 +104,10 @@ export function Sidebar({
           <div>
             <IconButton
               icon="search"
-              label="搜索会话"
-              onClick={() =>
-                sessionStore.update({ searchOpen: !state.searchOpen })
-              }
+              label={state.searchOpen ? '取消搜索' : '搜索会话'}
+              aria-expanded={state.searchOpen}
+              aria-controls="session-search"
+              onClick={toggleSearch}
             />
             <IconButton
               icon="archive"
@@ -115,7 +123,7 @@ export function Sidebar({
           </div>
         </div>
         <Collapse open={state.searchOpen}>
-          <div className="session-search">
+          <div id="session-search" className="session-search">
             <input
               type="search"
               placeholder="搜索会话标题或内容"

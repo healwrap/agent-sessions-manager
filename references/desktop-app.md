@@ -38,6 +38,8 @@ macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、�
 
 侧栏搜索覆盖标题、自定义名称、项目和跨会话可见对话正文；不会把隐藏内容或工具结果纳入对话搜索。结果按原项目、来源归类。轨迹搜索覆盖当前会话可见正文、引用和参数摘要。自动交接摘要和后台目录监听暂未加入。
 
+展开侧栏搜索后，搜索按钮变为“取消搜索”；再次点击会清空搜索词、取消尚未触发的搜索请求，并恢复当前来源筛选下的会话列表。关闭搜索框不会留下不可见的搜索条件，来源筛选不受影响。
+
 ## 构建
 
 在目标系统上构建，使用 Rust/Cargo、Node/npm 和 Python 3，以及该系统的 Tauri 原生开发依赖。macOS 需要 Xcode Command Line Tools，Windows 需要 MSVC 和 WebView2，Linux 需要 WebKitGTK 等原生库，参见 [Tauri 开发前置条件](https://v2.tauri.app/start/prerequisites/)。从仓库根目录运行：

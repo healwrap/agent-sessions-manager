@@ -89,7 +89,7 @@ export function Process({
   }
   if (!groups.length && reasoningEvent) groups.push([]);
   return (
-    <div className="chat-process">
+    <div className="chat-process" data-scroll-anchor={evidence[0].ref}>
       {!live && summary && (
         <ProcessSummary
           events={evidence}

@@ -22,6 +22,7 @@
 @import './motion.css' layer(components);
 @import './startup.css' layer(components);
 @import './loading.css' layer(components);
+@import './scrolling.css' layer(components);
 @custom-variant dark (&:where([data-ds-dark-theme], [data-ds-dark-theme] *));
 @theme {
   --color-surface: var(--dsw-alias-bg-layer-2);

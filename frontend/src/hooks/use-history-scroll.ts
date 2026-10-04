@@ -1,5 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { sessionStore, type View } from '../state/session-store';
+import { ScrollPosition } from '../lib/scroll-position';
+
 export function useHistoryScroll(
   ref: RefObject<HTMLElement | null>,
   view: View,
@@ -8,28 +10,30 @@ export function useHistoryScroll(
   id: string | null,
 ) {
   const navigation = useRef(0);
-  const previous = useRef({
-    id: '',
-    height: 0,
-    top: 0,
-    events: view.events,
-    active: false,
-  });
+  const position = useRef<ScrollPosition | null>(null);
+  const previous = useRef({ id: '', active: false });
+
   useLayoutEffect(() => {
     const pane = ref.current;
     if (!pane || !active) return;
-    const old = previous.current,
-      changed = id !== old.id;
-    if (changed) pane.scrollTop = mode === 'chat' ? pane.scrollHeight : 0;
-    else if (old.events !== view.events && view.change === 'before')
-      pane.scrollTop = old.top + pane.scrollHeight - old.height;
-    else if (!old.active) pane.scrollTop = sessionStore.scrollPosition(mode);
-    else if (
-      mode === 'chat' &&
-      old.events !== view.events &&
-      old.height - old.top - pane.clientHeight < 80
+    const old = previous.current;
+    if (!position.current || position.current.pane !== pane)
+      position.current = new ScrollPosition(pane);
+    const scroll = position.current;
+    if (id !== old.id) {
+      scroll.following = mode === 'chat';
+      scroll.move(mode === 'chat' ? scroll.maximum : 0);
+    } else if (!old.active && !scroll.height) {
+      scroll.move(sessionStore.scrollPosition(mode));
+    } else if (mode === 'chat' && scroll.following) {
+      scroll.move(scroll.maximum);
+    } else if (
+      !old.active ||
+      pane.scrollHeight !== scroll.height ||
+      pane.clientHeight !== scroll.clientHeight
     )
-      pane.scrollTop = pane.scrollHeight;
+      scroll.restore();
+
     if (
       view.navigation &&
       mode === 'trace' &&
@@ -54,63 +58,85 @@ export function useHistoryScroll(
               : bottom > pane.scrollTop + pane.clientHeight
                 ? bottom - pane.clientHeight
                 : pane.scrollTop;
-        // Only move the ledger, never its clipped split or application shell.
         pane.scrollTo({
-          top: target,
-          // The native WebView can leave stale scroll tiles after replacing a page.
+          top: Math.max(0, Math.min(target, scroll.maximum)),
+          // Native WebView scroll tiles can be stale after replacing a page.
           behavior:
-            sessionStore.state.settings.animations && !view.navigation.paged
+            sessionStore.state.settings.animations &&
+            !view.navigation.paged &&
+            !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+            Math.abs(target - pane.scrollTop) < pane.clientHeight
               ? 'smooth'
               : 'instant',
         });
       }
     }
-    previous.current = {
-      id: id || '',
-      height: pane.scrollHeight,
-      top: pane.scrollTop,
-      events: view.events,
-      active: true,
-    };
-  }, [ref, view.events, view.navigation, active, id, mode, view.change]);
+    scroll.capture();
+    sessionStore.rememberScroll(mode, scroll.top);
+    previous.current = { id: id || '', active: true };
+  });
+
   useLayoutEffect(() => {
     if (!active) {
       previous.current.active = false;
       return;
     }
-    const pane = ref.current;
-    if (!pane) return;
-    const onScroll = () => {
-      previous.current.top = pane.scrollTop;
-      previous.current.height = pane.scrollHeight;
-      sessionStore.rememberScroll(mode, pane.scrollTop);
+    const scroll = position.current;
+    if (!scroll) return;
+    const pane = scroll.pane;
+    const loadAtEdge = (direction: number) => {
       const latest = sessionStore.state.views[mode];
       if (latest.loading) return;
-      if (pane.scrollTop < 120 && latest.offset > 0)
+      // Restoration and resize must not start pagination.
+      if (direction < 0 && scroll.top < 120 && latest.offset > 0)
         void sessionStore.loadTrace(false, 'before');
       else if (
-        pane.scrollHeight - pane.scrollTop - pane.clientHeight < 180 &&
+        direction > 0 &&
+        scroll.maximum - scroll.top < 180 &&
         latest.next !== null
       )
         void sessionStore.loadTrace(false, 'after');
     };
-    pane.addEventListener('scroll', onScroll, { passive: true });
-    const observer = new ResizeObserver(() => {
-      const old = previous.current;
-      if (
-        mode === 'chat' &&
-        old.active &&
-        old.height - old.top - pane.clientHeight < 80
-      )
-        pane.scrollTop = pane.scrollHeight;
-      old.height = pane.scrollHeight;
-      old.top = pane.scrollTop;
-    });
-    if (mode === 'chat' && pane.firstElementChild)
-      observer.observe(pane.firstElementChild);
-    return () => {
-      pane.removeEventListener('scroll', onScroll);
-      observer.disconnect();
+    const onScroll = () => {
+      if (!pane.clientHeight) return;
+      const direction = scroll.trackScroll();
+      sessionStore.rememberScroll(mode, scroll.top);
+      loadAtEdge(direction);
     };
-  }, [active, mode, ref]);
+    const onWheel = (event: WheelEvent) => {
+      scroll.pauseOnUpwardInput(event);
+      // At an edge there may be no scroll event, but the user still wants more.
+      if (
+        !event.ctrlKey &&
+        !event.shiftKey &&
+        scroll.ownsScrollInput(event.target)
+      )
+        loadAtEdge(Math.sign(event.deltaY));
+    };
+    const observer = new ResizeObserver(() => {
+      if (!pane.clientHeight) return;
+      if (
+        pane.scrollHeight !== scroll.height ||
+        pane.clientHeight !== scroll.clientHeight
+      ) {
+        if (mode === 'chat' && scroll.following) scroll.move(scroll.maximum);
+        else scroll.restore();
+        scroll.capture();
+        sessionStore.rememberScroll(mode, scroll.top);
+      }
+    });
+    observer.observe(pane);
+    for (const child of pane.children) observer.observe(child);
+    pane.addEventListener('scroll', onScroll, { passive: true });
+    pane.addEventListener('wheel', onWheel, {
+      passive: true,
+    });
+    pane.addEventListener('keydown', scroll.pauseOnUpwardKey);
+    return () => {
+      observer.disconnect();
+      pane.removeEventListener('scroll', onScroll);
+      pane.removeEventListener('wheel', onWheel);
+      pane.removeEventListener('keydown', scroll.pauseOnUpwardKey);
+    };
+  }, [active, id, mode, ref]);
 }

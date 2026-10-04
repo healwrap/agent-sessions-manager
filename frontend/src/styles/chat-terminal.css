@@ -109,7 +109,7 @@
 }
 .chat-terminal-header::-webkit-scrollbar-thumb,
 .chat-terminal-output::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
+  border: 0;
   background-clip: padding-box;
   border-radius: var(--dsw-radius-sm);
 }

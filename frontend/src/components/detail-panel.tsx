@@ -140,7 +140,7 @@ export function DetailPanel({ state }: { state: AppState }) {
                 !detail.prompt_snapshot))
           }
         >
-          {error ? (
+          {error && !detail ? (
             <p className="metadata-note" role="alert">
               {error}
             </p>
@@ -150,6 +150,11 @@ export function DetailPanel({ state }: { state: AppState }) {
             </p>
           ) : (
             <>
+              {error && (
+                <p className="metadata-note" role="alert">
+                  {error}
+                </p>
+              )}
               {requestOpen ? (
                 <RequestContent
                   detail={detail}

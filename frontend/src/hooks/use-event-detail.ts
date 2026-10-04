@@ -19,7 +19,8 @@ export function useEventDetail(
   page: number,
 ) {
   const part = tab === '结果' ? 'output' : tab === '原始内容' ? 'raw' : 'input';
-  const scope = JSON.stringify([id, ref, version]);
+  // A live revision refreshes the same record without removing its scrollable UI.
+  const scope = JSON.stringify([id, ref]);
   const query = JSON.stringify([scope, part, page, tab === '概述']);
   const [result, setResult] = useState<LoadedDetail | null>(null);
   useEffect(() => {
@@ -29,7 +30,16 @@ export function useEventDetail(
       .api<Detail>('/api/event', { id, ref, part, page })
       .then(async (detail) => {
         if (!current) return;
-        setResult({ scope, query, detail, output: null, error: '' });
+        setResult((previous) => ({
+          scope,
+          query,
+          detail,
+          output:
+            detail.output_available && previous?.query === query
+              ? previous.output
+              : null,
+          error: '',
+        }));
         if (tab === '概述' && detail.output_available) {
           const output = await sessionStore.api<Detail>('/api/event', {
             id,
@@ -42,18 +52,22 @@ export function useEventDetail(
       })
       .catch((error) => {
         if (current)
-          setResult({
-            scope,
-            query,
-            detail: null,
-            output: null,
-            error: String(error),
-          });
+          setResult((previous) =>
+            previous?.query === query && previous.detail
+              ? { ...previous, error: String(error) }
+              : {
+                  scope,
+                  query,
+                  detail: null,
+                  output: null,
+                  error: String(error),
+                },
+          );
       });
     return () => {
       current = false;
     };
-  }, [id, ref, open, scope, query, part, page, tab]);
+  }, [id, ref, open, version, scope, query, part, page, tab]);
   const matching = result?.scope === scope ? result : null;
   return {
     detail: matching?.detail ?? null,

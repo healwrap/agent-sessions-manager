@@ -174,7 +174,11 @@ export function ChatPane({ state }: { state: AppState }) {
           onClick={() =>
             ref.current?.scrollTo({
               top: ref.current.scrollHeight,
-              behavior: state.settings.animations ? 'smooth' : 'instant',
+              behavior:
+                state.settings.animations &&
+                !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                  ? 'smooth'
+                  : 'instant',
             })
           }
         >

@@ -33,7 +33,7 @@ export function SessionActions({
       };
     document.addEventListener('pointerdown', click);
     document.addEventListener('keydown', key);
-    ref.current?.querySelector('button')?.focus();
+    ref.current?.querySelector('button')?.focus({ preventScroll: true });
     return () => {
       document.removeEventListener('pointerdown', click);
       document.removeEventListener('keydown', key);

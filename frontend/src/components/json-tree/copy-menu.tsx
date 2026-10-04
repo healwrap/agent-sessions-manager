@@ -43,7 +43,7 @@ export function CopyMenu({
       });
     };
     const close = () => {
-      root.current?.querySelector('button')?.focus();
+      root.current?.querySelector('button')?.focus({ preventScroll: true });
       onClose();
     };
     const pointer = (event: PointerEvent) => {
@@ -78,16 +78,16 @@ export function CopyMenu({
                   (event.key === 'ArrowUp' ? -1 : 1) +
                   buttons.length) %
                 buttons.length;
-        buttons[index]?.focus();
+        buttons[index]?.focus({ preventScroll: true });
       } else if (event.key === 'Tab') {
         event.preventDefault();
         if (event.shiftKey) close();
-        else if (current < 0) buttons[0]?.focus();
+        else if (current < 0) buttons[0]?.focus({ preventScroll: true });
         else buttons[current]?.click();
       }
     };
     place();
-    root.current?.querySelector('button')?.focus();
+    root.current?.querySelector('button')?.focus({ preventScroll: true });
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
     document.addEventListener('pointerdown', pointer);
@@ -117,7 +117,9 @@ export function CopyMenu({
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  root.current?.querySelector('button')?.focus();
+                  root.current
+                    ?.querySelector('button')
+                    ?.focus({ preventScroll: true });
                   onSelect(item.id);
                 }}
               >

@@ -1,0 +1,40 @@
+/* Keep independent panels from transferring momentum to the application shell. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+:where(
+  .session-list,
+  .chat-pane,
+  .tablePane,
+  .detailBody,
+  .overview-sections,
+  .settings-options,
+  .settings-nav-list,
+  .chat-terminal-header,
+  .chat-terminal-output,
+  .chat-tool-io,
+  .json-tree-stringRaw
+) {
+  overscroll-behavior-y: contain;
+}
+
+/* JS preserves visible records and live tails; avoid a second browser correction. */
+.chat-pane,
+.tablePane,
+.chat-process-group-body,
+.chat-terminal-output {
+  overflow-anchor: none;
+}
+
+/* Horizontal code/table scrolling must still allow vertical reading of the page. */
+.markdown-body pre,
+.prompt-diff {
+  overscroll-behavior-x: contain;
+}
+
+.tablePane,
+.settings-options {
+  scrollbar-gutter: stable;
+}

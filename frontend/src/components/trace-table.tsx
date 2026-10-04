@@ -74,6 +74,7 @@ export function TraceTable({ state }: { state: AppState }) {
                 <tr
                   key={event.ref}
                   className="summary-row"
+                  data-scroll-anchor={event.ref}
                   tabIndex={0}
                   data-collapsed-summary={
                     event.summaryType === 'call' ? 'assistant' : 'turn'

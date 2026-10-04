@@ -55,8 +55,8 @@ export function JsonString({
   useLayoutEffect(() => {
     if (!expanded) return;
     const raw = rawRef.current as HTMLPreElement;
-    // Keep raw text within the window and clipping ancestors outside the tree.
-    // Capture scrolling because an ancestor can move the string without resizing it.
+    // Size from the containing viewport, not the moving text's screen position.
+    // Changing maxHeight on every scroll shifts siblings and the scrollbar thumb.
     const clips: HTMLElement[] = [];
     const tree = raw.closest<HTMLElement>(`.${css.root}`) as HTMLElement;
     for (
@@ -68,36 +68,37 @@ export function JsonString({
         clips.push(parent);
     }
     const measure = () => {
-      let top = 0;
-      let bottom = window.innerHeight;
+      let available = Math.min(400, window.innerHeight - 32);
       for (const clip of clips) {
-        const rect = clip.getBoundingClientRect();
         const style = getComputedStyle(clip);
-        top = Math.max(top, rect.top + clip.clientTop);
-        bottom = Math.min(
-          bottom,
-          rect.top +
-            clip.clientTop +
-            clip.clientHeight -
+        const limit = Number.parseFloat(style.maxHeight);
+        // Intrinsic preview heights depend on this string; using them would
+        // create a ResizeObserver feedback loop when expanding or wrapping it.
+        const height = Number.isFinite(limit)
+          ? limit
+          : Number.parseFloat(style.flexGrow) > 0
+            ? clip.clientHeight
+            : Infinity;
+        available = Math.min(
+          available,
+          height -
+            Number.parseFloat(style.paddingTop) -
             Number.parseFloat(style.paddingBottom),
         );
       }
-      const available = bottom - Math.max(top, raw.getBoundingClientRect().top);
-      raw.style.maxHeight = `${Math.max(16, available - 4)}px`;
+      const height = `${Math.max(16, available - 4)}px`;
+      if (raw.style.maxHeight !== height) raw.style.maxHeight = height;
     };
     measure();
     const observer =
       typeof ResizeObserver === 'undefined'
         ? undefined
         : new ResizeObserver(measure);
-    observer?.observe(raw);
     for (const clip of clips) observer?.observe(clip);
     window.addEventListener('resize', measure);
-    window.addEventListener('scroll', measure, true);
     return () => {
       observer?.disconnect();
       window.removeEventListener('resize', measure);
-      window.removeEventListener('scroll', measure, true);
     };
   }, [expanded, value]);
 

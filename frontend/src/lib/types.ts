@@ -34,6 +34,8 @@ export interface Settings {
   syncSeconds: number;
   animations: boolean;
   theme: ThemePreference;
+  chatDetail: 'compact' | 'standard' | 'detailed' | 'verbose';
+  fontSize: number;
 }
 export interface Preferences {
   pinned: string[];
@@ -44,6 +46,7 @@ export interface Preferences {
 }
 export interface Event {
   program_summary?: string;
+  argument_summary?: string;
   ref: string;
   turn: number;
   kind: string;
@@ -66,7 +69,12 @@ export interface Event {
   model_provider?: string | null;
   usage?: Record<string, number>;
   request_cumulative_usage?: Record<string, number>;
+  turn_usage?: Record<string, number>;
   turn_status?: string;
+  turn_started_at?: string | null;
+  turn_completed_at?: string | null;
+  turn_duration_ms?: number | null;
+  has_reasoning?: boolean;
   duration_ms: number | null;
   timeline_start?: number;
   timeline_end?: number;
@@ -161,6 +169,7 @@ export interface Detail {
   request_config?: Record<string, unknown>;
   thinking_text?: string;
   output_text?: string;
+  output_page?: number | null;
   tool_calls?: { ref: string | null; name: string; preview: string }[];
   retries?: Record<string, unknown>[];
   request_tool_calls?: number;

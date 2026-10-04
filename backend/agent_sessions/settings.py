@@ -25,7 +25,8 @@ class AppSettings:
         if len(roots) != len(SOURCE_KEYS):
             raise ValueError('会话来源目录数量无效')
         self.defaults = {'paths': {key: str(Path(root).expanduser().resolve()) for key, root in zip(SOURCE_KEYS, roots)},
-                         'enabled': {key: True for key in path_fields()}, 'syncSeconds': 3, 'animations': True, 'theme': 'system'}
+                         'enabled': {key: True for key in path_fields()}, 'syncSeconds': 3, 'animations': True,
+                         'theme': 'system', 'chatDetail': 'standard', 'fontSize': 14}
         for key, field in path_fields().items():
             self.defaults['paths'].setdefault(key, str(field.default().expanduser().resolve()))
 
@@ -39,8 +40,9 @@ class AppSettings:
                     'enabled': {key: enabled.get(key, default) for key, default in self.defaults['enabled'].items()}}
 
     def validate(self, value):
-        if isinstance(value, dict) and set(value) == set(self.defaults)-{'theme'}:
-            value = {**value, 'theme': 'system'}
+        optional = {'theme', 'chatDetail', 'fontSize'}
+        if isinstance(value, dict) and set(self.defaults)-optional <= set(value) <= set(self.defaults):
+            value = {**self.defaults, **value}
         if not isinstance(value, dict) or set(value) != set(self.defaults):
             raise ValueError('应用设置格式无效')
         legacy = set(SOURCE_KEYS)-{'cursor:desktop'}
@@ -49,6 +51,10 @@ class AppSettings:
                      'enabled': {**value['enabled'], 'cursor:desktop': self.defaults['enabled']['cursor:desktop']}}
         if value['theme'] not in ('light', 'dark', 'system'):
             raise ValueError('外观应为浅色、深色或跟随系统')
+        if value['chatDetail'] not in ('compact', 'standard', 'detailed', 'verbose'):
+            raise ValueError('工作步骤展示选项无效')
+        if type(value['fontSize']) is not int or not 12 <= value['fontSize'] <= 20:
+            raise ValueError('字号大小应为 12 到 20 px')
         if not isinstance(value['paths'], dict) or set(value['paths']) != set(self.defaults['paths']):
             raise ValueError('会话目录配置无效')
         if not isinstance(value['enabled'], dict) or set(value['enabled']) != set(self.defaults['enabled']) or any(type(v) is not bool for v in value['enabled'].values()):

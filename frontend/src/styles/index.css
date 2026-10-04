@@ -9,6 +9,7 @@
 @import './dialogs.css' layer(components);
 @import './markdown.css' layer(components);
 @import './chat.css' layer(components);
+@import './chat-process.css' layer(components);
 @import './trajectory.css' layer(components);
 @import './dsh/tooltip.css' layer(components);
 @import './dsh/json-layout.css' layer(components);

@@ -15,6 +15,44 @@ export function GeneralSettings({
       />
       <div className="settings-row">
         <div className="settings-row-label">
+          <label htmlFor="settings-font">字号大小</label>
+          <p>仅影响会话内容的字号</p>
+        </div>
+        <input
+          id="settings-font"
+          type="number"
+          min={12}
+          max={20}
+          value={draft.fontSize}
+          onChange={(event) =>
+            onChange({ ...draft, fontSize: Number(event.target.value) })
+          }
+        />
+        <span>px</span>
+      </div>
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <label htmlFor="settings-detail">工作步骤展示</label>
+          <p>选择希望看到多少工具调用细节</p>
+        </div>
+        <select
+          id="settings-detail"
+          value={draft.chatDetail}
+          onChange={(event) =>
+            onChange({
+              ...draft,
+              chatDetail: event.target.value as Settings['chatDetail'],
+            })
+          }
+        >
+          <option value="compact">简洁</option>
+          <option value="standard">标准</option>
+          <option value="detailed">详细</option>
+          <option value="verbose">全部</option>
+        </select>
+      </div>
+      <div className="settings-row">
+        <div className="settings-row-label">
           <label htmlFor="settings-sync">自动刷新</label>
           <p>检查当前会话与项目列表的更新</p>
         </div>

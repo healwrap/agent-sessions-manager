@@ -93,6 +93,22 @@ export function useHistoryScroll(
         void sessionStore.loadTrace(false, 'after');
     };
     pane.addEventListener('scroll', onScroll, { passive: true });
-    return () => pane.removeEventListener('scroll', onScroll);
+    const observer = new ResizeObserver(() => {
+      const old = previous.current;
+      if (
+        mode === 'chat' &&
+        old.active &&
+        old.height - old.top - pane.clientHeight < 80
+      )
+        pane.scrollTop = pane.scrollHeight;
+      old.height = pane.scrollHeight;
+      old.top = pane.scrollTop;
+    });
+    if (mode === 'chat' && pane.firstElementChild)
+      observer.observe(pane.firstElementChild);
+    return () => {
+      pane.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    };
   }, [active, mode, ref]);
 }

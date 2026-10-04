@@ -55,12 +55,26 @@ function AttachmentImage({ name, src }: { name: string; src: string }) {
   );
 }
 
-export function AttachmentList({ detail, id }: { detail: Detail; id: string }) {
+export function AttachmentList({
+  detail,
+  id,
+  presentation = 'detail',
+}: {
+  detail: Detail;
+  id: string;
+  presentation?: 'detail' | 'chat';
+}) {
   if (!detail.attachments?.length) return null;
   const toolOutput =
     ['tool', 'subtool'].includes(detail.event.kind) && detail.part === 'output';
   return (
-    <ul className="record-attachments" aria-label="附件">
+    <ul
+      className={
+        'record-attachments' +
+        (presentation === 'chat' ? ' chat-attachments' : '')
+      }
+      aria-label="附件"
+    >
       {detail.attachments.map((item, index) => {
         const image =
           item.kind === 'image' ||
@@ -77,7 +91,7 @@ export function AttachmentList({ detail, id }: { detail: Detail; id: string }) {
           <li
             key={`${detail.event.ref}:${item.index}:${item.attachmentId}`}
             className={
-              previewImage && toolOutput
+              previewImage && (toolOutput || presentation === 'chat')
                 ? 'record-image'
                 : 'record-attachment-row'
             }

@@ -1,93 +1,215 @@
+/* Visual baseline: Harness MarkdownText, adapted to the shared renderer. */
 .markdownPayload {
   padding: 0;
 }
 .markdown-body {
+  min-width: 0;
   font: 13px/1.65 var(--dsw-font-family);
   overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-primary);
+}
+.markdown-body strong {
+  font-weight: 600;
+}
+.markdown-body h1 {
+  font: var(--dsw-font-markdown-h1);
+}
+.markdown-body h2 {
+  font: var(--dsw-font-markdown-h2);
+}
+.markdown-body h3 {
+  font: var(--dsw-font-markdown-h3);
+}
+.markdown-body :where(h1, h2, h3) {
+  margin: 32px 0 16px;
+}
+.markdown-body h4 {
+  font: 600
+    calc(16px + var(--dsh-content-font-delta, 0px))/calc(
+      24px + var(--dsh-content-font-delta, 0px)
+    )
+    var(--dsw-font-family);
+}
+.markdown-body :where(h4, h5, h6) {
+  margin: 16px 0;
+}
+.markdown-body :where(h1, h2, h3, h4, h5, h6) strong {
+  font-weight: inherit;
 }
 .markdown-body p {
-  margin: 0 0 12px;
+  margin: 16px 0;
 }
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3 {
-  margin: 16px 0 8px;
+.markdown-body :where(h4, h5, h6) + :where(ul, ol) {
+  margin-top: 8px;
 }
-.markdown-body h1:first-child,
-.markdown-body h2:first-child,
-.markdown-body h3:first-child {
-  margin-top: 0;
+.markdown-body :where(h4, h5, h6):has(+ :where(ul, ol)) {
+  margin-bottom: 8px;
 }
 .markdown-body a {
   color: var(--dsw-alias-link);
+  font-weight: 500;
+  text-decoration: none;
 }
-.markdown-body pre {
-  padding: 10px;
-  border-radius: 6px;
-  background: var(--dsw-alias-markdown-code-block);
-  margin: 10px 0;
+.markdown-body a:hover,
+.markdown-body a:focus {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
-.markdown-body :not(pre) > code {
-  background: var(--dsw-alias-markdown-inline-code);
-  padding: 1px 3px;
-  border-radius: 3px;
+.markdown-body :where(ul, ol) {
+  margin: 16px 0;
+  padding-left: 18px;
 }
-.markdown-body blockquote {
-  border-left: 3px solid var(--dsw-alias-border-l3);
-  margin: 10px 0;
-  padding-left: 10px;
+.markdown-body li:not(:first-child) {
+  margin-top: 6px;
+}
+.markdown-body li > :where(ul, ol) {
+  margin-top: 4px;
+}
+.markdown-body li::marker {
   color: var(--dsw-alias-label-secondary);
 }
-.markdown-body table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 12px;
+.markdown-body :where(ul, ol) ol {
+  list-style-position: inside;
+  padding-left: 0;
 }
-.markdown-body th,
-.markdown-body td {
-  border: 1px solid var(--dsw-alias-border-l2);
-  padding: 4px 6px;
+.markdown-body li > p {
+  margin: 8px 0;
+}
+.markdown-body li > *:first-child {
+  margin-top: 0;
+}
+.markdown-body li > *:last-child {
+  margin-bottom: 0;
+}
+.markdown-body input[type='checkbox'] {
+  margin: 0 8px 0 0;
+  accent-color: var(--dsw-alias-label-secondary);
+}
+.markdown-body hr {
+  border: 0;
+  height: 0.5px;
+  margin: 32px 0;
+  background: var(--dsw-alias-border-l2);
+}
+.markdown-body blockquote {
+  border-left: 2px solid var(--dsw-alias-label-caption);
+  margin: 16px 0 0;
+  padding-left: 14px;
+}
+.markdown-body pre {
+  margin: 16px 0;
+  font-family: var(--ds-font-family-code);
+  overflow: auto;
+}
+.markdown-body :not(pre) > code {
+  font-family: var(--ds-font-family-code);
+  font-size: 0.875em;
+  background: var(--dsw-alias-markdown-inline-code);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.markdown-body > span:first-child > *:first-child,
+.markdown-body p:first-child {
+  margin-top: 0;
+}
+.markdown-body > span:last-child > *:last-child,
+.markdown-body p:last-child {
+  margin-bottom: 0;
 }
 .markdown-code {
   border-radius: 8px;
   background: var(--dsw-alias-markdown-code-block);
-  overflow: hidden;
-  margin: 10px 0;
+  margin: 16px 0;
 }
 .markdown-code-header {
+  position: sticky;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 8px 12px;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
+  border-radius: 8px 8px 0 0;
+  background: var(--dsw-alias-markdown-code-block);
+}
+.markdown-code-actions {
+  display: inline-flex;
+  gap: 8px;
 }
 .markdown-code-header button {
-  display: flex;
-  gap: 5px;
-  align-items: center;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   border: 0;
+  border-radius: 4px;
   background: transparent;
   color: inherit;
 }
+.markdown-code-header button:hover,
+.markdown-code-header button[aria-pressed='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+.markdown-code-header .dsh-icon {
+  width: 14px;
+  height: 14px;
+}
 .markdown-body .markdown-code pre {
   margin: 0;
-  padding: 10px 12px;
+  padding: 0 16px 12px;
   white-space: pre;
   overflow-x: auto;
   overflow-wrap: normal;
   max-width: 100%;
 }
+.markdown-body .markdown-code pre[data-wrapped='true'] {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .markdown-table-scroll {
   overflow-x: auto;
   max-width: 100%;
-  margin: 10px 0;
+  margin: 16px 0;
+  overscroll-behavior-x: contain;
+}
+.markdown-table-scroll:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
 }
 .markdown-table-scroll table {
-  min-width: 100%;
+  border-collapse: collapse;
   width: max-content;
+  max-width: max-content;
+  font-size: inherit;
 }
-.markdown-table-scroll th,
+.markdown-table-scroll.md-table-fill table {
+  width: 100%;
+  max-width: none;
+}
+.markdown-table-scroll :where(th, td) {
+  text-align: start;
+  padding: 10px 16px;
+  max-width: min(30vw, 320px);
+  min-width: 100px;
+}
+.markdown-table-scroll th {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+  font-weight: 600;
+}
 .markdown-table-scroll td {
-  max-width: 420px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+.markdown-table-scroll :where(th, td):first-child {
+  padding-left: 0;
+}
+.markdown-table-scroll td:last-child {
+  padding-right: 0;
+}
+.markdown-table-scroll table code {
+  font-size: 11px;
+}
+.markdown-image-alt {
+  color: var(--dsw-alias-label-tertiary);
+  font-style: italic;
 }

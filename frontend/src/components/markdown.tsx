@@ -1,28 +1,6 @@
 import { marked, type Token } from 'marked';
 import { memo, type ReactNode } from 'react';
-import { copyText } from '../lib/api';
-import { sessionStore } from '../state/session-store';
-import { Icon } from './primitives';
-import { tokenStyle, useCodeTokens } from '../lib/code-highlighter';
-function CodeText({ code, language }: { code: string; language?: string }) {
-  const lines = useCodeTokens(code, language);
-  return (
-    <code>
-      {lines
-        ? lines.map((line, i) => (
-            <span key={i}>
-              {i > 0 && '\n'}
-              {line.map((token, j) => (
-                <span key={j} style={tokenStyle(token)}>
-                  {token.content}
-                </span>
-              ))}
-            </span>
-          ))
-        : code}
-    </code>
-  );
-}
+import { MarkdownCode } from './markdown-code';
 const safeHref = (href: string) =>
   /^(https?:|mailto:)/i.test(href) ? href : undefined;
 function tokens(items: Token[] = []): ReactNode[] {
@@ -32,6 +10,7 @@ function tokens(items: Token[] = []): ReactNode[] {
       items?: { tokens: Token[]; checked?: boolean }[];
       header?: { tokens: Token[] }[];
       rows?: { tokens: Token[] }[][];
+      align?: ('left' | 'center' | 'right' | null)[];
       href?: string;
       text?: string;
       lang?: string;
@@ -88,9 +67,8 @@ function tokens(items: Token[] = []): ReactNode[] {
         break;
       case 'image':
         node = (
-          <span>
-            {t.text || '图片'}
-            {t.href ? ' · ' + t.href : ''}
+          <span className="markdown-image-alt" title={t.href}>
+            图片无法预览 · {t.text || '图片'}
           </span>
         );
         break;
@@ -99,42 +77,46 @@ function tokens(items: Token[] = []): ReactNode[] {
         node = (
           <Tag start={t.start}>
             {t.items?.map((item, i) => (
-              <li key={i}>{tokens(item.tokens)}</li>
+              <li key={i}>
+                {typeof item.checked === 'boolean' && (
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    readOnly
+                    aria-label={item.checked ? '已完成' : '未完成'}
+                  />
+                )}
+                {tokens(item.tokens)}
+              </li>
             ))}
           </Tag>
         );
         break;
       }
       case 'code':
-        node = (
-          <div className="markdown-code">
-            <div className="markdown-code-header">
-              <span>{t.lang || '代码'}</span>
-              <button
-                onClick={() =>
-                  void copyText(t.text || '')
-                    .then(() => sessionStore.notify('已复制代码。'))
-                    .catch((error) => sessionStore.notify(String(error)))
-                }
-              >
-                <Icon name="copy" />
-                复制
-              </button>
-            </div>
-            <pre>
-              <CodeText code={t.text || ''} language={t.lang} />
-            </pre>
-          </div>
-        );
+        node = <MarkdownCode code={t.text || ''} language={t.lang} />;
         break;
       case 'table':
         node = (
-          <div className="markdown-table-scroll">
+          <div
+            className={
+              'markdown-table-scroll' +
+              ((t.header?.length || 0) >= 4
+                ? ' md-table-wide'
+                : ' md-table-fill')
+            }
+            tabIndex={0}
+          >
             <table>
               <thead>
                 <tr>
                   {t.header?.map((cell, i) => (
-                    <th key={i}>{tokens(cell.tokens)}</th>
+                    <th
+                      key={i}
+                      style={{ textAlign: t.align?.[i] || undefined }}
+                    >
+                      {tokens(cell.tokens)}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -142,7 +124,12 @@ function tokens(items: Token[] = []): ReactNode[] {
                 {t.rows?.map((row, i) => (
                   <tr key={i}>
                     {row.map((cell, j) => (
-                      <td key={j}>{tokens(cell.tokens)}</td>
+                      <td
+                        key={j}
+                        style={{ textAlign: t.align?.[j] || undefined }}
+                      >
+                        {tokens(cell.tokens)}
+                      </td>
                     ))}
                   </tr>
                 ))}

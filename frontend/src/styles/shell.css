@@ -18,6 +18,8 @@ body {
 }
 body {
   font: 14px/1.45 var(--dsw-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   color: var(--dsw-alias-label-primary);
 }
 button,

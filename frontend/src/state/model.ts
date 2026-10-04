@@ -108,6 +108,8 @@ export const initialState = (): AppState => ({
     syncSeconds: 3,
     animations: true,
     theme: 'system',
+    chatDetail: 'standard',
+    fontSize: 14,
   },
   settingsOpen: false,
   themePreview: null,

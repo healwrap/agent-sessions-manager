@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { JsonTree } from '../json-tree/json-tree';
 import type { JsonTreeLabels } from '../json-tree/types';
 import { stringWrapping } from '../../lib/string-wrapping';
+import { parseObjectPayload } from '../../lib/object-payload';
 
 const labels: JsonTreeLabels = {
   copyValue: '复制值',
@@ -29,13 +30,10 @@ export function Payload({
   label?: string;
   className?: string;
 }) {
-  const parsed = useMemo(() => {
-    if (raw) return;
-    try {
-      const value: unknown = JSON.parse(text);
-      if (value !== null && typeof value === 'object') return value;
-    } catch {}
-  }, [text, raw]);
+  const parsed = useMemo(
+    () => (raw ? undefined : parseObjectPayload(text)),
+    [text, raw],
+  );
   return parsed === undefined ? (
     <pre>{text}</pre>
   ) : (

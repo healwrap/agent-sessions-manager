@@ -87,7 +87,11 @@ export function JsonString({
         );
       }
       const height = `${Math.max(16, available - 4)}px`;
-      if (raw.style.maxHeight !== height) raw.style.maxHeight = height;
+      if (
+        raw.style.getPropertyValue('--json-tree-measured-string-max-height') !==
+        height
+      )
+        raw.style.setProperty('--json-tree-measured-string-max-height', height);
     };
     measure();
     const observer =

@@ -20,6 +20,10 @@
 
 .json-tree-root pre.json-tree-stringRaw {
   margin: 4px 0 0 12px;
+  max-height: var(
+    --json-tree-expanded-string-max-height,
+    var(--json-tree-measured-string-max-height, none)
+  );
   overflow: auto;
   color: var(--dsw-alias-label-primary);
   font: inherit;

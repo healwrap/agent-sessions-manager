@@ -124,28 +124,6 @@
 .record-attachments:empty {
   display: none;
 }
-.thinking-disclosure {
-  border-left: 2px solid var(--dsw-alias-border-l2);
-  padding-left: 10px;
-  margin-bottom: 14px;
-}
-.thinking-toggle {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  border: 0;
-  color: var(--dsw-alias-label-tertiary);
-  background: transparent;
-  cursor: pointer;
-  font: var(--dsw-font-xs-13);
-  gap: 3px;
-}
-.thinking-chevron {
-  transition: transform 120ms var(--ds-ease-in-out);
-}
-.thinking-toggle[aria-expanded='true'] .thinking-chevron {
-  transform: rotate(90deg);
-}
 .assistant-tool-calls {
   margin: 8px 0;
   padding: 0;
@@ -192,9 +170,8 @@
   font: var(--dsw-font-xs-13);
 }
 
-.message-preview .thinking-disclosure {
-  border-left: 0;
-  padding-left: 0;
+.message-preview:has(> .assistant-content) {
+  padding: 0;
 }
 
 .requestTokenDetail dt,

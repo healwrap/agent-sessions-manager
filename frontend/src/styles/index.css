@@ -8,11 +8,13 @@
 @import './sidebar-projects.css' layer(components);
 @import './dialogs.css' layer(components);
 @import './markdown.css' layer(components);
+@import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);
 @import './chat-process.css' layer(components);
 @import './chat-terminal.css' layer(components);
 @import './dsh/image-lightbox.css' layer(components);
 @import './trajectory.css' layer(components);
+@import './dsh/thinking.css' layer(components);
 @import './dsh/tooltip.css' layer(components);
 @import './dsh/json-layout.css' layer(components);
 @import './dsh/json-strings.css' layer(components);

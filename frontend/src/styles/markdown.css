@@ -108,11 +108,11 @@
   padding: 2px 4px;
   border-radius: 4px;
 }
-.markdown-body > span:first-child > *:first-child,
+.markdown-body > *:first-child,
 .markdown-body p:first-child {
   margin-top: 0;
 }
-.markdown-body > span:last-child > *:last-child,
+.markdown-body > *:last-child,
 .markdown-body p:last-child {
   margin-bottom: 0;
 }

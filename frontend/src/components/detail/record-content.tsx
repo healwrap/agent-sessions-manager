@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { Detail } from '../../lib/types';
 import { Payload } from './payload';
-import { Markdown } from '../markdown';
 import { RecordMarkdown } from '../record-markdown';
 import { sessionStore } from '../../state/session-store';
 import { Icon } from '../primitives';
@@ -18,7 +17,15 @@ export function RecordContent({
   raw?: boolean;
   preview?: boolean;
 }) {
-  const [thinkingExpanded, setThinkingExpanded] = useState(true);
+  const recordKey = `${id}:${detail.event.ref}`;
+  const [thinkingDisclosure, setThinkingDisclosure] = useState<{
+    recordKey: string;
+    expanded: boolean;
+  } | null>(null);
+  const thinkingExpanded =
+    thinkingDisclosure?.recordKey === recordKey
+      ? thinkingDisclosure.expanded
+      : true;
   if (raw)
     return detail.source_blocks?.length ? (
       <SourceBlocks detail={detail} />
@@ -30,22 +37,45 @@ export function RecordContent({
   return (
     <>
       {assistant ? (
-        <>
+        <div className="assistant-content">
           {detail.thinking_text && (
-            <div className="thinking-disclosure">
+            <div
+              className="thinking-disclosure"
+              data-only-preview={(preview && !detail.output_text) || undefined}
+            >
               <button
                 type="button"
                 className="thinking-toggle"
                 aria-expanded={thinkingExpanded}
-                onClick={() => setThinkingExpanded(!thinkingExpanded)}
+                onClick={() =>
+                  setThinkingDisclosure({
+                    recordKey,
+                    expanded: !thinkingExpanded,
+                  })
+                }
               >
-                思考 <Icon name="chevron" className="thinking-chevron" />
+                思考 <Icon name="right" className="thinking-chevron" />
               </button>
-              {thinkingExpanded && <Markdown text={detail.thinking_text} />}
+              {thinkingExpanded && (
+                <div className="thinking-content">
+                  <RecordMarkdown
+                    text={detail.thinking_text}
+                    detail={detail}
+                    id={id}
+                    variant="compact"
+                  />
+                </div>
+              )}
             </div>
           )}
           {detail.output_text && (
-            <RecordMarkdown text={detail.output_text} detail={detail} id={id} />
+            <div className="assistant-output">
+              <RecordMarkdown
+                text={detail.output_text}
+                detail={detail}
+                id={id}
+              />
+            </div>
           )}
           {!detail.thinking_text &&
             !detail.output_text &&
@@ -71,13 +101,13 @@ export function RecordContent({
                     <span className="assistant-tool-arguments">
                       {call.preview}
                     </span>
-                    {call.ref && <Icon name="chevron" />}
+                    {call.ref && <Icon name="right" />}
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </>
+        </div>
       ) : ['tool', 'subtool'].includes(detail.event.kind) ? (
         <Payload
           text={detail.text}

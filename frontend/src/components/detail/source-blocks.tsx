@@ -28,7 +28,7 @@ function Block({ block, index }: { block: SourceBlock; index: number }) {
           onClick={() => void sessionStore.selectEvent(block.ref!, true)}
         >
           <span className="source-block-label">{label}</span>
-          <Icon name="chevron" />
+          <Icon name="right" />
         </button>
       ) : (
         <div className="source-block-heading">

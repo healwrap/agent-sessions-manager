@@ -1,5 +1,5 @@
 import { marked, type Token } from 'marked';
-import { memo, type ReactNode } from 'react';
+import { Fragment, memo, type ReactNode } from 'react';
 import { MarkdownCode } from './markdown-code';
 import { MarkdownImage } from './markdown-image';
 type Images = { href: string; src: string }[];
@@ -151,21 +151,24 @@ function tokens(
       default:
         node = t.text || t.raw;
     }
-    return (
-      <span key={index} style={{ display: 'contents' }}>
-        {node}
-      </span>
-    );
+    return <Fragment key={index}>{node}</Fragment>;
   });
 }
 export const Markdown = memo(function Markdown({
   text,
   images,
+  variant = 'body',
 }: {
   text: string;
   images?: Images;
+  variant?: 'body' | 'compact';
 }) {
   return (
-    <div className="markdown-body">{tokens(marked.lexer(text), images)}</div>
+    <div
+      className="markdown-body"
+      data-markdown-variant={variant === 'compact' ? variant : undefined}
+    >
+      {tokens(marked.lexer(text), images)}
+    </div>
   );
 });

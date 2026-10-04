@@ -6,10 +6,12 @@ export function RecordMarkdown({
   text,
   detail,
   id,
+  variant,
 }: {
   text: string;
   detail: Detail | null;
   id: string;
+  variant?: 'body' | 'compact';
 }) {
   const images = detail?.inline_images?.map(({ href, page }) => ({
     href,
@@ -23,5 +25,5 @@ export function RecordMarkdown({
         href,
       }),
   }));
-  return <Markdown text={text} images={images} />;
+  return <Markdown text={text} images={images} variant={variant} />;
 }

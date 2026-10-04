@@ -45,7 +45,7 @@ export function ReasoningRow({
       </button>
       {open && (
         <div className="chat-reasoning-body">
-          <Markdown text={text} />
+          <Markdown text={text} variant="compact" />
         </div>
       )}
     </div>

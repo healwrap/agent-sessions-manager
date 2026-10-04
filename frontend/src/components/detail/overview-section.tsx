@@ -46,7 +46,7 @@ export function OverviewSection({
       <h3 className="overview-heading">
         <button type="button" className="overview-title" onClick={onOpen}>
           <span>{label}</span>
-          <Icon name="chevron" className="overview-title-icon" />
+          <Icon name="right" className="overview-title-icon" />
         </button>
         {actions}
       </h3>

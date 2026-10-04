@@ -1,0 +1,79 @@
+/* Harness MarkdownText compact variant, MIT; shared by all reasoning records. */
+.markdown-body[data-markdown-variant='compact'] {
+  max-width: 100%;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px));
+  color: var(--dsw-alias-label-tertiary);
+}
+.markdown-body[data-markdown-variant='compact'] :is(h1, h2, h3, h4, h5, h6) {
+  margin: 8px 0 4px;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+}
+.markdown-body[data-markdown-variant='compact'] :is(p, ul, ol, blockquote) {
+  margin: 4px 0;
+}
+.markdown-body[data-markdown-variant='compact'] li:not(:first-child) {
+  margin-top: 2px;
+}
+.markdown-body[data-markdown-variant='compact'] li > p {
+  margin: 4px 0;
+}
+.markdown-body[data-markdown-variant='compact'] li::marker {
+  line-height: inherit;
+  color: inherit;
+}
+.markdown-body[data-markdown-variant='compact'] blockquote {
+  padding-left: 8px;
+}
+.markdown-body[data-markdown-variant='compact'] hr {
+  margin: 8px 0;
+}
+.markdown-body[data-markdown-variant='compact'] a {
+  font-weight: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+}
+.markdown-body[data-markdown-variant='compact'] :not(pre) > code {
+  display: inline;
+  font: inherit;
+  font-family: var(--ds-font-family-code);
+  font-size: 1em;
+  border-radius: var(--dsw-radius-xs);
+  padding: 0 3px;
+  box-decoration-break: clone;
+}
+.markdown-body[data-markdown-variant='compact'] .markdown-code {
+  margin: 4px 0;
+  color: inherit;
+}
+.markdown-body[data-markdown-variant='compact'] .markdown-code-header {
+  position: static;
+  color: inherit;
+}
+.markdown-body[data-markdown-variant='compact'] pre,
+.markdown-body[data-markdown-variant='compact'] pre :is(code, span) {
+  color: inherit !important;
+}
+.markdown-body[data-markdown-variant='compact'] .markdown-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  margin: 4px 0;
+  padding-left: 0;
+}
+.markdown-body[data-markdown-variant='compact'] :is(th, td) {
+  padding: 4px 8px;
+  font: inherit;
+}
+.markdown-body[data-markdown-variant='compact'] th {
+  font-weight: 600;
+}
+.markdown-body[data-markdown-variant='compact'] > *:first-child,
+.markdown-body[data-markdown-variant='compact'] p:first-child {
+  margin-top: 0;
+}
+.markdown-body[data-markdown-variant='compact'] > *:last-child,
+.markdown-body[data-markdown-variant='compact'] p:last-child {
+  margin-bottom: 0;
+}

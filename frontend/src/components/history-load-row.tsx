@@ -9,7 +9,7 @@ export function HistoryLoadRow({
   active: boolean;
 }) {
   return (
-    <tr data-history-load="true">
+    <tr data-history-load={direction}>
       <td colSpan={2}>
         <button
           type="button"

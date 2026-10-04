@@ -132,6 +132,7 @@ export function ChatPane({ state }: { state: AppState }) {
             {view.offset > 0 && (
               <button
                 className="chat-history-load"
+                data-history-load="before"
                 disabled={view.loading}
                 onClick={() => void sessionStore.loadTrace(false, 'before')}
               >
@@ -150,6 +151,7 @@ export function ChatPane({ state }: { state: AppState }) {
             {view.next !== null && (
               <button
                 className="chat-history-load"
+                data-history-load="after"
                 disabled={view.loading}
                 onClick={() => void sessionStore.loadTrace(false, 'after')}
               >

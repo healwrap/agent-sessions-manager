@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { sessionStore, type View } from '../state/session-store';
 import { ScrollPosition } from '../lib/scroll-position';
+import { useHistoryAutofill } from './use-history-autofill';
 
 export function useHistoryScroll(
   ref: RefObject<HTMLElement | null>,
@@ -139,4 +140,6 @@ export function useHistoryScroll(
       pane.removeEventListener('keydown', scroll.pauseOnUpwardKey);
     };
   }, [active, id, mode, ref]);
+
+  useHistoryAutofill(ref, view, mode, active, id);
 }

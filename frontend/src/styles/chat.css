@@ -20,13 +20,15 @@
   min-height: 0;
   overflow-y: auto;
   flex: 1;
-  padding: 16px 32px;
+  padding: 0 32px;
   scrollbar-gutter: stable;
 }
+/* Keep vertical spacing on content so sticky headings meet the scroll edge. */
 .chat-messages {
   max-width: var(--dsh-chat-content-width);
   width: 100%;
   margin: 0 auto;
+  padding: 16px 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -258,7 +260,7 @@
 }
 @media (max-width: 700px) {
   .chat-pane {
-    padding: 16px;
+    padding: 0 16px;
   }
   .chat-user-stack {
     max-width: 90%;

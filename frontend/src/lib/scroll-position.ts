@@ -13,6 +13,7 @@ export class ScrollPosition {
   following = false;
   private anchor: { node: HTMLElement; key: string; offset: number } | null =
     null;
+  private disclosure: { node: HTMLElement; offset: number } | null = null;
 
   constructor(readonly pane: HTMLElement) {}
 
@@ -24,6 +25,33 @@ export class ScrollPosition {
     const target = Math.max(0, Math.min(top, this.maximum));
     if (Math.abs(this.pane.scrollTop - target) > 0.5)
       this.pane.scrollTop = target;
+  }
+
+  holdDisclosure(node: HTMLElement) {
+    this.following = false;
+    this.disclosure = {
+      node,
+      offset:
+        node.getBoundingClientRect().top -
+        this.pane.getBoundingClientRect().top -
+        this.pane.clientTop,
+    };
+  }
+
+  releaseDisclosure() {
+    this.disclosure = null;
+  }
+
+  restoreDisclosure() {
+    const anchor = this.disclosure;
+    this.releaseDisclosure();
+    if (!anchor || !this.pane.contains(anchor.node)) return false;
+    const offset =
+      anchor.node.getBoundingClientRect().top -
+      this.pane.getBoundingClientRect().top -
+      this.pane.clientTop;
+    this.move(this.pane.scrollTop + offset - anchor.offset);
+    return true;
   }
 
   capture() {
@@ -50,6 +78,7 @@ export class ScrollPosition {
   }
 
   restore() {
+    if (this.restoreDisclosure()) return;
     const pane = this.pane,
       anchor = this.anchor;
     const node =
@@ -69,6 +98,8 @@ export class ScrollPosition {
   }
 
   trackScroll() {
+    // Shrinking content can clamp scrollTop before our resize compensation.
+    if (this.disclosure) return 0;
     const top = Math.max(0, Math.min(this.pane.scrollTop, this.maximum));
     const direction = Math.sign(top - this.top);
     if (direction < 0) this.following = false;

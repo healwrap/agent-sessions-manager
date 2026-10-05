@@ -85,6 +85,22 @@ export function useHistoryScroll(
     const scroll = position.current;
     if (!scroll) return;
     const pane = scroll.pane;
+    let disclosureFrame = 0;
+    const onDisclosureClick = (event: MouseEvent) => {
+      if (mode !== 'chat' || !(event.target instanceof Element)) return;
+      const button = event.target.closest<HTMLButtonElement>(
+        'button.chat-disclosure[aria-expanded="true"], button.chat-process-summary[aria-expanded="true"]',
+      );
+      if (!button || button.disabled || !pane.contains(button)) return;
+      // Read the sticky heading before React removes its expanded content.
+      scroll.holdDisclosure(button);
+      cancelAnimationFrame(disclosureFrame);
+      disclosureFrame = requestAnimationFrame(() => {
+        scroll.restoreDisclosure();
+        scroll.capture();
+        sessionStore.rememberScroll(mode, scroll.top);
+      });
+    };
     const loadAtEdge = (direction: number) => {
       const latest = sessionStore.state.views[mode];
       if (latest.loading) return;
@@ -133,11 +149,15 @@ export function useHistoryScroll(
       passive: true,
     });
     pane.addEventListener('keydown', scroll.pauseOnUpwardKey);
+    pane.addEventListener('click', onDisclosureClick, true);
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(disclosureFrame);
+      scroll.releaseDisclosure();
       pane.removeEventListener('scroll', onScroll);
       pane.removeEventListener('wheel', onWheel);
       pane.removeEventListener('keydown', scroll.pauseOnUpwardKey);
+      pane.removeEventListener('click', onDisclosureClick, true);
     };
   }, [active, id, mode, ref]);
 

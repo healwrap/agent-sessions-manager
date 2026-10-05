@@ -223,13 +223,9 @@
   flex: none;
   width: var(--detail-width);
   max-width: calc(100% - 280px);
-  /* Release the layout only after the inspector has slid out. */
-  transition: width 0s 180ms;
-}
-.detail-slot[data-open='true'] {
-  transition-delay: 0s;
 }
 .detail-slot[data-open='false'] {
+  /* Expand the table underneath the outgoing inspector, leaving no gap. */
   width: 0;
 }
 .detail-slot .details {
@@ -238,13 +234,10 @@
   width: var(--detail-width);
   overflow: hidden;
   z-index: 2;
-  transition:
-    transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    opacity 140ms ease;
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .detail-slot[data-open='false'] .details {
   transform: translateX(100%);
-  opacity: 0;
   pointer-events: none;
 }
 @media (max-width: 700px) {

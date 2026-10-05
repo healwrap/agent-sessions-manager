@@ -56,14 +56,16 @@ export function AssistantProcess({
   event,
   id,
   reasoningOnly = false,
+  outputOnly = false,
   preview = true,
 }: {
   event: Event;
   id: string;
   reasoningOnly?: boolean;
+  outputOnly?: boolean;
   preview?: boolean;
 }) {
-  const record = useRecord(id, event),
+  const record = useRecord(id, event, undefined, true, undefined, outputOnly),
     { detail } = record;
   const thinking =
     detail?.thinking_text ??
@@ -72,8 +74,12 @@ export function AssistantProcess({
     detail?.output_text ??
     (event.phase === 'reasoning' ? '' : detail?.text || event.preview);
   return (
-    <div ref={record.ref} className="chat-process-message">
-      {thinking && (
+    <div
+      ref={record.ref}
+      className="chat-process-message"
+      data-chat-group-part={outputOnly ? 'response' : 'reasoning'}
+    >
+      {!outputOnly && thinking && (
         <ReasoningRow
           text={thinking}
           identity={`${id}:reasoning:${event.ref}`}

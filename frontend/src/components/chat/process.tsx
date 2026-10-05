@@ -1,9 +1,10 @@
 import type { Event, Settings } from '../../lib/types';
 import { Icon } from '../primitives';
-import { AssistantProcess, ToolProcess } from './process-record';
+import { AssistantProcess } from './process-record';
 import { useDisclosure } from './use-disclosure';
 import { turnTitle } from './process-title';
 import { ProcessGroup } from './process-group';
+import { processSegments } from './process-segments';
 
 export function ProcessSummary({
   events,
@@ -49,45 +50,8 @@ export function Process({
     live || state === 'aborted' || state === 'error' || mode === 'verbose';
   const [open, toggle] = useDisclosure(`${id}:process:${evidence[0].ref}`);
   const preview = mode !== 'compact';
-  const rows = events
-    .filter((event) => event.kind !== 'subtool')
-    .map((event) =>
-      event.kind === 'assistant' ? (
-        <AssistantProcess
-          key={event.ref}
-          event={event}
-          id={id}
-          preview={preview}
-        />
-      ) : (
-        <ToolProcess key={event.ref} event={event} id={id} />
-      ),
-    );
-  if (reasoningEvent)
-    rows.push(
-      <AssistantProcess
-        key={reasoningEvent.ref}
-        event={reasoningEvent}
-        id={id}
-        reasoningOnly
-        preview={preview}
-      />,
-    );
   const expanded = open || alwaysOpen || !summary;
-  const groups: Event[][] = [];
-  for (const event of events) {
-    const last = groups.at(-1);
-    const request = event.request_number ?? event.step;
-    if (
-      mode === 'detailed' &&
-      last &&
-      request !== (last[0].request_number ?? last[0].step)
-    )
-      groups.push([event]);
-    else if (last) last.push(event);
-    else groups.push([event]);
-  }
-  if (!groups.length && reasoningEvent) groups.push([]);
+  const segments = processSegments(events, reasoningEvent);
   return (
     <div className="chat-process" data-scroll-anchor={evidence[0].ref}>
       {!live && summary && (
@@ -100,21 +64,26 @@ export function Process({
       )}
       {expanded && (
         <div className="chat-process-body">
-          {mode === 'verbose'
-            ? rows
-            : groups.map((group, index) => (
-                <ProcessGroup
-                  key={group[0]?.ref || reasoningEvent!.ref}
-                  events={group}
-                  id={id}
-                  preview={preview}
-                  liveDetail={mode !== 'compact'}
-                  live={live && index === groups.length - 1}
-                  reasoningEvent={
-                    index === groups.length - 1 ? reasoningEvent : undefined
-                  }
-                />
-              ))}
+          {segments.map((segment, index) =>
+            segment.kind === 'response' ? (
+              <AssistantProcess
+                key={`${segment.event.ref}:response`}
+                event={segment.event}
+                id={id}
+                outputOnly
+              />
+            ) : (
+              <ProcessGroup
+                key={`${segment.events[0].ref}:group`}
+                events={segment.events}
+                id={id}
+                preview={preview}
+                grouped={mode !== 'verbose' && !(mode === 'detailed' && live)}
+                liveDetail={mode === 'standard' || mode === 'detailed'}
+                live={live && index === segments.length - 1}
+              />
+            ),
+          )}
         </div>
       )}
     </div>

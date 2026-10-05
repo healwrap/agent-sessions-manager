@@ -41,7 +41,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-top: 6px;
+  padding-top: 16px;
+}
+.chat-process-body > [data-chat-group-part='response'],
+.chat-process-body > [data-chat-group-part='response'] + * {
+  margin-top: 6px;
 }
 .chat-disclosure {
   display: flex;
@@ -91,23 +95,70 @@
 }
 .chat-process-group > .chat-disclosure {
   font-size: var(--dsh-content-font-size, 14px);
+  color: var(--dsw-alias-label-tertiary);
+  gap: 6px;
+}
+.chat-process-group > .chat-disclosure[aria-expanded='true'] {
+  padding-bottom: 8px;
+}
+.chat-process-leading {
+  position: relative;
+  flex: none;
+  width: calc(16px + var(--dsh-content-font-delta, 0px));
+  height: calc(16px + var(--dsh-content-font-delta, 0px));
+}
+.chat-process-leading > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 100ms;
+}
+.chat-process-toggle {
+  opacity: 0;
+}
+.chat-process-group
+  > .chat-disclosure:is(:hover, :focus-visible, [aria-expanded='true'])
+  .chat-process-activity {
+  opacity: 0;
+}
+.chat-process-group
+  > .chat-disclosure:is(:hover, :focus-visible, [aria-expanded='true'])
+  .chat-process-toggle {
+  opacity: 1;
 }
 .chat-process-group-body {
   max-height: min(400px, 50vh);
   overflow-y: auto;
   scrollbar-gutter: stable;
-  margin-top: 4px;
   overscroll-behavior-y: auto;
+}
+.chat-process-group[data-group-expanded-mode] > .chat-process-group-body {
+  max-height: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
 }
 .chat-process-group-content {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.chat-process-message > .markdown-body {
+.chat-process-message[data-chat-group-part='reasoning'] > .markdown-body {
   font-size: var(--dsh-content-font-size-secondary, 13px);
   line-height: calc(20px + var(--dsh-content-font-delta, 0px));
   color: var(--dsw-alias-label-secondary);
+}
+.chat-process-message[data-chat-group-part='response'] > .markdown-body {
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsh-content-font-size, 14px)/calc(
+      24px + var(--dsh-content-font-delta, 0px)
+    )
+    var(--dsw-font-family);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-process-leading > svg {
+    transition: none;
+  }
 }
 .chat-reasoning-body {
   margin-left: 22px;

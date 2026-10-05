@@ -11,6 +11,7 @@ const names: Record<string, string> = {
   write: 'write',
   write_file: 'write',
   edit: 'edit',
+  edit_file: 'edit',
   apply_patch: 'edit',
   bash: 'commands',
   pwsh: 'commands',
@@ -61,6 +62,7 @@ const toolTitles: Record<string, string> = {
   write: '写入',
   write_file: '写入文件',
   edit: '编辑',
+  edit_file: '编辑文件',
   apply_patch: '编辑文件',
   grep: '搜索',
   glob: '搜索',
@@ -70,11 +72,28 @@ const toolTitles: Record<string, string> = {
   run_code: '代码',
   exec: '运行代码',
 };
-export function toolTitle(event: Event) {
+function toolName(event: Event) {
+  return (event.name.split('__').at(-1) || event.name)
+    .split('.')
+    .at(-1)!
+    .toLowerCase()
+    .replace(/_v\d+$/, '');
+}
+function activity(event: Event) {
+  const name = toolName(event);
   return (
-    toolTitles[(event.name.split('__').at(-1) || event.name).toLowerCase()] ||
-    '工具调用'
+    names[name] ||
+    (/^terminal_/.test(name)
+      ? 'commands'
+      : /^subagent_/.test(name)
+        ? 'subagents'
+        : /_inspect$/.test(name)
+          ? 'search'
+          : 'tools')
   );
+}
+export function toolTitle(event: Event) {
+  return toolTitles[toolName(event)] || '工具调用';
 }
 export function toolSummary(event: Event) {
   const summary =
@@ -89,16 +108,7 @@ function activities(events: Event[]) {
   const counts = new Map<string, number>();
   for (const event of events) {
     if (!['tool', 'subtool'].includes(event.kind)) continue;
-    const name = (event.name.split('__').at(-1) || event.name).toLowerCase();
-    const kind =
-      names[name] ||
-      (/^terminal_/.test(name)
-        ? 'commands'
-        : /^subagent_/.test(name)
-          ? 'subagents'
-          : /_inspect$/.test(name)
-            ? 'search'
-            : 'tools');
+    const kind = activity(event);
     counts.set(kind, (counts.get(kind) || 0) + 1);
   }
   return [...counts].sort((a, b) => b[1] - a[1]);
@@ -137,8 +147,7 @@ export function activityTitle(events: Event[]) {
 export function liveActivityTitle(events: Event[]) {
   const last = events.at(-1);
   if (!last || last.kind === 'assistant') return '正在分析';
-  const kind =
-    names[(last.name.split('__').at(-1) || last.name).toLowerCase()] || 'tools';
+  const kind = activity(last);
   return (
     {
       read: '正在读取文件',
@@ -160,19 +169,17 @@ export function liveActivityTitle(events: Event[]) {
 export function turnTitle(events: Event[]) {
   const state = events.find((event) => event.turn_status)?.turn_status;
   const label =
-    state === 'aborted' ? '已停止' : state === 'error' ? '执行失败' : '已完成';
+    state === 'aborted' ? '已停止' : state === 'error' ? '处理失败' : '已完成';
   const ms = events.find((event) =>
     Number.isFinite(event.turn_duration_ms),
   )?.turn_duration_ms;
-  if (ms == null) return label;
+  if (ms == null || state === 'aborted' || state === 'error') return label;
   const seconds = Math.max(1, Math.floor(ms / 1000));
   const duration =
     seconds >= 3600
-      ? `${Math.floor(seconds / 3600)}小时 ${Math.floor((seconds % 3600) / 60)}分钟 ${seconds % 60}秒`
+      ? `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分${seconds % 60}秒`
       : seconds >= 60
-        ? `${Math.floor(seconds / 60)}分钟 ${seconds % 60}秒`
+        ? `${Math.floor(seconds / 60)}分${seconds % 60}秒`
         : `${seconds}秒`;
-  return state === 'completed'
-    ? `用时 ${duration}`
-    : `${label}，用时 ${duration}`;
+  return `${label}，用时 ${duration}`;
 }

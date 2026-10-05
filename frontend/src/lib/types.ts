@@ -165,6 +165,7 @@ export interface Detail {
     cwd: string | null;
     description: string | null;
     exit_markers: boolean;
+    result_format?: 'command-json';
   };
   code_program?: CodeProgram;
   part?: string;

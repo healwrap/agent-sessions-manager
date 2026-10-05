@@ -2,10 +2,11 @@
 import json
 import ntpath
 import posixpath
+import re
 
 # Tool protocols, never Agent identity. Unknown or partial input stays generic.
 COMMAND_FIELDS = {
-    'bash': 'command', 'pwsh': 'command', 'Bash': 'command',
+    'bash': 'command', 'pwsh': 'command',
     'exec_command': 'cmd', 'run_command': 'CommandLine',
     'run_terminal_cmd': 'command', 'run_terminal_command': 'command',
 }
@@ -14,7 +15,7 @@ COMMAND_FIELDS = {
 def terminal_input(detail, session_cwd=''):
     session_cwd = session_cwd if isinstance(session_cwd, str) else ''
     event = detail['event']
-    name = event['name'].split('__')[-1]
+    name = re.sub(r'_v\d+$', '', event['name'].split('__')[-1].split('.')[-1].lower())
     field = COMMAND_FIELDS.get(name)
     if (not field or event['kind'] not in ('tool', 'subtool') or
             detail.get('part', 'input') != 'input' or detail.get('pages') != 1 or
@@ -39,7 +40,8 @@ def terminal_input(detail, session_cwd=''):
         cwd = paths.normpath(cwd)
     else:
         cwd = None
-    description = next((args[k] for k in ('description', 'toolAction', 'toolSummary')
+    description = next((args[k] for k in ('description', 'commandDescription', 'toolAction', 'toolSummary')
                         if isinstance(args.get(k), str) and args[k].strip()), None)
     return {'command': command, 'cwd': cwd, 'description': description,
-            'exit_markers': name in ('bash', 'pwsh') and isinstance(args.get('description'), str)}
+            'exit_markers': name in ('bash', 'pwsh') and isinstance(args.get('description'), str),
+            **({'result_format': 'command-json'} if name == 'run_terminal_command' else {})}

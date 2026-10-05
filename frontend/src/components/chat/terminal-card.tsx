@@ -5,7 +5,22 @@ import { sessionStore } from '../../state/session-store';
 import { RecordPages, useRecord } from './use-record';
 import { useFollowOutput } from '../../hooks/use-follow-output';
 
-function resultBody(text: string, markers: boolean) {
+function resultBody(text: string, markers: boolean, structured: boolean) {
+  if (structured) {
+    try {
+      const result = JSON.parse(text);
+      if (result && typeof result.output === 'string')
+        return {
+          text: result.output,
+          status:
+            typeof result.exitCode === 'number' && result.exitCode !== 0
+              ? `退出码 ${result.exitCode}`
+              : '',
+        };
+    } catch {
+      // Partial pages and unsupported envelopes keep their recorded content.
+    }
+  }
   if (!markers) return { text, status: '' };
   const signal = /\n\[killed by signal: ([^\]\n]+)\]$/.exec(text);
   if (signal)
@@ -43,6 +58,8 @@ export function TerminalCard({
   const result = resultBody(
     text,
     terminal.exit_markers && output.detail?.page === output.detail?.pages,
+    terminal.result_format === 'command-json' &&
+      output.detail?.page === output.detail?.pages,
   );
   const running = ['running', 'in_progress'].includes(event.status);
   const outputPane = useRef<HTMLDivElement>(null);

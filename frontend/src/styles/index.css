@@ -10,6 +10,7 @@
 @import './markdown.css' layer(components);
 @import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);
+@import './chat-disclosure.css' layer(components);
 @import './chat-process.css' layer(components);
 @import './chat-terminal.css' layer(components);
 @import './dsh/image-lightbox.css' layer(components);

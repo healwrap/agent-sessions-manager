@@ -3,7 +3,7 @@ import base64
 import hashlib
 import json
 from .base import as_text, read_row
-from .common import PAGE_CHARS
+from .common import assistant_page
 from agent_sessions.context.text import compact_line
 
 
@@ -51,11 +51,7 @@ def enrich_detail(store, key, result):
     fields = {'attachments': attachments(blocks)}
     if event['kind'] == 'assistant':
         thinking = message_text(blocks, 'thinking'); output = as_text(blocks)
-        start = (result['page']-1)*PAGE_CHARS; end = result['page']*PAGE_CHARS
-        shift = len(thinking)+2 if thinking and output else 0
-        fields.update(thinking_text=thinking[start:end],
-                      output_text=output[max(0, start-shift):max(0, end-shift)],
-                      output_page=shift//PAGE_CHARS+1 if output else None)
+        fields.update(assistant_page(thinking, output, result['page']))
         fields['tool_calls'] = [{'ref': e['ref'], 'name': e['name'], 'preview': e['preview']}
                                for e in data['events'] if e['kind'] == 'tool' and e.get('parent_ref') == event['ref']]
     if result['part'] == 'raw' and event['kind'] in ('user', 'assistant', 'context') and blocks:

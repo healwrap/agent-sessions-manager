@@ -7,11 +7,20 @@ export const RecordSyncContext = createContext<{
   turn?: number;
 }>({ version: null });
 
+type RecordContent = 'all' | 'thinking' | 'output';
+
+function lastPage(detail: Detail, content: RecordContent) {
+  if (content === 'thinking') return detail.thinking_pages ?? detail.pages;
+  if (content === 'output' && detail.output_page === null) return 0;
+  return detail.pages;
+}
+
 function appendPage(detail: Detail, next: Detail): Detail {
   return {
     ...detail,
     page: next.page,
     pages: next.pages,
+    thinking_pages: next.thinking_pages,
     inline_images: [
       ...(detail.inline_images || []),
       ...(next.inline_images || []),
@@ -34,7 +43,7 @@ export function useRecord(
   revision?: string | number | null,
   enabled = true,
   part?: string,
-  preferOutput = false,
+  content: RecordContent = 'all',
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -68,7 +77,7 @@ export function useRecord(
           })
           .then(async (value) => {
             if (
-              preferOutput &&
+              content === 'output' &&
               value.output_text === '' &&
               value.output_page &&
               value.output_page > 1
@@ -80,7 +89,7 @@ export function useRecord(
               });
             for (
               let i = 1;
-              i < loadedPages.current && value.page < value.pages;
+              i < loadedPages.current && value.page < lastPage(value, content);
               i++
             ) {
               if (token !== generation.current) return;
@@ -111,9 +120,9 @@ export function useRecord(
       generation.current++;
       observer.disconnect();
     };
-  }, [id, event.ref, contentVersion, enabled, part, preferOutput]);
+  }, [id, event.ref, contentVersion, enabled, part, content]);
   const loadMore = async () => {
-    if (!detail || busy || detail.page >= detail.pages) return;
+    if (!detail || busy || detail.page >= lastPage(detail, content)) return;
     const token = generation.current;
     setBusy(true);
     try {
@@ -133,7 +142,14 @@ export function useRecord(
       if (token === generation.current) setBusy(false);
     }
   };
-  return { ref, detail, busy, error, loadMore };
+  return {
+    ref,
+    detail,
+    busy,
+    error,
+    loadMore,
+    pages: detail ? lastPage(detail, content) : 0,
+  };
 }
 
 export function RecordPages({
@@ -148,7 +164,7 @@ export function RecordPages({
           {record.error}
         </p>
       )}
-      {record.detail && record.detail.page < record.detail.pages && (
+      {record.detail && record.detail.page < record.pages && (
         <button
           className="chat-expand"
           disabled={record.busy}
@@ -156,7 +172,7 @@ export function RecordPages({
         >
           {record.busy
             ? '正在读取…'
-            : `继续展开（${record.detail.page} / ${record.detail.pages} 页）`}
+            : `继续展开（${record.detail.page} / ${record.pages} 页）`}
         </button>
       )}
     </>

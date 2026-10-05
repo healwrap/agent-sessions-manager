@@ -1,4 +1,5 @@
 import type { Event } from '../../lib/types';
+import type { ReactNode } from 'react';
 import { CodeXml } from 'lucide-react';
 import { sessionStore } from '../../state/session-store';
 import { Markdown } from '../markdown';
@@ -16,10 +17,12 @@ export function ReasoningRow({
   text,
   identity,
   preview = true,
+  children,
 }: {
   text: string;
   identity: string;
   preview?: boolean;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useDisclosure(identity);
   return (
@@ -31,7 +34,7 @@ export function ReasoningRow({
       >
         <Icon name="think" className="chat-disclosure-glyph" />
         <span>思考</span>
-        {!open && preview && (
+        {!open && preview && text && (
           <>
             <i className="chat-summary-dot" />
             <span className="chat-line-preview">
@@ -46,6 +49,7 @@ export function ReasoningRow({
       {open && (
         <div className="chat-reasoning-body">
           <Markdown text={text} variant="compact" />
+          {children}
         </div>
       )}
     </div>
@@ -65,8 +69,15 @@ export function AssistantProcess({
   outputOnly?: boolean;
   preview?: boolean;
 }) {
-  const record = useRecord(id, event, undefined, true, undefined, outputOnly),
-    { detail } = record;
+  const record = useRecord(
+    id,
+    event,
+    undefined,
+    true,
+    undefined,
+    reasoningOnly ? 'thinking' : outputOnly ? 'output' : 'all',
+  );
+  const { detail } = record;
   const thinking =
     detail?.thinking_text ??
     (event.phase === 'reasoning' ? detail?.text || event.preview : '');
@@ -79,12 +90,14 @@ export function AssistantProcess({
       className="chat-process-message"
       data-chat-group-part={outputOnly ? 'response' : 'reasoning'}
     >
-      {!outputOnly && thinking && (
+      {!outputOnly && (thinking || event.has_reasoning) && (
         <ReasoningRow
           text={thinking}
           identity={`${id}:reasoning:${event.ref}`}
           preview={preview}
-        />
+        >
+          {reasoningOnly && <RecordPages record={record} />}
+        </ReasoningRow>
       )}
       {!reasoningOnly && output && output !== '（仅工具调用）' && (
         <RecordMarkdown text={output} detail={detail} id={id} />
@@ -92,7 +105,7 @@ export function AssistantProcess({
       {!reasoningOnly && detail && (
         <AttachmentList detail={detail} id={id} presentation="chat" />
       )}
-      <RecordPages record={record} />
+      {!reasoningOnly && <RecordPages record={record} />}
     </div>
   );
 }

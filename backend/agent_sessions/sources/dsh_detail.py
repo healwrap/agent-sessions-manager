@@ -6,7 +6,7 @@ from .base import read_row, as_text
 from agent_sessions.context.text import compact_line
 from .dsh_metadata import content
 from .program import recorded_program
-from .common import PAGE_CHARS
+from .common import assistant_page
 
 IMAGE_TYPES = {'image/png', 'image/jpeg', 'image/webp', 'image/gif'}
 
@@ -131,11 +131,7 @@ def enrich_detail(store, key, result):
         fields['tool_calls'] = tool_shortcuts(data, event, blocks)
         # Separate disclosures preserve original text without creating two rail cells.
         thinking = content(blocks, 'reasoning'); output = content(blocks, 'text')
-        start = (result['page']-1)*PAGE_CHARS; end = result['page']*PAGE_CHARS
-        fields['thinking_text'] = thinking[start:end]
-        output_start = len(thinking)+2 if thinking and output else 0
-        fields['output_text'] = output[max(0, start-output_start):max(0, end-output_start)]
-        fields['output_page'] = output_start//PAGE_CHARS+1 if output else None
+        fields.update(assistant_page(thinking, output, result['page']))
         fields['retries'] = [read_row(data['source'], r['offset']).get('data', {}) for r in loc.get('retries', [])]
     if result['part'] == 'raw' and event['kind'] in ('user', 'assistant', 'context'):
         blocks = blocks_at(store, data, loc)

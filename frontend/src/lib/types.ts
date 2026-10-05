@@ -178,6 +178,7 @@ export interface Detail {
   tool_schema?: { name: string; description?: string; parameters: unknown };
   request_config?: Record<string, unknown>;
   thinking_text?: string;
+  thinking_pages?: number;
   output_text?: string;
   output_page?: number | null;
   tool_calls?: { ref: string | null; name: string; preview: string }[];

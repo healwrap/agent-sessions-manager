@@ -9,6 +9,16 @@ from .revision import file_revision
 PAGE_CHARS = 7000
 
 
+def assistant_page(thinking, output, page):
+    """Project each visible content part onto the unchanged record page range."""
+    start = (page-1)*PAGE_CHARS; end = page*PAGE_CHARS
+    shift = len(thinking)+2 if thinking and output else 0
+    return {'thinking_text': thinking[start:end],
+            'thinking_pages': (len(thinking)+PAGE_CHARS-1)//PAGE_CHARS,
+            'output_text': output[max(0, start-shift):max(0, end-shift)],
+            'output_page': shift//PAGE_CHARS+1 if output else None}
+
+
 def elapsed(start, end):
     try:
         return max(0, round((datetime.fromisoformat(end.replace('Z', '+00:00')) -

@@ -26,7 +26,7 @@ export function Message({
       revision,
       true,
       undefined,
-      event.kind === 'assistant',
+      event.kind === 'assistant' ? 'output' : 'all',
     ),
     { detail } = record;
   const user = event.kind === 'user' || event.attachment_role === 'user';

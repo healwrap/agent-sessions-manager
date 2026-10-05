@@ -1,6 +1,5 @@
 import type { Event } from '../../lib/types';
-import { useId, useRef } from 'react';
-import { useFollowOutput } from '../../hooks/use-follow-output';
+import { useId } from 'react';
 import { Icon } from '../primitives';
 import { AssistantProcess, ToolProcess } from './process-record';
 import {
@@ -27,10 +26,8 @@ export function ProcessGroup({
 }) {
   const first = events[0];
   const [open, toggle] = useDisclosure(`${id}:group:${first.ref}`);
-  const body = useRef<HTMLDivElement>(null);
   const bodyId = useId();
   const expanded = open || !grouped;
-  useFollowOutput(body, live && expanded, events);
   const title = live ? liveActivityTitle(events) : activityTitle(events);
   const last = events.at(-1);
   const detail =
@@ -38,10 +35,7 @@ export function ProcessGroup({
       ? last?.program_summary || last?.argument_summary || ''
       : '';
   return (
-    <div
-      className="chat-process-group"
-      data-group-expanded-mode={!grouped || undefined}
-    >
+    <div className="chat-process-group">
       {grouped && (
         <button
           className="chat-disclosure"
@@ -63,7 +57,7 @@ export function ProcessGroup({
         </button>
       )}
       {expanded && (
-        <div ref={body} id={bodyId} className="chat-process-group-body">
+        <div id={bodyId} className="chat-process-group-body">
           <div className="chat-process-group-content">
             {events
               .filter((event) => event.kind !== 'subtool')

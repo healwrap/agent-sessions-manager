@@ -82,15 +82,7 @@
   opacity: 1;
 }
 .chat-process-group-body {
-  max-height: min(400px, 50vh);
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior-y: auto;
-}
-.chat-process-group[data-group-expanded-mode] > .chat-process-group-body {
-  max-height: none;
-  overflow: visible;
-  scrollbar-gutter: auto;
+  --json-tree-expanded-string-max-height: none;
 }
 .chat-process-group-content {
   display: flex;
@@ -159,7 +151,7 @@
   max-height: 150px;
   overflow: auto;
 }
-/* The process viewport owns vertical scrolling; its cards only scroll sideways. */
+/* Process content expands in the page; its cards only scroll sideways. */
 .chat-process-group-body
   :is(.chat-tool-io, .chat-terminal-header, .chat-terminal-output) {
   max-height: none;
@@ -175,9 +167,6 @@
     .json-tree-stringRaw
   ) {
   overscroll-behavior-y: auto;
-}
-.chat-process-group-body {
-  --json-tree-expanded-string-max-height: none;
 }
 .chat-tool-io + .chat-tool-io {
   border-top: 0.5px solid var(--dsw-alias-border-l2);

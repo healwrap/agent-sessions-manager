@@ -44,9 +44,17 @@
   text-overflow: ellipsis;
   color: var(--dsw-alias-label-tertiary);
 }
-:is(.chat-tool-row, .chat-reasoning) > .chat-disclosure[aria-expanded='true'] {
+.chat-process-group:has(> .chat-disclosure[aria-expanded='true']) {
+  --chat-group-heading-height: calc(32px + var(--dsh-content-font-delta, 0px));
+}
+:is(.chat-process-group, .chat-tool-row, .chat-reasoning)
+  > .chat-disclosure[aria-expanded='true'] {
   position: sticky;
-  top: 0;
+  top: var(--chat-group-heading-height, 0px);
   z-index: 1;
   background: var(--dsw-alias-bg-layer-1);
+}
+.chat-process-group > .chat-disclosure[aria-expanded='true'] {
+  top: 0;
+  z-index: 2;
 }

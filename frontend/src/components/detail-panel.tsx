@@ -1,5 +1,5 @@
 import { DetailContent } from './detail/detail-content';
-import { useId, type CSSProperties } from 'react';
+import { useId, useState, type CSSProperties } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
 import { eventLabel } from '../lib/event-presentation';
 import { IconButton } from './primitives';
@@ -16,7 +16,24 @@ import { detailTabs } from './detail/detail-tabs';
 import { recordType } from '../lib/record-presentation';
 
 export function DetailPanel({ state }: { state: AppState }) {
-  const view = state.views.trace,
+  const liveView = state.views.trace;
+  // Keep the last open inspector intact while its closing transition runs.
+  const snapshot = {
+    selected: liveView.selected,
+    summaryNonce: liveView.summaryNonce,
+    requestOpen: liveView.requestOpen,
+    version: liveView.version,
+  };
+  const [retainedView, setRetainedView] = useState(snapshot);
+  if (
+    liveView.detailsOpen &&
+    (retainedView.selected !== snapshot.selected ||
+      retainedView.summaryNonce !== snapshot.summaryNonce ||
+      retainedView.requestOpen !== snapshot.requestOpen ||
+      retainedView.version !== snapshot.version)
+  )
+    setRetainedView(snapshot);
+  const view = liveView.detailsOpen ? liveView : retainedView,
     { tab, page, change, setPage, settle } = useInspectorTabs(
       view.selected,
       view.summaryNonce,
@@ -24,7 +41,7 @@ export function DetailPanel({ state }: { state: AppState }) {
     { metadata, detail, output, error, loaded } = useEventDetail(
       state.id,
       view.selected,
-      view.detailsOpen,
+      liveView.detailsOpen,
       view.version,
       tab,
       page,
@@ -51,14 +68,14 @@ export function DetailPanel({ state }: { state: AppState }) {
   return (
     <div
       className="detail-slot"
-      data-open={view.detailsOpen}
+      data-open={liveView.detailsOpen}
       style={{ '--detail-width': state.detailWidth + 'px' } as CSSProperties}
     >
       <aside
         className="details"
         aria-label="事件详情"
-        aria-hidden={!view.detailsOpen}
-        inert={!view.detailsOpen}
+        aria-hidden={!liveView.detailsOpen}
+        inert={!liveView.detailsOpen}
       >
         <div
           className="detailsResizeHandle"

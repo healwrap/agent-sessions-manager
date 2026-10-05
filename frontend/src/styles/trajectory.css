@@ -223,6 +223,11 @@
   flex: none;
   width: var(--detail-width);
   max-width: calc(100% - 280px);
+  /* Release the layout only after the inspector has slid out. */
+  transition: width 0s 180ms;
+}
+.detail-slot[data-open='true'] {
+  transition-delay: 0s;
 }
 .detail-slot[data-open='false'] {
   width: 0;

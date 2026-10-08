@@ -98,14 +98,6 @@
 .session-search {
   margin: 4px 0 8px;
 }
-.session-search input {
-  width: 100%;
-  border: 1px solid var(--dsw-alias-border-l4);
-  background: var(--asm-sidebar-search);
-  border-radius: 6px;
-  height: 29px;
-  padding: 0 8px;
-}
 .sidebar .session-list {
   width: calc(var(--sidebar-width) - 14px);
   margin-right: -10px;

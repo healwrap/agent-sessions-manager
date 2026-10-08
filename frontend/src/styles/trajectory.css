@@ -163,10 +163,6 @@
     z-index: 6;
   }
 }
-.TrajectoryToolbar-search > .dsh-icon {
-  width: 11px;
-  height: 11px;
-}
 .timeline-turn-boundary {
   position: absolute;
   top: 0;

@@ -21,6 +21,7 @@ import { Timeline } from './components/timeline';
 import { DetailPanel } from './components/detail-panel';
 import { Icon, IconButton } from './components/primitives';
 import { StartupContent } from './components/startup-content';
+import { SearchField } from './components/search-field';
 export function App() {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
@@ -180,17 +181,13 @@ export function App() {
                   );
                 })}
               </div>
-              <div className="TrajectoryToolbar-search">
-                <Icon name="search" />
-                <input
-                  className="TrajectoryToolbar-searchInput"
-                  type="search"
-                  aria-label="搜索轨迹"
-                  placeholder="搜索"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </div>
+              <SearchField
+                className="TrajectoryToolbar-search"
+                label="搜索轨迹"
+                value={search}
+                onChange={setSearch}
+                compact
+              />
             </div>
           </div>
           <div hidden={state.mode !== 'trace'}>

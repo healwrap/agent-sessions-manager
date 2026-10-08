@@ -1,0 +1,89 @@
+/* Adapted from DSH Input and ModelSelect, MIT; see harness-license.txt. */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.search-field:focus-within {
+  border-color: var(--dsw-alias-state-business-primary);
+}
+.search-field-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.search-field-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: 14px/22px var(--dsw-font-family);
+}
+.search-field-input:focus-visible {
+  outline: none;
+}
+.search-field-input::placeholder {
+  color: var(--dsw-alias-label-dimmed);
+}
+.search-field-input::-webkit-search-decoration,
+.search-field-input::-webkit-search-cancel-button,
+.search-field-input::-webkit-search-results-button,
+.search-field-input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+.search-field-clear {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+.search-field-clear > .dsh-icon {
+  width: 12px;
+  height: 12px;
+}
+.search-field-clear:hover,
+.search-field-clear:focus-visible {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.search-field[data-compact='true'] {
+  height: 24px;
+  padding: 0 6px;
+  gap: 4px;
+  border-radius: var(--dsw-radius-sm);
+}
+.search-field[data-compact='true'] .search-field-input {
+  font: var(--dsw-font-xxs-12);
+}
+.search-field[data-compact='true'] .search-field-icon {
+  width: 12px;
+  height: 12px;
+}
+.search-field[data-compact='true'] .search-field-clear {
+  width: 20px;
+  height: 20px;
+}

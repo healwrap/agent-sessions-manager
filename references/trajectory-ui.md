@@ -78,6 +78,8 @@ Codex 使用现有有界解析器的可见记录范围。DSH 展示日志实际�
 
 来源选择器使用独立的受控 `Select` 组件，样式参考同一提交的 `ui-primitives/src/{Menu,MenuSurface}.module.css` 和 `ui-permission-presets/src/client/PermissionSelect.module.css`。保留 DSH 的紧凑按钮、圆角菜单、悬停色和尾部勾选标记；菜单通过 HTML Popover 顶层显示，避免侧栏裁剪，不使用系统原生 `<select>` 外观。支持方向键、Home/End、输入首字母定位、Enter/空格确认、Esc 取消、Tab 离开和点击外部关闭。业务筛选继续调用原有来源接口。
 
+侧栏会话搜索与轨迹搜索共用受控 `SearchField`，外观参考同一提交的 `ui-primitives/src/Input.module.css` 与 `ui-model-selection/src/client/ModelSelect.module.css` 的清除按钮。保留细边框、主题圆角、前置搜索图标和蓝色聚焦边框；轨迹工具栏使用紧凑尺寸。关闭 WebKit 原生搜索装饰，清除按钮使用本地 SVG 并在清除后恢复输入焦点；Esc 可清空查询，展开侧栏搜索时自动聚焦。沿用原有 250ms 搜索防抖及来源筛选逻辑。
+
 `icons.svg` 复用 `ui-primitives/src/icons/index.tsx`、`shared-artwork.tsx` 与 `TrajectoryTable.tsx` 的原始 SVG。轮次/调用展开收起图标按原工具栏的方框加减图形绘制为 SVG。图标通过本地 SVG sprite 加载，无外部字体或 CDN。界面保留项目会话侧栏、对话、轨迹与事件详情，移除了底部输入框。
 
 Markdown 分词使用本地随附的 Marked `17.0.5`（MIT），随 Vite 从 npm 依赖打包，许可证在 `frontend/public/marked-license.txt`。分词结果用 React 节点构建，不执行记录里的 HTML；原文保留在事件详情中。运行时无需外部 CDN。源码与 Markdown 代码块按需使用 Shiki `4.3.1` 的 JavaScript 正则引擎，仅打包明确使用的语言；颜色复用 DSH 亮暗色变量。Shiki 许可证保存在 `frontend/public/shiki-license.txt`。

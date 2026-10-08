@@ -13,6 +13,7 @@ import { Collapse, Icon, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
 import { MarqueeTitle } from './marquee-title';
 import { Select } from './select';
+import { SearchField } from './search-field';
 export function Sidebar({
   state,
   onManage,
@@ -120,12 +121,12 @@ export function Sidebar({
         </div>
         <Collapse open={state.searchOpen}>
           <div id="session-search" className="session-search">
-            <input
-              type="search"
+            <SearchField
               placeholder="搜索会话标题或内容"
-              aria-label="搜索会话标题或内容"
+              label="搜索会话标题或内容"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
+              active={state.searchOpen}
             />
           </div>
         </Collapse>

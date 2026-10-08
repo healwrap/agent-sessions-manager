@@ -76,6 +76,8 @@ Codex 使用现有有界解析器的可见记录范围。DSH 展示日志实际�
 
 界面使用独立的 Agent Sessions 文字标识，不展示 DeepSeek 的品牌 SVG。对话气泡尺寸及正文节奏参考 `ui-chat` 的 `MessageItem`、`AssistantMarkdown`、`ChatView`；应用外壳在 React 组件与 Tailwind 布局中实现，后台适配器在 `backend/agent_sessions/sources/` 中实现。版权声明保存在 `harness-license.txt`。
 
+来源选择器使用独立的受控 `Select` 组件，样式参考同一提交的 `ui-primitives/src/{Menu,MenuSurface}.module.css` 和 `ui-permission-presets/src/client/PermissionSelect.module.css`。保留 DSH 的紧凑按钮、圆角菜单、悬停色和尾部勾选标记；菜单通过 HTML Popover 顶层显示，避免侧栏裁剪，不使用系统原生 `<select>` 外观。支持方向键、Home/End、输入首字母定位、Enter/空格确认、Esc 取消、Tab 离开和点击外部关闭。业务筛选继续调用原有来源接口。
+
 `icons.svg` 复用 `ui-primitives/src/icons/index.tsx`、`shared-artwork.tsx` 与 `TrajectoryTable.tsx` 的原始 SVG。轮次/调用展开收起图标按原工具栏的方框加减图形绘制为 SVG。图标通过本地 SVG sprite 加载，无外部字体或 CDN。界面保留项目会话侧栏、对话、轨迹与事件详情，移除了底部输入框。
 
 Markdown 分词使用本地随附的 Marked `17.0.5`（MIT），随 Vite 从 npm 依赖打包，许可证在 `frontend/public/marked-license.txt`。分词结果用 React 节点构建，不执行记录里的 HTML；原文保留在事件详情中。运行时无需外部 CDN。源码与 Markdown 代码块按需使用 Shiki `4.3.1` 的 JavaScript 正则引擎，仅打包明确使用的语言；颜色复用 DSH 亮暗色变量。Shiki 许可证保存在 `frontend/public/shiki-license.txt`。

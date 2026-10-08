@@ -45,15 +45,9 @@
   font-size: 12px;
   padding: 0 4px 10px;
 }
-.source-filter select {
+.source-filter .custom-select {
   min-width: 0;
   flex: 1;
-  background: var(--asm-sidebar-field);
-  border: 1px solid var(--dsw-alias-border-l4);
-  border-radius: 6px;
-  padding: 5px;
-  color: var(--dsw-alias-label-primary);
-  font: inherit;
 }
 .source-warning {
   font-size: 11px;

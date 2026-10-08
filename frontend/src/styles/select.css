@@ -1,0 +1,81 @@
+/* Adapted from DSH Menu, MenuSurface and PermissionSelect (MIT). */
+.custom-select {
+  min-width: 0;
+}
+.select-trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+}
+.select-trigger:hover:not(:disabled),
+.select-trigger[aria-expanded='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.select-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select-chevron {
+  flex: none;
+  color: var(--dsw-alias-label-caption, var(--dsw-alias-label-tertiary));
+  transition: transform 120ms ease;
+}
+.select-trigger[aria-expanded='true'] .select-chevron {
+  transform: rotate(180deg);
+}
+.select-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  box-shadow:
+    var(--dsw-elevation-prominent, 0 8px 32px #0003),
+    0 0 0 0.5px var(--dsw-alias-border-l1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+}
+.select-option[data-active='true'],
+.select-option:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.select-check {
+  display: grid;
+  place-items: center;
+  flex: 0 0 14px;
+}

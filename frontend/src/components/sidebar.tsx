@@ -12,6 +12,7 @@ import { showAbout } from '../lib/api';
 import { Collapse, Icon, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
 import { MarqueeTitle } from './marquee-title';
+import { Select } from './select';
 export function Sidebar({
   state,
   onManage,
@@ -69,29 +70,24 @@ export function Sidebar({
         <div className="brand-row">
           <span className="brand-name">Agent Sessions</span>
         </div>
-        <label className="source-filter">
-          来源
-          <select
-            aria-label="筛选 Agent"
+        <div className="source-filter">
+          <span>来源</span>
+          <Select
+            label="筛选 Agent"
             value={state.provider}
-            onChange={(event) =>
-              void sessionStore.filter(event.target.value, search)
-            }
-          >
-            <option value="">全部 Agent</option>
-            {(state.sources.length
-              ? state.sources
-              : Object.entries(sourceNames).map(([id, label]) => ({
-                  id,
-                  label,
-                }))
-            ).map(({ id: key, label }) => (
-              <option value={key} key={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(value) => void sessionStore.filter(value, search)}
+            options={[
+              { value: '', label: '全部 Agent' },
+              ...(state.sources.length
+                ? state.sources
+                : Object.entries(sourceNames).map(([id, label]) => ({
+                    id,
+                    label,
+                  }))
+              ).map(({ id, label }) => ({ value: id, label })),
+            ]}
+          />
+        </div>
         {state.sources
           .filter((source) => source.enabled && source.error)
           .map((source) => (

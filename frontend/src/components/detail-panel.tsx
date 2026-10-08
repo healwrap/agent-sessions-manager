@@ -69,7 +69,11 @@ export function DetailPanel({ state }: { state: AppState }) {
     <div
       className="detail-slot"
       data-open={liveView.detailsOpen}
-      style={{ '--detail-width': state.detailWidth + 'px' } as CSSProperties}
+      style={
+        state.detailWidth == null
+          ? undefined
+          : ({ '--detail-width': state.detailWidth + 'px' } as CSSProperties)
+      }
     >
       <aside
         className="details"
@@ -85,7 +89,6 @@ export function DetailPanel({ state }: { state: AppState }) {
           aria-orientation="vertical"
           aria-valuemin={320}
           aria-valuemax={720}
-          aria-valuenow={state.detailWidth}
           {...resize}
         />
         <div className="detailsHeader">

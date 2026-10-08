@@ -217,7 +217,7 @@
 }
 .detail-slot {
   flex: none;
-  width: var(--detail-width);
+  width: var(--detail-width, clamp(320px, 38%, 440px));
   max-width: calc(100% - 280px);
 }
 .detail-slot[data-open='false'] {
@@ -227,7 +227,7 @@
 .detail-slot .details {
   position: absolute;
   inset: 0 0 0 auto;
-  width: var(--detail-width);
+  width: var(--detail-width, clamp(320px, 38%, 440px));
   overflow: hidden;
   z-index: 2;
   transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1);

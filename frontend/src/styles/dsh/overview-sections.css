@@ -31,14 +31,14 @@
   flex: 1;
   min-height: 0;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   border-top: 0;
 }
 
 .overview-section {
   display: flex;
-  flex: 0 0 auto;
-  max-height: min(45vh, 420px);
+  flex: 1 1 0;
+  max-height: calc(24px + var(--overview-content-height, 0px));
   min-height: 24px;
   flex-direction: column;
   overflow: hidden;
@@ -46,6 +46,7 @@
 
 .overview-section + .overview-section {
   padding-top: 2px;
+  max-height: calc(26px + var(--overview-content-height, 0px));
 }
 
 .overview-heading {
@@ -100,7 +101,7 @@
 }
 
 .overview-preview {
-  flex: 0 1 auto;
+  flex: 1;
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
@@ -111,7 +112,12 @@
   mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
 }
 
-.overview-preview > :last-child {
+.overview-preview-content {
+  display: flow-root;
+  min-width: 0;
+}
+
+.overview-preview-content > :last-child {
   margin-bottom: 0;
   padding-bottom: 0;
 }

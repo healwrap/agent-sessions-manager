@@ -86,7 +86,7 @@ export interface AppState {
   duration: boolean;
   collapsed: Set<number>;
   expandedCalls: Set<string>;
-  detailWidth: number;
+  detailWidth: number | null;
   toolRequestOffset: number | null;
 }
 export const initialState = (): AppState => ({
@@ -127,6 +127,6 @@ export const initialState = (): AppState => ({
   duration: false,
   collapsed: new Set(),
   expandedCalls: new Set(),
-  detailWidth: 400,
+  detailWidth: null,
   toolRequestOffset: null,
 });

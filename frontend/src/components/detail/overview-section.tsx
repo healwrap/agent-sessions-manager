@@ -18,7 +18,9 @@ export function OverviewSection({
   actions?: ReactNode;
   children: ReactNode;
 }) {
+  const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [hasMore, setHasMore] = useState(false);
   const measureOverflow = useCallback((preview: HTMLElement) => {
     setHasMore(
@@ -28,21 +30,31 @@ export function OverviewSection({
 
   useLayoutEffect(() => {
     const preview = previewRef.current as HTMLDivElement;
+    const content = contentRef.current as HTMLDivElement;
+    const section = sectionRef.current as HTMLElement;
     const measure = () => {
+      // WebKit can resolve max-height: max-content to the shrunken flex height.
+      // Measure an unconstrained child so short sections release their unused
+      // space and long sections share the remaining height, as in DSH.
+      const height = `${Math.ceil(content.getBoundingClientRect().height)}px`;
+      if (
+        section.style.getPropertyValue('--overview-content-height') !== height
+      )
+        section.style.setProperty('--overview-content-height', height);
       measureOverflow(preview);
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
     observer.observe(preview);
-    for (const child of preview.children) observer.observe(child);
+    observer.observe(content);
     return () => {
       observer.disconnect();
     };
   }, [children, measureOverflow]);
 
   return (
-    <section className="overview-section">
+    <section ref={sectionRef} className="overview-section">
       <h3 className="overview-heading">
         <button type="button" className="overview-title" onClick={onOpen}>
           <span>{label}</span>
@@ -59,7 +71,9 @@ export function OverviewSection({
           measureOverflow(event.currentTarget);
         }}
       >
-        {children}
+        <div ref={contentRef} className="overview-preview-content">
+          {children}
+        </div>
       </div>
     </section>
   );

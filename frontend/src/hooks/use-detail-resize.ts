@@ -1,4 +1,10 @@
-import { useRef, type HTMLAttributes } from 'react';
+import {
+  useCallback,
+  useRef,
+  useState,
+  type HTMLAttributes,
+  type RefCallback,
+} from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
 
 const clamp = (width: number, split: number) =>
@@ -9,7 +15,18 @@ const defaultToolWidth = (width: number) =>
   Math.min(480, Math.max(180, width * 0.36 - 56));
 export function useDetailResize(
   state: AppState,
-): HTMLAttributes<HTMLDivElement> {
+): HTMLAttributes<HTMLDivElement> & { ref: RefCallback<HTMLDivElement> } {
+  const [measuredWidth, setMeasuredWidth] = useState<number>();
+  const resizeRef = useCallback<RefCallback<HTMLDivElement>>((handle) => {
+    const details = handle?.parentElement;
+    if (!details) return;
+    const measure = () =>
+      setMeasuredWidth(Math.round(details.getBoundingClientRect().width));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(details);
+    return () => observer.disconnect();
+  }, []);
   const drag = useRef<{
     pointer: number;
     x: number;
@@ -42,8 +59,10 @@ export function useDetailResize(
     });
   };
   return {
+    ref: resizeRef,
+    'aria-valuenow': measuredWidth,
     onDoubleClick: () =>
-      sessionStore.update({ detailWidth: 400, toolRequestOffset: null }),
+      sessionStore.update({ detailWidth: null, toolRequestOffset: null }),
     onKeyDown: (event) => {
       if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
       const start = dimensions(event.currentTarget);

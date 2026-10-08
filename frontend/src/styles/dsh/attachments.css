@@ -8,7 +8,7 @@
   list-style: none;
 }
 /* These hosts delegate their inset to the content, including attachment siblings. */
-.overview-preview > .record-attachments,
+.overview-preview-content > .record-attachments,
 .message-preview:has(> .assistant-content) > .record-attachments,
 .detail-content:has(> :is(.json-tree-root, .assistant-content))
   > .record-attachments {

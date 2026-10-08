@@ -6,11 +6,17 @@
 
 ## macOS 留白
 
-`source-macos.png` 保留原图内容，只缩放并增加透明留白。原图底板约占画布 90%，在 ⌘Tab 和 Dock 中明显大于其他图标；本机 DSH 的不透明底板为 824 / 1024。macOS 版本使用独立的 1024 × 1024 原图，使底板宽度约占 80%，其他平台继续使用原图。
+`source-macos.png` 保留原图内容，只缩放并增加透明留白。原图底板约占画布 90%；本机 DSH 的 ICNS 不透明底板为 824 / 1024。macOS 版本使用独立的 1024 × 1024 原图，使底板宽度约占 80%，其他平台继续使用原图。这是资源尺寸的对照，实际 Dock 大小还受系统处理与悬停放大影响。
 
 尺寸转换：`magick desktop/icons/source.png -resize 914x914 -gravity center -background none -extent 1024x1024 PNG32:desktop/icons/source-macos.png`。
 
-构建时从对应平台原图生成 PNG、ICNS 和 ICO。macOS 运行时直接加载 ICNS 的多分辨率图像，与安装包图标一致，避免单张 PNG 覆盖原生图标。
+构建时从对应平台原图生成 PNG、ICNS 和 ICO。正式应用由 macOS 根据应用包的 `CFBundleIconFile` 加载图标，不在启动时使用 `setApplicationIconImage` 覆盖。开发模式的图标由 Tauri 管理。
+
+## macOS 26 系统材质
+
+macOS 26 引入新的图标材质。苹果说明：符合圆角矩形轮廓的旧版 Mac 图标，也会自动调整轮廓并获得新材质；要精确控制分层材质和不同外观，可使用 Icon Composer。高光、玻璃边缘等效果不应直接烘焙到当前平面原图中。
+
+参考：[Say hello to the new look of app icons](https://developer.apple.com/videos/play/wwdc2025/220/) 与 [Icon Composer](https://developer.apple.com/icon-composer/)。
 
 ## 生成提示词
 

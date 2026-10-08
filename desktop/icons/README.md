@@ -4,6 +4,14 @@
 
 设计方向：错位的斜向层叠，以深绿主体、青柠点缀和浅鼠尾草底色形成抽象 A，使用扁平几何造型，不使用对话框。
 
+## macOS 留白
+
+`source-macos.png` 保留原图内容，只缩放并增加透明留白。原图底板约占画布 90%，在 ⌘Tab 和 Dock 中明显大于其他图标；本机 DSH 的不透明底板为 824 / 1024。macOS 版本使用独立的 1024 × 1024 原图，使底板宽度约占 80%，其他平台继续使用原图。
+
+尺寸转换：`magick desktop/icons/source.png -resize 914x914 -gravity center -background none -extent 1024x1024 PNG32:desktop/icons/source-macos.png`。
+
+构建时从对应平台原图生成 PNG、ICNS 和 ICO。macOS 运行时直接加载 ICNS 的多分辨率图像，与安装包图标一致，避免单张 PNG 覆盖原生图标。
+
 ## 生成提示词
 
 Use case: logo-brand. Create one elegant distinctive production desktop application icon for Agent Sessions Manager. Concept: staggered layers / organized histories. A bold compact emblem of three offset parallel oblique slabs, carefully composed to create a subtle abstract A through negative space. This is an expertly designed geometric logo, not paper cards or a bar chart: no borders, no internal lines, no tiny details. Use a precise Bauhaus-influenced architectural silhouette with deliberate rhythm, strict spacing, softly rounded endpoints and beautiful optical balance. Flat dark evergreen main shapes with one small lime accent plane on a solid very pale sage rounded-square tile, transparent outside corners. Original premium productivity software identity with design sophistication, strong recognition at 32 pixels. Centered 1024 square, ample safe inset. No gradients, no light reflections, no texture, no shadows, no 3D, no glass, no speech bubbles, no dialog cards, no dots and connecting lines, no text, no mockup, no watermark. Flawless clean antialiased edges.

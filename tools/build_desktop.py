@@ -36,7 +36,8 @@ def main():
     extension = '.exe' if windows else ''
     shutil.copy2(ROOT/('dist/agent-sessions-server'+extension), directory/('agent-sessions-server-'+triple+extension))
     with tempfile.TemporaryDirectory(prefix='agent-sessions-icons-') as icons:
-        run(cli, 'icon', ROOT/'desktop/icons/source.png', '--output', icons)
+        source = 'source-macos.png' if sys.platform == 'darwin' else 'source.png'
+        run(cli, 'icon', ROOT/'desktop/icons'/source, '--output', icons)
         for name in ('icon.png', 'icon.icns', 'icon.ico'):
             shutil.copy2(Path(icons)/name, ROOT/'desktop/icons'/name)
     bundles = 'app' if sys.platform == 'darwin' else 'nsis' if windows else 'deb,appimage'

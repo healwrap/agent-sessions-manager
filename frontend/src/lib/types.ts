@@ -13,6 +13,7 @@ export interface Session extends Project {
   agent_role?: string | null;
   children_count?: number;
   search_query?: string;
+  search_mode?: 'words' | 'literal';
   id: string;
   title: string;
   updated_at: string;
@@ -234,6 +235,12 @@ export interface PromptSnapshot {
   tools: { name: string; description?: string; parameters?: unknown }[] | null;
 }
 export interface Catalogue {
+  search_index?: {
+    pending: number;
+    indexed: number;
+    total: number;
+    failed: number;
+  } | null;
   items: Session[];
   total: number;
   next_offset: number | null;

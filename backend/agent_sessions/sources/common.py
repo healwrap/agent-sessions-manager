@@ -105,6 +105,17 @@ class TrajectoryStore:
                 # Searching hundreds of sessions must not retain all their bodies.
                 if not already_loaded: self.loaded.pop(key, None)
 
+    def search_document(self, key):
+        """Return complete visible dialogue once per source revision, not per query."""
+        with self.lock:
+            loaded = key in self.loaded
+            try:
+                data = self.session(key)
+                return '\n'.join(self.message_search_text(data, data['lookup'][e['ref']][1])
+                                 for e in data['events'] if e['kind'] in ('user', 'assistant'))
+            finally:
+                if not loaded: self.loaded.pop(key, None)
+
     def trajectory(self, key, offset=0, limit=150, query='', kind='all'):
         with self.lock:
             data = self.session(key)

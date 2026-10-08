@@ -105,7 +105,11 @@ export function createTraceLoader(store: SessionStore) {
         store.update({
           sessions: store.state.sessions.map((item) =>
             item.id === canonical
-              ? { ...first.session!, search_query: item.search_query }
+              ? {
+                  ...first.session!,
+                  search_query: item.search_query,
+                  search_mode: item.search_mode,
+                }
               : item,
           ),
         });

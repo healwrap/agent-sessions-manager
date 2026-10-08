@@ -6,6 +6,7 @@ import type {
   Trajectory,
   Source,
 } from './types';
+import { matchesSearch, type SearchMode } from './search';
 export function chatReplyRefs(events: Event[], hasMore = false) {
   const replies = new Set<string>(),
     finals = new Set<number>(),
@@ -64,6 +65,7 @@ export function projectGroups(
   query: string,
   archive: boolean,
   sources: Source[] = [],
+  searchMode: SearchMode = 'words',
 ) {
   const known = new Map(sessions.map((s) => [s.id, s]));
   for (const item of Object.values(p.metadata))
@@ -86,10 +88,13 @@ export function projectGroups(
         item.provider !== provider) ||
       p.archived.includes(item.id) !== archive ||
       (query &&
-        item.search_query !== query &&
-        !`${sessionTitle(item, p)} ${item.project_label}`
-          .toLowerCase()
-          .includes(query.toLowerCase()))
+        (item.search_query !== query ||
+          (item.search_mode || 'words') !== searchMode) &&
+        !matchesSearch(
+          `${sessionTitle(item, p)} ${item.project_label}`,
+          query,
+          searchMode,
+        ))
     )
       continue;
     const key = item.project_id || 'projectless';

@@ -79,6 +79,15 @@ class CursorStore(HistoryStore):
             self.loaded.pop(key, None)
             return result
 
+    def search_document(self, key):
+        with self.lock:
+            loaded = key in self.loaded
+            try:
+                data = self.session(key)
+                return '\n'.join(record['text'] for category, record in data['lookup'].values() if category == 'message')
+            finally:
+                if not loaded: self.loaded.pop(key, None)
+
     def trajectory_search_text(self, data, event, record_type, record):
         with database(data['source']) as db:
             table = self.rows[data['key']]['_table']

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useSessionSearch } from '../hooks/use-session-search';
 import type { AppState } from '../state/session-store';
 import { sessionStore } from '../state/session-store';
 import {
@@ -23,23 +23,7 @@ export function Sidebar({
   onManage: (item: Session, x: number, y: number) => void;
   managedId?: string;
 }) {
-  const [search, setSearch] = useState(state.query);
-  useEffect(() => {
-    if (!state.searchOpen || search === sessionStore.state.query) return;
-    const timer = setTimeout(
-      () => void sessionStore.filter(sessionStore.state.provider, search),
-      250,
-    );
-    return () => clearTimeout(timer);
-  }, [search, state.searchOpen]);
-  const toggleSearch = () => {
-    const open = !state.searchOpen;
-    sessionStore.update({ searchOpen: open });
-    if (!open) {
-      setSearch('');
-      if (state.query) void sessionStore.filter(state.provider, '');
-    }
-  };
+  const { search, setSearch, toggleSearch } = useSessionSearch(state);
   const groups = projectGroups(
     state.sessions,
     state.projects,
@@ -48,6 +32,7 @@ export function Sidebar({
     state.query,
     state.archive,
     state.sources,
+    state.searchMode,
   );
   return (
     <div className="sidebar-slot" data-closed={state.sidebarClosed}>
@@ -127,7 +112,37 @@ export function Sidebar({
               value={search}
               onChange={setSearch}
               active={state.searchOpen}
+              focusNonce={state.searchFocus}
+              onDismiss={toggleSearch}
             />
+            <div
+              className="session-search-modes"
+              role="group"
+              aria-label="搜索匹配方式"
+            >
+              {(['words', 'literal'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={state.searchMode === mode}
+                  onClick={() =>
+                    void sessionStore.filter(state.provider, search, mode)
+                  }
+                  title={
+                    mode === 'words'
+                      ? '按空格拆词，所有词都需要匹配；顺序不限'
+                      : '逐字匹配完整连续文本，保留中间空格'
+                  }
+                >
+                  {mode === 'words' ? '拆词匹配' : '逐字匹配'}
+                </button>
+              ))}
+              <span>
+                {state.searchMode === 'words'
+                  ? '空格分词 · 全部命中'
+                  : '连续文本'}
+              </span>
+            </div>
           </div>
         </Collapse>
         <nav
@@ -141,6 +156,25 @@ export function Sidebar({
           {state.query && state.catalogueLoading && (
             <div role="status">正在搜索标题和内容…</div>
           )}
+          {state.query && !!state.searchIndex?.pending && (
+            <div className="sidebar-empty" role="status">
+              正在更新内容索引 {state.searchIndex.indexed}/
+              {state.searchIndex.total}，结果会自动补齐
+            </div>
+          )}
+          {state.query && !!state.searchIndex?.failed && (
+            <div className="sidebar-empty" role="status">
+              {state.searchIndex.failed} 个会话正文暂时无法读取
+            </div>
+          )}
+          {state.query &&
+            !state.catalogueLoading &&
+            !state.searchIndex?.pending &&
+            !groups.length && (
+              <div className="sidebar-empty" role="status">
+                没有匹配的会话
+              </div>
+            )}
           {groups.map((group) => {
             const key = group.project_id,
               open =

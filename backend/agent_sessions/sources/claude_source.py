@@ -60,6 +60,10 @@ class ClaudeSourceStore:
         adapter, native = self.target(key)
         return adapter.matches_content(native, query)
 
+    def search_document(self, key):
+        adapter, native = self.target(key)
+        return adapter.search_document(native)
+
     def attachment(self, key, *args):
         adapter, native = self.target(key)
         return adapter.attachment(native, *args)

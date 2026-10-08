@@ -96,7 +96,11 @@ Codex 使用现有有界解析器的可见记录范围。DSH 展示日志实际�
 
 来源选择器使用独立的受控 `Select` 组件，样式参考同一提交的 `ui-primitives/src/{Menu,MenuSurface}.module.css` 和 `ui-permission-presets/src/client/PermissionSelect.module.css`。保留 DSH 的紧凑按钮、圆角菜单、悬停色和尾部勾选标记；菜单通过 HTML Popover 顶层显示，避免侧栏裁剪，不使用系统原生 `<select>` 外观。支持方向键、Home/End、输入首字母定位、Enter/空格确认、Esc 取消、Tab 离开和点击外部关闭。业务筛选继续调用原有来源接口。
 
-侧栏会话搜索与轨迹搜索共用受控 `SearchField`，外观参考同一提交的 `ui-primitives/src/Input.module.css` 与 `ui-model-selection/src/client/ModelSelect.module.css` 的清除按钮。保留细边框、主题圆角、前置搜索图标和蓝色聚焦边框；轨迹工具栏使用紧凑尺寸。关闭 WebKit 原生搜索装饰，清除按钮使用本地 SVG 并在清除后恢复输入焦点；Esc 可清空查询，展开侧栏搜索时自动聚焦。沿用原有 250ms 搜索防抖及来源筛选逻辑。
+侧栏会话搜索与轨迹搜索共用受控 `SearchField`，外观参考同一提交的 `ui-primitives/src/Input.module.css` 与 `ui-model-selection/src/client/ModelSelect.module.css` 的清除按钮。保留细边框、主题圆角、前置搜索图标和蓝色聚焦边框；轨迹工具栏使用紧凑尺寸。关闭 WebKit 原生搜索装饰，清除按钮使用本地 SVG 并在清除后恢复输入焦点；Esc 清空查询，再按一次关闭侧栏搜索。Cmd+F / Ctrl+F 展开侧栏并聚焦会话搜索，再次使用快捷键选中现有查询。
+
+会话搜索默认“拆词匹配”：按空格等空白拆分关键词，同一会话的标题、项目、代理名称、显示名称与可见对话中所有词均命中才显示，顺序不限。可切换“逐字匹配”，按完整连续文本匹配，保留中间空格。两种模式忽略大小写，输入防抖 120ms；关闭搜索同时取消筛选。轨迹搜索保持原有参数与结果检索范围。
+
+应用在自己的状态目录维护 `search-v1.sqlite3`，通过 SQLite FTS5 trigram 缩小候选范围，再核对字面子串；一两个字符使用 SQLite 原生子串查询，无 FTS5 的运行时回退到同一查询语义。各来源通过可选 `search_document(key)` 接口返回完整可见对话，解析与可见范围仍由来源模块管理；公共索引不读取原生管理字段或工具载荷。启动时后台预建，按来源路径、原生记录版本及显示名称增量更新，关闭来源后移除索引。首次建立或更新期间先显示标题结果，提示进度并自动补齐内容结果；失败显示无法读取的数量，记录变化后重试。原始历史只读，派生索引不提交到仓库。
 
 `icons.svg` 复用 `ui-primitives/src/icons/index.tsx`、`shared-artwork.tsx` 与 `TrajectoryTable.tsx` 的原始 SVG。轮次/调用展开收起图标按原工具栏的方框加减图形绘制为 SVG。图标通过本地 SVG sprite 加载，无外部字体或 CDN。界面保留项目会话侧栏、对话、轨迹与事件详情，移除了底部输入框。
 

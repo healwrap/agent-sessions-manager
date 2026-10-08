@@ -9,6 +9,8 @@ export function SearchField({
   className = '',
   compact = false,
   active = false,
+  focusNonce = 0,
+  onDismiss,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -17,11 +19,16 @@ export function SearchField({
   className?: string;
   compact?: boolean;
   active?: boolean;
+  focusNonce?: number;
+  onDismiss?: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (active) input.current?.focus({ preventScroll: true });
-  }, [active]);
+    if (active) {
+      input.current?.focus({ preventScroll: true });
+      if (focusNonce) input.current?.select();
+    }
+  }, [active, focusNonce]);
   const clear = () => {
     onChange('');
     input.current?.focus({ preventScroll: true });
@@ -43,11 +50,12 @@ export function SearchField({
           if (
             event.key === 'Escape' &&
             !event.nativeEvent.isComposing &&
-            value
+            (value || onDismiss)
           ) {
             event.preventDefault();
             event.stopPropagation();
-            clear();
+            if (value) clear();
+            else onDismiss?.();
           }
         }}
       />

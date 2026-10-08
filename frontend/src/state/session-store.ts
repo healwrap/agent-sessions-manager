@@ -8,6 +8,7 @@ import {
 import { createTraceLoader } from './trace-loader';
 import { createNavigation, updateAddress } from './navigation';
 import { request } from '../lib/api';
+import type { SearchMode } from '../lib/search';
 import type {
   Catalogue,
   Preferences,
@@ -127,7 +128,7 @@ export class SessionStore {
   }
   async loadSessions(preserve = true, pending?: Promise<Catalogue>) {
     const generation = ++this.sessionsGeneration;
-    const { query, provider } = this.state;
+    const { query, provider, searchMode } = this.state;
     if (this.state.initializing || !preserve)
       this.update({ catalogueLoading: true });
     try {
@@ -135,6 +136,7 @@ export class SessionStore {
         this.api<Catalogue>('/api/sessions', {
           q: query,
           provider,
+          search_mode: searchMode,
         }));
       if (generation !== this.sessionsGeneration) return;
       const known = new Map(
@@ -148,6 +150,7 @@ export class SessionStore {
         sessions: Array.from(known.values()),
         projects: data.projects,
         sources: data.sources,
+        searchIndex: data.search_index || null,
         projectPages: preserve ? this.state.projectPages : {},
       });
       if (!this.state.id) {
@@ -184,6 +187,7 @@ export class SessionStore {
         project: key,
         provider: this.state.provider,
         q: this.state.query,
+        search_mode: this.state.searchMode,
         offset: this.state.projectPages[key] || 0,
         limit: 100,
       });
@@ -222,10 +226,16 @@ export class SessionStore {
     this.update({ projectExpanded: expanded });
     if (expand) void this.loadProject(key);
   }
-  async filter(provider: string, query: string) {
+  async filter(
+    provider: string,
+    query: string,
+    searchMode: SearchMode = this.state.searchMode,
+  ) {
     this.update({
       provider,
-      query,
+      query: query.trim(),
+      searchMode,
+      searchIndex: null,
       projectPages: {},
       projectExpanded: new Set(),
     });

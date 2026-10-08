@@ -77,22 +77,11 @@ class MultiStore:
     def session_family(self, key, offset=0, limit=30, include_activity=True):
         return session_family(self, key, offset, limit, include_activity)
 
-    def sessions(self, query='', offset=0, limit=30, project_id='', provider=''):
+    def sessions(self, query='', offset=0, limit=30, project_id='', provider='', search_mode='words'):
+        from agent_sessions.search.catalogue import search_sessions
         provider = self.registry.public_source(provider)
         rows = self.catalogue()
-        aliases = self.settings.read()['value'].get('aliases', {}) if hasattr(self, 'settings') else {}
-        selected = []
-        for row in rows:
-            if not query and row.get('session_kind') == 'subagent' and row.get('parent_available'): continue
-            if provider and row['provider'] != provider and row['source_id'] != provider: continue
-            label = ' '.join(str(row.get(field) or '') for field in ('title', 'project_label', 'agent_name', 'agent_role'))+' '+aliases.get(row['id'], '')
-            if query and query.casefold() not in label.casefold():
-                try:
-                    source, native = self.resolve(row['id'])
-                    if not self.adapters[source].matches_content(native, query): continue
-                except (OSError, ValueError):
-                    continue
-            selected.append({**row, 'search_query': query} if query else row)
+        selected, progress = search_sessions(self, rows, query, search_mode, provider)
         projects = {}
         for row in selected:
             group = projects.setdefault(row['project_id'], {k: row[k] for k in ('project_id', 'project_label', 'project_path', 'project_source')})
@@ -101,7 +90,7 @@ class MultiStore:
         current = os.environ.get('CODEX_THREAD_ID')
         return {'items': filtered[offset:offset+limit], 'total': len(filtered), 'projects': list(projects.values()),
                 'next_offset': offset+limit if offset+limit < len(filtered) else None,
-                'current_id': 'codex:local:'+current if current else None, 'sources': self.sources()['items']}
+                'current_id': 'codex:local:'+current if current else None, 'sources': self.sources()['items'], 'search_index': progress}
 
     def resolve(self, key):
         parts = key.split(':', 2)

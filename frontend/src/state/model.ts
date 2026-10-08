@@ -8,6 +8,7 @@ import type {
   Settings,
   ThemePreference,
 } from '../lib/types';
+import type { SearchMode } from '../lib/search';
 export interface View {
   events: Event[];
   data: Trajectory | null;
@@ -66,6 +67,14 @@ export interface AppState {
   archive: boolean;
   sidebarClosed: boolean;
   searchOpen: boolean;
+  searchMode: SearchMode;
+  searchFocus: number;
+  searchIndex: {
+    pending: number;
+    indexed: number;
+    total: number;
+    failed: number;
+  } | null;
   sessions: Session[];
   projects: Project[];
   sources: Source[];
@@ -99,6 +108,9 @@ export const initialState = (): AppState => ({
   archive: false,
   sidebarClosed: false,
   searchOpen: false,
+  searchMode: 'words',
+  searchFocus: 0,
+  searchIndex: null,
   sessions: [],
   projects: [],
   sources: [],

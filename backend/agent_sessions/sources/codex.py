@@ -139,6 +139,15 @@ class Store(TrajectoryStore):
                 return rows
             offset = page['next_offset']
 
+    def search_document(self, key):
+        with self.lock:
+            source = self.files.get(key)
+            if source is None: raise FileNotFoundError('未找到本地会话')
+            # Use the existing visible-message normalizer; no tool matching or
+            # trajectory construction is needed for dialogue search.
+            index = load_index(source, self.root, None)
+            return '\n'.join(r['text'] for r in index['records'] if r.get('kind') == 'message')
+
     def session_family(self, key, offset=0, limit=30, include_activity=True):
         from .session_family import annotate_family, family_page
         rows = self.discover()

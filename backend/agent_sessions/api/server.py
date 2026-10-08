@@ -59,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.store.sources()
             elif parsed.path == '/api/sessions':
                 args = (get('q'), integer('offset', 0, 0, 1_000_000), integer('limit', 30, 1, 100), get('project'))
-                result = self.server.store.sessions(*args, get('provider')) if hasattr(self.server.store, 'catalogue') else self.server.store.sessions(*args)
+                result = self.server.store.sessions(*args, get('provider'), get('search_mode', 'words')) if hasattr(self.server.store, 'catalogue') else self.server.store.sessions(*args)
             elif parsed.path == '/api/trajectory':
                 result = self.server.store.trajectory(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 150, 1, 250), get('q'), get('kind', 'all'))
             elif parsed.path == '/api/session-family':
@@ -122,6 +122,8 @@ class Handler(BaseHTTPRequestHandler):
                 config = self.server.app_settings.validate(value)
                 store = configured_store(config, self.server.settings)
                 saved = self.server.app_settings.write(config)
+                old_index = getattr(self.server.store, 'search_index', None)
+                if old_index: old_index.close()
                 self.server.store = store
                 self.respond(200, {'value': saved, 'sources': store.sources()['items']})
             else:
@@ -199,6 +201,8 @@ def main():
         pass
     finally:
         server.server_close()
+        index = getattr(server.store, 'search_index', None)
+        if index: index.close()
 
 
 if __name__ == '__main__':

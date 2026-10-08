@@ -61,7 +61,7 @@ export function Subagents({
             {item.agent_role && (
               <span className="subagent-role">{item.agent_role}</span>
             )}
-            {item.agent_name && (
+            {(item.task_preview || item.agent_name) && (
               <span className="subagent-task">
                 {item.task_preview
                   ? markdownText(item.task_preview)

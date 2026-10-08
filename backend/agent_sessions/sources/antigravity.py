@@ -22,7 +22,11 @@ class AntigravityStore(HistoryStore):
             db, temporary = readonly_db(path)
             try:
                 db.row_factory = sqlite3.Row
-                summaries = {r['conversation_id']: dict(r) for r in db.execute('select conversation_id,title,workspace_uris,last_modified_time,status,parent_conversation_id from conversation_summaries')}
+                columns = {r[1] for r in db.execute('pragma table_info(conversation_summaries)')}
+                names = ('conversation_id', 'title', 'workspace_uris', 'last_modified_time', 'status',
+                         'parent_conversation_id', 'nesting_depth', 'agent_name', 'source')
+                selected = ','.join(name if name in columns else 'NULL AS '+name for name in names)
+                summaries = {r['conversation_id']: dict(r) for r in db.execute('select '+selected+' from conversation_summaries')}
             finally:
                 db.close()
                 if temporary: temporary.cleanup()
@@ -38,6 +42,17 @@ class AntigravityStore(HistoryStore):
                               'updated_at': item.get('last_modified_time') or (datetime.fromtimestamp(file.stat().st_mtime).astimezone().isoformat() if file else ''),
                               'transcript_available': file is not None, 'native_status': item.get('status'),
                               **self.project(key, cwd)}
+            depth = item.get('nesting_depth')
+            # Parent IDs also occur on ordinary forks. Require the native
+            # subagent marker/depth before placing a conversation in a family.
+            child = isinstance(depth, int) and depth > 0 or item.get('source') == 'subagent'
+            if child:
+                row = self.rows[key]
+                row['session_kind'] = 'subagent'
+                parent = item.get('parent_conversation_id')
+                if isinstance(parent, str) and parent and parent != key: row['parent_id'] = parent
+                name = item.get('agent_name')
+                if isinstance(name, str) and name: row['agent_name'] = name
         return list(self.rows.values())
 
     def session(self, key):

@@ -13,17 +13,20 @@ def session_activity(adapter, key):
         loaded = key in adapter.loaded
         try:
             data = adapter.session(key)
+            events = [event for event in data['events'] if not event.get('inherited')]
             turns = data.get('turns') or []
-            status = turns[-1].get('status', 'unknown') if turns else 'unknown'
-            latest_turn = data['events'][-1]['turn'] if data['events'] else None
-            replies = [event for event in data['events'] if event['kind'] == 'assistant' and event['turn'] == latest_turn
+            status = turns[-1].get('status', 'unknown') if turns and events else 'unknown'
+            latest_turn = events[-1]['turn'] if events else None
+            replies = [event for event in events if event['kind'] == 'assistant' and event['turn'] == latest_turn
                        and event.get('phase') not in {'reasoning', 'tool_calls', 'analysis'}]
             final = [event for event in replies if event.get('phase') in {'final', 'final_answer'}]
             message = (final or replies)[-1] if final or replies else None
-            task = next((event for event in reversed(data['events']) if event['kind'] == 'user'), None)
+            task = next((event for event in reversed(events) if event['kind'] == 'user'), None)
             # Indexed visible message text retains line breaks for the Markdown excerpt.
             record = data['lookup'][message['ref']][1] if message else {}
             result = record.get('text', message.get('preview', '')) if message else ''
+            read_text = getattr(adapter, 'activity_text', None)
+            if message and callable(read_text): result = read_text(data, message, record)
             if not isinstance(result, str): result = message.get('preview', '') if message else ''
             summary = {'status': status,
                        'task_preview': compact_line(task.get('preview', ''), 160) if task else '',

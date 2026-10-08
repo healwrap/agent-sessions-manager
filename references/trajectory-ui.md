@@ -4,9 +4,19 @@
 
 参考 Codex 的独立 agent thread 与子代理活动列表（[官方说明](https://learn.chatgpt.com/docs/agent-configuration/subagents)）。主会话顶部的“子代理”入口提供执行状态、已保存消息摘要与独立会话入口，子会话可返回父会话。主会话正文不拼接子会话的完整记录；主会话原有的委派调用和回传结果仍保留。
 
-来源 `discover()` 可以返回 `session_kind: subagent`、原生 `parent_id`、`agent_name` 和 `agent_role`。公共目录负责限定来源的 ID 映射与父子关联，展示层不按 Agent 名称分支。Codex 读取 `session_meta.source.subagent.thread_spawn`；Claude 读取原生 `subagents/` 路径，并关联桌面端共享正文的父会话。没有可靠父关系的记录保留在会话列表中并标注子代理，不猜测归属。默认列表将父会话可读取的子代理收纳到父会话入口；用户置顶的子代理仍显示，归档与搜索仍能找到子代理，深链接继续可读。
+来源 `discover()` 可以返回 `session_kind: subagent`、原生 `parent_id`、`agent_name` 和 `agent_role`。公共目录负责限定来源的 ID 映射与父子关联，展示层不按 Agent 名称分支。没有可靠父关系的记录保留在会话列表中并标注子代理，不猜测归属。默认列表将父会话可读取的子代理收纳到父会话入口；用户置顶的子代理仍显示，归档与搜索仍能找到子代理，深链接继续可读。
+
+原生关系由各来源分别解析：
+
+- Codex：`session_meta.source.subagent.thread_spawn`。
+- Claude：原生 `subagents/` 路径，并关联桌面端共享正文的父会话。
+- DSH：会话头的 `origin: subagent` 与 `parentSession`；`subagent/descriptor` 提供任务名称，父会话的 `subagent/catalog` 与 `team/member` 补充子代理目录和团队成员名称。不同工作区先按原生 ID 的同目录关系解析，不能用标题或工具嵌套 ID 猜测归属。目录已保存但独立日志缺失时，保留入口并说明缺失。读取 JSONL / Zstandard 最新一代，按文件版本缓存关系；种子边界之前继承的目录不属于新子代理。
+- Cursor：`composerData.subagentInfo.parentComposerId`、`subagentTypeName` 与 `subagentComposerIds`，补齐普通 composer 索引省略的独立子代理正文。子会话自身的父 ID 优先，复制的父目录不能抢占归属；多候选父 ID 不猜测。Best-of-N 候选不作为委派子代理收纳。
+- Antigravity Desktop / CLI：读取摘要库中的 `parent_conversation_id`、`nesting_depth`、`agent_name` 与明确的 `source: subagent`。父 ID 必须同时有子代理来源或正嵌套深度，普通 fork 保留为独立主会话。旧库缺少可选字段时仍可读取普通会话。本机当前没有含子代理关系的 Antigravity 样本，尚未核验其真实子代理 UI；只有摘要而没有导出正文的会话仍显示缺失说明。
 
 可选 `session_activity(key)` 返回标准化的 `status`、`task_preview`、`result_preview`、`result_ref`，默认实现从本会话规范化记录生成摘要，按文件版本缓存。`/api/session-family` 独立分页读取子代理，避免主列表分页漏掉子代理；`activity=0` 只读取关联目录，打开面板时才读取任务状态与摘要。界面中的执行中表示历史记录的状态，不能据此证明进程仍存活；状态未记录、失败与停止分别显示。父会话缺失、来源停用或子会话读取失败时保留可用入口与说明。
+
+来源可以在规范化事件上标记 `inherited: true`。DSH 使用 `session/end-seed`，Cursor 使用 `conversationLengthAtSpawn` 确定继承范围；活动摘要只取子代理自己的消息和结果，继承的原始轨迹仍保留在独立会话中。协调工具按通用工具语义显示，涵盖 `subagent`、`Agent` / `Task`、`invoke_subagent` 与控制工具，不按来源名称选择组件。
 
 ## 运行与核验
 

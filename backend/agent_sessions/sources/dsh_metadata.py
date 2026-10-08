@@ -47,6 +47,7 @@ def metadata(row):
               'has_tools': 'tool-call' in types, 'image_count': types.count('image'),
               'interrupted': data.get('interrupted', False), 'first_token_at': first_token(data.get('stream')),
               'usage': data.get('usage'), 'model': source.get('model'), 'model_provider': source.get('provider')}
+    if kind == 'session/end-seed': result['inherited'] = data.get('inherited') is True
     if kind.startswith('compaction/'):
         result.update(compaction_id=data.get('compactionId'), compaction_error=data.get('error'),
                       summary=compact_line(as_text(data.get('summary')), 420), model=data.get('model'))

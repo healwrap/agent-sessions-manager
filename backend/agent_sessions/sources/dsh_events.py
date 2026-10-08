@@ -10,6 +10,7 @@ ADMIN = {'session', 'session/title', 'turn/start', 'turn/end', 'step/start', 'st
          'session/title-llm-request', 'assistant/attempt', 'assistant/live-chunk', 'compaction/start'}
 ADMIN.update({'model/selection', 'assistant/chunk', 'reasoning-chunks', 'text-chunks', 'tool-call-chunks',
               'command/run', 'command/done', 'todo/write', 'goal/change', 'subagent/descriptor',
+              'subagent/catalog', 'team/member', 'session/end-seed',
               'approval/asked', 'approval/decided', 'llm/retry-started', 'web/deepseek-search-llm-request'})
 
 
@@ -24,7 +25,7 @@ def events(rows):
         event = {'ref': ref, 'turn': r.get('turn') or current, 'step': r.get('step'), 'kind': kind, 'name': name,
                  'preview': preview, 'timestamp': r['timestamp'], 'completed_at': r['timestamp'],
                  'status': 'pending' if kind in ('tool', 'subtool') else 'completed',
-                 'line': line, 'duration_ms': None, 'phase': 'reasoning' if part == 'reasoning' else None,
+                 'line': line, 'native_seq': r['seq'], 'duration_ms': None, 'phase': 'reasoning' if part == 'reasoning' else None,
                  'layer': '工具调用' if kind == 'subtool' else '助手消息' if kind in ('assistant', 'tool') else None}
         loc = {'offset': offset, 'line': line, 'part': part, 'text': preview, 'header': header}
         ledger.append(event); lookup[ref] = ('message' if kind in ('user', 'assistant') else 'call', loc)

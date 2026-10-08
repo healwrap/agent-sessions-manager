@@ -84,6 +84,7 @@ def read_headers(db, available):
 
 
 def catalogue(path, fallback_cwd=''):
+    from .cursor_family import family_headers
     with database(path) as db:
         available = tables(db)
         kv = 'cursorDiskKV' if 'cursorDiskKV' in available else 'ItemTable'
@@ -96,7 +97,7 @@ def catalogue(path, fallback_cwd=''):
                 if row:
                     headers.append(dict(composerId=key, name=row[0], createdAt=row[1], lastUpdatedAt=row[2], workspaceIdentifier=decode(row[3], {}), isDraft=row[4]))
         rows = []
-        for header in headers:
+        for header in family_headers(db, kv, headers, keys):
             if header.get('isDraft'): continue
             key = header['composerId']
             # A global header owns workspace identity. Do not use an unrelated
@@ -112,26 +113,29 @@ def catalogue(path, fallback_cwd=''):
 
 def conversation(db, table, key):
     parent = 'composerData:'+key
-    row = fields(db, table, parent, ('$.status', '$.fullConversationHeadersOnly'))
+    row = fields(db, table, parent, ('$.status', '$.fullConversationHeadersOnly', '$.subagentInfo.conversationLengthAtSpawn'))
     if not row: return None, [], {'cursor_missing_body': 1}
+    inherited = row[2] if isinstance(row[2], int) and row[2] > 0 else 0
     headers = decode(row[1], [])
     if isinstance(headers, list) and headers:
         locations = []
         seen = set()
-        for h in headers:
+        for index, h in enumerate(headers):
             if not isinstance(h, dict) or not isinstance(h.get('bubbleId'), str): continue
             if h['bubbleId'] in seen: continue
             seen.add(h['bubbleId'])
-            locations.append({'key': 'bubbleId:'+key+':'+h['bubbleId'], 'path': '$', 'bubble_id': h['bubbleId'], 'header': h})
+            locations.append({'key': 'bubbleId:'+key+':'+h['bubbleId'], 'path': '$', 'bubble_id': h['bubbleId'],
+                              'header': h, 'inherited': index < inherited})
         return row[0], locations, {}
     # Before split bubble storage, the complete conversation lived in one row.
     for name in ('conversation', 'fullConversation', 'conversationMap'):
         kind = db.execute('select json_type(value,?) from '+table+' where key=? and json_valid(value)', ('$.'+name, parent)).fetchone()
         if not kind or kind[0] not in ('array', 'object'): continue
         locations = []
-        for index, bubble_id in db.execute('select j.key,json_extract(j.value,\'$.bubbleId\') from '+table+' s,json_each(s.value,?) j where s.key=? and json_valid(s.value) and j.type=\'object\'', ('$.'+name, parent)):
+        for ordinal, (index, bubble_id) in enumerate(db.execute('select j.key,json_extract(j.value,\'$.bubbleId\') from '+table+' s,json_each(s.value,?) j where s.key=? and json_valid(s.value) and j.type=\'object\'', ('$.'+name, parent))):
             suffix = '['+str(index)+']' if kind[0] == 'array' else '.'+json.dumps(str(index))
-            locations.append({'key': parent, 'path': '$.'+name+suffix, 'bubble_id': bubble_id or str(index), 'header': {}})
+            locations.append({'key': parent, 'path': '$.'+name+suffix, 'bubble_id': bubble_id or str(index),
+                              'header': {}, 'inherited': ordinal < inherited})
         if locations: return row[0], locations, {}
     return row[0], [], {'cursor_empty_or_unsupported_body': 1}
 

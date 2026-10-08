@@ -36,7 +36,8 @@ def events(db, table, status, locations, initial_warnings):
                  'preview': compact_line(text or '媒体附件', 420),
                  'timestamp': timestamp(record['createdAt'] or location['header'].get('createdAt')),
                  'status': state, 'line': None, 'native_id': uid, 'tool_call_id': record['toolFormerData.toolCallId'],
-                 'duration_ms': None, 'turn_status': 'completed', 'phase': None, 'position': len(visible)}
+                 'duration_ms': None, 'turn_status': 'completed', 'phase': None, 'position': len(visible),
+                 'inherited': location.get('inherited', False)}
         visible.append(event)
         lookup[ref] = ('call' if kind == 'tool' else 'message', {**location, 'kind': kind, 'text': record['text'], 'output_available': record['output_available'] if kind == 'tool' else False})
     final = {'generating': 'in_progress', 'running': 'in_progress', 'streaming': 'in_progress', 'in_progress': 'in_progress',

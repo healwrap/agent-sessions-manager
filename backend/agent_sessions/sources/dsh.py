@@ -15,6 +15,7 @@ from .dsh_metadata import metadata, content
 from .dsh_events import events
 from .dsh_detail import enrich_detail, attachment_bytes, blocks_at
 from .revision import file_revision
+from .dsh_family import family_facts, link_family
 
 
 @contextmanager
@@ -36,6 +37,7 @@ class DshStore(HistoryStore):
     def __init__(self, root):
         super().__init__(root, 'dsh', 'local')
         self.raw_files = {}; self.decoded = {}; self.headers = {}; self.failures = {}; self.titles = {}; self.workspaces = {}
+        self.family_cache = {}
         self.temporary = tempfile.TemporaryDirectory(prefix='agent-sessions-dsh-')
 
     def discover(self):
@@ -51,7 +53,7 @@ class DshStore(HistoryStore):
         try:
             cache = json.loads((self.root/'storages/session_projcache.json').read_text(encoding='utf-8')).get('tables', {}).get('sessions', {})
         except (OSError, ValueError): cache = {}
-        rows = {}; raw_files = {}; failures = {}
+        rows = {}; raw_files = {}; failures = {}; families = {}; headers = {}
         for key, generations in candidates.items():
             version = max(v for v, _ in generations)
             selected = [p for v, p in generations if v == version]
@@ -69,6 +71,7 @@ class DshStore(HistoryStore):
                     if header.get('type') != 'session' or header.get('version') != version: raise ValueError('DSH 日志文件与会话头版本不一致')
                     self.headers[key] = (revision, header)
                 if version > 4: raise ValueError(f'暂不支持 DSH 日志版本 v{version}')
+                families[key] = family_facts(self, key, path, header, transcript_stream)
             except (ValueError, OSError) as error: failures[key] = str(error)
             projection = cache.get(header.get('id', path.parent.name), {})
             projection_path = self.root/'storages/session_projcache/sessions'/(str(header.get('id', path.parent.name))+'.json')
@@ -85,6 +88,9 @@ class DshStore(HistoryStore):
                          'transcript_available': key not in failures, 'unavailable_reason': failures.get(key),
                          **self.project(header.get('id', path.parent.name), cwd)}
             raw_files[key] = path
+            headers[key] = header
+        link_family(rows, headers, families)
+        self.family_cache = {key: value for key, value in self.family_cache.items() if key in raw_files}
         self.rows, self.raw_files, self.failures = rows, raw_files, failures
         self.files = {key: self.decoded[key][1] if key in self.decoded else path for key, path in raw_files.items()}
         return list(rows.values())
@@ -93,7 +99,9 @@ class DshStore(HistoryStore):
         with self.lock:
             if key not in self.raw_files: self.discover()
             path = self.raw_files.get(key)
-            if path is None: raise FileNotFoundError('没有找到该来源的会话记录')
+            if path is None:
+                if key in self.rows: return str(self.rows[key]['updated_at'])
+                raise FileNotFoundError('没有找到该来源的会话记录')
             # Watch source generations, not our decoded temporary copy.
             return file_revision(list(path.parent.glob('session*.jsonl*')))
 
@@ -115,6 +123,11 @@ class DshStore(HistoryStore):
     def session(self, key):
         with self.lock:
             self.discover()
+            if key in self.rows and key not in self.raw_files:
+                row = self.rows[key]
+                return {'source': self.root/'sessions'/key/'session.jsonl', 'events': [], 'lookup': {}, 'turns': [],
+                        'index': {'meta': {'title': row['title'], 'cwd': row['cwd']},
+                                  'source_size': 0, 'source_mtime_ns': row['updated_at']}}
             if key not in self.raw_files: raise FileNotFoundError('没有找到 DSH 会话')
             source = self.raw_files[key]; stat = source.stat()
             if key in self.failures:
@@ -175,6 +188,7 @@ class DshStore(HistoryStore):
         # Compressed source versions, rather than disposable decoded paths, own freshness.
         with self.lock:
             self.discover()
+            if key not in self.raw_files: return False
             source = self.raw_files[key]; stat = source.stat()
             version = (str(source), stat.st_size, stat.st_mtime_ns, query.casefold())
             if self.search_matches.get(key, (None,))[0] != version:
@@ -187,8 +201,18 @@ class DshStore(HistoryStore):
     def metadata(self, row):
         return metadata(row)
 
+    def activity_text(self, data, event, record):
+        raw = read_row(data['source'], record['offset']).get('data') or {}
+        message = raw.get('message', raw)
+        return content(message.get('content', []), 'text')
+
     def events(self, rows):
-        return events(rows)
+        result = events(rows)
+        boundary = next((r['seq'] for _, _, r in rows if r['type'] == 'session/end-seed' and r.get('inherited')), None)
+        if isinstance(boundary, int):
+            for event in result[0]:
+                if isinstance(event.get('native_seq'), int) and event['native_seq'] < boundary: event['inherited'] = True
+        return result
 
     def body(self, row, location):
         data = row.get('data') or {}; message = data.get('message', data)

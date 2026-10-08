@@ -47,7 +47,7 @@ def family_page(current, rows, activity, offset=0, limit=30):
     items = []
     for row in children[offset:offset+limit]:
         summary = {'status': 'unknown', 'result_preview': '', 'result_ref': None}
-        error = None
+        error = row.get('unavailable_reason') if row.get('transcript_available') is False else None
         try:
             summary.update(activity(row))
         except (OSError, ValueError) as exc:

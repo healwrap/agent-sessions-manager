@@ -37,7 +37,9 @@ class CursorStore(HistoryStore):
 
     @staticmethod
     def public_row(row):
-        return {k: row[k] for k in ('id', 'native_id', 'title', 'cwd', 'updated_at', 'transcript_available', 'project_id', 'project_label', 'project_path', 'project_source') if k in row}
+        return {k: row[k] for k in ('id', 'native_id', 'title', 'cwd', 'updated_at', 'transcript_available',
+                                  'project_id', 'project_label', 'project_path', 'project_source',
+                                  'session_kind', 'parent_id', 'agent_name', 'agent_role') if k in row}
 
     def session(self, key):
         with self.lock:

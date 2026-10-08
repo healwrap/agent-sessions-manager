@@ -59,6 +59,7 @@ export interface Settings {
   fontSize: number;
 }
 export interface Preferences {
+  showSubagents?: boolean;
   pinned: string[];
   archived: string[];
   aliases: Record<string, string>;

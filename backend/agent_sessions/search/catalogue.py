@@ -4,7 +4,7 @@ from .index import SearchIndex
 from .query import terms, matches
 
 
-def search_sessions(store, rows, query, mode, provider):
+def search_sessions(store, rows, query, mode, provider, include_subagents=True):
     needles = terms(query, mode)
     aliases = store.settings.read()['value'].get('aliases', {}) if hasattr(store, 'settings') else {}
     with store.lock:
@@ -13,9 +13,11 @@ def search_sessions(store, rows, query, mode, provider):
             store.search_index = SearchIndex(directory)
         index = store.search_index
     index.sync(rows, store.adapters, store.resolve, aliases, (store.catalogue_time, tuple(sorted(aliases.items()))))
-    eligible = [row for row in rows if not provider or row['provider'] == provider or row['source_id'] == provider]
+    eligible = [row for row in rows
+                if (include_subagents or row.get('session_kind') != 'subagent')
+                and (not provider or row['provider'] == provider or row['source_id'] == provider)]
     if not needles:
-        return [row for row in eligible if row.get('session_kind') != 'subagent' or not row.get('parent_available')], None
+        return eligible, None
     ids = {row['id'] for row in eligible}
     found, progress = index.find(needles, ids)
     selected = []

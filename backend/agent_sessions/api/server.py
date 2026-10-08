@@ -59,7 +59,9 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.store.sources()
             elif parsed.path == '/api/sessions':
                 args = (get('q'), integer('offset', 0, 0, 1_000_000), integer('limit', 30, 1, 100), get('project'))
-                result = self.server.store.sessions(*args, get('provider'), get('search_mode', 'words')) if hasattr(self.server.store, 'catalogue') else self.server.store.sessions(*args)
+                subagents = get('subagents', '1')
+                if subagents not in ('0', '1'): raise ValueError('子代理筛选选项无效')
+                result = self.server.store.sessions(*args, get('provider'), get('search_mode', 'words'), subagents == '1') if hasattr(self.server.store, 'catalogue') else self.server.store.sessions(*args)
             elif parsed.path == '/api/trajectory':
                 result = self.server.store.trajectory(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 150, 1, 250), get('q'), get('kind', 'all'))
             elif parsed.path == '/api/session-family':

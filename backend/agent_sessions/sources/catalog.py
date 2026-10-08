@@ -77,11 +77,11 @@ class MultiStore:
     def session_family(self, key, offset=0, limit=30, include_activity=True):
         return session_family(self, key, offset, limit, include_activity)
 
-    def sessions(self, query='', offset=0, limit=30, project_id='', provider='', search_mode='words'):
+    def sessions(self, query='', offset=0, limit=30, project_id='', provider='', search_mode='words', include_subagents=True):
         from agent_sessions.search.catalogue import search_sessions
         provider = self.registry.public_source(provider)
         rows = self.catalogue()
-        selected, progress = search_sessions(self, rows, query, search_mode, provider)
+        selected, progress = search_sessions(self, rows, query, search_mode, provider, include_subagents)
         projects = {}
         for row in selected:
             group = projects.setdefault(row['project_id'], {k: row[k] for k in ('project_id', 'project_label', 'project_path', 'project_source')})

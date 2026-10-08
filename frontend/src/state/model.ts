@@ -51,6 +51,7 @@ export const emptyView = (): View => ({
   change: 'reset',
 });
 export const emptyPreferences = (): Preferences => ({
+  showSubagents: true,
   pinned: [],
   archived: [],
   aliases: {},

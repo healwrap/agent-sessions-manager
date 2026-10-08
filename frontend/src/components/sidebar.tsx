@@ -74,6 +74,20 @@ export function Sidebar({
             ]}
           />
         </div>
+        <div className="session-kind-filter">
+          <span>显示</span>
+          <label title="取消勾选后，列表和搜索结果只显示主会话">
+            <input
+              type="checkbox"
+              aria-label="显示子代理会话"
+              checked={state.preferences.showSubagents !== false}
+              onChange={(event) =>
+                void sessionStore.setShowSubagents(event.target.checked)
+              }
+            />
+            子代理
+          </label>
+        </div>
         {state.sources
           .filter((source) => source.enabled && source.error)
           .map((source) => (
@@ -206,7 +220,9 @@ export function Sidebar({
                     <div
                       key={item.id}
                       className="session-item"
-                      data-source-visible={!state.provider}
+                      data-source-visible={
+                        !state.provider || item.session_kind === 'subagent'
+                      }
                       aria-current={item.id === state.id}
                     >
                       <button

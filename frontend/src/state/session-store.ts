@@ -132,11 +132,15 @@ export class SessionStore {
     if (this.state.initializing || !preserve)
       this.update({ catalogueLoading: true });
     try {
-      const data = await ((pending && !query && !provider ? pending : null) ||
+      const subagents = this.state.preferences.showSubagents !== false;
+      const data = await ((pending && !query && !provider && subagents
+        ? pending
+        : null) ||
         this.api<Catalogue>('/api/sessions', {
           q: query,
           provider,
           search_mode: searchMode,
+          subagents: subagents ? 1 : 0,
         }));
       if (generation !== this.sessionsGeneration) return;
       const known = new Map(
@@ -188,6 +192,7 @@ export class SessionStore {
         provider: this.state.provider,
         q: this.state.query,
         search_mode: this.state.searchMode,
+        subagents: this.state.preferences.showSubagents !== false ? 1 : 0,
         offset: this.state.projectPages[key] || 0,
         limit: 100,
       });
@@ -201,9 +206,11 @@ export class SessionStore {
     } catch (error) {
       this.notify(String(error));
     } finally {
-      const loading = new Set(this.state.projectLoading);
-      loading.delete(key);
-      this.update({ projectLoading: loading });
+      if (generation === this.sessionsGeneration) {
+        const loading = new Set(this.state.projectLoading);
+        loading.delete(key);
+        this.update({ projectLoading: loading });
+      }
     }
   }
   toggleProject(key: string, open: boolean) {
@@ -237,9 +244,18 @@ export class SessionStore {
       searchMode,
       searchIndex: null,
       projectPages: {},
+      projectLoading: new Set(),
       projectExpanded: new Set(),
     });
     await this.loadSessions(false);
+  }
+  async setShowSubagents(showSubagents: boolean) {
+    const saved = this.savePreferences({
+      ...this.state.preferences,
+      showSubagents,
+    });
+    await this.filter(this.state.provider, this.state.query);
+    await saved;
   }
   async selectSession(id: string, ref: string | null = null) {
     this.scrollPositions = { trace: 0, chat: 0 };

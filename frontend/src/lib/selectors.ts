@@ -78,11 +78,7 @@ export function projectGroups(
   );
   for (const item of known.values()) {
     if (
-      (!query &&
-        !archive &&
-        item.session_kind === 'subagent' &&
-        item.parent_available &&
-        !p.pinned.includes(item.id)) ||
+      (p.showSubagents === false && item.session_kind === 'subagent') ||
       (provider &&
         sourceId(item, sources) !== provider &&
         item.provider !== provider) ||
@@ -118,19 +114,11 @@ export function projectGroups(
       (item) =>
         item.project_id === group.project_id &&
         p.archived.includes(item.id) &&
-        (query || item.session_kind !== 'subagent' || !item.parent_available),
+        (p.showSubagents !== false || item.session_kind !== 'subagent'),
     ).length;
-    const pinnedChildren = query
-      ? 0
-      : group.items.filter(
-          (item) =>
-            item.session_kind === 'subagent' &&
-            item.parent_available &&
-            p.pinned.includes(item.id),
-        ).length;
     group.count = archive
       ? group.items.length
-      : Math.max(group.items.length, group.count + pinnedChildren - archived);
+      : Math.max(group.items.length, group.count - archived);
   }
   return Array.from(groups.values());
 }

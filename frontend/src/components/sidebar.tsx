@@ -14,6 +14,7 @@ import { StartupContent } from './startup-content';
 import { MarqueeTitle } from './marquee-title';
 import { Select } from './select';
 import { SearchField } from './search-field';
+import { SessionFilters } from './session-filters';
 export function Sidebar({
   state,
   onManage,
@@ -74,20 +75,6 @@ export function Sidebar({
             ]}
           />
         </div>
-        <div className="session-kind-filter">
-          <span>显示</span>
-          <label title="取消勾选后，列表和搜索结果只显示主会话">
-            <input
-              type="checkbox"
-              aria-label="显示子代理会话"
-              checked={state.preferences.showSubagents !== false}
-              onChange={(event) =>
-                void sessionStore.setShowSubagents(event.target.checked)
-              }
-            />
-            子代理
-          </label>
-        </div>
         {state.sources
           .filter((source) => source.enabled && source.error)
           .map((source) => (
@@ -105,11 +92,10 @@ export function Sidebar({
               aria-controls="session-search"
               onClick={toggleSearch}
             />
-            <IconButton
-              icon="archive"
-              label={state.archive ? '返回会话' : '查看归档会话'}
-              aria-pressed={state.archive}
-              onClick={() => sessionStore.update({ archive: !state.archive })}
+            <SessionFilters
+              archive={state.archive}
+              showSubagents={state.preferences.showSubagents !== false}
+              disabled={state.sidebarClosed || state.initializing}
             />
             <IconButton
               icon="refresh"

@@ -7,6 +7,7 @@
 @import './select.css' layer(components);
 @import './search-field.css' layer(components);
 @import './sidebar.css' layer(components);
+@import './session-filters.css' layer(components);
 @import './sidebar-projects.css' layer(components);
 @import './subagents.css' layer(components);
 @import './dialogs.css' layer(components);

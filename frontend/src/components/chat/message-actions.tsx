@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ClipboardPaste } from 'lucide-react';
 import type { Event } from '../../lib/types';
 import { copyText } from '../../lib/api';
+import { copyContextReference } from '../../lib/context-reference';
 import { sessionStore } from '../../state/session-store';
 import { Icon } from '../primitives';
 
@@ -70,14 +71,10 @@ export function MessageActions({
       pending.current = false;
     }
   };
-  const handoff = async () => {
+  const contextReference = async () => {
     try {
-      const result = await sessionStore.api<{ text?: string; prompt?: string }>(
-        '/api/handoff',
-        { id, ref: event.ref },
-      );
-      await copyText(result.prompt || result.text || '');
-      sessionStore.notify('已复制续接指令。');
+      await copyContextReference(id, event.ref);
+      sessionStore.notify('已复制上下文引用。');
     } catch (error) {
       sessionStore.notify(String(error));
     }
@@ -100,9 +97,9 @@ export function MessageActions({
         <Icon name="jump" />
       </button>
       <button
-        title="复制续接指令"
-        aria-label={'复制续接指令 ' + event.ref}
-        onClick={() => void handoff()}
+        title="复制上下文引用（从此消息开始）"
+        aria-label={'复制上下文引用 ' + event.ref}
+        onClick={() => void contextReference()}
       >
         <ClipboardPaste strokeWidth={1.6} />
       </button>

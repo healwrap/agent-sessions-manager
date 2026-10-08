@@ -21,7 +21,7 @@ frontend/
 backend/agent_sessions/
   api/                           本机 HTTP API 与静态资源服务
   sources/                       来源插件注册、统一接口与各原生格式解析
-  context/                       定位、索引、原话、证据、CLI 与续接
+  context/                       定位、索引、原话、证据、CLI 与上下文引用
   trajectory/                    执行时长投影、折叠摘要与圈选定位
   settings.py                    独立应用设置
 scripts/                         两个稳定的命令行兼容入口

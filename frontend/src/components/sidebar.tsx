@@ -210,10 +210,32 @@ export function Sidebar({
                         !state.provider || item.session_kind === 'subagent'
                       }
                       aria-current={item.id === state.id}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const rect =
+                          event.currentTarget.getBoundingClientRect();
+                        onManage(
+                          item,
+                          event.clientX || rect.right,
+                          event.clientY || rect.bottom,
+                        );
+                      }}
                     >
                       <button
                         className="session-select flex min-w-0 flex-1 items-center text-left"
                         onClick={() => void sessionStore.selectSession(item.id)}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === 'ContextMenu' ||
+                            (event.shiftKey && event.key === 'F10')
+                          ) {
+                            event.preventDefault();
+                            const rect =
+                              event.currentTarget.getBoundingClientRect();
+                            onManage(item, rect.right, rect.bottom);
+                          }
+                        }}
                       >
                         <span className="session-copy">
                           <MarqueeTitle

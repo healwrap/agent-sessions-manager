@@ -32,7 +32,7 @@ Claude Code 共享正文目录默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~
 
 Cursor 默认目录：macOS 为 `~/Library/Application Support/Cursor/User`，Windows 为 `%APPDATA%/Cursor/User`，Linux 为 `$XDG_CONFIG_HOME/Cursor/User` 或 `~/.config/Cursor/User`。设置也接受上一级 `Cursor` 目录；便携或自定义用户目录可手动配置，读取命令使用 `--cursor-home`。目录读取只查询原生头部索引，消息与工具结果按会话和消息键读取，不把整个数据库导出到缓存。使用只读事务处理 WAL，一并观察主库与 WAL 版本来识别增量更新。项目优先取原生 `workspaceIdentifier`，旧工作区记录使用自身 `workspace.json`，不借用 Codex 项目名称。适配依据本机原始数据库与安装包实现，后续存储格式变化需另行核验；2026-10-02 已核验本机 3.15.19，旧内嵌格式与头部表迁移通过 fixture 验证。
 
-对话消息旁的剪贴板箭头图标复制本地只读指令。目标 Agent 在同一台电脑、有文件读取权限时，可执行应用自带的读取程序，按目录和引用恢复到所选消息。指令包含来源路径、会话 ID、续接位置、分页及证据读取方法；历史授权不继承。云端 Agent 不能直接访问本机文件。本功能恢复可见上下文，不搬运原 Agent 的隐藏运行状态。
+对话消息旁的“复制上下文引用”把从该消息开始的历史内容作为新任务的上下文参考（包含该消息）；左侧会话右键、会话管理菜单中的同名入口引用整个会话。复制内容只包含简短说明、一条本地只读目录命令和按引用读取/分页用法，不要求继续历史任务。`--read-from` 限定起点，目录、原文和工具证据遵守同一范围；未指定起点时读取整个会话的目录。命令仅保留所选来源插件登记的目录，包括必要的补充索引。目标 Agent 需在同一台电脑并有本地文件读取权限；历史内容仅作参考，历史授权不继承。
 
 macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、详情、项目会话列表和对话过程使用短过渡，遵循系统“减少动态效果”和应用动画开关。时长模式按已记录调用区间的并集折叠空闲时间；圈选用区间重叠判断。缺少模型时长的来源保留点标记，不伪造计时。摘要步骤数按可见助手消息与外层调用计数，内部调用计入工具调用数；没有原生模型请求分组的来源，不宣称这是模型请求数。
 
@@ -60,7 +60,7 @@ npm run desktop:build
 
 构建脚本按宿主系统处理 Python 虚拟环境、Windows `.exe` sidecar 和安装包类型：macOS 生成 app / dmg，Windows 生成 NSIS，Linux 生成 deb / AppImage。Windows、Linux 需要在对应宿主机实际构建和验收，本机 Mac 测试不能替代它们。
 
-系统窗口装饰默认启用，Windows 和 Linux 的窗口按钮交给系统；仅 `desktop/tauri.macos.conf.json` 启用 macOS Overlay 和原生 Sidebar 材质。Tauri 自动合并平台配置。应用目录按本机用户选择：Mac 为 `~/Library/Application Support/Agent Sessions`，Windows 优先 `%LOCALAPPDATA%/Agent Sessions`，Linux 为 `$XDG_DATA_HOME/agent-sessions` 或 `~/.local/share/agent-sessions`。Codex 遵循 `CODEX_HOME`，Claude Code 遵循 `CLAUDE_CONFIG_DIR`；其他来源默认仍在当前用户的 `.gemini` 下，可在设置中更改。Antigravity 的 file URI 兼容 Windows 盘符、UNC 网络共享和编码路径；续接命令在 Windows 使用 PowerShell 引号。
+系统窗口装饰默认启用，Windows 和 Linux 的窗口按钮交给系统；仅 `desktop/tauri.macos.conf.json` 启用 macOS Overlay 和原生 Sidebar 材质。Tauri 自动合并平台配置。应用目录按本机用户选择：Mac 为 `~/Library/Application Support/Agent Sessions`，Windows 优先 `%LOCALAPPDATA%/Agent Sessions`，Linux 为 `$XDG_DATA_HOME/agent-sessions` 或 `~/.local/share/agent-sessions`。Codex 遵循 `CODEX_HOME`，Claude Code 遵循 `CLAUDE_CONFIG_DIR`；其他来源默认仍在当前用户的 `.gemini` 下，可在设置中更改。Antigravity 的 file URI 兼容 Windows 盘符、UNC 网络共享和编码路径；上下文读取命令在 Windows 使用 PowerShell 引号。
 
 Rust 外壳：`desktop/src/main.rs`。React + TypeScript 界面：`frontend/src/`，由 Vite 与 Tailwind CSS 构建。后台：`backend/agent_sessions/`，按 API、来源适配、上下文读取和轨迹布局分包。两个 `scripts/` 命令保留为兼容入口。目录约定见根目录 `README.md`。
 

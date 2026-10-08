@@ -52,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parsed.path == '/api/settings':
                 result = {'value': self.server.app_settings.read(), 'defaults': self.server.app_settings.defaults,
                           'sources': self.server.store.sources()['items']}
-            elif parsed.path == '/api/handoff':
+            elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
             elif parsed.path == '/api/sources':
@@ -161,6 +161,7 @@ def main():
     parser.add_argument('--read-action', choices=['status', 'outline', 'message', 'tools', 'evidence'], default='outline')
     parser.add_argument('--read-ref', default='')
     parser.add_argument('--read-through', default='')
+    parser.add_argument('--read-from', default='', help='从指定消息开始读取上下文，包含该消息')
     parser.add_argument('--read-query', default='')
     parser.add_argument('--read-page', type=int, default=1)
     args = parser.parse_args()
@@ -180,7 +181,7 @@ def main():
         if not 1 <= args.read_page <= 1_000_000: parser.error('页码无效')
         from agent_sessions.context.handoff import read
         try:
-            result = read(store, args.read_session, args.read_action, args.read_ref, args.read_page, args.read_query, args.read_through)
+            result = read(store, args.read_session, args.read_action, args.read_ref, args.read_page, args.read_query, args.read_through, args.read_from)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         except (ValueError, OSError) as error:
             parser.exit(1, str(error)+'\n')

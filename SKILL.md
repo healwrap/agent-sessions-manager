@@ -1,6 +1,6 @@
 ---
 name: agent-sessions
-description: 管理 Codex、Claude Code、Cursor、Antigravity Desktop / CLI 与 DeepSeek Harness 的本地会话、对话和轨迹，按项目整理，并按引用恢复长期上下文或复制跨 Agent 续接指令。
+description: 管理 Codex、Claude Code、Cursor、Antigravity Desktop / CLI 与 DeepSeek Harness 的本地会话、对话和轨迹，按项目整理，并按引用恢复长期上下文或复制跨 Agent 上下文引用。
 ---
 
 # Agent Sessions
@@ -11,7 +11,7 @@ description: 管理 Codex、Claude Code、Cursor、Antigravity Desktop / CLI 与
 
 - 用户要查看或管理会话：优先打开已安装的 Agent Sessions 应用。开发启动、来源目录、展示规则和排查方法见 [references/trajectory-ui.md](references/trajectory-ui.md)。
 - 用户要恢复 Codex 历史：使用 `scripts/session_context.py`，先 `status`、`outline`、`search`，再按 `T003/A04` 等引用读取 `message`；详细定位、分页和证据流程见 [references/context-recovery.md](references/context-recovery.md)。
-- 用户要续接其他 Agent 的会话：对话消息旁的剪贴板箭头图标复制本地读取指令；或用 `scripts/trajectory_server.py --read-session 来源会话ID --read-action outline`。按目录里的引用读取 `--read-action message --read-ref 引用`；工具结果使用 `--read-action evidence --read-ref 引用 --read-query 查询词`。`--read-page` 分页，`--read-through` 限定续接位置。目标 Agent 需能访问同一台电脑的文件。
+- 用户要把历史会话作为上下文：对话消息旁的“复制上下文引用”引用从该消息开始的内容（包含该消息）；会话右键菜单或管理菜单的同名入口引用整个会话。复制内容仅包含简短说明和本地只读命令，不要求继续执行历史任务。也可用 `scripts/trajectory_server.py --read-session 来源会话ID --read-action outline` 查看目录，加 `--read-from 引用` 限定起点。按目录引用用 `--read-action message --read-ref 引用` 读取原文，`--read-page` 分页；按需用 `--read-action tools` 列出工具，`--read-action evidence --read-ref 引用 --read-query 查询词` 读取结果证据。读取原文与证据也遵守起点；保留 `--read-through` 作为可选终点。目标 Agent 需能访问同一台电脑的文件。
 - 用户要调整或打包应用：项目组织与开发命令见 [README.md](README.md)，桌面运行和打包见 [references/desktop-app.md](references/desktop-app.md)。
 
 Codex 专用恢复入口只读 Codex；其他来源使用统一读取入口。来源键为 `provider:instance:native-key`。Claude 桌面端和 CLI 合并为 Claude Code，按共享正文文件去重，桌面索引用于补充标题；旧桌面来源键仍兼容读取。Cursor 使用 `cursor:desktop:composerId`，直接读取本地 SQLite 目录与可见消息，不要求手动导出；工具参数与结果按同一原生消息读取。Antigravity 的桌面端与 CLI 继续分开。DSH 支持本地 JSONL 与 Zstandard 日志。目录配置与格式边界见 [references/desktop-app.md](references/desktop-app.md)。旧 Codex UUID 与消息深链接仍兼容。

@@ -16,6 +16,7 @@
 @import './dsh/image-lightbox.css' layer(components);
 @import './trajectory.css' layer(components);
 @import './dsh/thinking.css' layer(components);
+@import './dsh/assistant-tool-calls.css' layer(components);
 @import './dsh/tooltip.css' layer(components);
 @import './dsh/json-layout.css' layer(components);
 @import './dsh/json-strings.css' layer(components);

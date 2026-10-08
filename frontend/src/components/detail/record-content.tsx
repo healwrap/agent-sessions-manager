@@ -81,10 +81,13 @@ export function RecordContent({
             !detail.output_text &&
             !detail.tool_calls?.length && <p>{detail.text}</p>}
           {!!detail.tool_calls?.length && (
-            <ul className="assistant-tool-calls">
+            <ul
+              className={`assistant-tool-calls${preview ? ' assistant-tool-calls-preview' : ''}`}
+            >
               {detail.tool_calls.map((call, index) => (
                 <li key={index}>
                   <button
+                    type="button"
                     className="assistant-tool-link"
                     disabled={!call.ref}
                     title={
@@ -96,12 +99,17 @@ export function RecordContent({
                       call.ref && void sessionStore.selectEvent(call.ref, true)
                     }
                   >
-                    <Icon name="wrench" className="assistant-tool-icon" />
-                    <strong title={call.name}>{call.name}</strong>
-                    <span className="assistant-tool-arguments">
-                      {call.preview}
+                    <Icon name="tool-call" className="assistant-tool-icon" />
+                    <span className="assistant-tool-text">
+                      <span className="assistant-tool-name" title={call.name}>
+                        {call.name}
+                      </span>
+                      {call.preview && (
+                        <span className="assistant-tool-arguments">
+                          {call.preview}
+                        </span>
+                      )}
                     </span>
-                    {call.ref && <Icon name="right" />}
                   </button>
                 </li>
               ))}

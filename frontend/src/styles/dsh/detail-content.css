@@ -125,52 +125,6 @@
 .record-attachments:empty {
   display: none;
 }
-.assistant-tool-calls {
-  margin: 8px 0;
-  padding: 0;
-  list-style: none;
-}
-.assistant-tool-calls li + li {
-  margin-top: 3px;
-}
-.assistant-tool-link {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-  padding: 3px 2px;
-  border: 0;
-  color: var(--dsw-alias-label-secondary);
-  background: transparent;
-  cursor: pointer;
-  font: var(--dsw-font-xs-13);
-  gap: 5px;
-  text-align: left;
-}
-.assistant-tool-link:hover:not(:disabled) {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-.assistant-tool-icon {
-  flex: none;
-}
-.assistant-tool-link strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.assistant-tool-arguments {
-  min-width: 0;
-  overflow: hidden;
-  font-family: var(--ds-font-family-code);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.assistant-tool-link:disabled {
-  cursor: default;
-}
-
 .message-preview {
   padding: 2px 14px 8px;
   color: var(--dsw-alias-label-primary);

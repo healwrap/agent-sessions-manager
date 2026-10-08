@@ -80,6 +80,21 @@ class Store(TrajectoryStore):
                 'project_label': Path(cwd).name if cwd else '未分配项目',
                 'project_path': cwd or '', 'project_source': 'directory'}
 
+    def relationship(self, key):
+        source = self.files[key]
+        if self.session_meta.get(key, (None,))[0] != source:
+            self.session_meta[key] = (source, read_session_meta(source))
+        origin = self.session_meta[key][1].get('source')
+        subagent = origin.get('subagent') if isinstance(origin, dict) else None
+        if not isinstance(subagent, dict): return {}
+        spawn = subagent.get('thread_spawn') or {}
+        if not isinstance(spawn, dict): return {}
+        parent = spawn.get('parent_thread_id')
+        return {'session_kind': 'subagent',
+                'parent_id': parent if isinstance(parent, str) and UUID.fullmatch(parent) else None,
+                'agent_name': spawn.get('agent_nickname') or spawn.get('agent_path'),
+                'agent_role': spawn.get('agent_role')}
+
     def sessions(self, query='', offset=0, limit=30, project_id=''):
         with self.lock:
             index_path = self.root / 'session_index.jsonl'
@@ -103,7 +118,8 @@ class Store(TrajectoryStore):
                 title = str(row.get('thread_name') or '(无标题)')
                 if query and query.casefold() not in (title+' '+project['project_label']).casefold():
                     continue
-                item = {'id': row['id'], 'title': title, 'updated_at': str(row.get('updated_at') or ''), **project}
+                item = {'id': row['id'], 'title': title, 'updated_at': str(row.get('updated_at') or ''),
+                        **project, **self.relationship(row['id'])}
                 group = groups.setdefault(project['project_id'], {**project, 'count': 0})
                 group['count'] += 1
                 if not project_id or project_id == project['project_id']:
@@ -122,6 +138,14 @@ class Store(TrajectoryStore):
                 self.rows = {row['id']: row for row in rows}
                 return rows
             offset = page['next_offset']
+
+    def session_family(self, key, offset=0, limit=30, include_activity=True):
+        from .session_family import annotate_family, family_page
+        rows = self.discover()
+        annotate_family(rows)
+        current = next((row for row in rows if row['id'] == key), None)
+        if current is None: raise FileNotFoundError('未找到本地会话')
+        return family_page(current, rows, lambda row: self.session_activity(row['id']) if include_activity else {}, offset, limit)
 
     def session(self, key):
         if not UUID.fullmatch(key):

@@ -8,6 +8,7 @@
 @import './search-field.css' layer(components);
 @import './sidebar.css' layer(components);
 @import './sidebar-projects.css' layer(components);
+@import './subagents.css' layer(components);
 @import './dialogs.css' layer(components);
 @import './markdown.css' layer(components);
 @import './markdown-compact.css' layer(components);

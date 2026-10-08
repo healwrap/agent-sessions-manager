@@ -26,6 +26,14 @@ const names: Record<string, string> = {
   search_web: 'webSearch',
   web_fetch: 'webFetch',
   subagent: 'subagents',
+  spawn_agent: 'subagents',
+  send_input: 'subagents',
+  followup_task: 'subagents',
+  wait_agent: 'subagents',
+  resume_agent: 'subagents',
+  close_agent: 'subagents',
+  interrupt_agent: 'subagents',
+  list_agents: 'subagents',
   todo_write: 'plan',
   create_goal: 'plan',
   update_goal: 'plan',
@@ -71,13 +79,28 @@ const toolTitles: Record<string, string> = {
   web_fetch: '访问网页',
   run_code: '代码',
   exec: '运行代码',
+  spawn_agent: '创建子代理',
+  send_input: '发送子代理指令',
+  followup_task: '继续子代理任务',
+  wait_agent: '等待子代理',
+  resume_agent: '恢复子代理',
+  close_agent: '关闭子代理',
+  interrupt_agent: '中断子代理',
+  list_agents: '查看子代理',
 };
 function toolName(event: Event) {
-  return (event.name.split('__').at(-1) || event.name)
+  const name = (event.name.split('__').at(-1) || event.name)
     .split('.')
     .at(-1)!
     .toLowerCase()
     .replace(/_v\d+$/, '');
+  if (
+    /(?:^|[._])(?:collaboration|multi_agent(?:_v\d+)?)[._]/.test(event.name)
+  ) {
+    if (name === 'wait') return 'wait_agent';
+    if (name === 'send_message') return 'send_input';
+  }
+  return name;
 }
 function activity(event: Event) {
   const name = toolName(event);
@@ -121,6 +144,7 @@ export function activityIcon(events: Event[]) {
         thinking: 'think',
         commands: 'terminal',
         code: 'code',
+        subagents: 'agents',
         questions: 'question',
         search: 'search',
         read: 'clip',

@@ -48,7 +48,13 @@ export function sourceId(item: Session, sources: Source[] = []) {
   );
 }
 export function sessionTitle(item: Session, p: Preferences) {
-  return p.aliases[item.id] || item.title || '(无标题)';
+  return (
+    p.aliases[item.id] ||
+    (item.title && item.title !== '(无标题)'
+      ? item.title
+      : item.agent_name || item.title) ||
+    '(无标题)'
+  );
 }
 export function projectGroups(
   sessions: Session[],
@@ -70,6 +76,11 @@ export function projectGroups(
   );
   for (const item of known.values()) {
     if (
+      (!query &&
+        !archive &&
+        item.session_kind === 'subagent' &&
+        item.parent_available &&
+        !p.pinned.includes(item.id)) ||
       (provider &&
         sourceId(item, sources) !== provider &&
         item.provider !== provider) ||
@@ -100,11 +111,21 @@ export function projectGroups(
     );
     const archived = Array.from(known.values()).filter(
       (item) =>
-        item.project_id === group.project_id && p.archived.includes(item.id),
+        item.project_id === group.project_id &&
+        p.archived.includes(item.id) &&
+        (query || item.session_kind !== 'subagent' || !item.parent_available),
     ).length;
+    const pinnedChildren = query
+      ? 0
+      : group.items.filter(
+          (item) =>
+            item.session_kind === 'subagent' &&
+            item.parent_available &&
+            p.pinned.includes(item.id),
+        ).length;
     group.count = archive
       ? group.items.length
-      : Math.max(group.items.length, group.count - archived);
+      : Math.max(group.items.length, group.count + pinnedChildren - archived);
   }
   return Array.from(groups.values());
 }

@@ -26,6 +26,9 @@ class ClaudeSourceStore:
             rows = self.shared.discover()
             rows += [{**row, 'id': 'desktop/'+row['id'],
                       'route_id': 'claude:desktop', 'route_key': row['id']} for row in desktop_rows]
+            parents = {row['transcript_key']: row['id'] for row in rows if row.get('transcript_key')}
+            rows = [{**row, 'parent_id': parents.get(row['parent_id'], row['parent_id'])}
+                    if row.get('parent_id') else row for row in rows]
             self.rows = {row['id']: row for row in rows}
             return rows
 
@@ -40,6 +43,10 @@ class ClaudeSourceStore:
     def revision(self, key):
         adapter, native = self.target(key)
         return adapter.revision(native)
+
+    def session_activity(self, key):
+        adapter, native = self.target(key)
+        return adapter.session_activity(native)
 
     def detail(self, key, *args, **kwargs):
         adapter, native = self.target(key)

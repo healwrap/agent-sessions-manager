@@ -1,5 +1,13 @@
 # Agent Sessions 本地会话查看器
 
+## 子代理会话
+
+参考 Codex 的独立 agent thread 与子代理活动列表（[官方说明](https://learn.chatgpt.com/docs/agent-configuration/subagents)）。主会话顶部的“子代理”入口提供执行状态、已保存消息摘要与独立会话入口，子会话可返回父会话。主会话正文不拼接子会话的完整记录；主会话原有的委派调用和回传结果仍保留。
+
+来源 `discover()` 可以返回 `session_kind: subagent`、原生 `parent_id`、`agent_name` 和 `agent_role`。公共目录负责限定来源的 ID 映射与父子关联，展示层不按 Agent 名称分支。Codex 读取 `session_meta.source.subagent.thread_spawn`；Claude 读取原生 `subagents/` 路径，并关联桌面端共享正文的父会话。没有可靠父关系的记录保留在会话列表中并标注子代理，不猜测归属。默认列表将父会话可读取的子代理收纳到父会话入口；用户置顶的子代理仍显示，归档与搜索仍能找到子代理，深链接继续可读。
+
+可选 `session_activity(key)` 返回标准化的 `status`、`task_preview`、`result_preview`、`result_ref`，默认实现从本会话规范化记录生成摘要，按文件版本缓存。`/api/session-family` 独立分页读取子代理，避免主列表分页漏掉子代理；`activity=0` 只读取关联目录，打开面板时才读取任务状态与摘要。界面中的执行中表示历史记录的状态，不能据此证明进程仍存活；状态未记录、失败与停止分别显示。父会话缺失、来源停用或子会话读取失败时保留可用入口与说明。
+
 ## 运行与核验
 
 从仓库目录执行 `npm ci`、`npm run build:ui`，再启动 `python3 scripts/trajectory_server.py --port 8765`。开发时另开 `npm run dev`，Vite 将 API 请求代理到 8765。服务只绑定 `127.0.0.1`；可用 `--source-path SOURCE=PATH` 指定注册目录（可重复），旧 `--codex-home` 等参数保持兼容；`--state-home` 指定应用整理设置目录。`--codex-only` 可仅运行原有 Codex 适配器。

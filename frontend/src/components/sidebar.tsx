@@ -189,12 +189,17 @@ export function Sidebar({
                               )
                             }
                           />
-                          {!state.provider && (
+                          {(!state.provider ||
+                            item.session_kind === 'subagent') && (
                             <span className="provider-tag">
-                              {state.sources.find(
-                                (source) =>
-                                  source.id === sourceId(item, state.sources),
-                              )?.label || item.provider_label}
+                              {!state.provider &&
+                                (state.sources.find(
+                                  (source) =>
+                                    source.id === sourceId(item, state.sources),
+                                )?.label ||
+                                  item.provider_label)}
+                              {item.session_kind === 'subagent' &&
+                                (state.provider ? '子代理' : ' · 子代理')}
                             </span>
                           )}
                         </span>

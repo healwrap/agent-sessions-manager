@@ -63,6 +63,10 @@ class TrajectoryStore:
     def available(self):
         return self.root.is_dir()
 
+    def session_activity(self, key):
+        from .session_activity import session_activity
+        return session_activity(self, key)
+
     def revision(self, key):
         with self.lock:
             path = self.files.get(key)

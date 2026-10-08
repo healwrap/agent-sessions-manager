@@ -6,6 +6,12 @@ export interface Project {
   count: number;
 }
 export interface Session extends Project {
+  session_kind?: 'main' | 'subagent';
+  parent_id?: string | null;
+  parent_available?: boolean;
+  agent_name?: string | null;
+  agent_role?: string | null;
+  children_count?: number;
   search_query?: string;
   id: string;
   title: string;
@@ -14,6 +20,20 @@ export interface Session extends Project {
   source_id?: string;
   instance_id?: string;
   provider_label: string;
+}
+export interface SubagentSession extends Session {
+  status: string;
+  task_preview?: string;
+  result_preview: string;
+  result_ref: string | null;
+  activity_error?: string | null;
+}
+export interface SessionFamily {
+  current: Session;
+  parent: Session | null;
+  items: SubagentSession[];
+  total: number;
+  next_offset: number | null;
 }
 export interface Source {
   aliases?: string[];
@@ -107,6 +127,7 @@ export interface CallGroup {
   anchor_ref: string | null;
 }
 export interface Trajectory {
+  session?: Session | null;
   current_status: string;
   capabilities?: Record<string, boolean>;
   id: string;

@@ -27,9 +27,13 @@ class ClaudeStore(HistoryStore):
                 cwd = item.get('cwd') or cwd; native = item.get('session_id') or native
                 title = item.get('title') or title
             first = next((i['preview'] for _, _, i in index['rows'] if i.get('role') == 'user' and i.get('preview')), None)
+            subagent = '/subagents/' in '/'+key
+            parent = key.rsplit('/subagents/', 1)[0] if subagent else None
+            relationship = {'session_kind': 'subagent', 'parent_id': parent if parent in self.files else None,
+                            'agent_name': path.stem} if subagent else {}
             self.rows[key] = {'id': key, 'native_id': native, 'title': title or first or path.stem,
                               'cwd': cwd, 'updated_at': datetime.fromtimestamp(path.stat().st_mtime).astimezone().isoformat(),
-                              'is_subagent': '/subagents/' in '/'+key,
+                              'is_subagent': subagent, **relationship,
                               'desktop_origin': any(r.get('entrypoint') in DESKTOP_ENTRYPOINTS for _, _, r in index['rows']),
                               **self.project(key, cwd)}
         self.rows = {k: v for k, v in self.rows.items() if k in self.files}

@@ -62,6 +62,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.store.sessions(*args, get('provider')) if hasattr(self.server.store, 'catalogue') else self.server.store.sessions(*args)
             elif parsed.path == '/api/trajectory':
                 result = self.server.store.trajectory(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 150, 1, 250), get('q'), get('kind', 'all'))
+            elif parsed.path == '/api/session-family':
+                result = self.server.store.session_family(get('id'), integer('offset', 0, 0, 1_000_000), integer('limit', 30, 1, 100), get('activity', '1') == '1')
             elif parsed.path == '/api/session-version':
                 result = {'revision': self.server.store.revision(get('id'))}
             elif parsed.path == '/api/event':

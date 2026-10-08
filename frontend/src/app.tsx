@@ -22,6 +22,7 @@ import { DetailPanel } from './components/detail-panel';
 import { Icon, IconButton } from './components/primitives';
 import { StartupContent } from './components/startup-content';
 import { SearchField } from './components/search-field';
+import { Subagents } from './components/subagents';
 export function App() {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
@@ -47,7 +48,8 @@ export function App() {
   useEffect(() => {
     setSearch(state.views.trace.query);
   }, [state.views.trace.query]);
-  const current = state.sessions.find((item) => item.id === state.id),
+  const current =
+      state.sessions.find((item) => item.id === state.id) || view.data?.session,
     title = current
       ? sessionTitle(current, state.preferences)
       : view.data?.title || '从项目列表打开会话';
@@ -76,6 +78,18 @@ export function App() {
               {title}
             </div>
             <div className="header-actions">
+              {state.id && (
+                <Subagents
+                  key={state.id}
+                  id={state.id}
+                  seconds={state.settings.syncSeconds}
+                  preferences={state.preferences}
+                  running={['in_progress', 'running'].includes(
+                    view.data?.current_status || '',
+                  )}
+                  onOpen={(id, ref) => void sessionStore.selectSession(id, ref)}
+                />
+              )}
               <IconButton
                 icon="refresh"
                 label="刷新会话内容"

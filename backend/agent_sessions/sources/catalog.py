@@ -9,6 +9,7 @@ from .contract import SourceRegistry
 from .plugins import PLUGINS, SOURCE_KEYS, path_fields
 from .common import normalize_event
 from .terminal import terminal_input
+from .session_family import qualify_sessions, annotate_family, session_family
 
 
 def public_source(source):
@@ -57,17 +58,12 @@ class MultiStore:
             try:
                 with adapter.lock: rows = adapter.discover()
                 self.errors.pop(source, None)
-                for row in rows:
-                    public = {k: v for k, v in row.items() if k not in ('route_id', 'route_key')}
-                    items.append({**public, 'id': self.registry.qualify(source, row),
-                                  'native_id': row.get('native_id', row['id']),
-                                  'provider': source.split(':')[0],
-                                  'provider_label': self.registry.plugins[source].label,
-                                  'source_id': source, 'instance_id': source.split(':')[1]})
+                items.extend(qualify_sessions(self.registry, source, rows))
             except (OSError, ValueError, sqlite3.Error) as error:
                 self.errors[source] = str(error)
         # Project identity belongs to the source, never to a neighbouring adapter.
         self.catalogue_rows = sorted(items, key=lambda r: r['updated_at'], reverse=True)
+        annotate_family(self.catalogue_rows)
         assignments = self.settings.read()['value'].get('projectAssignments', {}) if hasattr(self, 'settings') else {}
         for row in self.catalogue_rows:
             assigned = assignments.get(row['id'])
@@ -78,14 +74,19 @@ class MultiStore:
         self.catalogue_time = time.monotonic()
         return self.catalogue_rows
 
+    def session_family(self, key, offset=0, limit=30, include_activity=True):
+        return session_family(self, key, offset, limit, include_activity)
+
     def sessions(self, query='', offset=0, limit=30, project_id='', provider=''):
         provider = self.registry.public_source(provider)
         rows = self.catalogue()
         aliases = self.settings.read()['value'].get('aliases', {}) if hasattr(self, 'settings') else {}
         selected = []
         for row in rows:
+            if not query and row.get('session_kind') == 'subagent' and row.get('parent_available'): continue
             if provider and row['provider'] != provider and row['source_id'] != provider: continue
-            if query and query.casefold() not in (row['title']+' '+row['project_label']+' '+aliases.get(row['id'], '')).casefold():
+            label = ' '.join(str(row.get(field) or '') for field in ('title', 'project_label', 'agent_name', 'agent_role'))+' '+aliases.get(row['id'], '')
+            if query and query.casefold() not in label.casefold():
                 try:
                     source, native = self.resolve(row['id'])
                     if not self.adapters[source].matches_content(native, query): continue
@@ -124,7 +125,9 @@ class MultiStore:
         qualified = key if len(parts) == 3 and ':'.join(parts[:2]) in self.registry.routes else source+':'+native
         if qualified not in self.project_overrides: self.catalogue()
         row = getattr(self.adapters[source], 'rows', {}).get(native, {})
+        session = next((item for item in self.catalogue_rows if item['id'] == qualified), None)
         return {**data, 'id': qualified, **self.identity(source), **self.project_overrides.get(qualified, {}),
+                'session': session,
                 'unavailable_reason': row.get('unavailable_reason') or ('此会话只有摘要或索引记录，本机尚未保存可读取的对话轨迹。' if row.get('transcript_available') is False else None),
                 'capabilities': self.registry.plugins[source].capabilities}
 

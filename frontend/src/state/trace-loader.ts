@@ -98,8 +98,20 @@ export function createTraceLoader(store: SessionStore) {
         },
         mode,
       );
+      if (
+        first.session &&
+        store.state.sessions.some((item) => item.id === canonical)
+      ) {
+        store.update({
+          sessions: store.state.sessions.map((item) =>
+            item.id === canonical
+              ? { ...first.session!, search_query: item.search_query }
+              : item,
+          ),
+        });
+      }
       if (!store.state.sessions.some((item) => item.id === canonical)) {
-        const item = { ...first, updated_at: '', count: 1 };
+        const item = first.session || { ...first, updated_at: '', count: 1 };
         store.update({ sessions: [...store.state.sessions, item] });
       }
       if (

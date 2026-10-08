@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod appearance;
+mod resources;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     Mutex,
@@ -114,10 +115,11 @@ fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| show(app)))
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .manage(Backend::default())
-        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about, appearance::set_theme])
+        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about, appearance::set_theme, resources::open_resource])
         .on_page_load(|window, _| {
             let preference = appearance::saved_preference(window.app_handle());
             let _ = window.eval(&format!("localStorage.setItem('agent-sessions-theme','{preference}');"));

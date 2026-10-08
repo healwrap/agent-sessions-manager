@@ -19,6 +19,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-autostart",
  "tauri-plugin-clipboard-manager",
+ "tauri-plugin-opener",
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
 ]
@@ -3823,6 +3824,28 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "tauri-plugin-opener"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d39404b2572927e0d3ed30a7ca226037f7508d22e79c96ee6ef0d42b6a4b3345"
+dependencies = [
+ "dunce",
+ "glob",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "open",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.21",
+ "url",
+ "windows",
+ "zbus",
 ]
 
 [[package]]

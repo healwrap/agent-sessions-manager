@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-open-resource"
+description = "按用户点击，用默认程序打开网页与本地文件，或在文件管理器中显示"
+commands.allow = ["open_resource"]

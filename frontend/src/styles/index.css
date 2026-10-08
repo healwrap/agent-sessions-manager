@@ -12,6 +12,7 @@
 @import './subagents.css' layer(components);
 @import './dialogs.css' layer(components);
 @import './markdown.css' layer(components);
+@import './resource-links.css' layer(components);
 @import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);
 @import './chat-disclosure.css' layer(components);

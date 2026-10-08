@@ -129,6 +129,7 @@ export interface CallGroup {
   anchor_ref: string | null;
 }
 export interface Trajectory {
+  cwd?: string | null;
   session?: Session | null;
   current_status: string;
   capabilities?: Record<string, boolean>;

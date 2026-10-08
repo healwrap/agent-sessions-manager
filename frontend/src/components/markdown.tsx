@@ -2,9 +2,8 @@ import { marked, type Token } from 'marked';
 import { Fragment, memo, type ReactNode } from 'react';
 import { MarkdownCode } from './markdown-code';
 import { MarkdownImage } from './markdown-image';
+import { ResourceLink } from './resource-link';
 type Images = { href: string; src: string }[];
-const safeHref = (href: string) =>
-  /^(https?:|mailto:)/i.test(href) ? href : undefined;
 function tokens(
   items: Token[] = [],
   images: Images = [],
@@ -66,9 +65,9 @@ function tokens(
         break;
       case 'link':
         node = (
-          <a href={safeHref(t.href || '')} target="_blank" rel="noreferrer">
+          <ResourceLink href={t.href || ''}>
             {tokens(t.tokens, images, true)}
-          </a>
+          </ResourceLink>
         );
         break;
       case 'image':

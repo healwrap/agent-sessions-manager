@@ -1,0 +1,7 @@
+{
+  "identifier": "local-resources",
+  "description": "本机查看器可打开用户主动点击的链接和文件",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:*/*"] },
+  "permissions": ["allow-open-resource"]
+}

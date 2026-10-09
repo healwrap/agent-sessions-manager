@@ -3,7 +3,8 @@ import { sessionStore, type AppState } from '../state/session-store';
 import type { Session } from '../lib/types';
 import { sessionTitle } from '../lib/selectors';
 import { copyContextReference } from '../lib/context-reference';
-import { Dialog, Icon } from './primitives';
+import { Dialog } from './primitives';
+import { MenuItem, MenuSurface } from './menu-surface';
 export interface SessionMenu {
   item: Session;
   x: number;
@@ -92,7 +93,7 @@ export function SessionActions({
   return (
     <>
       {menu && (
-        <div
+        <MenuSurface
           ref={ref}
           className="session-menu"
           role="menu"
@@ -107,7 +108,7 @@ export function SessionActions({
               'pin',
               state.preferences.pinned.includes(menu.item.id)
                 ? '取消置顶'
-                : '置顶',
+                : '置顶会话',
               () => void sessionStore.togglePreference(menu.item, 'pinned'),
             ],
             ['edit', '重命名', () => edit('rename')],
@@ -117,23 +118,22 @@ export function SessionActions({
               'archive',
               state.preferences.archived.includes(menu.item.id)
                 ? '取消归档'
-                : '归档',
+                : '归档会话',
               () => void sessionStore.togglePreference(menu.item, 'archived'),
             ],
           ].map(([icon, label, action]) => (
-            <button
+            <MenuItem
               key={String(icon)}
-              role="menuitem"
+              icon={String(icon)}
               onClick={() => {
                 (action as () => void)();
                 onClose();
               }}
             >
-              <Icon name={String(icon)} />
               {String(label)}
-            </button>
+            </MenuItem>
           ))}
-        </div>
+        </MenuSurface>
       )}
       <Dialog
         open={editing !== null}

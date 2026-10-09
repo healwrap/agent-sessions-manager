@@ -84,11 +84,6 @@
   align-items: center;
   justify-content: center;
 }
-.session-menu button {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
 @media (max-width: 1050px) {
   .sidebar-slot {
     --sidebar-width: 230px;

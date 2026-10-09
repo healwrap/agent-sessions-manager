@@ -234,32 +234,6 @@
   background: var(--dsw-alias-interactive-bg-active);
   color: var(--dsw-alias-label-primary);
 }
-.session-menu {
-  position: fixed;
-  width: 208px;
-  z-index: 30;
-  padding: 5px;
-  background: var(--dsw-alias-bg-layer-1);
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
-  box-shadow: 0 8px 30px #0002;
-}
-.session-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-align: left;
-  width: 100%;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: inherit;
-  padding: 7px 10px;
-  font-size: 13px;
-}
-.session-menu button:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-}
 .session-select {
   user-select: none;
   -webkit-user-select: none;

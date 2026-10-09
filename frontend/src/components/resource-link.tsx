@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { copyText } from '../lib/api';
 import { resourceTarget } from '../lib/resource-links';
 import { sessionStore } from '../state/session-store';
+import { MenuItem, MenuSurface } from './menu-surface';
 
 export function ResourceLink({
   href,
@@ -132,21 +133,21 @@ export function ResourceLink({
       </a>
       {menu &&
         createPortal(
-          <div
+          <MenuSurface
             ref={popupRef}
             className="resource-menu"
             role="menu"
             aria-label="文件操作"
             style={{ left: menu.x, top: menu.y }}
           >
-            <button role="menuitem" onClick={() => void open()}>
+            <MenuItem icon="jump" onClick={() => void open()}>
               用默认程序打开
-            </button>
-            <button role="menuitem" onClick={() => void open(true)}>
+            </MenuItem>
+            <MenuItem icon="folder" onClick={() => void open(true)}>
               {revealLabel}
-            </button>
-            <button
-              role="menuitem"
+            </MenuItem>
+            <MenuItem
+              icon="copy"
               onClick={() => {
                 setMenu(null);
                 void copyText(resource.target)
@@ -155,8 +156,8 @@ export function ResourceLink({
               }}
             >
               复制文件地址
-            </button>
-          </div>,
+            </MenuItem>
+          </MenuSurface>,
           document.body,
         )}
     </>

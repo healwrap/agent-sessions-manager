@@ -40,35 +40,6 @@
   height: 12px;
   stroke: currentColor;
 }
-.json-copy-menu {
-  position: fixed;
-  z-index: 100;
-  min-width: 180px;
-  padding: 4px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
-  background: var(--dsw-alias-bg-layer-1);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
-  font: var(--dsw-font-xs-13);
-}
-.json-copy-menu button {
-  display: block;
-  width: 100%;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 4px;
-  text-align: left;
-  color: var(--dsw-alias-label-primary);
-  background: transparent;
-  font: inherit;
-  cursor: pointer;
-}
-.json-copy-menu button:hover,
-.json-copy-menu button:focus-visible {
-  background: var(--dsw-alias-interactive-bg-hover);
-  outline: none;
-}
-
 .overview-title-icon {
   width: 12px;
   height: 12px;

@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
+import { MenuItem, MenuSurface } from './menu-surface';
 
 export interface SelectOption {
   value: string;
@@ -80,7 +81,9 @@ export function Select({
 
   useLayoutEffect(() => {
     if (open)
-      menu.current?.children[active]?.scrollIntoView({ block: 'nearest' });
+      menu.current
+        ?.querySelectorAll('[role="option"]')
+        [active]?.scrollIntoView({ block: 'nearest' });
   }, [open, active]);
 
   const show = (index = Math.max(0, selected)) => {
@@ -169,7 +172,7 @@ export function Select({
         </span>
         <ChevronDown className="select-chevron" size={12} aria-hidden="true" />
       </button>
-      <div
+      <MenuSurface
         ref={menu}
         id={id}
         popover="manual"
@@ -178,27 +181,27 @@ export function Select({
         className="select-menu"
       >
         {options.map((option, index) => (
-          <button
+          <MenuItem
             key={option.value}
             id={`${id}-${index}`}
-            type="button"
             role="option"
             tabIndex={-1}
             aria-selected={option.value === value}
             data-active={open && active === index}
-            className="select-option"
             title={option.label}
             onPointerMove={() => setActive(index)}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => choose(index)}
+            trailing={
+              <span className="select-check" aria-hidden="true">
+                {option.value === value && <Check size={14} />}
+              </span>
+            }
           >
-            <span className="select-label">{option.label}</span>
-            <span className="select-check" aria-hidden="true">
-              {option.value === value && <Check size={14} />}
-            </span>
-          </button>
+            {option.label}
+          </MenuItem>
         ))}
-      </div>
+      </MenuSurface>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { MenuItem, MenuSurface } from '../menu-surface';
 
 export interface CopyMenuItem {
   id: string;
@@ -104,7 +105,7 @@ export function CopyMenu({
       {anchor}
       {open &&
         createPortal(
-          <div
+          <MenuSurface
             ref={list}
             role="menu"
             aria-label="JSON 复制选项"
@@ -112,10 +113,8 @@ export function CopyMenu({
             style={position}
           >
             {items.map((item) => (
-              <button
+              <MenuItem
                 key={item.id}
-                type="button"
-                role="menuitem"
                 onClick={() => {
                   root.current
                     ?.querySelector('button')
@@ -124,9 +123,9 @@ export function CopyMenu({
                 }}
               >
                 {item.label}
-              </button>
+              </MenuItem>
             ))}
-          </div>,
+          </MenuSurface>,
           document.body,
         )}
     </span>

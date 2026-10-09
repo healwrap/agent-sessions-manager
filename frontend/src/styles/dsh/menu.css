@@ -1,0 +1,110 @@
+/* Adapted from DSH Menu.module.css, MenuSurface.module.css and theme tokens (MIT). */
+body {
+  --dsw-menu-surface-fill: #f8f9fa94;
+  --dsw-menu-backdrop-filter: blur(40px) saturate(150%);
+  --dsw-alias-menu-icon: var(--dsw-static-neutral-bluish-800);
+}
+body[data-ds-dark-theme] {
+  --dsw-menu-surface-fill: #43454a73;
+  --dsw-alias-menu-icon: var(--dsw-static-neutral-bluish-100);
+}
+.dsh-menu {
+  position: fixed;
+  z-index: 1100;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: min(144px, calc(100vw - 24px));
+  max-width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  padding: 4px;
+  border: 0;
+  border-radius: var(--dsw-radius-lg);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-13);
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l1);
+  box-shadow:
+    0 0 0 0.5px var(--dsw-elevation-stroke-color),
+    0 3px 8px 0 #0000000a,
+    0 0 20px 0 #0000000d;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+body[data-ds-dark-theme] .dsh-menu {
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l3);
+}
+.dsh-menu[popover]:not(:popover-open) {
+  display: none;
+}
+.dsh-menu-material {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--dsw-menu-surface-fill);
+  -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter);
+  backdrop-filter: var(--dsw-menu-backdrop-filter);
+  pointer-events: none;
+}
+.dsh-menu-viewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dsh-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 34px;
+  flex: none;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-13);
+  text-align: left;
+  cursor: pointer;
+}
+.dsh-menu-item:hover:not(:disabled),
+.dsh-menu-item:focus-visible:not(:disabled),
+.dsh-menu-item[data-active='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  outline: none;
+}
+.dsh-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dsh-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--dsw-alias-menu-icon);
+}
+.dsh-menu-icon .dsh-icon {
+  width: 14px;
+  height: 14px;
+}
+.dsh-menu-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .dsh-menu-material {
+    background: var(--dsw-alias-bg-layer-2);
+  }
+}

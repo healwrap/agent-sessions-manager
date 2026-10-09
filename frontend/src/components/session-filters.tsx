@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { sessionStore } from '../state/session-store';
 import { Icon } from './primitives';
+import { MenuItem, MenuSurface } from './menu-surface';
 
 export function SessionFilters({
   archive,
@@ -97,7 +98,7 @@ export function SessionFilters({
       >
         <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden="true" />
       </button>
-      <div
+      <MenuSurface
         ref={menu}
         id={id}
         popover="auto"
@@ -143,25 +144,25 @@ export function SessionFilters({
               {group.label}
             </div>
             {group.items.map((option, index) => (
-              <button
+              <MenuItem
                 key={option.label}
-                type="button"
                 role={option.role}
                 aria-checked={option.checked}
                 tabIndex={active === group.offset + index ? 0 : -1}
-                className="select-option"
                 onFocus={() => setActive(group.offset + index)}
                 onClick={option.select}
+                trailing={
+                  <span className="select-check" aria-hidden="true">
+                    {option.checked && <Icon name="check" />}
+                  </span>
+                }
               >
-                <span className="select-label">{option.label}</span>
-                <span className="select-check" aria-hidden="true">
-                  {option.checked && <Icon name="check" />}
-                </span>
-              </button>
+                {option.label}
+              </MenuItem>
             ))}
           </div>
         ))}
-      </div>
+      </MenuSurface>
     </div>
   );
 }

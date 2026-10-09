@@ -98,7 +98,7 @@ export function App() {
               />
               <IconButton
                 icon="more"
-                label="管理当前会话"
+                label="会话操作"
                 disabled={!current}
                 onClick={(event) => {
                   if (current) {
@@ -246,7 +246,7 @@ export function App() {
         </main>
       </div>
       <SettingsDialog open={state.settingsOpen} />
-      <SessionActions state={state} menu={menu} onClose={closeMenu} />
+      <SessionActions menu={menu} onClose={closeMenu} />
       {state.toast && (
         <div id="toast" role="status">
           {state.toast}

@@ -31,7 +31,6 @@ export function Sidebar({
     state.preferences,
     state.provider,
     state.query,
-    state.archive,
     state.sources,
     state.searchMode,
   );
@@ -83,7 +82,7 @@ export function Sidebar({
             </div>
           ))}
         <div className="workspace-header">
-          <span>{state.archive ? '归档会话' : '项目'}</span>
+          <span>项目</span>
           <div>
             <IconButton
               icon="search"
@@ -93,7 +92,6 @@ export function Sidebar({
               onClick={toggleSearch}
             />
             <SessionFilters
-              archive={state.archive}
               showSubagents={state.preferences.showSubagents !== false}
               disabled={state.sidebarClosed || state.initializing}
             />
@@ -241,11 +239,6 @@ export function Sidebar({
                           <MarqueeTitle
                             className="session-name"
                             text={sessionTitle(item, state.preferences)}
-                            prefix={
-                              state.preferences.pinned.includes(item.id) && (
-                                <Icon name="pin" className="session-pin" />
-                              )
-                            }
                           />
                           {(!state.provider ||
                             item.session_kind === 'subagent') && (
@@ -268,7 +261,7 @@ export function Sidebar({
                       <IconButton
                         icon="more"
                         label={
-                          '管理会话 ' + sessionTitle(item, state.preferences)
+                          '会话操作 ' + sessionTitle(item, state.preferences)
                         }
                         className="icon-button session-options"
                         aria-haspopup="menu"

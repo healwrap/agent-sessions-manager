@@ -12,9 +12,7 @@ import type { SearchMode } from '../lib/search';
 import type {
   Catalogue,
   Preferences,
-  Project,
   Request,
-  Session,
   Settings,
   SettingsResponse,
   Source,
@@ -331,40 +329,6 @@ export class SessionStore {
     }
     await this.loadSessions(false);
     this.notify('设置已保存。');
-  }
-  async togglePreference(item: Session, field: 'pinned' | 'archived') {
-    const p = this.state.preferences,
-      list = p[field].includes(item.id)
-        ? p[field].filter((id) => id !== item.id)
-        : [...p[field], item.id];
-    await this.savePreferences({
-      ...p,
-      [field]: list,
-      metadata: { ...p.metadata, [item.id]: item },
-    });
-  }
-  async rename(item: Session, title: string) {
-    const p = this.state.preferences;
-    await this.savePreferences({
-      ...p,
-      aliases: { ...p.aliases, [item.id]: title },
-      metadata: { ...p.metadata, [item.id]: item },
-    });
-  }
-  async moveProject(item: Session, project: Project | undefined) {
-    const p = this.state.preferences,
-      assignments = { ...p.projectAssignments },
-      metadata = { ...p.metadata };
-    if (project) assignments[item.id] = project;
-    else delete assignments[item.id];
-    delete metadata[item.id];
-    await this.savePreferences({
-      ...p,
-      projectAssignments: assignments,
-      metadata,
-    });
-    await this.loadSessions(false);
-    if (item.id === this.state.id) await this.loadTrace(true);
   }
 }
 export const sessionStore = new SessionStore();

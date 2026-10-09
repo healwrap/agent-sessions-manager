@@ -17,17 +17,6 @@
 .session-filter-trigger[aria-expanded='true'] {
   background: var(--dsw-alias-interactive-bg-hover);
 }
-.session-filter-heading {
-  padding: 5px 8px;
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 16px;
-}
-.session-filter-divider {
-  margin-top: 4px;
-  padding-top: 8px;
-  border-top: 1px solid var(--dsw-alias-border-l2);
-}
 .session-filter-menu .select-check .dsh-icon {
   width: 14px;
   height: 14px;

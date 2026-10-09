@@ -74,11 +74,6 @@
 .project-group {
   margin-bottom: 4px;
 }
-.session-pin {
-  width: 12px;
-  height: 12px;
-  margin-right: 4px;
-}
 .session-options {
   display: flex;
   align-items: center;

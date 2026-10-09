@@ -1,9 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { sessionStore, type AppState } from '../state/session-store';
+import { useLayoutEffect, useRef } from 'react';
+import { sessionStore } from '../state/session-store';
 import type { Session } from '../lib/types';
-import { sessionTitle } from '../lib/selectors';
 import { copyContextReference } from '../lib/context-reference';
-import { Dialog } from './primitives';
 import { MenuItem, MenuSurface } from './menu-surface';
 export interface SessionMenu {
   item: Session;
@@ -11,19 +9,12 @@ export interface SessionMenu {
   y: number;
 }
 export function SessionActions({
-  state,
   menu,
   onClose,
 }: {
-  state: AppState;
   menu: SessionMenu | null;
   onClose: () => void;
 }) {
-  const [editing, setEditing] = useState<{
-      item: Session;
-      kind: 'rename' | 'project';
-    } | null>(null),
-    [value, setValue] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (!menu) return;
@@ -73,15 +64,6 @@ export function SessionActions({
         previous.focus({ preventScroll: true });
     };
   }, [menu, onClose]);
-  const edit = (kind: 'rename' | 'project') => {
-    setEditing({ item: menu!.item, kind });
-    setValue(
-      kind === 'rename'
-        ? sessionTitle(menu!.item, state.preferences)
-        : menu!.item.project_id,
-    );
-    onClose();
-  };
   const copyContext = async (id: string) => {
     try {
       await copyContextReference(id);
@@ -90,102 +72,26 @@ export function SessionActions({
       sessionStore.notify(String(error));
     }
   };
-  return (
-    <>
-      {menu && (
-        <MenuSurface
-          ref={ref}
-          className="session-menu"
-          role="menu"
-          aria-label="会话操作"
-          style={{
-            left: Math.min(menu.x, window.innerWidth - 210),
-            top: Math.min(menu.y, window.innerHeight - 190),
-          }}
-        >
-          {[
-            [
-              'pin',
-              state.preferences.pinned.includes(menu.item.id)
-                ? '取消置顶'
-                : '置顶会话',
-              () => void sessionStore.togglePreference(menu.item, 'pinned'),
-            ],
-            ['edit', '重命名', () => edit('rename')],
-            ['folder', '移动到项目', () => edit('project')],
-            ['copy', '复制上下文引用', () => void copyContext(menu.item.id)],
-            [
-              'archive',
-              state.preferences.archived.includes(menu.item.id)
-                ? '取消归档'
-                : '归档会话',
-              () => void sessionStore.togglePreference(menu.item, 'archived'),
-            ],
-          ].map(([icon, label, action]) => (
-            <MenuItem
-              key={String(icon)}
-              icon={String(icon)}
-              onClick={() => {
-                (action as () => void)();
-                onClose();
-              }}
-            >
-              {String(label)}
-            </MenuItem>
-          ))}
-        </MenuSurface>
-      )}
-      <Dialog
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        id={editing?.kind === 'project' ? 'project-dialog' : 'rename-dialog'}
-        title={editing?.kind === 'project' ? '移动到项目' : '重命名会话'}
+  return menu ? (
+    <MenuSurface
+      ref={ref}
+      className="session-menu"
+      role="menu"
+      aria-label="会话操作"
+      style={{
+        left: Math.min(menu.x, window.innerWidth - 210),
+        top: Math.min(menu.y, window.innerHeight - 190),
+      }}
+    >
+      <MenuItem
+        icon="copy"
+        onClick={() => {
+          void copyContext(menu.item.id);
+          onClose();
+        }}
       >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!editing) return;
-            void (
-              editing.kind === 'rename'
-                ? sessionStore.rename(editing.item, value)
-                : sessionStore.moveProject(
-                    editing.item,
-                    state.projects.find((p) => p.project_id === value),
-                  )
-            ).then(() => setEditing(null));
-          }}
-        >
-          <h2>{editing?.kind === 'project' ? '移动到项目' : '重命名会话'}</h2>
-          {editing?.kind === 'project' ? (
-            <select
-              aria-label="目标项目"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-            >
-              <option value="">恢复原始项目</option>
-              {state.projects.map((project) => (
-                <option key={project.project_id} value={project.project_id}>
-                  {project.project_label} · {project.project_path}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              required
-              maxLength={200}
-              aria-label="会话名称"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-            />
-          )}
-          <div className="rename-actions">
-            <button type="button" onClick={() => setEditing(null)}>
-              取消
-            </button>
-            <button>保存</button>
-          </div>
-        </form>
-      </Dialog>
-    </>
-  );
+        复制上下文引用
+      </MenuItem>
+    </MenuSurface>
+  ) : null;
 }

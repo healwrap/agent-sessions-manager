@@ -63,18 +63,12 @@ export function projectGroups(
   p: Preferences,
   provider: string,
   query: string,
-  archive: boolean,
   sources: Source[] = [],
   searchMode: SearchMode = 'words',
 ) {
   const known = new Map(sessions.map((s) => [s.id, s]));
-  for (const item of Object.values(p.metadata))
-    if (!known.has(item.id)) known.set(item.id, item);
   const groups = new Map(
-    (archive ? [] : projects).map((g) => [
-      g.project_id,
-      { ...g, items: [] as Session[] },
-    ]),
+    projects.map((g) => [g.project_id, { ...g, items: [] as Session[] }]),
   );
   for (const item of known.values()) {
     if (
@@ -82,7 +76,6 @@ export function projectGroups(
       (provider &&
         sourceId(item, sources) !== provider &&
         item.provider !== provider) ||
-      p.archived.includes(item.id) !== archive ||
       (query &&
         (item.search_query !== query ||
           (item.search_mode || 'words') !== searchMode) &&
@@ -105,20 +98,8 @@ export function projectGroups(
     groups.get(key)!.items.push(item);
   }
   for (const group of groups.values()) {
-    group.items.sort(
-      (a, b) =>
-        Number(p.pinned.includes(b.id)) - Number(p.pinned.includes(a.id)) ||
-        b.updated_at.localeCompare(a.updated_at),
-    );
-    const archived = Array.from(known.values()).filter(
-      (item) =>
-        item.project_id === group.project_id &&
-        p.archived.includes(item.id) &&
-        (p.showSubagents !== false || item.session_kind !== 'subagent'),
-    ).length;
-    group.count = archive
-      ? group.items.length
-      : Math.max(group.items.length, group.count - archived);
+    group.items.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    group.count = Math.max(group.items.length, group.count);
   }
   return Array.from(groups.values());
 }

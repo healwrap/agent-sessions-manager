@@ -65,7 +65,6 @@ export interface AppState {
   mode: 'trace' | 'chat';
   provider: string;
   query: string;
-  archive: boolean;
   sidebarClosed: boolean;
   searchOpen: boolean;
   searchMode: SearchMode;
@@ -106,7 +105,6 @@ export const initialState = (): AppState => ({
   mode: 'trace',
   provider: '',
   query: '',
-  archive: false,
   sidebarClosed: false,
   searchOpen: false,
   searchMode: 'words',

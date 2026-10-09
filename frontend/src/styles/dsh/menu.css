@@ -48,6 +48,22 @@ body[data-ds-dark-theme] .dsh-menu {
   backdrop-filter: var(--dsw-menu-backdrop-filter);
   pointer-events: none;
 }
+.dsh-menu-backing {
+  display: none;
+}
+/* DSH's macOS backing supplies page pixels above native window vibrancy.
+ * It stays below page content and occupies only the visible menu's bounds. */
+.desktop-macos body {
+  isolation: isolate;
+}
+.desktop-macos .dsh-menu-backing {
+  display: block;
+  position: fixed;
+  z-index: -1;
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-base);
+  pointer-events: none;
+}
 .dsh-menu-viewport {
   display: flex;
   flex-direction: column;

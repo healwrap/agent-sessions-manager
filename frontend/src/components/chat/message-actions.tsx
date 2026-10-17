@@ -103,12 +103,16 @@ export function MessageActions({
       >
         <ClipboardPaste strokeWidth={1.6} />
       </button>
-      {!user && total != null && (
-        <span className="chat-time" title="本轮已记录用量">
-          {formatted} tok
+      {!user && (
+        <span className="chat-end-info">
+          {total != null && (
+            <span className="chat-time" title="本轮已记录用量">
+              {formatted} tok
+            </span>
+          )}
+          {timestamp}
         </span>
       )}
-      {!user && timestamp}
     </div>
   );
 }

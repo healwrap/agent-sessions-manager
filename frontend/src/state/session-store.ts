@@ -310,15 +310,13 @@ export class SessionStore {
       value,
     );
     const changed =
-      JSON.stringify(value.paths) !==
+      JSON.stringify(data.value.paths) !==
         JSON.stringify(this.state.settings.paths) ||
-      JSON.stringify(value.enabled) !==
+      JSON.stringify(data.value.enabled) !==
         JSON.stringify(this.state.settings.enabled);
     this.update({
       settings: data.value,
       sources: data.sources,
-      settingsOpen: false,
-      themePreview: null,
     });
     if (changed) {
       this.update({
@@ -327,8 +325,8 @@ export class SessionStore {
       });
       if (typeof history !== 'undefined') history.replaceState(null, '', '/');
     }
-    await this.loadSessions(false);
-    this.notify('设置已保存。');
+    if (changed) await this.loadSessions(false);
+    return data;
   }
 }
 export const sessionStore = new SessionStore();

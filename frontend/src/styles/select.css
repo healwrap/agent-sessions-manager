@@ -47,3 +47,31 @@
   place-items: center;
   flex: 0 0 14px;
 }
+.custom-select[data-variant='field'] .select-trigger {
+  display: inline-flex;
+  width: auto;
+  height: 36px;
+  padding: 0 14px;
+  gap: 12px;
+  border: none;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-primary);
+  font: 14px/22px var(--dsw-font-family);
+}
+.custom-select[data-variant='field'] .select-trigger:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.custom-select[data-variant='field'] .select-chevron {
+  width: 16px;
+  height: 16px;
+  color: inherit;
+  transform: none;
+}
+.select-menu[data-variant='field'] {
+  min-width: min(144px, calc(100vw - 24px));
+}
+.select-menu[data-variant='field'] .select-check .dsh-icon {
+  width: 14px;
+  height: 14px;
+}

@@ -8,26 +8,33 @@ import {
 } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { MenuItem, MenuSurface } from './menu-surface';
+import { Icon } from './primitives';
 
-export interface SelectOption {
-  value: string;
+export interface SelectOption<Value extends string = string> {
+  value: Value;
   label: string;
   icon?: ReactNode;
 }
 
 // DSH Menu / PermissionSelect styling with a controlled, single-value listbox.
 // The popover top layer keeps the menu clear of sidebar and dialog clipping.
-export function Select({
+export function Select<Value extends string>({
   value,
   options,
   onChange,
   label,
+  id: controlId,
+  descriptionId,
+  variant = 'compact',
   disabled = false,
 }: {
-  value: string;
-  options: readonly SelectOption[];
-  onChange: (value: string) => void;
+  value: Value;
+  options: readonly SelectOption<Value>[];
+  onChange: (value: Value) => void;
   label: string;
+  id?: string;
+  descriptionId?: string;
+  variant?: 'compact' | 'field';
   disabled?: boolean;
 }) {
   const id = useId();
@@ -36,6 +43,7 @@ export function Select({
   const search = useRef({ text: '', time: 0 });
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [keyboard, setKeyboard] = useState(false);
   const selected = options.findIndex((option) => option.value === value);
   const enabled = !disabled && options.length > 0;
 
@@ -50,13 +58,13 @@ export function Select({
       const above = rect.top - margin - 4;
       const upwards =
         below < Math.min(popup.scrollHeight, 240) && above > below;
-      const width = Math.min(
-        Math.max(rect.width, 180),
-        window.innerWidth - margin * 2,
-      );
-      popup.style.width = `${width}px`;
+      const field = variant === 'field';
+      popup.style.width = field
+        ? 'max-content'
+        : `${Math.min(Math.max(rect.width, 180), window.innerWidth - margin * 2)}px`;
+      const width = popup.offsetWidth;
       popup.style.maxHeight = `${Math.max(34, Math.min(320, upwards ? above : below))}px`;
-      popup.style.left = `${Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin))}px`;
+      popup.style.left = `${Math.max(margin, Math.min(field ? rect.right - width : rect.left, window.innerWidth - width - margin))}px`;
       popup.style.top = `${Math.max(margin, upwards ? rect.top - popup.offsetHeight - 4 : rect.bottom + 4)}px`;
     };
     const dismiss = (event: Event) => {
@@ -79,7 +87,7 @@ export function Select({
       document.removeEventListener('focusin', dismiss);
       if (popup.matches(':popover-open')) popup.hidePopover();
     };
-  }, [open, enabled, options.length]);
+  }, [open, enabled, options.length, variant]);
 
   useLayoutEffect(() => {
     if (open)
@@ -88,10 +96,11 @@ export function Select({
         [active]?.scrollIntoView({ block: 'nearest' });
   }, [open, active]);
 
-  const show = (index = Math.max(0, selected)) => {
+  const show = (index = Math.max(0, selected), navigation = true) => {
     trigger.current?.focus({ preventScroll: true });
     search.current = { text: '', time: 0 };
     setActive(index);
+    setKeyboard(navigation);
     setOpen(true);
   };
   const choose = (index: number) => {
@@ -103,6 +112,7 @@ export function Select({
   };
   const keyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.nativeEvent.isComposing || !enabled) return;
+    setKeyboard(true);
     const key = event.key;
     if (key === 'Tab') {
       setOpen(false);
@@ -154,19 +164,23 @@ export function Select({
   };
 
   return (
-    <div className="custom-select">
+    <div className="custom-select" data-variant={variant}>
       <button
         ref={trigger}
+        id={controlId}
         type="button"
         className="select-trigger"
         role="combobox"
         aria-label={label}
+        aria-describedby={descriptionId}
         aria-haspopup="listbox"
         aria-expanded={open && enabled}
         aria-controls={open && enabled ? id : undefined}
         aria-activedescendant={open && enabled ? `${id}-${active}` : undefined}
         disabled={!enabled}
-        onClick={() => (open ? setOpen(false) : show())}
+        onClick={() =>
+          open ? setOpen(false) : show(undefined, variant === 'compact')
+        }
         onKeyDown={keyDown}
       >
         {options[selected]?.icon && (
@@ -177,7 +191,15 @@ export function Select({
         <span className="select-label">
           {options[selected]?.label || value}
         </span>
-        <ChevronDown className="select-chevron" size={12} aria-hidden="true" />
+        {variant === 'field' ? (
+          <Icon name="down" className="select-chevron" />
+        ) : (
+          <ChevronDown
+            className="select-chevron"
+            size={12}
+            aria-hidden="true"
+          />
+        )}
       </button>
       <MenuSurface
         ref={menu}
@@ -186,6 +208,7 @@ export function Select({
         role="listbox"
         aria-label={label}
         className="select-menu"
+        data-variant={variant}
       >
         {options.map((option, index) => (
           <MenuItem
@@ -194,15 +217,23 @@ export function Select({
             role="option"
             tabIndex={-1}
             aria-selected={option.value === value}
-            data-active={open && active === index}
+            data-active={open && keyboard && active === index}
             title={option.label}
             icon={option.icon}
-            onPointerMove={() => setActive(index)}
+            onPointerMove={() => {
+              if (variant === 'field') setKeyboard(false);
+              setActive(index);
+            }}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => choose(index)}
             trailing={
               <span className="select-check" aria-hidden="true">
-                {option.value === value && <Check size={14} />}
+                {option.value === value &&
+                  (variant === 'field' ? (
+                    <Icon name="check" />
+                  ) : (
+                    <Check size={14} />
+                  ))}
               </span>
             }
           >

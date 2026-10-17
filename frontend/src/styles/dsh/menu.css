@@ -53,7 +53,8 @@ body[data-ds-dark-theme] .dsh-menu {
 }
 /* DSH's macOS backing supplies page pixels above native window vibrancy.
  * It stays below page content and occupies only the visible menu's bounds. */
-.desktop-macos body {
+/* WebKit can paint a modal behind its backdrop when body is isolated. */
+.desktop-macos body:not(:has(dialog[open])) {
   isolation: isolate;
 }
 .desktop-macos .dsh-menu-backing {

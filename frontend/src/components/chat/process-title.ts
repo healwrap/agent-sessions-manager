@@ -132,7 +132,9 @@ export function toolTitle(event: Event) {
 export function toolSummary(event: Event) {
   const summary =
     event.status === 'error'
-      ? event.output_preview || event.preview
+      ? (event.output_preview || event.preview)
+          .split('\n')
+          .find((line) => line.trim()) || ''
       : event.program_summary || event.argument_summary || event.preview;
   return toolTitle(event) === '工具调用'
     ? `${event.name} · ${summary}`

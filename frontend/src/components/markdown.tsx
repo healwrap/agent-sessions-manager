@@ -1,6 +1,7 @@
 import { marked, type Token } from 'marked';
 import { Fragment, memo, type ReactNode } from 'react';
 import { MarkdownCode } from './markdown-code';
+import { MarkdownTable } from './markdown-table';
 import { MarkdownImage } from './markdown-image';
 import { ResourceLink } from './resource-link';
 type Images = { href: string; src: string }[];
@@ -8,6 +9,7 @@ function tokens(
   items: Token[] = [],
   images: Images = [],
   inLink = false,
+  inQuote = false,
 ): ReactNode[] {
   return items.map((token, index) => {
     const t = token as Token & {
@@ -23,7 +25,7 @@ function tokens(
       ordered?: boolean;
       start?: number;
     };
-    const nested = () => tokens(t.tokens, images, inLink);
+    const nested = () => tokens(t.tokens, images, inLink, inQuote);
     let node: ReactNode;
     switch (t.type) {
       case 'space':
@@ -61,12 +63,14 @@ function tokens(
         node = <hr />;
         break;
       case 'blockquote':
-        node = <blockquote>{nested()}</blockquote>;
+        node = (
+          <blockquote>{tokens(t.tokens, images, inLink, true)}</blockquote>
+        );
         break;
       case 'link':
         node = (
           <ResourceLink href={t.href || ''}>
-            {tokens(t.tokens, images, true)}
+            {tokens(t.tokens, images, true, inQuote)}
           </ResourceLink>
         );
         break;
@@ -95,7 +99,7 @@ function tokens(
                     aria-label={item.checked ? '已完成' : '未完成'}
                   />
                 )}
-                {tokens(item.tokens, images)}
+                {tokens(item.tokens, images, inLink, inQuote)}
               </li>
             ))}
           </Tag>
@@ -107,14 +111,9 @@ function tokens(
         break;
       case 'table':
         node = (
-          <div
-            className={
-              'markdown-table-scroll' +
-              ((t.header?.length || 0) >= 4
-                ? ' md-table-wide'
-                : ' md-table-fill')
-            }
-            tabIndex={0}
+          <MarkdownTable
+            wide={(t.header?.length || 0) >= 4 && !inQuote}
+            markdown={t.raw}
           >
             <table>
               <thead>
@@ -144,7 +143,7 @@ function tokens(
                 ))}
               </tbody>
             </table>
-          </div>
+          </MarkdownTable>
         );
         break;
       default:

@@ -2,6 +2,7 @@
 import html
 import re
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 from agent_sessions.paths import file_uri_path
 
 MAX_IMAGE_BYTES = 25*1024*1024
@@ -15,10 +16,15 @@ def image_links(detail):
              'page': detail['page']} for match in IMAGE.finditer(text)]
 
 
-def local_image_bytes(href):
+def local_image_bytes(href, cwd=''):
     raw = file_uri_path(href) if href.startswith('file:') else href
     path = Path(raw).expanduser()
-    if not path.is_absolute(): raise FileNotFoundError('图片没有本地绝对路径')
+    if not path.is_absolute():
+        location = urlsplit(href)
+        if location.scheme or location.netloc: raise FileNotFoundError('图片不是本地文件路径')
+        directory = Path(cwd).expanduser()
+        if not directory.is_absolute(): raise FileNotFoundError('会话没有本地绝对工作目录，无法定位图片')
+        path = directory / unquote(location.path)
     if path.stat().st_size > MAX_IMAGE_BYTES: raise ValueError('图片超过读取上限')
     with path.open('rb') as handle: body = handle.read(MAX_IMAGE_BYTES+1)
     if len(body) > MAX_IMAGE_BYTES: raise ValueError('图片超过读取上限')
@@ -33,4 +39,4 @@ def local_image_bytes(href):
 def message_image_bytes(detail, href):
     if href not in {link['href'] for link in image_links(detail)}:
         raise FileNotFoundError('当前消息没有引用该图片')
-    return local_image_bytes(href)
+    return local_image_bytes(href, detail.get('cwd', ''))

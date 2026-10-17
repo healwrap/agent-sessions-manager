@@ -133,7 +133,7 @@ class MultiStore:
         cwd = self.adapters[source].rows.get(native, {}).get('cwd', '')
         terminal = terminal_input(result, cwd)
         if terminal: result = {**result, 'terminal': terminal}
-        return {**result, **self.identity(source), 'capabilities': self.registry.plugins[source].capabilities}
+        return {**result, 'cwd': cwd, **self.identity(source), 'capabilities': self.registry.plugins[source].capabilities}
 
     def focus(self, key, *args):
         source, native = self.resolve(key)

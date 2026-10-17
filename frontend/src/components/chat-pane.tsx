@@ -116,7 +116,8 @@ export function ChatPane({ state }: { state: AppState }) {
         {
           '--dsh-chat-content-width': `${Math.max(0, Math.min(width - 64, Math.max(680, Math.min(width * 0.64, 920))))}px`,
           '--dsh-content-font-size': `${font}px`,
-          '--dsh-content-font-size-secondary': `${font - 1}px`,
+          '--dsh-content-font-size-secondary': `${font - (font <= 14 ? 1 : 2)}px`,
+          '--dsh-content-font-delta-secondary': `${font - (font <= 14 ? 1 : 2) - 13}px`,
           '--dsh-content-font-delta': `${font - 14}px`,
         } as CSSProperties
       }

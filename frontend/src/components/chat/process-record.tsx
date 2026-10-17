@@ -4,7 +4,6 @@ import { CodeXml } from 'lucide-react';
 import { sessionStore } from '../../state/session-store';
 import { Markdown } from '../markdown';
 import { RecordMarkdown } from '../record-markdown';
-import { Icon } from '../primitives';
 import { AttachmentList } from '../detail/record-attachments';
 import { Payload } from '../detail/payload';
 import { ProgramInput } from '../detail/program-content';
@@ -12,6 +11,7 @@ import { RecordPages, useRecord } from './use-record';
 import { useDisclosure } from './use-disclosure';
 import { activityIcon, toolTitle, toolSummary } from './process-title';
 import { TerminalCard } from './terminal-card';
+import { DisclosureLeading } from './disclosure-leading';
 
 export function ReasoningRow({
   text,
@@ -32,7 +32,7 @@ export function ReasoningRow({
         aria-expanded={open}
         onClick={setOpen}
       >
-        <Icon name="think" className="chat-disclosure-glyph" />
+        <DisclosureLeading icon="think" open={open} />
         <span>思考</span>
         {!open && preview && text && (
           <>
@@ -167,10 +167,7 @@ export function ToolProcess({ event, id }: { event: Event; id: string }) {
   return (
     <div ref={record.ref} className="chat-tool-row" data-status={event.status}>
       <button className="chat-disclosure" aria-expanded={open} onClick={toggle}>
-        <Icon
-          name={open ? 'up' : activityIcon([event])}
-          className="chat-disclosure-glyph"
-        />
+        <DisclosureLeading icon={activityIcon([event])} open={open} />
         <span className="chat-tool-name">{toolTitle(event)}</span>
         <i className="chat-summary-dot" />
         <span className="chat-line-preview">

@@ -122,11 +122,14 @@ class Handler(BaseHTTPRequestHandler):
             value = json.loads(self.rfile.read(length))
             if self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
-                store = configured_store(config, self.server.settings)
+                previous = self.server.app_settings.read()
+                changed = any(config[key] != previous[key] for key in ('paths', 'enabled'))
+                store = configured_store(config, self.server.settings) if changed else self.server.store
                 saved = self.server.app_settings.write(config)
-                old_index = getattr(self.server.store, 'search_index', None)
-                if old_index: old_index.close()
-                self.server.store = store
+                if changed:
+                    old_index = getattr(self.server.store, 'search_index', None)
+                    if old_index: old_index.close()
+                    self.server.store = store
                 self.respond(200, {'value': saved, 'sources': store.sources()['items']})
             else:
                 self.respond(200, self.server.settings.write(value))

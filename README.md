@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1
 
 </details>
 
-[▶ 单独播放](https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1) · 30 秒 · 1920 × 1080 · 含配乐 · [下载 MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
+30 秒 · 1920 × 1080 · 含配乐 · [下载 MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
 
 > 视频与截图展示当前界面，所有会话内容均为虚构演示数据。截图原图为 2560 × 1440，可点击查看。
 

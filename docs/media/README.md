@@ -7,7 +7,7 @@
 - `conversation-dark.png`、`trajectory-dark.png`、`conversation-light.png`、`settings-dark.png`：当前应用界面的 2560 × 1440 原始截图。
 - `logo.svg`：由项目应用图标的矢量图层组合而成。
 
-README 的在线播放使用 [GitHub 视频附件](https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1)，可在折叠区域展开播放器；仓库保留同一份 MP4，供下载与离线查看。
+README 的在线播放使用 GitHub 视频附件，可在[项目首页](../../README.md#30-秒认识-agent-sessions)的折叠区域展开播放器；仓库保留同一份 MP4，供下载与离线查看。
 
 所有会话、项目和执行结果均为虚构演示数据。截图来自最新前端和独立的演示后台，不包含个人历史、认证信息或真实项目内容。视频中的接力场景是流程演示，目标 Agent 需能读取同机文件。
 

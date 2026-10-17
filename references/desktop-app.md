@@ -26,7 +26,7 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 
 来源统一键为 `provider:instance:native-key`。引用随原生 UUID、步骤或原有 Codex 引用保持稳定；事件正文每页 7000 字符、轨迹每页默认 150 条，滚到边缘自动补页。工具结果只在用户打开结果时读取。
 
-侧栏底部“设置”支持六个来源的数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。Claude Code 使用一个来源开关，卡片内可展开补充索引路径。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。升级保留自定义路径；旧 Claude 两个来源有任意一个启用时，合并来源保持启用。旧四来源配置沿用原 Claude 开关。
+侧栏底部“设置”支持六个来源的数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。Claude Code 使用一个来源开关，卡片内可展开补充索引路径。来源路径或启用状态保存后立即重建目录；普通阅读偏好不重新加载会话。配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。升级保留自定义路径；旧 Claude 两个来源有任意一个启用时，合并来源保持启用。旧四来源配置沿用原 Claude 开关。
 
 Claude Code 共享正文目录默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~/.claude`。可选桌面会话索引默认目录：macOS 为 `~/Library/Application Support/Claude/claude-code-sessions`，Windows 为 `%APPDATA%/Claude/claude-code-sessions`，Linux 为 `$XDG_CONFIG_HOME/Claude/claude-code-sessions` 或 `~/.config/Claude/claude-code-sessions`。索引目录不存在时仍读取共享正文，不要求创建目录或搬动正文。索引路径保留在 Claude Code 设置卡片的“补充会话索引”中，旧 `--claude-desktop-home` 参数仍兼容。本机已核验桌面与 CLI 读取同一份 JSONL，而非两份同步副本。DSH 默认根目录为 `~/.dsh`。
 
@@ -74,7 +74,7 @@ macOS 主窗口使用 Overlay 标题栏并隐藏原生标题文字。系统红�
 
 ## 验证
 
-通用设置提供浅色、深色和跟随系统三个外观选项，沿用 DSH 的分栏设置与外观卡片。点击即预览，取消恢复已保存外观，保存写入应用独立设置文件。页面首次绘制前应用已保存主题，React 接管后继续监听系统外观；原生窗口和侧栏材质同步切换。主题缓存只辅助启动，不覆盖设置文件。
+通用设置提供浅色、深色和跟随系统三个外观选项，沿用 DSH 的分栏设置与外观卡片。外观、字号和开关等偏好更改后自动写入应用独立设置文件；路径在失焦或按 Enter 后保存，不再提供保存、取消或恢复默认按钮。页面首次绘制前应用已保存主题，React 接管后继续监听系统外观；原生窗口和侧栏材质同步切换。主题缓存只辅助启动，不覆盖设置文件。
 
 ```bash
 npm run build:ui

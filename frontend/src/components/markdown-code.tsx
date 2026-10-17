@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { WrapText } from 'lucide-react';
 import { copyText } from '../lib/api';
 import { sessionStore } from '../state/session-store';
 import { tokenStyle, useCodeTokens } from '../lib/code-highlighter';
@@ -24,7 +23,7 @@ export function MarkdownCode({
         <span>{language || '代码块'}</span>
         <span className="markdown-code-actions">
           <button
-            title="自动换行"
+            title={wrapped ? '取消自动换行' : '自动换行'}
             aria-label="自动换行"
             aria-pressed={wrapped}
             onClick={() => {
@@ -32,7 +31,7 @@ export function MarkdownCode({
               setWrapped(!wrapped);
             }}
           >
-            <WrapText size={14} />
+            <Icon name="wrap" />
           </button>
           <button
             title={copied ? '已复制' : '复制代码'}

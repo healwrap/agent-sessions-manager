@@ -1,0 +1,93 @@
+.markdown-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0;
+  overscroll-behavior-x: contain;
+}
+.md-table-wide > .markdown-table-scroll {
+  overflow-x: hidden;
+  padding-bottom: var(--dsh-scrollbar-width, 5px);
+}
+.md-table-wide > .markdown-table-scroll:is(:hover, :focus-within) {
+  overflow-x: scroll;
+  padding-bottom: 0;
+}
+.markdown-table-scroll:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+}
+.markdown-table-scroll table {
+  border-collapse: collapse;
+  width: max-content;
+  max-width: max-content;
+  font-size: inherit;
+}
+.md-table-fill table {
+  width: 100%;
+  max-width: none;
+}
+.markdown-table-scroll :where(th, td) {
+  text-align: start;
+  padding: 10px 16px;
+  max-width: min(30vw, 320px);
+  min-width: 100px;
+}
+.markdown-table-scroll th {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+  font-weight: 600;
+}
+.markdown-table-scroll td {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+.markdown-table-scroll :where(th, td):first-child {
+  padding-left: 0;
+}
+.markdown-table-scroll td:last-child {
+  padding-right: 0;
+}
+.markdown-table-scroll table code {
+  font-size: 11px;
+}
+
+.markdown-table-block {
+  position: relative;
+  margin: 16px 0;
+  min-width: 0;
+}
+.markdown-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 0 0 4px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.markdown-table-actions .icon-button {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--dsw-radius-sm);
+}
+.markdown-table-block > .markdown-table-actions {
+  opacity: 0;
+}
+.markdown-table-block:is(:hover, :focus-within) > .markdown-table-actions {
+  opacity: 1;
+}
+.markdown-table-dialog {
+  width: calc(100vw - 64px);
+  max-width: 1200px;
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+}
+.markdown-table-dialog .markdown-table-scroll {
+  max-height: calc(100vh - 160px);
+  overflow: auto;
+}
+.markdown-table-dialog :where(th, td) {
+  max-width: 480px;
+}
+@media (hover: none) {
+  .markdown-table-block > .markdown-table-actions {
+    opacity: 1;
+  }
+}

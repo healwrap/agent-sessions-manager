@@ -1,6 +1,6 @@
 import type { Event } from '../../lib/types';
 import { useId } from 'react';
-import { Icon } from '../primitives';
+import { DisclosureLeading } from './disclosure-leading';
 import { AssistantProcess, ToolProcess } from './process-record';
 import {
   activityIcon,
@@ -35,7 +35,7 @@ export function ProcessGroup({
       ? last?.program_summary || last?.argument_summary || ''
       : '';
   return (
-    <div className="chat-process-group">
+    <div className="chat-process-group" data-ungrouped={!grouped || undefined}>
       {grouped && (
         <button
           className="chat-disclosure"
@@ -43,13 +43,7 @@ export function ProcessGroup({
           aria-controls={bodyId}
           onClick={toggle}
         >
-          <span className="chat-process-leading" aria-hidden="true">
-            <Icon
-              name={activityIcon(events)}
-              className="chat-process-activity"
-            />
-            <Icon name={open ? 'up' : 'down'} className="chat-process-toggle" />
-          </span>
+          <DisclosureLeading icon={activityIcon(events)} open={open} />
           <span className="chat-line-preview">
             {title}
             {detail && ` · ${detail}`}

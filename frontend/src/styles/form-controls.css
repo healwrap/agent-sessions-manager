@@ -1,0 +1,95 @@
+/* Form fields use the same DSH surface, radius and focus tokens as Select. */
+.number-field {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  border: 0.5px solid transparent;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-primary);
+}
+.number-field:focus-within {
+  border-color: var(--dsw-alias-state-business-primary);
+}
+.number-field-input {
+  appearance: textfield;
+  -webkit-appearance: none;
+  min-width: 0;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: var(--dsw-font-s-14, 14px/22px var(--dsw-font-family));
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.number-field-input:focus-visible {
+  outline: none;
+}
+.number-field-input::-webkit-inner-spin-button,
+.number-field-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.number-field-step {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+}
+.number-field-step:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.number-field-step:disabled {
+  color: var(--dsw-alias-label-dimmed);
+  cursor: default;
+}
+.number-field[data-disabled='true'] {
+  opacity: 0.45;
+}
+.form-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  padding: 2px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l3);
+  cursor: pointer;
+}
+.form-switch:after {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dsw-alias-switch-thumb);
+  transition: transform 120ms ease;
+}
+.form-switch:checked {
+  background: var(--dsw-alias-brand-primary);
+}
+.form-switch:checked:after {
+  transform: translateX(16px);
+  background: var(--dsw-alias-label-primary-foreground);
+}
+.form-switch:disabled {
+  cursor: default;
+}

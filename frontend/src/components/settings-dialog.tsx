@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Settings, SettingsResponse } from '../lib/types';
 import { GeneralSettings } from './settings/general';
 import { SourceSettings } from './settings/sources';
@@ -8,19 +8,22 @@ export function SettingsDialog({ open }: { open: boolean }) {
   const [data, setData] = useState<SettingsResponse | null>(null),
     [draft, setDraft] = useState<Settings | null>(null),
     [section, setSection] = useState('general'),
-    [error, setError] = useState(''),
-    [saving, setSaving] = useState(false);
+    [error, setError] = useState('');
+  const saves = useRef(Promise.resolve());
+  const queued = useRef<Settings | null>(null);
   useEffect(() => {
     if (!open) return;
     let current = true;
     setSection('general');
     setError('');
-    void sessionStore
-      .api<SettingsResponse>('/api/settings')
+    setDraft(null);
+    void saves.current
+      .then(() => sessionStore.api<SettingsResponse>('/api/settings'))
       .then((value) => {
         if (current) {
           setData(value);
           setDraft(structuredClone(value.value));
+          queued.current = value.value;
         }
       })
       .catch((e) => current && setError(String(e)));
@@ -28,28 +31,37 @@ export function SettingsDialog({ open }: { open: boolean }) {
       current = false;
     };
   }, [open]);
-  const change = (value: Settings) => {
+  const change = (value: Settings, commit = true) => {
     setDraft(value);
     if (value.theme !== draft?.theme)
       sessionStore.update({ themePreview: value.theme });
+    if (!commit || JSON.stringify(value) === JSON.stringify(queued.current))
+      return;
+    queued.current = value;
+    setError('');
+    // Serialize whole-setting writes so rapid changes cannot overwrite each other.
+    saves.current = saves.current
+      .then(async () => {
+        const saved = await sessionStore.saveSettings(value);
+        setData((previous) => previous && { ...previous, ...saved });
+        setDraft((previous) => (previous === value ? saved.value : previous));
+        if (queued.current === value) queued.current = saved.value;
+        setError('');
+      })
+      .catch((e) => {
+        if (queued.current === value) queued.current = null;
+        setError(String(e));
+        sessionStore.notify('设置未能保存：' + String(e));
+      });
   };
-  const close = () =>
+  const close = () => {
+    if (draft && JSON.stringify(draft) !== JSON.stringify(queued.current))
+      change(draft);
     sessionStore.update({ settingsOpen: false, themePreview: null });
+  };
   return (
     <Dialog open={open} onClose={close} id="settings-dialog" title="设置">
-      <form
-        id="settings-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!draft) return;
-          setSaving(true);
-          setError('');
-          void sessionStore
-            .saveSettings(draft)
-            .catch((e) => setError(String(e)))
-            .finally(() => setSaving(false));
-        }}
-      >
+      <form id="settings-form" onSubmit={(event) => event.preventDefault()}>
         <nav className="settings-nav" aria-label="设置分类">
           <h2>设置</h2>
           <div className="settings-nav-list">
@@ -74,6 +86,11 @@ export function SettingsDialog({ open }: { open: boolean }) {
             <IconButton icon="close" label="关闭设置" onClick={close} />
           </header>
           <div className="settings-options">
+            {error && (
+              <p className="settings-error" role="alert">
+                {error}
+              </p>
+            )}
             {!draft && <p>正在读取设置…</p>}
             {draft && (
               <>
@@ -86,29 +103,6 @@ export function SettingsDialog({ open }: { open: boolean }) {
               </>
             )}
           </div>
-          <footer className="settings-footer">
-            {error && (
-              <p className="settings-error" role="alert">
-                {error}
-              </p>
-            )}
-            <div className="settings-actions">
-              <button
-                id="settings-defaults"
-                type="button"
-                disabled={!data}
-                onClick={() => data && change(structuredClone(data.defaults))}
-              >
-                恢复默认
-              </button>
-              <button type="button" onClick={close}>
-                取消
-              </button>
-              <button id="settings-save" disabled={!draft || saving}>
-                {saving ? '保存中…' : '保存'}
-              </button>
-            </div>
-          </footer>
         </div>
       </form>
     </Dialog>

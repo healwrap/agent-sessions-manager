@@ -1,5 +1,6 @@
 import type { Settings, SettingsResponse } from '../../lib/types';
 import { AgentIcon } from '../agent-icon';
+import { Switch } from '../switch';
 
 export function SourceSettings({
   draft,
@@ -8,12 +9,12 @@ export function SourceSettings({
 }: {
   draft: Settings;
   data: SettingsResponse | null;
-  onChange: (value: Settings) => void;
+  onChange: (value: Settings, commit?: boolean) => void;
 }) {
   return (
     <section aria-label="会话来源">
       <p className="settings-description">
-        读取各 Agent 的本地会话，保存后生效。
+        读取各 Agent 的本地会话。开关即时生效，路径在结束编辑后自动保存。
       </p>
       {data?.sources.map((source) => {
         const paths = source.paths || [
@@ -27,11 +28,23 @@ export function SourceSettings({
             type="text"
             value={draft.paths[key] || ''}
             onChange={(event) =>
-              onChange({
-                ...draft,
-                paths: { ...draft.paths, [key]: event.target.value },
-              })
+              onChange(
+                {
+                  ...draft,
+                  paths: { ...draft.paths, [key]: event.target.value },
+                },
+                false,
+              )
             }
+            onBlur={() =>
+              draft.paths[key] !== data.value.paths[key] && onChange(draft)
+            }
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                event.currentTarget.blur();
+              }
+            }}
           />
         );
         return (
@@ -41,19 +54,16 @@ export function SourceSettings({
                 <AgentIcon source={source.id} />
                 {source.label}
               </label>
-              <input
-                type="checkbox"
-                role="switch"
-                className="settings-switch"
-                aria-label={'启用 ' + source.label}
+              <Switch
+                label={'启用 ' + source.label}
                 checked={draft.enabled[source.id] !== false}
-                onChange={(event) =>
+                onChange={(checked) =>
                   onChange({
                     ...draft,
                     enabled: {
                       ...draft.enabled,
                       ...Object.fromEntries(
-                        paths.map((path) => [path.key, event.target.checked]),
+                        paths.map((path) => [path.key, checked]),
                       ),
                     },
                   })
@@ -63,7 +73,7 @@ export function SourceSettings({
             {input(main.key)}
             <p className="settings-path-status">
               {changed
-                ? '保存后检查路径'
+                ? '结束编辑后检查路径'
                 : source.error ||
                   (!source.enabled
                     ? '已停用'

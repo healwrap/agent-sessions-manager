@@ -9,9 +9,16 @@
 
 ## 30 秒认识 Agent Sessions
 
-[![点击观看：Agent Sessions 横版宣传片](docs/media/promo-cover.png)](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4)
+![Agent Sessions 横版宣传片封面](docs/media/promo-cover.png)
 
-[▶ 播放横版宣传片](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4) · 30 秒 · 1920 × 1080 · 含配乐。点击封面进入视频播放页。
+<details>
+<summary>▶ 展开并播放 30 秒宣传片</summary>
+
+https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1
+
+</details>
+
+[▶ 单独播放](https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1) · 30 秒 · 1920 × 1080 · 含配乐 · [下载 MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
 
 > 视频与截图展示当前界面，所有会话内容均为虚构演示数据。截图原图为 2560 × 1440，可点击查看。
 

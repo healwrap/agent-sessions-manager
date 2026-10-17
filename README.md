@@ -1,6 +1,7 @@
 <div align="center">
   <img src="docs/media/logo.svg" width="104" alt="Agent Sessions 图标">
   <h1>Agent Sessions</h1>
+  <p><strong>简体中文</strong> · <a href="README.en.md">English</a></p>
   <p><strong>所有 Agent 会话，一处管理。</strong></p>
   <p>把散落在不同工具里的对话与工作轨迹，带回同一个项目。</p>
   <p>本机读取 · 历史只读 · 按需接力</p>
@@ -8,16 +9,9 @@
 
 ## 30 秒认识 Agent Sessions
 
-[![点击观看：Agent Sessions 横版宣传片](docs/media/promo-cover.png)](https://git.healwrap.cn/pepedd/agent-sessions-manager/raw/branch/main/docs/media/agent-sessions-landscape.mp4)
+[![点击观看：Agent Sessions 横版宣传片](docs/media/promo-cover.png)](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4)
 
-<details>
-<summary>在 README 内播放视频</summary>
-
-<video controls width="100%" src="https://git.healwrap.cn/pepedd/agent-sessions-manager/raw/branch/main/docs/media/agent-sessions-landscape.mp4"></video>
-
-</details>
-
-[▶ 播放横版宣传片](https://git.healwrap.cn/pepedd/agent-sessions-manager/raw/branch/main/docs/media/agent-sessions-landscape.mp4) · 30 秒 · 1920 × 1080 · 含配乐
+[▶ 播放横版宣传片](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4) · 30 秒 · 1920 × 1080 · 含配乐。点击封面进入视频播放页。
 
 > 视频与截图展示当前界面，所有会话内容均为虚构演示数据。截图原图为 2560 × 1440，可点击查看。
 
@@ -93,7 +87,7 @@ Agent Sessions 是一个本地会话管理应用：把不同来源放进同一�
 需要 **Node.js 22.12+** 与 **Python 3.10+**。
 
 ```bash
-git clone https://git.healwrap.cn/pepedd/agent-sessions-manager.git
+git clone https://github.com/healwrap/agent-sessions-manager.git
 cd agent-sessions-manager
 npm ci
 python3 -m venv .venv
@@ -103,7 +97,7 @@ npm run build:ui
 python scripts/trajectory_server.py --port 8765
 ```
 
-打开 [http://127.0.0.1:8765](http://127.0.0.1:8765)。Windows PowerShell 使用 `.venv\Scripts\Activate.ps1` 激活环境。私有仓库需要已获授权的 Git 访问方式。
+打开 [http://127.0.0.1:8765](http://127.0.0.1:8765)。Windows PowerShell 使用 `.venv\Scripts\Activate.ps1` 激活环境。
 
 ### 构建桌面应用
 
@@ -127,7 +121,7 @@ npm run desktop:build
 - [项目结构、开发命令与校验](references/development.md)
 - [来源插件接口](references/source-plugins.md)
 - [对话与轨迹展示约定](references/trajectory-ui.md)
-- [反馈问题与建议](https://git.healwrap.cn/pepedd/agent-sessions-manager/issues)
+- [反馈问题与建议](https://github.com/healwrap/agent-sessions-manager/issues)
 
 提交问题或界面截图时，请使用演示记录或先去除个人对话与凭据。
 

@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { MenuItem, MenuSurface } from './menu-surface';
@@ -11,6 +12,7 @@ import { MenuItem, MenuSurface } from './menu-surface';
 export interface SelectOption {
   value: string;
   label: string;
+  icon?: ReactNode;
 }
 
 // DSH Menu / PermissionSelect styling with a controlled, single-value listbox.
@@ -167,6 +169,11 @@ export function Select({
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={keyDown}
       >
+        {options[selected]?.icon && (
+          <span className="select-agent-icon" aria-hidden="true">
+            {options[selected].icon}
+          </span>
+        )}
         <span className="select-label">
           {options[selected]?.label || value}
         </span>
@@ -189,6 +196,7 @@ export function Select({
             aria-selected={option.value === value}
             data-active={open && active === index}
             title={option.label}
+            icon={option.icon}
             onPointerMove={() => setActive(index)}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => choose(index)}

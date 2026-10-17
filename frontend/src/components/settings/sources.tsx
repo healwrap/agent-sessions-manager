@@ -1,4 +1,5 @@
 import type { Settings, SettingsResponse } from '../../lib/types';
+import { AgentIcon } from '../agent-icon';
 
 export function SourceSettings({
   draft,
@@ -36,7 +37,10 @@ export function SourceSettings({
         return (
           <div className="settings-source" key={source.id}>
             <div className="settings-source-heading">
-              <label htmlFor={'path-' + main.key}>{source.label}</label>
+              <label htmlFor={'path-' + main.key}>
+                <AgentIcon source={source.id} />
+                {source.label}
+              </label>
               <input
                 type="checkbox"
                 role="switch"

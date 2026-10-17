@@ -88,7 +88,7 @@ export function MenuItem({
   className = '',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  icon?: string;
+  icon?: ReactNode;
   trailing?: ReactNode;
 }) {
   return (
@@ -100,7 +100,7 @@ export function MenuItem({
     >
       {icon && (
         <span className="dsh-menu-icon">
-          <Icon name={icon} />
+          {typeof icon === 'string' ? <Icon name={icon} /> : icon}
         </span>
       )}
       <span className="dsh-menu-label">{children}</span>

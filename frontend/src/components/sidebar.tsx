@@ -15,6 +15,7 @@ import { MarqueeTitle } from './marquee-title';
 import { Select } from './select';
 import { SearchField } from './search-field';
 import { SessionFilters } from './session-filters';
+import { AgentIcon } from './agent-icon';
 export function Sidebar({
   state,
   onManage,
@@ -63,14 +64,18 @@ export function Sidebar({
             value={state.provider}
             onChange={(value) => void sessionStore.filter(value, search)}
             options={[
-              { value: '', label: '全部 Agent' },
+              { value: '', label: '全部 Agent', icon: <AgentIcon source="" /> },
               ...(state.sources.length
                 ? state.sources
                 : Object.entries(sourceNames).map(([id, label]) => ({
                     id,
                     label,
                   }))
-              ).map(({ id, label }) => ({ value: id, label })),
+              ).map(({ id, label }) => ({
+                value: id,
+                label,
+                icon: <AgentIcon source={id} />,
+              })),
             ]}
           />
         </div>
@@ -243,14 +248,22 @@ export function Sidebar({
                           {(!state.provider ||
                             item.session_kind === 'subagent') && (
                             <span className="provider-tag">
-                              {!state.provider &&
-                                (state.sources.find(
-                                  (source) =>
-                                    source.id === sourceId(item, state.sources),
-                                )?.label ||
-                                  item.provider_label)}
-                              {item.session_kind === 'subagent' &&
-                                (state.provider ? '子代理' : ' · 子代理')}
+                              {!state.provider && (
+                                <AgentIcon
+                                  source={sourceId(item, state.sources)}
+                                />
+                              )}
+                              <span className="provider-name">
+                                {!state.provider &&
+                                  (state.sources.find(
+                                    (source) =>
+                                      source.id ===
+                                      sourceId(item, state.sources),
+                                  )?.label ||
+                                    item.provider_label)}
+                                {item.session_kind === 'subagent' &&
+                                  (state.provider ? '子代理' : ' · 子代理')}
+                              </span>
                             </span>
                           )}
                         </span>

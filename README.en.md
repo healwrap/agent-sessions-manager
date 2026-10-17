@@ -9,9 +9,16 @@
 
 ## Meet Agent Sessions in 30 seconds
 
-[![Watch the Agent Sessions landscape promo](docs/media/promo-cover.png)](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4)
+![Agent Sessions landscape promo cover](docs/media/promo-cover.png)
 
-[▶ Watch the landscape promo](https://github.com/healwrap/agent-sessions-manager/blob/main/docs/media/agent-sessions-landscape.mp4) · 30 seconds · 1920 × 1080 · With music. Click the cover to open the video player.
+<details>
+<summary>▶ Expand to play the 30-second promo</summary>
+
+https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1
+
+</details>
+
+[▶ Watch separately](https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1) · 30 seconds · 1920 × 1080 · With music · [Download MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
 
 > The video and screenshots show the current interface using fictional demo sessions. Full-resolution screenshots are 2560 × 1440; click any image to view it. The demo uses Chinese UI text.
 

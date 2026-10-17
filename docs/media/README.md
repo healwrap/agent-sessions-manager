@@ -7,6 +7,8 @@
 - `conversation-dark.png`、`trajectory-dark.png`、`conversation-light.png`、`settings-dark.png`：当前应用界面的 2560 × 1440 原始截图。
 - `logo.svg`：由项目应用图标的矢量图层组合而成。
 
+README 的在线播放使用 [GitHub 视频附件](https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1)，可在折叠区域展开播放器；仓库保留同一份 MP4，供下载与离线查看。
+
 所有会话、项目和执行结果均为虚构演示数据。截图来自最新前端和独立的演示后台，不包含个人历史、认证信息或真实项目内容。视频中的接力场景是流程演示，目标 Agent 需能读取同机文件。
 
 横版视频沿用原竖版的 30 秒时间轴、深绿与青柠配色、原创配乐与音效，按 16:9 重新编排画面，并更新为当前应用截图。配乐由 XSXB-Band 工程制作；视频字体使用得意黑、Noto Sans SC 和 JetBrains Mono（SIL Open Font License）。此目录不分发字体文件。

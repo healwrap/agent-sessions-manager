@@ -1,6 +1,7 @@
 """Locate the real browser executable, bypassing external manager launchers."""
 from functools import lru_cache
 import mmap
+import json
 import hashlib
 import os
 from pathlib import Path
@@ -20,14 +21,16 @@ def fingerprint_capable(path, modified):
         return False
 
 
-def discover():
+def discover(directory):
     candidates = []
+    directory = Path(directory).resolve()
+    manifest = directory/'current.json'
+    if manifest.exists():
+        value = json.loads(manifest.read_text())
+        path = Path(value['executable']).resolve()
+        if path.is_relative_to(directory): candidates.append((path, 'Agent Sessions 管理'))
     override = os.environ.get('AGENT_SESSIONS_BROWSER')
-    if override: candidates.append((Path(override).expanduser(), '指定内核'))
-    if sys.platform == 'darwin':
-        for root in (Path('/Applications'), Path.home()/'Applications'):
-            for name in ('Fingerprint Chromium.app', 'Chromium.app', 'CCBaga-B.app'):
-                candidates.append((root/name/'Contents/MacOS/Chromium', name[:-4]))
+    if override: candidates.append((Path(override).expanduser(), '指定独立内核'))
     for path, source in candidates:
         if not path.is_file() or not os.access(path, os.X_OK): continue
         if not fingerprint_capable(str(path), path.stat().st_mtime_ns): continue

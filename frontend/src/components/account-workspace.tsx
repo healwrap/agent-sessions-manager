@@ -1,3 +1,4 @@
+import { request } from '../lib/api';
 import { useState } from 'react';
 import {
   ArrowLeftRight,
@@ -33,7 +34,7 @@ const sections = [
     title: '账号管理',
     icon: Users,
     description:
-      '将 Claude、Codex 账号绑定独立浏览器环境，按门控策略检查后启动。',
+      '管理 Claude、Codex 账号，分别进入独立浏览器或官方 App 登录与切换。',
   },
   {
     id: 'browser',
@@ -43,9 +44,9 @@ const sections = [
   },
   {
     id: 'claude-app',
-    title: 'Claude App 账号',
+    title: 'Claude App 环境',
     icon: ArrowLeftRight,
-    description: '管理官方 App 的账号切换入口与独立使用环境。',
+    description: '为每个账号保存官方 App 登录状态、代理与独立 Code 配置。',
   },
   {
     id: 'proxies',
@@ -68,7 +69,7 @@ export function AccountWorkspace({
   onNavigate: (page: WorkspacePage) => void;
   active?: boolean;
 }) {
-  const [section, setSection] = useState<EnvironmentSection>('browser');
+  const [section, setSection] = useState<EnvironmentSection>('accounts');
   const [sidebarClosed, setSidebarClosed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState<number>();
   const { settings } = useSessionStore();
@@ -76,8 +77,21 @@ export function AccountWorkspace({
   const [diagnosticTarget, setDiagnosticTarget] =
     useState<DiagnosticTarget>('network');
   const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
-  const { data, loading, busy, error, reload, save, remove, runtime } =
-    useEnvironmentSettings(active);
+  const {
+    data,
+    loading,
+    busy,
+    error,
+    reload,
+    save,
+    provision,
+    remove,
+    runtime,
+  } = useEnvironmentSettings(active);
+  const installKernel = async () => {
+    await request('/api/browser-kernel/install', {}, {});
+    await reload();
+  };
   const current = sections.find((item) => item.id === section)!;
   const inspect = (proxy?: string) => {
     setDiagnosticProxy(proxy);
@@ -142,7 +156,16 @@ export function AccountWorkspace({
               <p>{current.description}</p>
             </div>
             <div className="environment-page-actions">
-              {section === 'browser' ? (
+              {section === 'claude-app' ? (
+                <Button
+                  variant="primary"
+                  disabled={loading || busy}
+                  onClick={() => setEdit({ kind: 'app_profiles' })}
+                >
+                  <Plus size={16} />
+                  新建 App 环境
+                </Button>
+              ) : section === 'browser' ? (
                 <Button
                   variant="primary"
                   onClick={() => setEdit({ kind: 'profiles' })}
@@ -173,10 +196,18 @@ export function AccountWorkspace({
             <BrowserAccounts
               data={data}
               busy={busy}
-              onSave={(item) => save('accounts', item)}
+              onSave={provision}
               onDelete={(id) => void remove('accounts', id)}
-              onRuntime={(action, body) => void runtime(action, body)}
-              onCreateEnvironment={() => setSection('browser')}
+              onRuntime={(action, body, target) =>
+                void runtime(action, body, target)
+              }
+              onEditProfile={(kind, id) => {
+                const item = (
+                  kind === 'profiles' ? data.profiles : data.app_profiles
+                ).find((profile) => profile.id === id);
+                if (item) setEdit({ kind, item } as EnvironmentEdit);
+              }}
+              onInstall={() => void installKernel()}
             />
           )}
           {section === 'browser' && (
@@ -185,6 +216,7 @@ export function AccountWorkspace({
               busy={busy}
               loading={loading}
               onRuntime={(action, body) => void runtime(action, body)}
+              onInstall={() => void installKernel()}
               onEdit={(item) => setEdit({ kind: 'profiles', item })}
               onDelete={(id) => void remove('profiles', id)}
             />
@@ -192,7 +224,10 @@ export function AccountWorkspace({
           {section === 'claude-app' && (
             <AppAccounts
               data={data}
-              loading={loading}
+              busy={busy}
+              onEdit={(item) => setEdit({ kind: 'app_profiles', item })}
+              onDelete={(id) => void remove('app_profiles', id)}
+              onRuntime={(action, body) => void runtime(action, body, 'app')}
               onInspect={() => {
                 setDiagnosticTarget('app');
                 setSection('diagnostics');

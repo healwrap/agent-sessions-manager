@@ -62,10 +62,12 @@ class Handler(BaseHTTPRequestHandler):
                 result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
             elif parsed.path.startswith('/api/browser-checks/'):
                 result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
+            elif parsed.path == '/api/app-runtime':
+                result = self.server.app_runtime.state()
             elif parsed.path == '/api/browser-runtime':
                 result = self.server.browser_runtime.state()
             elif parsed.path == '/api/environments':
-                result = {**self.server.environments.read(), 'browser': self.server.browser_runtime.state()}
+                result = {**self.server.environments.read(), 'browser': self.server.browser_runtime.state(), 'app_runtime': self.server.app_runtime.state()}
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
@@ -123,7 +125,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        runtime = self.path in {'/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region'}
+        runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region'}
         browser_probe = self.path.startswith('/api/browser-checks/')
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
         if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime) or not hasattr(self.server, 'settings'):
@@ -143,7 +145,14 @@ class Handler(BaseHTTPRequestHandler):
             value = json.loads(self.rfile.read(length))
             if runtime:
                 from agent_sessions.browser.api import command
-                self.respond(200, command(self.server, self.path, value))
+                if self.path.startswith('/api/app-runtime/'):
+                    if self.path.endswith('/start'): result = self.server.app_runtime.launch(value)
+                    elif self.path.endswith('/open'): result = self.server.app_runtime.open(value)
+                    else:
+                        if not isinstance(value, dict) or set(value) != {'profile_id'}: raise ValueError('请选择 App 环境')
+                        result = self.server.app_runtime.stop(value['profile_id'])
+                    self.respond(200, result)
+                else: self.respond(200, command(self.server, self.path, value))
             elif browser_probe:
                 result = (self.server.browser_diagnostics.start(value) if self.path.endswith('/start') else
                           self.server.browser_diagnostics.complete(self.path.rsplit('/', 1)[-1], value))
@@ -158,8 +167,9 @@ class Handler(BaseHTTPRequestHandler):
                     self.respond(200, result)
             elif self.path == '/api/environments':
                 self.server.browser_runtime.ensure_mutable(value)
+                self.server.app_runtime.ensure_mutable(value)
                 result = self.server.environments.change(value)
-                self.respond(200, {**result, 'browser': self.server.browser_runtime.state()})
+                self.respond(200, {**result, 'browser': self.server.browser_runtime.state(), 'app_runtime': self.server.app_runtime.state()})
             elif self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
                 previous = self.server.app_settings.read()
@@ -242,6 +252,8 @@ def main():
     server.browser_diagnostics = BrowserDiagnostics(server.environments)
     from agent_sessions.browser.runtime import BrowserRuntime
     server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}')
+    from agent_sessions.desktop_client.runtime import AppRuntime
+    server.app_runtime = AppRuntime(args.state_home, server.environments)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.
@@ -254,6 +266,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        server.app_runtime.close()
         server.browser_runtime.close()
         server.server_close()
         index = getattr(server.store, 'search_index', None)

@@ -64,6 +64,7 @@ class RelayHandler(BaseHTTPRequestHandler):
             upstream = connect_upstream(self.server.proxy_url, host, port)
             with self.server.connections_lock:
                 self.server.connections.update((self.connection, upstream))
+                self.server.observed_hosts.add(host.lower())
             if initial: upstream.sendall(initial)
             else:
                 self.send_response(200, 'Connection Established')
@@ -114,6 +115,7 @@ class ProxyRelay(ThreadingHTTPServer):
         if proxy_url: validate_proxy(proxy_url)
         self.proxy_url = proxy_url
         self.connections = set()
+        self.observed_hosts = set()
         self.connections_lock = threading.RLock()
         self.stopping = False
         self.released = False

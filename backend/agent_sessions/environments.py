@@ -8,14 +8,13 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from .browser.gates import definitions, DEFAULTS
 from .browser.proxy import validate_proxy
+from .account_profiles import COLLECTIONS, provision, put
 
 
 def installed_apps():
     if sys.platform != 'darwin': return []
     roots = [Path('/Applications'), Path.home()/'Applications', Path.home()/'Desktop']
-    names = [('claude', 'Claude.app'), ('switcher', 'Claude切换器.app'),
-             ('ccbaga', 'CCBaga.app'), ('ccbaga-a', 'CCBaga-A.app'),
-             ('ccbaga-b', 'CCBaga-B.app'), ('chrome', 'Google Chrome.app')]
+    names = [('claude', 'Claude.app'), ('chrome', 'Google Chrome.app')]
     return [{'id': key, 'name': name[:-4], 'path': str(path)}
             for key, name in names
             for path in [next((root/name for root in roots if (root/name).is_dir()), None)]
@@ -31,40 +30,43 @@ class EnvironmentSettings:
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
-                    'accounts': value.get('accounts', []), 'apps': installed_apps(), 'gate_definitions': definitions()}
+                    'app_profiles': value.get('app_profiles', []),
+                    'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])], 'apps': installed_apps(), 'gate_definitions': definitions()}
 
     def change(self, value):
         if not isinstance(value, dict): raise ValueError('环境配置格式无效')
         collection, action = value.get('collection'), value.get('action')
-        if collection not in ('profiles', 'proxies', 'accounts') or action not in ('save', 'delete'):
+        if collection not in COLLECTIONS or action not in ('save', 'delete', 'provision') or (action == 'provision' and collection != 'accounts'):
             raise ValueError('环境配置操作无效')
         with self.lock:
             current = self.read()
-            if action == 'delete':
+            if action == 'provision':
+                provision(value, current, self.validate)
+            elif action == 'delete':
                 key = value.get('id')
                 if not isinstance(key, str) or not key: raise ValueError('请选择配置')
-                if collection == 'proxies' and any(item['proxy_id'] == key for item in current['profiles']):
+                if collection == 'proxies' and any(item['proxy_id'] == key for item in current['profiles']+current['app_profiles']):
                     raise ValueError('此代理已被环境配置引用，请先调整对应环境')
-                if collection == 'profiles' and any(item['profile_id'] == key for item in current['accounts']):
+                field = 'profile_id' if collection == 'profiles' else 'app_profile_id'
+                if collection in ('profiles', 'app_profiles') and any(item.get(field) == key for item in current['accounts']):
                     raise ValueError('此环境已绑定账号，请先调整账号绑定')
                 current[collection] = [item for item in current[collection] if item['id'] != key]
             else:
                 item = self.validate(collection, value.get('item'), current)
-                if any(row['id'] == item['id'] for row in current[collection]):
-                    current[collection] = [item if row['id'] == item['id'] else row for row in current[collection]]
-                else:
-                    current[collection].append(item)
+                put(current, collection, item)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix('.tmp')
-            temporary.write_text(json.dumps({key: current[key] for key in ('profiles', 'proxies', 'accounts')},
+            temporary.write_text(json.dumps({key: current[key] for key in COLLECTIONS},
                                              ensure_ascii=False, indent=2), encoding='utf-8')
+            temporary.chmod(0o600)
             temporary.replace(self.path)
             return current
 
     def validate(self, collection, item, current):
         required = {'proxies': {'name', 'url'}, 'accounts': {'name', 'provider', 'profile_id'},
-                    'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'}}[collection]
-        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'gates'} if collection == 'profiles' else set()
+                    'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'},
+                    'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
+        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
         fields = set(item)-{'gates'}
@@ -77,17 +79,21 @@ class EnvironmentSettings:
             validate_proxy(item['url'])
         elif collection == 'accounts':
             if item['provider'] not in ('claude', 'codex'): raise ValueError('请选择账号类型')
-            profile = next((row for row in current['profiles'] if row['id'] == item['profile_id']), None)
-            if not profile: raise ValueError('请绑定已保存的浏览器环境')
-            if profile['provider'] != item['provider']: raise ValueError('账号与环境的 Agent 类型应一致')
-            if any(row['profile_id'] == item['profile_id'] and row['id'] != key for row in current['accounts']):
-                raise ValueError('此环境已绑定其他账号，请为新账号创建独立环境')
+            if not item['profile_id'] and not item.get('app_profile_id'): raise ValueError('请绑定至少一个独立环境')
+            for field, target in (('profile_id', 'profiles'), ('app_profile_id', 'app_profiles')):
+                if not item.get(field): continue
+                profile = next((row for row in current[target] if row['id'] == item[field]), None)
+                if not profile: raise ValueError('绑定的环境不存在')
+                if target == 'profiles' and profile['provider'] != item['provider']: raise ValueError('账号与环境的 Agent 类型应一致')
+                if target == 'app_profiles' and item['provider'] != 'claude': raise ValueError('官方 App 环境适用于 Claude 账号')
+                if any(row.get(field) == item[field] and row['id'] != key for row in current['accounts']):
+                    raise ValueError('此环境已绑定其他账号，请为新账号创建独立环境')
         else:
-            if item['provider'] not in ('claude', 'codex') or item['engine'] not in ('ccbaga', 'chrome', 'fingerprint-chromium'):
+            if collection == 'profiles' and (item['provider'] not in ('claude', 'codex') or item['engine'] not in ('ccbaga', 'chrome', 'fingerprint-chromium')):
                 raise ValueError('请选择 Agent 和浏览器')
-            if any(row['profile_id'] == key and row['provider'] != item['provider'] for row in current['accounts']):
+            if collection == 'profiles' and any(row['profile_id'] == key and row['provider'] != item['provider'] for row in current['accounts']):
                 raise ValueError('此环境已绑定账号，Agent 类型应与账号一致')
-            if not all(item[key].strip() for key in ('locale', 'timezone', 'fingerprint_seed')):
+            if not all(item[field].strip() for field in (('locale', 'timezone', 'fingerprint_seed') if collection == 'profiles' else ('locale', 'timezone'))):
                 raise ValueError('请独立设置语言、时区与指纹种子')
             if item['proxy_id'] and not any(row['id'] == item['proxy_id'] for row in current['proxies']):
                 raise ValueError('所选代理不存在，请重新选择')

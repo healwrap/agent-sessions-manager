@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type {
   BrowserProfile,
+  AppProfile,
   GateDefinition,
   ProxyConfig,
 } from '../lib/environment-settings';
@@ -14,7 +15,7 @@ export function BrowserProfileFields({
   gates,
   onChange,
 }: {
-  value: BrowserProfile;
+  value: BrowserProfile | AppProfile;
   proxies: ProxyConfig[];
   gates: GateDefinition[];
   onChange: (patch: Partial<BrowserProfile>) => void;
@@ -43,45 +44,52 @@ export function BrowserProfileFields({
   };
   return (
     <>
-      <div className="environment-form-grid">
-        <div className="environment-field">
-          <span>Agent</span>
-          <Select
-            label="环境 Agent"
-            value={value.provider}
-            options={[
-              { value: 'claude', label: 'Claude' },
-              { value: 'codex', label: 'Codex' },
-            ]}
-            onChange={(provider) =>
-              onChange({ provider: provider as BrowserProfile['provider'] })
-            }
-          />
+      {'engine' in value && (
+        <div className="environment-form-grid">
+          <div className="environment-field">
+            <span>Agent</span>
+            <Select
+              label="环境 Agent"
+              value={value.provider}
+              options={[
+                { value: 'claude', label: 'Claude' },
+                { value: 'codex', label: 'Codex' },
+              ]}
+              onChange={(provider) =>
+                onChange({ provider: provider as BrowserProfile['provider'] })
+              }
+            />
+          </div>
+          <div className="environment-field">
+            <span>浏览器内核</span>
+            <Select
+              label="环境浏览器"
+              value={
+                value.engine === 'ccbaga'
+                  ? 'fingerprint-chromium'
+                  : value.engine
+              }
+              options={[
+                {
+                  value: 'fingerprint-chromium',
+                  label: 'Fingerprint Chromium',
+                },
+                ...(value.engine === 'chrome'
+                  ? [
+                      {
+                        value: 'chrome',
+                        label: 'Google Chrome（请切换内核后启动）',
+                      },
+                    ]
+                  : []),
+              ]}
+              onChange={(engine) =>
+                onChange({ engine: engine as BrowserProfile['engine'] })
+              }
+            />
+          </div>
         </div>
-        <div className="environment-field">
-          <span>浏览器内核</span>
-          <Select
-            label="环境浏览器"
-            value={
-              value.engine === 'ccbaga' ? 'fingerprint-chromium' : value.engine
-            }
-            options={[
-              { value: 'fingerprint-chromium', label: 'Fingerprint Chromium' },
-              ...(value.engine === 'chrome'
-                ? [
-                    {
-                      value: 'chrome',
-                      label: 'Google Chrome（请切换内核后启动）',
-                    },
-                  ]
-                : []),
-            ]}
-            onChange={(engine) =>
-              onChange({ engine: engine as BrowserProfile['engine'] })
-            }
-          />
-        </div>
-      </div>
+      )}
       <div className="environment-field">
         <span>专用代理</span>
         <Select
@@ -150,53 +158,68 @@ export function BrowserProfileFields({
           placeholder="留空时与启动预检出口比较"
         />
       </label>
-      <div className="environment-field">
-        <label htmlFor="environment-fingerprint-seed">稳定指纹种子</label>
-        <div className="environment-seed">
-          <input
-            id="environment-fingerprint-seed"
-            required
-            value={value.fingerprint_seed}
-            onChange={(event) =>
-              onChange({ fingerprint_seed: event.target.value })
-            }
-          />
-          <Button
-            onClick={() => onChange({ fingerprint_seed: crypto.randomUUID() })}
-          >
-            重新生成
-          </Button>
-        </div>
-        <small>每次启动使用相同种子；登录状态保存在此环境的独立目录。</small>
-      </div>
+      {'fingerprint_seed' in value && (
+        <>
+          {' '}
+          <div className="environment-field">
+            <label htmlFor="environment-fingerprint-seed">稳定指纹种子</label>
+            <div className="environment-seed">
+              <input
+                id="environment-fingerprint-seed"
+                required
+                value={value.fingerprint_seed}
+                onChange={(event) =>
+                  onChange({ fingerprint_seed: event.target.value })
+                }
+              />
+              <Button
+                onClick={() =>
+                  onChange({ fingerprint_seed: crypto.randomUUID() })
+                }
+              >
+                重新生成
+              </Button>
+            </div>
+            <small>
+              每次启动使用相同种子；登录状态保存在此环境的独立目录。
+            </small>
+          </div>
+        </>
+      )}
       <details className="environment-gate-editor" open>
         <summary>启动门控</summary>
         <p>强制项失败或未验证会拦截；提醒项继续启动；关闭项跳过检查。</p>
-        {gates.map((gate) => (
-          <div className="environment-gate-setting" key={gate.id}>
-            <div>
-              <strong>{gate.title}</strong>
-              <small>{gate.description}</small>
+        {gates
+          .filter(
+            (gate) =>
+              'engine' in value ||
+              ['proxy', 'region', 'exit_ip'].includes(gate.id),
+          )
+          .map((gate) => (
+            <div className="environment-gate-setting" key={gate.id}>
+              <div>
+                <strong>{gate.title}</strong>
+                <small>{gate.description}</small>
+              </div>
+              <Select
+                label={`${gate.title}门控`}
+                value={value.gates?.[gate.id] || gate.default_mode}
+                options={[
+                  { value: 'block', label: '强制拦截' },
+                  { value: 'warn', label: '仅提醒' },
+                  { value: 'off', label: '关闭' },
+                ]}
+                onChange={(mode) =>
+                  onChange({
+                    gates: {
+                      ...value.gates,
+                      [gate.id]: mode as 'block' | 'warn' | 'off',
+                    },
+                  })
+                }
+              />
             </div>
-            <Select
-              label={`${gate.title}门控`}
-              value={value.gates?.[gate.id] || gate.default_mode}
-              options={[
-                { value: 'block', label: '强制拦截' },
-                { value: 'warn', label: '仅提醒' },
-                { value: 'off', label: '关闭' },
-              ]}
-              onChange={(mode) =>
-                onChange({
-                  gates: {
-                    ...value.gates,
-                    [gate.id]: mode as 'block' | 'warn' | 'off',
-                  },
-                })
-              }
-            />
-          </div>
-        ))}
+          ))}
       </details>
     </>
   );

@@ -112,7 +112,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
             setError('');
           }}
           options={[
-            { value: 'external', label: '外部独立浏览器（SunBrowser 等）' },
+            { value: 'external', label: '其他独立浏览器' },
             ...data.profiles.map((row) => ({
               value: 'profile:' + row.id,
               label: row.name,

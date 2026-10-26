@@ -8,14 +8,18 @@ import subprocess
 import threading
 import time
 from . import kernel
+from .installer import KernelInstaller
+from .session_state import session_state
+from agent_sessions.desktop_client.focus import focus_process
 from .gates import blocked, browser_checks, check, policy
 from .proxy import ProxyRelay
-from .region import exit_ip, region_for
+from .preflight import inspect
 
 
 class BrowserRuntime:
     def __init__(self, directory, environments, diagnostics, origin):
         self.directory = Path(directory)/'browser'
+        self.installer = KernelInstaller(self.directory/'kernel')
         self.environments, self.diagnostics, self.origin = environments, diagnostics, origin
         self.lock = threading.RLock()
         self.runs = {}
@@ -28,11 +32,24 @@ class BrowserRuntime:
                     self.runs[key]['status'] = 'stopped'
                     relay = self.relays.pop(key, None)
                     if relay: threading.Thread(target=relay.close, daemon=True).start()
-            return {'kernel': kernel.discover(), 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()]}
+            return {'kernel': {**kernel.discover(self.directory/'kernel'), 'installation': self.installer.state()}, 'sessions': {profile['id']: session_state(self.directory/'profiles'/hashlib.sha256(profile['id'].encode()).hexdigest()[:32], profile['provider']) for profile in self.environments.read()['profiles']}, 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()]}
 
     def update(self, key, **fields):
         with self.lock:
             self.runs[key].update(fields)
+
+    def open(self, value):
+        if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}: raise ValueError('账号打开参数无效')
+        settings = self.environments.read()
+        account = next((row for row in settings['accounts'] if row['id'] == value.get('account_id')), None)
+        key = account['profile_id'] if account else value.get('profile_id')
+        with self.lock:
+            process, run = self.processes.get(key), self.runs.get(key, {})
+            if process and process.poll() is None and run.get('status') == 'running':
+                if not focus_process(process.pid):
+                    raise ValueError('环境仍在运行，但窗口未能置前，请从程序坞打开或先停止环境')
+                return self.state()
+        return self.launch(value)
 
     def launch(self, value):
         if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}:
@@ -47,7 +64,7 @@ class BrowserRuntime:
             raise ValueError('此环境需选择 Fingerprint Chromium 内核')
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')
-        found = kernel.discover()
+        found = kernel.discover(self.directory/'kernel')
         if not found['available']: raise ValueError('未找到 Fingerprint Chromium 内核')
         with self.lock:
             process = self.processes.get(key)
@@ -67,18 +84,7 @@ class BrowserRuntime:
         try:
             modes = policy(profile)
             url = proxy['url'] if proxy else ''
-            follows = any(profile.get(field+'_mode', 'manual') == 'proxy' for field in ('locale', 'timezone'))
-            needs_exit = follows or any(modes[field] != 'off' for field in ('proxy', 'region', 'exit_ip'))
-            exit = exit_ip(url) if needs_exit else {'ip': '', 'error': ''}
-            region = region_for(url, exit['ip']) if exit['ip'] and (follows or modes['region'] != 'off') else {}
-            resolved = {'ip': exit['ip'], 'country': region.get('country', ''),
-                        'locale': region.get('locale') if profile.get('locale_mode') == 'proxy' and region.get('locale') else profile['locale'],
-                        'timezone': region.get('timezone') if profile.get('timezone_mode') == 'proxy' and region.get('timezone') else profile['timezone']}
-            checks = [check(profile, 'proxy', 'pass' if exit['ip'] else 'fail',
-                            '代理链路可用' if proxy and exit['ip'] else '系统路由可用' if exit['ip'] else exit['error'] or '未执行网络预检'),
-                      check(profile, 'region', 'pass' if region and not region.get('error') else 'unknown',
-                            f"{region.get('country', '')} · {region.get('timezone', '')}" if region and not region.get('error') else '出口定位未完成',
-                            '语言与时区按出口解析；定位失败时使用环境中保存的备用值')]
+            resolved, checks = inspect(profile, proxy)
             with self.lock:
                 if run.get('cancelled'): return
                 self.update(key, checks=checks, resolved=resolved)
@@ -96,7 +102,7 @@ class BrowserRuntime:
                 ticket = self.diagnostics.start({'target': 'profile:'+key}, context={
                     'expected': {field: resolved[field] for field in ('locale', 'timezone')},
                     'launch': {'state': 'checking'},
-                    'probe_options': {'managed': True, 'exit_source': exit.get('source', ''), 'exit': modes['exit_ip'] != 'off', 'webrtc': modes['webrtc'] != 'off',
+                    'probe_options': {'managed': True, 'exit_source': resolved.get('probe_source', ''), 'exit': modes['exit_ip'] != 'off', 'webrtc': modes['webrtc'] != 'off',
                                       'fingerprint': modes['fingerprint'] != 'off'}})
                 launch_url = self.origin+'/browser-check.html?ticket='+ticket['token']
                 args = [found['path'], f'--user-data-dir={profile_dir}', f'--fingerprint={kernel.seed_number(profile["fingerprint_seed"])}',
@@ -104,7 +110,7 @@ class BrowserRuntime:
                         f'--lang={resolved["locale"]}', f'--accept-lang={resolved["locale"]},{resolved["locale"].split("-")[0]}',
                         f'--timezone={resolved["timezone"]}', f'--proxy-server=http://127.0.0.1:{relay.server_port}',
                         '--disable-non-proxied-udp', '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
-                        '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
+                        '--dns-prefetch-disable',
                         '--disable-background-networking', '--disable-quic', '--no-first-run', '--no-default-browser-check',
                         '--disable-session-crashed-bubble', '--new-window', launch_url]
                 environment = {name: content for name, content in os.environ.items()
@@ -114,15 +120,23 @@ class BrowserRuntime:
                     process = subprocess.Popen(args, env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
                 self.processes[key] = process
                 self.update(key, stage='正在读取目标浏览器实测结果', pid=process.pid)
-            deadline = time.monotonic()+90
+            for attempt in range(30):
+                if run.get('cancelled') or process.poll() is not None: break
+                if focus_process(process.pid): break
+                time.sleep(.1)
+            deadline = time.monotonic()+180
+            prompted = False
             report = None
             while time.monotonic() < deadline:
                 if process.poll() is not None: raise ValueError(f'浏览器已退出，退出码 {process.returncode}')
                 if run.get('cancelled'): return
                 report = self.diagnostics.read(ticket['token'])['report']
                 if report: break
+                if not prompted and time.monotonic() > deadline-165:
+                    prompted = True
+                    self.update(key, stage='正在等待浏览器采样；若出现系统钥匙串提示，请先在本机处理' if os.sys.platform == 'darwin' else '正在等待浏览器完成启动采样')
                 time.sleep(0.3)
-            if not report: raise ValueError('目标浏览器未在 90 秒内完成启动采样')
+            if not report: raise ValueError('目标浏览器未在 180 秒内完成启动采样'+('；如有系统钥匙串提示，请处理后重新打开环境' if os.sys.platform == 'darwin' else ''))
             baseline_file = profile_dir/'fingerprint-baseline.json'
             baseline = json.loads(baseline_file.read_text()) if baseline_file.exists() else None
             actual, next_baseline = browser_checks(profile, resolved, report['checks'], baseline)
@@ -154,6 +168,7 @@ class BrowserRuntime:
         # Restore only the check page before the account domain is released.
         path = directory/'Default/Preferences'
         value = json.loads(path.read_text()) if path.exists() else {}
+        value['network_prediction_options'] = 2
         value.setdefault('session', {})['restore_on_startup'] = 5
         value['session']['startup_urls'] = []
         value.setdefault('profile', {})['exit_type'] = 'Normal'
@@ -163,6 +178,7 @@ class BrowserRuntime:
         temporary.replace(path)
 
     def stop(self, key):
+        forced = False
         with self.lock:
             if key not in self.runs: raise ValueError('环境尚未启动')
             self.runs[key]['cancelled'] = True
@@ -170,10 +186,13 @@ class BrowserRuntime:
         if process and process.poll() is None:
             process.terminate()
             try: process.wait(timeout=8)
-            except subprocess.TimeoutExpired: raise ValueError('浏览器尚未退出，请先关闭此环境的浏览器窗口') from None
+            except subprocess.TimeoutExpired:
+                forced = True
+                process.kill()
+                process.wait(timeout=5)
         relay = self.relays.pop(key, None)
         if relay: relay.close()
-        self.update(key, status='stopped', stage='已停止')
+        self.update(key, status='stopped', stage='浏览器未响应退出，已结束此环境进程' if forced else '已停止')
         return self.state()
 
     def ensure_mutable(self, value):

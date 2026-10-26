@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   BrowserProfile,
+  AppProfile,
   ProxyConfig,
   GateDefinition,
   EnvironmentCollection,
@@ -11,7 +12,8 @@ import { BrowserProfileFields } from './browser-profile-fields';
 
 export type EnvironmentEdit =
   | { kind: 'profiles'; item?: BrowserProfile }
-  | { kind: 'proxies'; item?: ProxyConfig };
+  | { kind: 'proxies'; item?: ProxyConfig }
+  | { kind: 'app_profiles'; item?: AppProfile };
 
 export function EnvironmentEditor({
   edit,
@@ -26,29 +28,41 @@ export function EnvironmentEditor({
   onSave: (kind: EnvironmentCollection, item: EnvironmentItem) => Promise<void>;
   onClose: () => void;
 }) {
-  const profile = edit.kind === 'profiles';
+  const profile = edit.kind !== 'proxies';
+  const native = edit.kind === 'app_profiles';
   const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     nameInput.current?.focus();
   }, []);
-  const [value, setValue] = useState<BrowserProfile | ProxyConfig>(
+  const [value, setValue] = useState<BrowserProfile | AppProfile | ProxyConfig>(
     () =>
       edit.item ||
-      (profile
+      (native
         ? {
             id: '',
             name: '',
-            provider: 'claude',
-            engine: 'fingerprint-chromium',
-            locale_mode: 'proxy',
-            timezone_mode: 'proxy',
-            gates: {},
             proxy_id: '',
             locale: 'en-US',
             timezone: 'America/Los_Angeles',
-            fingerprint_seed: crypto.randomUUID(),
+            locale_mode: 'proxy',
+            timezone_mode: 'proxy',
+            gates: {},
           }
-        : { id: '', name: '', url: '' }),
+        : profile
+          ? {
+              id: '',
+              name: '',
+              provider: 'claude',
+              engine: 'fingerprint-chromium',
+              locale_mode: 'proxy',
+              timezone_mode: 'proxy',
+              gates: {},
+              proxy_id: '',
+              locale: 'en-US',
+              timezone: 'America/Los_Angeles',
+              fingerprint_seed: crypto.randomUUID(),
+            }
+          : { id: '', name: '', url: '' }),
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -56,7 +70,7 @@ export function EnvironmentEditor({
     setValue((current) => ({ ...current, [key]: next }));
   const browser = value as BrowserProfile;
   const proxy = value as ProxyConfig;
-  const title = `${edit.item ? '编辑' : '新建'}${profile ? '浏览器环境' : '代理配置'}`;
+  const title = `${edit.item ? '编辑' : '新建'}${native ? 'Claude App 环境' : profile ? '浏览器环境' : '代理配置'}`;
   const save = async () => {
     setError('');
     try {
@@ -146,7 +160,9 @@ export function EnvironmentEditor({
           )}
           <p className="environment-form-note">
             {profile
-              ? '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
+              ? native
+                ? '为官方 App 单独保存登录数据、代理与内嵌 Code 配置。'
+                : '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
               : '保存为代理配置；实际路由由使用它的浏览器或 App 决定。'}
           </p>
           {error && (

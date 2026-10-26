@@ -1,0 +1,177 @@
+"""Launch the official Claude app with isolated data and embedded Code settings."""
+from datetime import datetime, timezone
+import json
+import hashlib
+import os
+from pathlib import Path
+import subprocess
+import threading
+import time
+from agent_sessions.browser.gates import blocked
+from agent_sessions.browser.preflight import inspect
+from agent_sessions.browser.proxy import ProxyRelay
+from agent_sessions.browser.session_state import session_state
+from .conflicts import warnings
+from .focus import focus_process
+
+
+def app_processes():
+    rows = subprocess.run(['ps', '-axo', 'pid=,comm='], capture_output=True, text=True, timeout=5).stdout.splitlines()
+    return [int(row.strip().split(None, 1)[0]) for row in rows
+            if row.strip().endswith('/Claude.app/Contents/MacOS/Claude')]
+
+
+class AppRuntime:
+    def __init__(self, directory, environments):
+        self.directory = Path(directory)/'claude-app'
+        self.environments = environments
+        self.lock = threading.RLock()
+        self.runs, self.processes, self.relays = {}, {}, {}
+
+    def profile_directory(self, key):
+        return self.directory/'profiles'/(hashlib.sha256(key.encode()).hexdigest()[:32]+'-3p')
+
+    def state(self):
+        with self.lock:
+            for key, process in self.processes.items():
+                if process.poll() is not None and self.runs[key]['status'] == 'running':
+                    abnormal = process.returncode != 0 and not self.runs[key].get('cancelled')
+                    self.runs[key].update(status='failed' if abnormal else 'stopped', stage='App 意外退出' if abnormal else 'App 已退出',
+                                          error=f'App 返回码 {process.returncode}；请检查环境启动日志及系统中其他启动守卫' if abnormal else '')
+                    relay = self.relays.pop(key, None)
+                    if relay: threading.Thread(target=relay.close, daemon=True).start()
+            settings = self.environments.read()
+            for key, relay in self.relays.items():
+                with relay.connections_lock: self.runs[key]['proxy_hosts'] = sorted(relay.observed_hosts)
+            return {'warnings': warnings(), 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()],
+                    'sessions': {profile['id']: session_state(self.profile_directory(profile['id'])) for profile in settings['app_profiles']}}
+
+    def open(self, value):
+        if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}: raise ValueError('账号打开参数无效')
+        settings = self.environments.read()
+        account = next((row for row in settings['accounts'] if row['id'] == value.get('account_id')), None)
+        key = account.get('app_profile_id') if account else value.get('profile_id')
+        with self.lock:
+            process = self.processes.get(key)
+            if process and process.poll() is None and self.runs[key]['status'] == 'running':
+                if not focus_process(process.pid): raise ValueError('App 仍在运行，请从程序坞打开它的窗口')
+                return self.state()
+        return self.launch(value)
+
+    def launch(self, value):
+        if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}: raise ValueError('App 启动参数无效')
+        settings = self.environments.read()
+        account = next((row for row in settings['accounts'] if row['id'] == value.get('account_id')), None)
+        if value.get('account_id') and not account: raise ValueError('账号不存在')
+        key = account.get('app_profile_id') if account else value.get('profile_id')
+        profile = next((row for row in settings['app_profiles'] if row['id'] == key), None)
+        if not profile: raise ValueError('请为账号绑定 Claude App 环境')
+        app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
+        if not app: raise ValueError('请先安装官方 Claude App')
+        proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
+        if profile['proxy_id'] and not proxy: raise ValueError('绑定的代理不存在')
+        with self.lock:
+            if any(row['status'] == 'checking' for row in self.runs.values()): raise ValueError('正在切换 App 环境，请稍候')
+            process = self.processes.get(key)
+            if process and process.poll() is None: raise ValueError('此 App 环境已打开')
+            self.processes.pop(key, None)
+            run = {'profile_id': key, 'account_id': account['id'] if account else '', 'name': profile['name'],
+                   'status': 'checking', 'stage': '正在检查 App 启动环境', 'checked_at': datetime.now(timezone.utc).isoformat(),
+                   'checks': [], 'resolved': {}, 'browser_checks': [], 'error': '', 'data_directory': str(self.profile_directory(key))}
+            self.runs[key] = run
+        threading.Thread(target=self._launch, args=(profile, proxy, app, run), daemon=True).start()
+        return self.state()
+
+    def _launch(self, profile, proxy, app, run):
+        key = profile['id']
+        try:
+            resolved, checks = inspect(profile, proxy, browser=False)
+            with self.lock:
+                if run.get('cancelled'): return
+                run.update(resolved=resolved, checks=checks)
+                if blocked(checks): run.update(status='blocked', stage='App 强制门控未通过'); return
+                owned = {process.pid for process in self.processes.values() if process.poll() is None}
+                if set(app_processes())-owned:
+                    raise ValueError('请先退出自行打开的 Claude App，再启动隔离环境；现有登录数据会保留')
+                for other in list(self.processes):
+                    if self.processes[other].poll() is None: self.stop(other)
+                directory = self.profile_directory(key)
+                directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+                config = directory/'claude-code'
+                config.mkdir(parents=True, exist_ok=True, mode=0o700)
+                settings_file = directory/'config.json'
+                preferences = json.loads(settings_file.read_text()) if settings_file.exists() else {}
+                requested_locale = resolved['locale']
+                ui_locale = {'zh-CN': 'zh-Hans', 'zh-TW': 'zh-Hant', 'zh-HK': 'zh-Hant'}.get(requested_locale, requested_locale)
+                resources = Path(app['path'])/'Contents/Resources'
+                if not (resources/(ui_locale+'.json')).is_file(): ui_locale = ui_locale.split('-')[0]
+                preferences['locale'] = ui_locale
+                temporary = settings_file.with_suffix('.tmp')
+                temporary.write_text(json.dumps(preferences, ensure_ascii=False))
+                temporary.replace(settings_file)
+                relay = ProxyRelay(proxy['url'] if proxy else '')
+                relay.released = True
+                self.relays[key] = relay
+                env = {name: value for name, value in os.environ.items() if name in ('HOME', 'PATH', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'SYSTEMROOT', 'WINDIR')}
+                env.update(CLAUDE_CONFIG_DIR=str(config), TZ=resolved['timezone'])
+                args = [str(Path(app['path'])/'Contents/MacOS/Claude'), '--user-data-dir='+str(directory),
+                        '--proxy-server=http://127.0.0.1:'+str(relay.server_port),
+                        '--lang='+resolved['locale'], '--accept-lang='+resolved['locale'], '--disable-quic',
+                        '--force-webrtc-ip-handling-policy=disable_non_proxied_udp']
+                with (directory/'app-launch.log').open('ab') as log:
+                    process = subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
+                self.processes[key] = process
+                run.update(pid=process.pid, stage='正在确认 App 的独立数据目录')
+            for attempt in range(60):
+                if run.get('cancelled'): return
+                if process.poll() is not None: raise ValueError(f'官方 App 已退出，退出码 {process.returncode}；请查看此环境启动日志')
+                if any((directory/name).exists() for name in ('Cookies', 'Preferences', 'Local State')): break
+                time.sleep(.25)
+            else: raise ValueError('尚未确认官方 App 使用独立数据目录，已停止本次启动')
+            with self.lock:
+                if run.get('cancelled'): return
+                checks += [dict(id='app-storage', title='App 登录数据隔离', policy='block', state='pass', value=str(directory), detail='官方 App 已在这个独立目录创建用户数据'),
+                           dict(id='code-storage', title='内嵌 Code 配置隔离', policy='block', state='pass', value=str(config), detail='独立 CLAUDE_CONFIG_DIR，启动环境不继承 CLI 的供应商与思考强度变量')]
+                run.update(status='running', stage='App 已启动，可在官方窗口登录', checks=checks,
+                           checked_at=datetime.now(timezone.utc).isoformat())
+        except Exception as error:
+            if run.get('cancelled'): return
+            run.update(status='failed', stage='App 启动未完成', error=str(error))
+            process = self.processes.get(key)
+            if process and process.poll() is None: process.terminate()
+            relay = self.relays.pop(key, None)
+            if relay: relay.close()
+
+    def stop(self, key):
+        with self.lock:
+            if key not in self.runs: raise ValueError('此 App 环境尚未启动')
+            self.runs[key]['cancelled'] = True
+            process = self.processes.get(key)
+            if process and process.poll() is None:
+                process.terminate()
+                try: process.wait(timeout=8)
+                except subprocess.TimeoutExpired: raise ValueError('App 尚未退出，请关闭它的窗口后重试') from None
+            relay = self.relays.pop(key, None)
+            if relay: relay.close()
+            self.runs[key].update(status='stopped', stage='App 已停止，登录状态保留')
+        return self.state()
+
+    def ensure_mutable(self, value):
+        if not isinstance(value, dict): return
+        item = value.get('item', {})
+        key = value.get('id') if value.get('action') == 'delete' else item.get('id') if isinstance(item, dict) else None
+        settings = self.environments.read()
+        with self.lock:
+            for profile in settings['app_profiles']:
+                run, process = self.runs.get(profile['id'], {}), self.processes.get(profile['id'])
+                if run.get('status') != 'checking' and not (process and process.poll() is None): continue
+                accounts = [row['id'] for row in settings['accounts'] if row.get('app_profile_id') == profile['id']]
+                if ((value.get('collection') == 'app_profiles' and key == profile['id']) or
+                    (value.get('collection') == 'proxies' and key == profile['proxy_id']) or
+                    (value.get('collection') == 'accounts' and key in accounts)):
+                    raise ValueError('请先停止对应的 Claude App 环境，再修改配置')
+
+    def close(self):
+        for key in list(self.runs):
+            try: self.stop(key)
+            except (ValueError, OSError): pass

@@ -14,11 +14,9 @@ export interface GateResult {
   value: string;
   detail: string;
 }
-export interface BrowserProfile {
+export interface ProfileRoute {
   id: string;
   name: string;
-  provider: 'claude' | 'codex';
-  engine: 'fingerprint-chromium' | 'ccbaga' | 'chrome';
   proxy_id: string;
   locale: string;
   timezone: string;
@@ -26,13 +24,19 @@ export interface BrowserProfile {
   timezone_mode?: 'manual' | 'proxy';
   expected_ip?: string;
   gates?: Record<string, GateMode>;
+}
+export interface BrowserProfile extends ProfileRoute {
+  provider: 'claude' | 'codex';
+  engine: 'fingerprint-chromium' | 'ccbaga' | 'chrome';
   fingerprint_seed: string;
 }
+export interface AppProfile extends ProfileRoute {}
 export interface BrowserAccount {
   id: string;
   name: string;
   provider: 'claude' | 'codex';
   profile_id: string;
+  app_profile_id?: string;
 }
 export interface BrowserRun {
   profile_id: string;
@@ -52,6 +56,15 @@ export interface BrowserRun {
   browser_checks: DiagnosticItem[];
   error: string;
 }
+export interface LocalSession {
+  state: 'saved' | 'empty' | 'unavailable';
+  label: string;
+}
+export interface AppRuntimeState {
+  warnings?: string[];
+  runs: BrowserRun[];
+  sessions: Record<string, LocalSession>;
+}
 export interface BrowserRuntimeState {
   kernel: {
     available: boolean;
@@ -59,8 +72,15 @@ export interface BrowserRuntimeState {
     version: string;
     path: string;
     source: string;
+    installation?: {
+      state: 'idle' | 'installing' | 'ready' | 'failed';
+      progress: number;
+      message: string;
+      error: string;
+    };
   };
   runs: BrowserRun[];
+  sessions?: Record<string, LocalSession>;
 }
 export interface ProxyConfig {
   id: string;
@@ -74,16 +94,20 @@ export interface LocalApp {
 }
 export interface EnvironmentSettings {
   profiles: BrowserProfile[];
+  app_profiles: AppProfile[];
   proxies: ProxyConfig[];
   accounts: BrowserAccount[];
   apps: LocalApp[];
   gate_definitions: GateDefinition[];
   browser: BrowserRuntimeState;
+  app_runtime: AppRuntimeState;
 }
 export type EnvironmentSection =
   'accounts' | 'browser' | 'claude-app' | 'proxies' | 'diagnostics';
-export type EnvironmentCollection = 'profiles' | 'proxies' | 'accounts';
-export type EnvironmentItem = BrowserProfile | ProxyConfig | BrowserAccount;
+export type EnvironmentCollection =
+  'profiles' | 'app_profiles' | 'proxies' | 'accounts';
+export type EnvironmentItem =
+  BrowserProfile | AppProfile | ProxyConfig | BrowserAccount;
 export const runLabels: Record<BrowserRun['status'], string> = {
   checking: '启动检查中',
   running: '运行中',

@@ -10,10 +10,12 @@ import type {
 export function useEnvironmentSettings(active = true, watchRuntime = true) {
   const [data, setData] = useState<EnvironmentSettings>({
     profiles: [],
+    app_profiles: [],
     proxies: [],
     accounts: [],
     apps: [],
     gate_definitions: [],
+    app_runtime: { runs: [], sessions: {} },
     browser: {
       kernel: {
         available: false,
@@ -77,6 +79,10 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
   };
   const save = (collection: EnvironmentCollection, item: EnvironmentItem) =>
     change({ collection, action: 'save', item });
+  const provision = (
+    item: import('../lib/environment-settings').BrowserAccount,
+    route: { proxy_id: string; proxy_url?: string },
+  ) => change({ collection: 'accounts', action: 'provision', item, route });
   const remove = async (collection: EnvironmentCollection, id: string) => {
     try {
       await change({ collection, action: 'delete', id });
@@ -85,23 +91,42 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     }
   };
   const runtime = async (
-    action: 'start' | 'stop',
+    action: 'start' | 'stop' | 'open',
     body: { profile_id?: string; account_id?: string },
+    target: 'browser' | 'app' = 'browser',
   ) => {
     setBusy(true);
     setError('');
     try {
-      const browser = await request<BrowserRuntimeState>(
-        '/api/browser-runtime/' + action,
+      const result = await request<BrowserRuntimeState>(
+        '/api/' + target + '-runtime/' + action,
         {},
         body,
       );
-      setData((value) => ({ ...value, browser }));
+      setData((value) =>
+        target === 'browser'
+          ? { ...value, browser: result }
+          : {
+              ...value,
+              app_runtime:
+                result as import('../lib/environment-settings').AppRuntimeState,
+            },
+      );
     } catch (reason) {
       setError(String(reason));
     } finally {
       setBusy(false);
     }
   };
-  return { data, loading, error, busy, reload, save, remove, runtime };
+  return {
+    data,
+    loading,
+    error,
+    busy,
+    reload,
+    save,
+    provision,
+    remove,
+    runtime,
+  };
 }

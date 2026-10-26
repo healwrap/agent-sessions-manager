@@ -4,6 +4,10 @@ from .region import region_for
 
 def command(server, path, value):
     if not isinstance(value, dict): raise ValueError('浏览器参数无效')
+    if path.endswith('/install'):
+        if value: raise ValueError('内核安装参数无效')
+        return server.browser_runtime.installer.start()
+    if path.endswith('/open'): return server.browser_runtime.open(value)
     if path.endswith('/start'): return server.browser_runtime.launch(value)
     if path.endswith('/stop'):
         if set(value) != {'profile_id'}: raise ValueError('请选择要停止的环境')

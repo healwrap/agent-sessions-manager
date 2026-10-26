@@ -1,12 +1,66 @@
+import type { DiagnosticItem } from './claude-diagnostics';
+export type GateMode = 'block' | 'warn' | 'off';
+export interface GateDefinition {
+  id: string;
+  title: string;
+  description: string;
+  default_mode: GateMode;
+}
+export interface GateResult {
+  id: string;
+  title: string;
+  policy: GateMode;
+  state: 'pass' | 'fail' | 'unknown' | 'skip';
+  value: string;
+  detail: string;
+}
 export interface BrowserProfile {
   id: string;
   name: string;
   provider: 'claude' | 'codex';
-  engine: 'ccbaga' | 'chrome';
+  engine: 'fingerprint-chromium' | 'ccbaga' | 'chrome';
   proxy_id: string;
   locale: string;
   timezone: string;
+  locale_mode?: 'manual' | 'proxy';
+  timezone_mode?: 'manual' | 'proxy';
+  expected_ip?: string;
+  gates?: Record<string, GateMode>;
   fingerprint_seed: string;
+}
+export interface BrowserAccount {
+  id: string;
+  name: string;
+  provider: 'claude' | 'codex';
+  profile_id: string;
+}
+export interface BrowserRun {
+  profile_id: string;
+  account_id: string;
+  name: string;
+  status: 'checking' | 'running' | 'blocked' | 'failed' | 'stopped';
+  alive: boolean;
+  stage: string;
+  checked_at: string;
+  checks: GateResult[];
+  resolved: {
+    ip?: string;
+    country?: string;
+    locale?: string;
+    timezone?: string;
+  };
+  browser_checks: DiagnosticItem[];
+  error: string;
+}
+export interface BrowserRuntimeState {
+  kernel: {
+    available: boolean;
+    name: string;
+    version: string;
+    path: string;
+    source: string;
+  };
+  runs: BrowserRun[];
 }
 export interface ProxyConfig {
   id: string;
@@ -21,7 +75,19 @@ export interface LocalApp {
 export interface EnvironmentSettings {
   profiles: BrowserProfile[];
   proxies: ProxyConfig[];
+  accounts: BrowserAccount[];
   apps: LocalApp[];
+  gate_definitions: GateDefinition[];
+  browser: BrowserRuntimeState;
 }
 export type EnvironmentSection =
-  'browser' | 'claude-app' | 'proxies' | 'diagnostics';
+  'accounts' | 'browser' | 'claude-app' | 'proxies' | 'diagnostics';
+export type EnvironmentCollection = 'profiles' | 'proxies' | 'accounts';
+export type EnvironmentItem = BrowserProfile | ProxyConfig | BrowserAccount;
+export const runLabels: Record<BrowserRun['status'], string> = {
+  checking: '启动检查中',
+  running: '运行中',
+  blocked: '已拦截',
+  failed: '启动失败',
+  stopped: '已停止',
+};

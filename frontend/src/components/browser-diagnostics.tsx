@@ -12,7 +12,11 @@ import { SettingsRow } from './settings/row';
 import '../styles/browser-check.css';
 
 export function BrowserDiagnostics({ active }: { active: boolean }) {
-  const { data, loading, error: environmentError } = useEnvironmentSettings();
+  const {
+    data,
+    loading,
+    error: environmentError,
+  } = useEnvironmentSettings(active, false);
   const [target, setTarget] = useState('external');
   const [ticket, setTicket] = useState<BrowserCheckTicket>();
   const [busy, setBusy] = useState(false);

@@ -211,10 +211,20 @@ async function webrtcCandidates(): Promise<DiagnosticItem> {
   }
 }
 
-export async function inspectDiagnosticWindow(): Promise<DiagnosticItem[]> {
+export async function inspectDiagnosticWindow(
+  options: { fingerprint?: boolean; webrtc?: boolean } = {},
+): Promise<DiagnosticItem[]> {
   const [canvas, webrtc] = await Promise.all([
-    canvasFingerprint(),
-    webrtcCandidates(),
+    options.fingerprint === false
+      ? Promise.resolve(
+          deviceItem('canvas', 'Canvas 指纹', '已关闭采样', '', 'unknown'),
+        )
+      : canvasFingerprint(),
+    options.webrtc === false
+      ? Promise.resolve(
+          deviceItem('webrtc', 'WebRTC 候选地址', '已关闭采样', '', 'unknown'),
+        )
+      : webrtcCandidates(),
   ]);
   return [
     deviceItem(
@@ -233,7 +243,9 @@ export async function inspectDiagnosticWindow(): Promise<DiagnosticItem[]> {
       '屏幕与触屏',
       `${screen.width} × ${screen.height} · ${devicePixelRatio}x · ${navigator.maxTouchPoints} 个触点`,
     ),
-    webglRenderer(),
+    options.fingerprint === false
+      ? deviceItem('webgl', 'WebGL 渲染器', '已关闭采样', '', 'unknown')
+      : webglRenderer(),
     canvas,
     webrtc,
   ];

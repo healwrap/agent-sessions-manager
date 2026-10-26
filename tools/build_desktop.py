@@ -29,7 +29,9 @@ def main():
     run(npm, 'run', 'build:ui')
     run(python, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
         '--name', 'agent-sessions-server', '--paths', ROOT/'backend',
-        '--add-data', str(ROOT/'frontend/dist')+':frontend/dist', ROOT/'scripts/trajectory_server.py')
+        '--add-data', str(ROOT/'frontend/dist')+':frontend/dist',
+        '--add-data', str(ROOT/'backend/agent_sessions/browser/locales.json')+':agent_sessions/browser',
+        ROOT/'scripts/trajectory_server.py')
     triple = subprocess.check_output(['rustc', '--print', 'host-tuple'], text=True).strip()
     directory = ROOT/'desktop/binaries'
     directory.mkdir(exist_ok=True)

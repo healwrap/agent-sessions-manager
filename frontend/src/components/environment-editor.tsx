@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import type { BrowserProfile, ProxyConfig } from '../lib/environment-settings';
+import type {
+  BrowserProfile,
+  ProxyConfig,
+  GateDefinition,
+  EnvironmentCollection,
+  EnvironmentItem,
+} from '../lib/environment-settings';
 import { Button, Dialog, IconButton } from './primitives';
-import { Select } from './select';
+import { BrowserProfileFields } from './browser-profile-fields';
 
 export type EnvironmentEdit =
   | { kind: 'profiles'; item?: BrowserProfile }
@@ -10,15 +16,14 @@ export type EnvironmentEdit =
 export function EnvironmentEditor({
   edit,
   proxies,
+  gates,
   onSave,
   onClose,
 }: {
   edit: EnvironmentEdit;
   proxies: ProxyConfig[];
-  onSave: (
-    kind: 'profiles' | 'proxies',
-    item: BrowserProfile | ProxyConfig,
-  ) => Promise<void>;
+  gates: GateDefinition[];
+  onSave: (kind: EnvironmentCollection, item: EnvironmentItem) => Promise<void>;
   onClose: () => void;
 }) {
   const profile = edit.kind === 'profiles';
@@ -26,7 +31,7 @@ export function EnvironmentEditor({
   useEffect(() => {
     nameInput.current?.focus();
   }, []);
-  const [value, setValue] = useState(
+  const [value, setValue] = useState<BrowserProfile | ProxyConfig>(
     () =>
       edit.item ||
       (profile
@@ -34,7 +39,10 @@ export function EnvironmentEditor({
             id: '',
             name: '',
             provider: 'claude',
-            engine: 'ccbaga',
+            engine: 'fingerprint-chromium',
+            locale_mode: 'proxy',
+            timezone_mode: 'proxy',
+            gates: {},
             proxy_id: '',
             locale: 'en-US',
             timezone: 'America/Los_Angeles',
@@ -115,94 +123,14 @@ export function EnvironmentEditor({
             />
           </label>
           {profile ? (
-            <>
-              <div className="environment-form-grid">
-                <div className="environment-field">
-                  <span>Agent</span>
-                  <Select
-                    label="环境 Agent"
-                    value={browser.provider}
-                    options={[
-                      { value: 'claude', label: 'Claude' },
-                      { value: 'codex', label: 'Codex' },
-                    ]}
-                    onChange={(next) => field('provider', next)}
-                  />
-                </div>
-                <div className="environment-field">
-                  <span>浏览器</span>
-                  <Select
-                    label="环境浏览器"
-                    value={browser.engine}
-                    options={[
-                      { value: 'ccbaga', label: 'CCBaga' },
-                      { value: 'chrome', label: 'Google Chrome' },
-                    ]}
-                    onChange={(next) => field('engine', next)}
-                  />
-                </div>
-              </div>
-              <div className="environment-field">
-                <span>专用代理</span>
-                <Select
-                  label="环境专用代理"
-                  value={browser.proxy_id}
-                  options={[
-                    { value: '', label: '系统出口' },
-                    ...proxies.map((item) => ({
-                      value: item.id,
-                      label: item.name,
-                    })),
-                  ]}
-                  onChange={(next) => field('proxy_id', next)}
-                />
-              </div>
-              <div className="environment-form-grid">
-                <label className="environment-field">
-                  语言
-                  <input
-                    required
-                    value={browser.locale}
-                    onChange={(event) => field('locale', event.target.value)}
-                    placeholder="en-US"
-                  />
-                  <small>独立语言代码</small>
-                </label>
-                <label className="environment-field">
-                  时区
-                  <input
-                    required
-                    value={browser.timezone}
-                    onChange={(event) => field('timezone', event.target.value)}
-                    placeholder="America/Los_Angeles"
-                  />
-                  <small>独立 IANA 时区</small>
-                </label>
-              </div>
-              <div className="environment-field">
-                <label htmlFor="environment-fingerprint-seed">
-                  稳定指纹种子
-                </label>
-                <div className="environment-seed">
-                  <input
-                    id="environment-fingerprint-seed"
-                    required
-                    value={browser.fingerprint_seed}
-                    onChange={(event) =>
-                      field('fingerprint_seed', event.target.value)
-                    }
-                  />
-                  <Button
-                    onClick={() =>
-                      field('fingerprint_seed', crypto.randomUUID())
-                    }
-                  >
-                    重新生成
-                  </Button>
-                </div>
-                <small>固定保存，编辑其他配置时保持不变。</small>
-              </div>
-            </>
+            <BrowserProfileFields
+              value={browser}
+              proxies={proxies}
+              gates={gates}
+              onChange={(patch) =>
+                setValue((current) => ({ ...current, ...patch }))
+              }
+            />
           ) : (
             <label className="environment-field">
               代理地址
@@ -218,7 +146,7 @@ export function EnvironmentEditor({
           )}
           <p className="environment-form-note">
             {profile
-              ? '当前保存为配置草稿；浏览器启动、登录隔离和指纹应用待接入。'
+              ? '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
               : '保存为代理配置；实际路由由使用它的浏览器或 App 决定。'}
           </p>
           {error && (

@@ -4,6 +4,8 @@ import {
   PanelsTopLeft,
   Pencil,
   Plus,
+  Play,
+  Square,
   Trash2,
 } from 'lucide-react';
 import type {
@@ -11,7 +13,8 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { AgentIcon } from './agent-icon';
-import { EnvironmentAppButton } from './environment-app-button';
+import { BrowserLaunchReport } from './browser-launch-report';
+import { runLabels } from '../lib/environment-settings';
 import { Button } from './primitives';
 
 export function BrowserEnvironments({
@@ -20,14 +23,16 @@ export function BrowserEnvironments({
   loading,
   onEdit,
   onDelete,
+  onRuntime,
 }: {
   data: EnvironmentSettings;
   busy: boolean;
   loading: boolean;
   onEdit: (item?: BrowserProfile) => void;
   onDelete: (id: string) => void;
+  onRuntime: (action: 'start' | 'stop', body: { profile_id: string }) => void;
 }) {
-  const managers = data.apps.filter((app) => app.id.startsWith('ccbaga'));
+  const kernel = data.browser.kernel;
   return (
     <>
       <div className="environment-connection">
@@ -35,23 +40,18 @@ export function BrowserEnvironments({
           <PanelsTopLeft size={19} />
         </span>
         <div>
-          <strong>浏览器连接</strong>
+          <strong>Fingerprint Chromium</strong>
           <p>
             {loading
-              ? '正在读取本机应用…'
-              : managers.length
-                ? `已发现 ${managers.map((app) => app.name).join('、')}`
-                : '尚未发现 CCBaga'}
+              ? '正在读取本机内核…'
+              : kernel.available
+                ? `${kernel.version} · 来自 ${kernel.source}`
+                : '尚未找到支持指纹的 Chromium 内核'}
           </p>
         </div>
         <span className="environment-tag">
-          {managers.length ? '外部管理器' : '未连接'}
+          {kernel.available ? '内核已就绪' : '未安装'}
         </span>
-        <div className="environment-app-buttons">
-          {managers.map((app) => (
-            <EnvironmentAppButton key={app.id} app={app} />
-          ))}
-        </div>
       </div>
       <section className="environment-panel" aria-label="浏览器环境列表">
         <header className="environment-panel-heading">
@@ -74,51 +74,79 @@ export function BrowserEnvironments({
               </tr>
             </thead>
             <tbody>
-              {data.profiles.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <span className="environment-name">
-                      <AgentIcon source={item.provider} />
-                      <strong>{item.name}</strong>
-                    </span>
-                    <small>
-                      {item.provider === 'codex' ? 'Codex' : 'Claude'}
-                    </small>
-                  </td>
-                  <td>
-                    {item.engine === 'ccbaga' ? 'CCBaga' : 'Google Chrome'}
-                    <small>
-                      {data.proxies.find((proxy) => proxy.id === item.proxy_id)
-                        ?.name || '系统出口'}
-                    </small>
-                  </td>
-                  <td>
-                    {item.locale}
-                    <small>{item.timezone}</small>
-                  </td>
-                  <td>
-                    <span className="environment-tag">配置草稿</span>
-                  </td>
-                  <td>
-                    <div className="environment-row-actions">
-                      <button
-                        aria-label={`编辑环境 ${item.name}`}
-                        onClick={() => onEdit(item)}
-                        disabled={busy}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        aria-label={`删除环境配置 ${item.name}`}
-                        onClick={() => onDelete(item.id)}
-                        disabled={busy}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {data.profiles.map((item) => {
+                const run = data.browser.runs.find(
+                  (row) => row.profile_id === item.id,
+                );
+                const live = run?.alive || run?.status === 'checking';
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      <span className="environment-name">
+                        <AgentIcon source={item.provider} />
+                        <strong>{item.name}</strong>
+                      </span>
+                      <small>
+                        {item.provider === 'codex' ? 'Codex' : 'Claude'}
+                      </small>
+                    </td>
+                    <td>
+                      {item.engine === 'chrome'
+                        ? 'Google Chrome（需更换内核）'
+                        : 'Fingerprint Chromium'}
+                      <small>
+                        {data.proxies.find(
+                          (proxy) => proxy.id === item.proxy_id,
+                        )?.name || '系统出口'}
+                      </small>
+                    </td>
+                    <td>
+                      {item.locale_mode === 'proxy'
+                        ? '语言跟随出口'
+                        : item.locale}
+                      <small>
+                        {item.timezone_mode === 'proxy'
+                          ? '时区跟随出口'
+                          : item.timezone}
+                      </small>
+                    </td>
+                    <td>
+                      <span className="environment-tag">
+                        {run ? runLabels[run.status] : '尚未启动'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="environment-row-actions">
+                        <Button
+                          disabled={busy || !kernel.available}
+                          onClick={() =>
+                            onRuntime(live ? 'stop' : 'start', {
+                              profile_id: item.id,
+                            })
+                          }
+                        >
+                          {live ? <Square size={14} /> : <Play size={14} />}
+                          {live ? '停止' : '启动'}
+                        </Button>
+                        <button
+                          aria-label={`编辑环境 ${item.name}`}
+                          onClick={() => onEdit(item)}
+                          disabled={busy || live}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          aria-label={`删除环境配置 ${item.name}`}
+                          onClick={() => onDelete(item.id)}
+                          disabled={busy || live}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -137,9 +165,14 @@ export function BrowserEnvironments({
         )}
         <footer className="environment-panel-note">
           <Fingerprint size={14} />
-          配置草稿已独立保存；浏览器运行、登录状态与指纹应用待接入。
+          每个环境独立保存登录状态与指纹种子，通过启动门控后放行网站访问。
         </footer>
       </section>
+      {data.browser.runs
+        .filter((run) => !run.account_id)
+        .map((run) => (
+          <BrowserLaunchReport key={run.profile_id} run={run} />
+        ))}
       <div className="environment-capabilities">
         <div>
           <Globe2 size={17} />
@@ -154,7 +187,7 @@ export function BrowserEnvironments({
         <div>
           <PanelsTopLeft size={17} />
           <strong>登录状态</strong>
-          <span>后续按环境隔离保存</span>
+          <span>按环境隔离保存</span>
         </div>
       </div>
     </>

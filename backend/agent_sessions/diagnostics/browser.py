@@ -24,7 +24,7 @@ class BrowserDiagnostics:
             profile = next((row for row in settings['profiles'] if 'profile:'+row['id'] == target), None)
             if not profile: raise ValueError('此浏览器环境已不存在，请重新选择')
             name = profile['name']
-            expected = {key: profile[key] for key in ('locale', 'timezone')}
+            expected = {key: profile[key] for key in ('locale', 'timezone') if profile.get(key+'_mode', 'manual') == 'manual'}
         else:
             app = next((row for row in settings['apps'] if 'app:'+row['id'] == target
                         and (row['id'].startswith('ccbaga') or row['id'] == 'chrome')), None)

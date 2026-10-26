@@ -29,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        extra_connect = ' https://claude.ai https://www.cloudflare.com' if urlparse(self.path).path == '/browser-check.html' else ''
+        extra_connect = ' https://claude.ai https://www.cloudflare.com https://api.ipify.org' if urlparse(self.path).path == '/browser-check.html' else ''
         self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'{extra_connect}; frame-ancestors 'none'; base-uri 'none'")
         self.end_headers()
         self.wfile.write(body)
@@ -62,8 +62,10 @@ class Handler(BaseHTTPRequestHandler):
                 result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
             elif parsed.path.startswith('/api/browser-checks/'):
                 result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
+            elif parsed.path == '/api/browser-runtime':
+                result = self.server.browser_runtime.state()
             elif parsed.path == '/api/environments':
-                result = self.server.environments.read()
+                result = {**self.server.environments.read(), 'browser': self.server.browser_runtime.state()}
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
@@ -121,9 +123,10 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
+        runtime = self.path in {'/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region'}
         browser_probe = self.path.startswith('/api/browser-checks/')
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -138,7 +141,10 @@ class Handler(BaseHTTPRequestHandler):
             if browser_probe and (length > 65536 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('浏览器采样应使用 JSON，大小不能超过 64 KB')
             value = json.loads(self.rfile.read(length))
-            if browser_probe:
+            if runtime:
+                from agent_sessions.browser.api import command
+                self.respond(200, command(self.server, self.path, value))
+            elif browser_probe:
                 result = (self.server.browser_diagnostics.start(value) if self.path.endswith('/start') else
                           self.server.browser_diagnostics.complete(self.path.rsplit('/', 1)[-1], value))
                 if self.path.endswith('/start'):
@@ -151,7 +157,9 @@ class Handler(BaseHTTPRequestHandler):
                     result = self.server.claude_diagnostics.run(value)
                     self.respond(200, result)
             elif self.path == '/api/environments':
-                self.respond(200, self.server.environments.change(value))
+                self.server.browser_runtime.ensure_mutable(value)
+                result = self.server.environments.change(value)
+                self.respond(200, {**result, 'browser': self.server.browser_runtime.state()})
             elif self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
                 previous = self.server.app_settings.read()
@@ -232,6 +240,8 @@ def main():
     server.environments = EnvironmentSettings(args.state_home)
     from agent_sessions.diagnostics.browser import BrowserDiagnostics
     server.browser_diagnostics = BrowserDiagnostics(server.environments)
+    from agent_sessions.browser.runtime import BrowserRuntime
+    server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}')
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.
@@ -244,6 +254,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        server.browser_runtime.close()
         server.server_close()
         index = getattr(server.store, 'search_index', None)
         if index: index.close()

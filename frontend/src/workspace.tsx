@@ -60,7 +60,10 @@ export function Workspace() {
           hidden={page !== 'accounts'}
           inert={page !== 'accounts'}
         >
-          <AccountWorkspace onNavigate={navigate} />
+          <AccountWorkspace
+            onNavigate={navigate}
+            active={page === 'accounts'}
+          />
         </div>
       )}
       {sessionsOpened && (

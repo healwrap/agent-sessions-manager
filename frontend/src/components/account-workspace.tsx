@@ -5,11 +5,13 @@ import {
   PanelsTopLeft,
   Plus,
   ScanLine,
+  Users,
 } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import type { EnvironmentSection } from '../lib/environment-settings';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { useSessionStore } from '../hooks/use-session-store';
+import { BrowserAccounts } from './browser-accounts';
 import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
 import {
@@ -26,6 +28,13 @@ import {
 } from './workspace-layout';
 
 const sections = [
+  {
+    id: 'accounts',
+    title: '账号管理',
+    icon: Users,
+    description:
+      '将 Claude、Codex 账号绑定独立浏览器环境，按门控策略检查后启动。',
+  },
   {
     id: 'browser',
     title: '浏览器管理',
@@ -54,8 +63,10 @@ const sections = [
 
 export function AccountWorkspace({
   onNavigate,
+  active = true,
 }: {
   onNavigate: (page: WorkspacePage) => void;
+  active?: boolean;
 }) {
   const [section, setSection] = useState<EnvironmentSection>('browser');
   const [sidebarClosed, setSidebarClosed] = useState(false);
@@ -65,8 +76,8 @@ export function AccountWorkspace({
   const [diagnosticTarget, setDiagnosticTarget] =
     useState<DiagnosticTarget>('network');
   const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
-  const { data, loading, busy, error, reload, save, remove } =
-    useEnvironmentSettings();
+  const { data, loading, busy, error, reload, save, remove, runtime } =
+    useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
   const inspect = (proxy?: string) => {
     setDiagnosticProxy(proxy);
@@ -112,6 +123,7 @@ export function AccountWorkspace({
                 >
                   <SectionIcon size={17} strokeWidth={1.7} />
                   <span>{title}</span>
+                  {id === 'accounts' && <small>{data.accounts.length}</small>}
                   {id === 'browser' && <small>{data.profiles.length}</small>}
                   {id === 'proxies' && <small>{data.proxies.length}</small>}
                 </button>
@@ -157,11 +169,22 @@ export function AccountWorkspace({
               <Button onClick={() => void reload()}>重新读取</Button>
             </div>
           )}
+          {section === 'accounts' && (
+            <BrowserAccounts
+              data={data}
+              busy={busy}
+              onSave={(item) => save('accounts', item)}
+              onDelete={(id) => void remove('accounts', id)}
+              onRuntime={(action, body) => void runtime(action, body)}
+              onCreateEnvironment={() => setSection('browser')}
+            />
+          )}
           {section === 'browser' && (
             <BrowserEnvironments
               data={data}
               busy={busy}
               loading={loading}
+              onRuntime={(action, body) => void runtime(action, body)}
               onEdit={(item) => setEdit({ kind: 'profiles', item })}
               onDelete={(id) => void remove('profiles', id)}
             />
@@ -193,7 +216,7 @@ export function AccountWorkspace({
             <EnvironmentDiagnostics
               target={diagnosticTarget}
               onTarget={setDiagnosticTarget}
-              active={section === 'diagnostics'}
+              active={active && section === 'diagnostics'}
               initialProxy={diagnosticProxy}
             />
           </div>
@@ -203,6 +226,7 @@ export function AccountWorkspace({
         <EnvironmentEditor
           edit={edit}
           proxies={data.proxies}
+          gates={data.gate_definitions}
           onSave={save}
           onClose={() => setEdit(null)}
         />

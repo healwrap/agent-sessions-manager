@@ -41,13 +41,13 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 ## Claude 检测
 
-侧栏底部的「Claude 检测」提供按需采样。可选择系统路由或显式 HTTP / HTTPS / SOCKS5h 代理，分别取得 Claude、Cloudflare 域名出口，查看 Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机 Claude 配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测，不修改系统、账号、语言、时区或其他应用。
+从开始页进入「账号与环境管理」，点击「Claude 环境检测」中的「打开检测」进行按需采样。可选择系统路由或显式 HTTP / HTTPS / SOCKS5h 代理，分别取得 Claude、Cloudflare 域名出口，查看 Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机 Claude 配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测，不修改系统、账号、语言、时区或其他应用。
 
 网络探测依赖本机 `curl`，请求固定的 Claude / Cloudflare / IPify 地址，并向 IPinfo 查询取得的 Claude 出口 IP。HTTP 401 表示未认证的 API 已到达；403 保留为访问受限，不判断账号状态。界面中的语言、时区、UA、WebGL、Canvas 和 WebRTC 采样来自当前 Agent Sessions 窗口；WebRTC 使用 Google STUN。它们与后台代理检测分区展示，不作为官方 Claude App 的实际环境证据。DNS 公网出口和官方 App 链路当前标为未验证；ASN 不用于推断住宅属性或计算可信评分。
 
-IP 信誉向 [Proxycheck v3](https://proxycheck.io/api/) 显式查询实测的 Claude 出口 IP，展示来源风险分（0–100，越高风险越高）、住宅／商业／无线／机房分类、代理／VPN／Tor 等标记及数据时间。使用免 Key 接口，官方当前额度为每查询出口每天 100 次；失败或限额显示未完成。内存缓存最多 128 个 IP，匿名或代理标记结果缓存 1 分钟，其余结果缓存 10 分钟，退出后台后清空。分类来自第三方数据，不用运营商名称推断住宅，也不将来源分数称为 Claude 信任分。
+IP 信誉直接使用 [Net.Coffee IP 详情页](https://ip.net.coffee/ip/66.167.9.194)当前使用的 `/api/ip/lookup/{ip}` 接口，显式查询实测的 Claude 出口 IP。沿用来源的信任分（0–100，越高越好）、住宅／商业／无线／机房分类、代理／VPN／Tor／爬虫／滥用标记与地理资料，保留原网页链接。接口目前无需 Key，失败或限流显示未完成；来源分数不称为 Claude 官方账号评分。内存缓存最多 128 个 IP、每项 5 分钟，退出后台后清空。结果采用出口卡片、信任刻度条、属性列表与状态标签展示，详细网络明细可展开。
 
-最近 30 次出口记录保存在应用数据目录的 `diagnostics/claude-history.json`，可在面板清除。代理凭据仅交给本次请求，不保存到历史或进程参数。检测模块独立位于 `backend/agent_sessions/diagnostics/`，会话来源保持只读。项目分类参考 [Net.Coffee Claude 检测](https://ip.net.coffee/claude/)，未使用其评分或内部接口。
+最近 30 次出口记录保存在应用数据目录的 `diagnostics/claude-history.json`，可在面板清除。代理凭据仅交给本次请求，不保存到历史或进程参数。检测模块独立位于 `backend/agent_sessions/diagnostics/`，会话来源保持只读。页面分类参考 [Net.Coffee Claude 检测](https://ip.net.coffee/claude/)。IP 属性与评分沿用其查询接口，网络与窗口采样由本应用独立发起。
 
 ## 持续同步
 

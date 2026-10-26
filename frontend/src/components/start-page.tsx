@@ -1,7 +1,11 @@
-import { ArrowRight, MessagesSquare, UsersRound } from 'lucide-react';
+import {
+  ArrowRight,
+  MessagesSquare,
+  PanelsTopLeft,
+  UsersRound,
+} from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import { AgentIcon } from './agent-icon';
-import { WorkspaceHeader } from './workspace-header';
 
 export function StartPage({
   onNavigate,
@@ -10,7 +14,12 @@ export function StartPage({
 }) {
   return (
     <div className="workspace-page start-page">
-      <WorkspaceHeader />
+      <header className="workspace-header-bar" data-tauri-drag-region>
+        <span className="workspace-brand" data-tauri-drag-region>
+          <PanelsTopLeft size={18} aria-hidden="true" />
+          Agent Sessions
+        </span>
+      </header>
       <main className="start-content">
         <div className="start-intro">
           <span className="workspace-eyebrow">你的 Agent 工作台</span>
@@ -50,18 +59,17 @@ export function StartPage({
             </span>
             <div className="workspace-choice-heading">
               <h2>账号与环境管理</h2>
-              <span className="workspace-status">检测可用</span>
             </div>
-            <p>面向 Claude、Codex 等 Agent，逐步接入账号切换与独立环境管理。</p>
-            <span className="workspace-choice-note">账号切换功能即将接入</span>
+            <p>管理浏览器环境、Claude App 账号入口与专用代理，检查使用环境。</p>
+            <span className="workspace-choice-note">
+              浏览器 · App 账号 · 代理 · 检测
+            </span>
             <span className="workspace-choice-action">
               进入账号与环境管理 <ArrowRight size={17} aria-hidden="true" />
             </span>
           </button>
         </nav>
-        <p className="start-footer" id="status" role="status">
-          随时返回开始页，切换你的工作方式。
-        </p>
+        <p className="start-footer" id="status" role="status" />
       </main>
     </div>
   );

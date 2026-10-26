@@ -1,14 +1,8 @@
-import { sessionStore } from '../state/session-store';
 import { usePaneResize } from './use-pane-resize';
 
 export function useSidebarResize(
   width: number | undefined,
-  onWidthChange: (width?: number) => void = (next) => {
-    const { sidebarWidth: _, ...preferences } = sessionStore.state.preferences;
-    void sessionStore.savePreferences(
-      next == null ? preferences : { ...preferences, sidebarWidth: next },
-    );
-  },
+  onWidthChange: (width?: number) => void,
 ) {
   return usePaneResize({
     edge: 'right',

@@ -1,92 +1,212 @@
-import { Fingerprint, Globe2, ScanLine, UsersRound } from 'lucide-react';
 import { useState } from 'react';
+import {
+  ArrowLeftRight,
+  Globe2,
+  PanelsTopLeft,
+  Plus,
+  ScanLine,
+} from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
+import type { EnvironmentSection } from '../lib/environment-settings';
+import { useEnvironmentSettings } from '../hooks/use-environment-settings';
+import { useSessionStore } from '../hooks/use-session-store';
+import { AppAccounts } from './app-accounts';
+import { BrowserEnvironments } from './browser-environments';
+import {
+  EnvironmentDiagnostics,
+  type DiagnosticTarget,
+} from './environment-diagnostics';
+import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
+import { ProxyEnvironments } from './proxy-environments';
 import { Button } from './primitives';
-import { WorkspaceHeader } from './workspace-header';
-import { ClaudeDiagnostics } from './claude-diagnostics';
+import {
+  WorkspaceLayout,
+  WorkspaceSidebar,
+  WorkspaceSwitch,
+} from './workspace-layout';
+
+const sections = [
+  {
+    id: 'browser',
+    title: '浏览器管理',
+    icon: PanelsTopLeft,
+    description: '为每个账号独立配置浏览器、代理、语言、时区与指纹。',
+  },
+  {
+    id: 'claude-app',
+    title: 'Claude App 账号',
+    icon: ArrowLeftRight,
+    description: '管理官方 App 的账号切换入口与独立使用环境。',
+  },
+  {
+    id: 'proxies',
+    title: '代理设置',
+    icon: Globe2,
+    description: '集中保存专用代理，为环境选择对应的网络出口。',
+  },
+  {
+    id: 'diagnostics',
+    title: '环境检测',
+    icon: ScanLine,
+    description: '分别检查网络链路、浏览器窗口与 Claude App 的实际环境。',
+  },
+] as const;
 
 export function AccountWorkspace({
   onNavigate,
 }: {
   onNavigate: (page: WorkspacePage) => void;
 }) {
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [section, setSection] = useState<EnvironmentSection>('browser');
+  const [sidebarClosed, setSidebarClosed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState<number>();
+  const { settings } = useSessionStore();
+  const [edit, setEdit] = useState<EnvironmentEdit | null>(null);
+  const [diagnosticTarget, setDiagnosticTarget] =
+    useState<DiagnosticTarget>('network');
+  const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
+  const { data, loading, busy, error, reload, save, remove } =
+    useEnvironmentSettings();
+  const current = sections.find((item) => item.id === section)!;
+  const inspect = (proxy?: string) => {
+    setDiagnosticProxy(proxy);
+    setDiagnosticTarget('network');
+    setSection('diagnostics');
+  };
   return (
-    <div className="workspace-page account-workspace">
-      <WorkspaceHeader
+    <>
+      <WorkspaceLayout
+        className="account-workspace"
+        closed={sidebarClosed}
+        animations={settings.animations}
         title="账号与环境管理"
-        onHome={() => onNavigate('home')}
-      />
-      <main className="account-workspace-content">
-        <div className="account-workspace-intro">
-          <span className="workspace-choice-icon">
-            <UsersRound size={28} strokeWidth={1.6} aria-hidden="true" />
-          </span>
-          <span className="workspace-eyebrow">账号与环境管理</span>
-          <h1>账号与环境，各自独立</h1>
-          <p>
-            面向 Claude、Codex 等 Agent，集中管理账号及各自的浏览器与网络环境。
-          </p>
-        </div>
-        <section
-          className="account-workspace-diagnostics"
-          aria-labelledby="claude-check-title"
-        >
-          <span className="workspace-choice-icon">
-            <ScanLine size={24} strokeWidth={1.6} aria-hidden="true" />
-          </span>
-          <div>
-            <h2 id="claude-check-title">Claude 环境检测</h2>
-            <p>查看网络出口、IP 信誉、Claude 连通性与本机环境。</p>
-          </div>
-          <Button variant="primary" onClick={() => setDiagnosticsOpen(true)}>
-            打开检测
-          </Button>
-        </section>
-        <section
-          className="account-workspace-empty"
-          aria-labelledby="account-status"
-        >
-          <span className="workspace-status">准备中</span>
-          <h2 id="account-status">账号管理即将加入</h2>
-          <p>工作区入口已就绪，账号切换与环境管理功能将在这里逐步接入。</p>
-          <div className="account-workspace-features">
-            {[
-              {
-                icon: UsersRound,
-                title: '账号切换',
-                text: '保存登录状态，按账号切换',
-              },
-              {
-                icon: Fingerprint,
-                title: '独立浏览器',
-                text: '分别管理状态、语言、时区与指纹',
-              },
-              {
-                icon: Globe2,
-                title: '专用代理',
-                text: '为每个环境配置网络并检测出口',
-              },
-            ].map(({ icon: FeatureIcon, title, text }) => (
-              <div key={title}>
-                <FeatureIcon size={20} strokeWidth={1.6} aria-hidden="true" />
-                <strong>{title}</strong>
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="account-workspace-actions">
-            <Button onClick={() => onNavigate('home')}>返回开始页</Button>
-            <Button variant="text" onClick={() => onNavigate('sessions')}>
+        onExpand={() => setSidebarClosed(false)}
+        actions={
+          sidebarClosed && (
+            <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
               进入会话管理
-            </Button>
+            </WorkspaceSwitch>
+          )
+        }
+        sidebar={
+          <WorkspaceSidebar
+            label="账号与环境侧边栏"
+            title="账号与环境"
+            closed={sidebarClosed}
+            width={sidebarWidth}
+            onResize={setSidebarWidth}
+            onCollapse={() => setSidebarClosed(true)}
+            footer={
+              <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
+                进入会话管理
+              </WorkspaceSwitch>
+            }
+          >
+            <nav className="environment-navigation" aria-label="管理功能">
+              {sections.map(({ id, title, icon: SectionIcon }) => (
+                <button
+                  className="panel-row"
+                  key={id}
+                  aria-current={section === id ? 'page' : undefined}
+                  onClick={() => setSection(id)}
+                >
+                  <SectionIcon size={17} strokeWidth={1.7} />
+                  <span>{title}</span>
+                  {id === 'browser' && <small>{data.profiles.length}</small>}
+                  {id === 'proxies' && <small>{data.proxies.length}</small>}
+                </button>
+              ))}
+            </nav>
+          </WorkspaceSidebar>
+        }
+      >
+        <div className="environment-content">
+          <header className="environment-page-heading">
+            <div>
+              <span className="environment-breadcrumb">
+                账号与环境管理 / {current.title}
+              </span>
+              <h1>{current.title}</h1>
+              <p>{current.description}</p>
+            </div>
+            <div className="environment-page-actions">
+              {section === 'browser' ? (
+                <Button
+                  variant="primary"
+                  onClick={() => setEdit({ kind: 'profiles' })}
+                  disabled={loading || busy}
+                >
+                  <Plus size={16} />
+                  新建浏览器环境
+                </Button>
+              ) : section === 'proxies' ? (
+                <Button
+                  variant="primary"
+                  onClick={() => setEdit({ kind: 'proxies' })}
+                  disabled={loading || busy}
+                >
+                  <Plus size={16} />
+                  添加代理
+                </Button>
+              ) : null}
+            </div>
+          </header>
+          {error && (
+            <div className="environment-error-bar" role="alert">
+              <span>{error}</span>
+              <Button onClick={() => void reload()}>重新读取</Button>
+            </div>
+          )}
+          {section === 'browser' && (
+            <BrowserEnvironments
+              data={data}
+              busy={busy}
+              loading={loading}
+              onEdit={(item) => setEdit({ kind: 'profiles', item })}
+              onDelete={(id) => void remove('profiles', id)}
+            />
+          )}
+          {section === 'claude-app' && (
+            <AppAccounts
+              data={data}
+              loading={loading}
+              onInspect={() => {
+                setDiagnosticTarget('app');
+                setSection('diagnostics');
+              }}
+            />
+          )}
+          {section === 'proxies' && (
+            <ProxyEnvironments
+              data={data}
+              busy={busy}
+              loading={loading}
+              onEdit={(item) => setEdit({ kind: 'proxies', item })}
+              onDelete={(id) => void remove('proxies', id)}
+              onInspect={inspect}
+            />
+          )}
+          <div
+            hidden={section !== 'diagnostics'}
+            inert={section !== 'diagnostics'}
+          >
+            <EnvironmentDiagnostics
+              target={diagnosticTarget}
+              onTarget={setDiagnosticTarget}
+              active={section === 'diagnostics'}
+              initialProxy={diagnosticProxy}
+            />
           </div>
-        </section>
-      </main>
-      <ClaudeDiagnostics
-        open={diagnosticsOpen}
-        onClose={() => setDiagnosticsOpen(false)}
-      />
-    </div>
+        </div>
+      </WorkspaceLayout>
+      {edit && (
+        <EnvironmentEditor
+          edit={edit}
+          proxies={data.proxies}
+          onSave={save}
+          onClose={() => setEdit(null)}
+        />
+      )}
+    </>
   );
 }

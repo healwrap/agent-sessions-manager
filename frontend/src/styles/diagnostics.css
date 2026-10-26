@@ -1,55 +1,37 @@
-#claude-diagnostics {
-  width: 1160px;
-  max-width: calc(100vw - 48px);
-  height: min(920px, calc(100vh - 48px));
-  max-height: calc(100vh - 48px);
-  padding: 0;
-  border: 0;
-  background: var(--dsw-alias-bg-module-platform);
-  overflow: hidden;
+.diagnostic-body {
+  min-width: 0;
 }
-#claude-diagnostics[open] {
-  display: flex;
-  flex-direction: column;
-}
-#claude-diagnostics::backdrop {
-  background: var(--dsw-alias-bg-mask-1);
-  backdrop-filter: var(--dsw-mask-blur);
-}
-.diagnostic-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-alias-bg-layer-1);
-}
-.diagnostic-header > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.diagnostic-header .agent-icon {
-  width: 24px;
-  height: 24px;
-}
-.diagnostic-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-.diagnostic-header-caption {
-  margin-left: 4px;
+.diagnostic-scope {
+  margin: 0 0 16px;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
 }
-.diagnostic-body {
-  padding: 0 24px 24px;
-  min-height: 0;
-  overflow-y: auto;
+.diagnostic-target-tabs {
+  padding-left: 0;
+  margin-bottom: 24px;
+  gap: 24px;
 }
-.diagnostic-intro {
-  margin: 20px 0 16px;
-  font-size: 13px;
+.diagnostic-target-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 9px;
+}
+.diagnostic-target-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.diagnostic-target-toolbar strong {
+  font-size: 14px;
+  font-weight: 550;
+}
+.diagnostic-target-toolbar p {
+  margin: 7px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
 }
 .diagnostic-form {
   display: grid;
@@ -205,20 +187,9 @@
   text-decoration: underline;
 }
 @media (max-width: 650px) {
-  #claude-diagnostics {
-    max-width: calc(100vw - 24px);
-    height: calc(100vh - 24px);
-    max-height: calc(100vh - 24px);
-  }
-  .diagnostic-header-caption {
-    display: none;
-  }
   .diagnostic-form,
   .diagnostic-form[data-mode='direct'] {
     grid-template-columns: 1fr;
-  }
-  .diagnostic-body {
-    padding: 0 16px 20px;
   }
   .diagnostic-egress {
     grid-template-columns: 1fr;

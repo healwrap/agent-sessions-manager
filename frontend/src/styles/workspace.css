@@ -20,8 +20,7 @@
 .desktop-macos .workspace-header-bar {
   padding-left: 104px;
 }
-.workspace-brand,
-.workspace-back {
+.workspace-brand {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -31,23 +30,7 @@
 .workspace-brand {
   font-weight: 600;
 }
-.workspace-header-title {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-}
-.workspace-back {
-  border: 0;
-  border-radius: 6px;
-  padding: 6px 8px;
-  margin-left: -8px;
-  background: transparent;
-}
-.workspace-back:hover {
-  color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-.start-content,
-.account-workspace-content {
+.start-content {
   width: min(100%, 980px);
   padding: clamp(32px, 8vh, 88px) 40px 36px;
   margin: auto;
@@ -60,16 +43,14 @@
   font-weight: 500;
   letter-spacing: 0.04em;
 }
-.start-intro h1,
-.account-workspace-intro h1 {
+.start-intro h1 {
   margin: 12px 0;
   font-size: clamp(28px, 3.5vw, 36px);
   font-weight: 650;
   line-height: 1.25;
   letter-spacing: -1px;
 }
-.start-intro p,
-.account-workspace-intro p {
+.start-intro p {
   margin: 0;
   color: var(--dsw-alias-label-secondary);
   font-size: 14px;
@@ -114,8 +95,7 @@
   background: color-mix(in srgb, #608ba0 12%, transparent);
   color: #608ba0;
 }
-.accounts-choice .workspace-choice-icon,
-.account-workspace-intro .workspace-choice-icon {
+.accounts-choice .workspace-choice-icon {
   background: color-mix(in srgb, #8871a8 12%, transparent);
   color: #8871a8;
 }
@@ -187,8 +167,7 @@
   font-size: 12px;
 }
 @media (max-width: 720px) {
-  .start-content,
-  .account-workspace-content {
+  .start-content {
     padding: 24px;
   }
   .workspace-choices {
@@ -206,4 +185,18 @@
   .workspace-choice {
     transition: none;
   }
+}
+
+.workspace-sidebar-actions {
+  width: 100%;
+}
+.main-header .workspace-switch {
+  width: auto;
+  height: 28px;
+  padding: 0 8px;
+  gap: 7px;
+  font-size: 12px;
+}
+.start-footer:empty {
+  display: none;
 }

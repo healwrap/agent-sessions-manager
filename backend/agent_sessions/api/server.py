@@ -54,6 +54,12 @@ class Handler(BaseHTTPRequestHandler):
                           'sources': self.server.store.sources()['items']}
             elif parsed.path == '/api/claude-diagnostics/history':
                 result = {'history': self.server.claude_diagnostics.history()}
+            elif parsed.path == '/api/environments/app-check':
+                from agent_sessions.diagnostics.local import inspect_app
+                config = self.server.app_settings.read()
+                result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
+            elif parsed.path == '/api/environments':
+                result = self.server.environments.read()
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
@@ -112,7 +118,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings'} and not diagnostic) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -129,9 +135,10 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path.endswith('/clear'):
                     self.respond(200, self.server.claude_diagnostics.clear())
                 else:
-                    config = self.server.app_settings.read()
-                    result = self.server.claude_diagnostics.run(value, Path(config['paths']['claude:local']))
+                    result = self.server.claude_diagnostics.run(value)
                     self.respond(200, result)
+            elif self.path == '/api/environments':
+                self.respond(200, self.server.environments.change(value))
             elif self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
                 previous = self.server.app_settings.read()
@@ -208,6 +215,8 @@ def main():
     server.store = store
     from agent_sessions.diagnostics.claude import ClaudeDiagnostics
     server.claude_diagnostics = ClaudeDiagnostics(args.state_home)
+    from agent_sessions.environments import EnvironmentSettings
+    server.environments = EnvironmentSettings(args.state_home)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

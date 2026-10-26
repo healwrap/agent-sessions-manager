@@ -40,13 +40,11 @@ def settings_summary(path):
         return '设置文件无法读取或格式无效'
 
 
-def inspect_local(claude_home):
-    rows = [item('cli-settings', 'Claude Code 用户设置', 'info', settings_summary(claude_home/'settings.json'),
-                 str(claude_home/'settings.json'), '配置文件参考')]
+def inspect_network():
+    rows = []
     if sys.platform != 'darwin':
-        rows.append(item('system-network', '系统代理与 DNS', 'unknown', '当前平台暂未读取',
-                         '网络检测仍可使用系统路由或指定代理。'))
-        return rows
+        return [item('system-network', '系统代理与 DNS', 'unknown', '当前平台暂未读取',
+                     '网络检测仍可使用系统路由或指定代理。')]
     proxy = command('/usr/sbin/scutil', '--proxy')
     enabled = [name for name in ('HTTP', 'HTTPS', 'SOCKS')
                if re.search(rf'\b{name}Enable\s*:\s*1\b', proxy)]
@@ -63,6 +61,21 @@ def inspect_local(claude_home):
     except OSError: zone = ''
     rows.append(item('system-timezone', '电脑时区', 'info', zone or '未取得',
                      '仅展示电脑设置；目标 Claude / 浏览器的时区需要在对应环境验证。'))
+    return rows
+
+
+def inspect_app(claude_home):
+    rows = [item('cli-settings', 'Claude Code 用户设置参考', 'info', settings_summary(claude_home/'settings.json'),
+                 str(claude_home/'settings.json'), 'CLI 配置参考')]
+    if sys.platform != 'darwin':
+        return [item('desktop-platform', 'Claude App 运行环境', 'unknown', '当前平台暂未接入',
+                     '尚未读取此平台的 App 进程与配置。', 'Claude App')]
+    rows.extend([
+        item('desktop-transport', 'App 实际网络出口', 'unknown', '尚未采样 App 实际连接',
+             '网络页的后台检测不代表 Claude App 已采用同一路由。', 'Claude App'),
+        item('desktop-locale', 'App 运行时语言与时区', 'unknown', '尚未取得运行时值',
+             '不会使用电脑或 Agent Sessions 窗口值替代 App 的实际结果。', 'Claude App'),
+    ])
     bundle = Path('/Applications/Claude.app')
     version = ''
     try:

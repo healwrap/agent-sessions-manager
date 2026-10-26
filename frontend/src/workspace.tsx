@@ -8,10 +8,10 @@ import { request } from './lib/api';
 import type { SettingsResponse } from './lib/types';
 import { sessionStore } from './state/session-store';
 
-export type WorkspacePage = 'home' | 'sessions' | 'accounts';
+export type WorkspacePage = 'sessions' | 'accounts';
 
 export function Workspace() {
-  const [page, setPage] = useState<WorkspacePage>('home');
+  const [page, setPage] = useState<WorkspacePage | 'home'>('home');
   const [sessionsOpened, setSessionsOpened] = useState(false);
   const [accountsOpened, setAccountsOpened] = useState(false);
   const [preferencesReady, setPreferencesReady] = useState(false);
@@ -69,7 +69,10 @@ export function Workspace() {
           hidden={page !== 'sessions'}
           inert={page !== 'sessions'}
         >
-          <App active={page === 'sessions'} onHome={() => navigate('home')} />
+          <App
+            active={page === 'sessions'}
+            onAccounts={() => navigate('accounts')}
+          />
         </div>
       )}
     </>

@@ -152,7 +152,8 @@
 .session-item[data-source-visible='true'] {
   height: 46px;
 }
-.session-item[aria-current='true'] {
+.session-item[aria-current='true'],
+.panel-row[aria-current='page'] {
   background: var(--asm-sidebar-selected);
 }
 .session-name {

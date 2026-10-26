@@ -2,7 +2,9 @@
 
 用于管理本机 Codex、Claude Code、Cursor、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。Claude Code 桌面端与 CLI 共用会话正文，在界面中合并展示。Cursor 读取桌面端本地 Agent / Composer 会话数据库。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
 
-应用默认打开开始页，选择进入「会话管理」或「账号与环境管理」。会话页与账号环境工作区均提供返回开始页的入口；返回后保留已打开的会话、筛选和检测结果，会话同步在其他工作区暂停。会话目录在首次进入会话管理时加载，原有会话引用链接仍可直接进入。账号环境工作区面向 Claude、Codex 等 Agent，已接入 Claude 环境检测，账号切换和独立浏览器管理目前展示为待接入。
+开始页仅在启动时展示，选择进入「会话管理」或「账号与环境管理」。两个工作区通过侧栏底部按钮直接切换；侧栏收起时，切换按钮显示在顶栏。切换保留会话、筛选和检测结果，并暂停会话同步。会话目录在首次进入会话管理时加载，原有会话引用链接仍可直接进入。
+
+账号环境工作区分为浏览器管理、Claude App 账号、代理设置和环境检测。浏览器环境与代理支持保存、编辑和删除配置，独立记录语言、时区和固定指纹种子，保存在应用自己的 `environments.json`。浏览器启动、登录状态隔离、指纹应用与 App 内嵌切号尚未接入；已安装的 CCBaga、Claude App 和现有 Claude 切换器可从桌面端打开。
 
 ## 项目结构
 
@@ -13,7 +15,8 @@ SKILL.md                         Skill 入口与读取边界
 agents/openai.yaml               Skill 显示信息
 references/                      按需加载的恢复、查看器与桌面说明
 frontend/
-  src/app.tsx                    React 应用组合
+  src/workspace.tsx              启动页与工作区切换
+  src/app.tsx                    会话页面组合
   src/components/                项目侧栏、聊天、时间线、详情、设置
   src/state/                     会话状态、目录、分页读取与导航请求控制
   src/hooks/                     状态订阅、自动同步与滚动分页
@@ -26,6 +29,7 @@ backend/agent_sessions/
   context/                       定位、索引、原话、证据、CLI 与上下文引用
   trajectory/                    执行时长投影、折叠摘要与圈选定位
   settings.py                    独立应用设置
+  environments.py                环境配置草稿与本机应用发现
 scripts/                         两个稳定的命令行兼容入口
   session_context.py
   trajectory_server.py
@@ -41,7 +45,9 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 ## Claude 检测
 
-从开始页进入「账号与环境管理」，点击「Claude 环境检测」中的「打开检测」进行按需采样。可选择系统路由或显式 HTTP / HTTPS / SOCKS5h 代理，分别取得 Claude、Cloudflare 域名出口，查看 Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机 Claude 配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测，不修改系统、账号、语言、时区或其他应用。
+在「账号与环境管理 → 环境检测」直接选择检测对象并查看结果。网络、浏览器与 Claude App 复用结果组件，分别采样：网络检测由后台使用系统路由或显式代理发起，浏览器检测采样当前 Agent Sessions 窗口，App 检测读取真实安装信息、App 进程与配置继承。App 页的「检查 App 环境」直接进入 App 对象，代理列表的「检测」进入网络对象并带入代理地址。
+
+网络检测分别取得 Claude、Cloudflare 域名出口、Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机网络配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测。
 
 网络探测依赖本机 `curl`，请求固定的 Claude / Cloudflare / IPify 地址，并向 IPinfo 查询取得的 Claude 出口 IP。HTTP 401 表示未认证的 API 已到达；403 保留为访问受限，不判断账号状态。界面中的语言、时区、UA、WebGL、Canvas 和 WebRTC 采样来自当前 Agent Sessions 窗口；WebRTC 使用 Google STUN。它们与后台代理检测分区展示，不作为官方 Claude App 的实际环境证据。DNS 公网出口和官方 App 链路当前标为未验证；ASN 不用于推断住宅属性或计算可信评分。
 
@@ -92,3 +98,5 @@ npm run desktop:build
 ## 源码提交
 
 仓库仅保存源码、依赖锁文件、图标和说明。会话 JSONL、个人设置、数据库、日志、环境变量、认证及签名文件、依赖目录、缓存和安装包由 `.gitignore` 排除。实际会话数据与应用设置保存在各用户自己的数据目录。提交前检查暂存区；忽略规则不会自动移除已经被 Git 跟踪的文件。
+
+布局由 `components/workspace-layout.tsx` 统一提供侧栏、顶栏和切换入口，两个工作区复用相同的收起、动画与宽度调整行为；页面组件仅提供导航、操作和内容。

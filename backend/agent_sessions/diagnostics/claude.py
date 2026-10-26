@@ -5,7 +5,7 @@ import ipaddress
 import json
 from pathlib import Path
 import threading
-from .local import inspect_local, item
+from .local import inspect_network, item
 from .reputation import IpReputation
 from .transport import fetch, ip_details, route_config, trace
 
@@ -65,7 +65,7 @@ class ClaudeDiagnostics:
         self.save([])
         return {'history': []}
 
-    def run(self, value, claude_home):
+    def run(self, value):
         route, proxy = route_config(value)
         if not self.running.acquire(blocking=False): raise ValueError('已有检测正在运行，请稍后重试')
         try:
@@ -73,7 +73,7 @@ class ClaudeDiagnostics:
                 tasks = {key: pool.submit(fetch, url, proxy, ipv6=key == 'ipv6',
                                           head=key == 'claude-web')
                          for key, (_, url) in TARGETS.items()}
-                local = pool.submit(inspect_local, claude_home)
+                local = pool.submit(inspect_network)
                 results = {key: task.result() for key, task in tasks.items()}
                 checks = [network_item(key, result) for key, result in results.items()]
                 local_checks = local.result()
@@ -86,8 +86,6 @@ class ClaudeDiagnostics:
             checks.extend([
                 item('dns-leak', 'DNS 公网出口', 'unknown', '尚未验证',
                      '本次没有通过权威 DNS 探针验证目标环境的解析出口；本机 DNS 配置见下方。', '目标环境'),
-                item('desktop-transport', '官方 App 实际链路', 'unknown', '尚未验证',
-                     '本页网络请求由 Agent Sessions 后台发出，不代表运行中的 Claude App、Code 或 Cowork 已使用同一路由。', 'Claude App'),
             ])
             old = self.history()
             previous = next((row for row in old if row.get('route') == route and row.get('claude_ip')), None)

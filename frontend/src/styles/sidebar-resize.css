@@ -1,0 +1,31 @@
+.sidebar-resize-handle {
+  position: absolute;
+  z-index: 5;
+  inset: 0 -4px 0 auto;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 0 3px;
+  border-radius: 2px;
+  background: transparent;
+}
+.sidebar-resize-handle:hover::after,
+.sidebar-resize-handle:focus-visible::after,
+.sidebar-resize-handle[data-resizing]::after {
+  background: var(--dsw-alias-state-business-primary);
+}
+.sidebar-resize-handle:focus-visible {
+  outline: none;
+}
+.sidebar-slot[data-closed='true'] .sidebar-resize-handle {
+  display: none;
+}
+body:has(.sidebar-resize-handle[data-resizing]) {
+  cursor: col-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}

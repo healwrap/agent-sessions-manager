@@ -59,6 +59,7 @@ export interface Settings {
   fontSize: number;
 }
 export interface Preferences {
+  sidebarWidth?: number;
   showSubagents?: boolean;
   pinned: string[];
   archived: string[];

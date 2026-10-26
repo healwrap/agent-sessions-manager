@@ -1,4 +1,5 @@
 import { useSessionSearch } from '../hooks/use-session-search';
+import { useSidebarResize } from '../hooks/use-sidebar-resize';
 import type { AppState } from '../state/session-store';
 import { sessionStore } from '../state/session-store';
 import {
@@ -27,6 +28,7 @@ export function Sidebar({
   onHome?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
+  const resize = useSidebarResize(state.preferences.sidebarWidth);
   const groups = projectGroups(
     state.sessions,
     state.projects,
@@ -355,6 +357,17 @@ export function Sidebar({
           </button>
         </footer>
       </aside>
+      <div
+        className="sidebar-resize-handle"
+        role="separator"
+        aria-label="调整会话侧栏宽度"
+        aria-orientation="vertical"
+        aria-valuemin={180}
+        aria-valuemax={520}
+        title="拖动调整侧栏宽度，双击恢复默认"
+        tabIndex={state.sidebarClosed ? -1 : 0}
+        {...resize}
+      />
     </div>
   );
 }

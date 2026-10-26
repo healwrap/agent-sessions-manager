@@ -81,12 +81,12 @@
 }
 @media (max-width: 1050px) {
   .sidebar-slot {
-    --sidebar-width: 230px;
+    --sidebar-default-width: 230px;
   }
 }
 @media (max-width: 700px) {
   .sidebar-slot {
-    --sidebar-width: 180px;
+    --sidebar-default-width: 180px;
   }
   .brand-name {
     font-size: 19px;

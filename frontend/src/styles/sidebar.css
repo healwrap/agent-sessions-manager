@@ -1,5 +1,9 @@
 .sidebar-slot {
-  --sidebar-width: 280px;
+  --sidebar-default-width: 280px;
+  --sidebar-width: min(
+    var(--sidebar-user-width, var(--sidebar-default-width)),
+    max(180px, calc(100vw - 360px))
+  );
   width: var(--sidebar-width);
   flex: none;
   position: relative;

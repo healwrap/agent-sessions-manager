@@ -19,10 +19,12 @@ export function Sidebar({
   state,
   onManage,
   managedId,
+  onDiagnostics,
 }: {
   state: AppState;
   onManage: (item: Session, x: number, y: number) => void;
   managedId?: string;
+  onDiagnostics?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
   const groups = projectGroups(
@@ -335,6 +337,15 @@ export function Sidebar({
             );
           })}
         </nav>
+        <button
+          className="panel-row"
+          aria-haspopup="dialog"
+          onClick={onDiagnostics}
+          disabled={!onDiagnostics}
+        >
+          <AgentIcon source="claude:local" />
+          Claude 检测
+        </button>
         <footer>
           <button
             className="panel-row"

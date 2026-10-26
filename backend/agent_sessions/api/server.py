@@ -52,6 +52,8 @@ class Handler(BaseHTTPRequestHandler):
             elif parsed.path == '/api/settings':
                 result = {'value': self.server.app_settings.read(), 'defaults': self.server.app_settings.defaults,
                           'sources': self.server.store.sources()['items']}
+            elif parsed.path == '/api/claude-diagnostics/history':
+                result = {'history': self.server.claude_diagnostics.history()}
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
@@ -109,7 +111,8 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        if self.path not in {'/api/preferences', '/api/settings'} or not hasattr(self.server, 'settings'):
+        diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
+        if (self.path not in {'/api/preferences', '/api/settings'} and not diagnostic) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -119,8 +122,17 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', '0'))
             if not 0 < length <= 2_000_000: raise ValueError('会话视图设置过大')
+            if diagnostic and (length > 4096 or self.headers.get_content_type() != 'application/json'):
+                raise ValueError('检测参数应使用 JSON，大小不能超过 4 KB')
             value = json.loads(self.rfile.read(length))
-            if self.path == '/api/settings':
+            if diagnostic:
+                if self.path.endswith('/clear'):
+                    self.respond(200, self.server.claude_diagnostics.clear())
+                else:
+                    config = self.server.app_settings.read()
+                    result = self.server.claude_diagnostics.run(value, Path(config['paths']['claude:local']))
+                    self.respond(200, result)
+            elif self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
                 store = configured_store(config, self.server.settings)
                 saved = self.server.app_settings.write(config)
@@ -191,6 +203,8 @@ def main():
     server.settings = preferences
     server.app_settings = app_settings
     server.store = store
+    from agent_sessions.diagnostics.claude import ClaudeDiagnostics
+    server.claude_diagnostics = ClaudeDiagnostics(args.state_home)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

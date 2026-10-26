@@ -28,6 +28,10 @@ macOS 应用打开后自动启动随附后台，读取本机 Codex、Claude Code
 
 侧栏底部“设置”支持六个来源的数据目录、来源开关、3 至 60 秒刷新间隔与动画开关；`~` 展开为本机用户目录。Claude Code 使用一个来源开关，卡片内可展开补充索引路径。新路径保存后立即重建来源，配置写入应用自己的 `settings.json`；不会创建不存在的 Agent 数据目录。升级保留自定义路径；旧 Claude 两个来源有任意一个启用时，合并来源保持启用。旧四来源配置沿用原 Claude 开关。
 
+「Claude 检测」入口位于侧栏底部、设置上方。打开面板只读取本机出口历史，点击「开始检测」后才发起网络与当前窗口采样。系统路由与指定代理分别记录；检测关闭后后台任务完成仍保留结果，重新打开可继续查看。检测不会修改 Claude、CC Switch、系统语言、时区或网络配置。macOS 可只读展示系统代理、解析器、Claude 安装版本以及运行中 App 的 Code 配置目录和思考强度；其他平台尚未实现的本机项目显示为未验证。
+
+出口地区显示中文国家名和国旗，Cloudflare 节点显示城市与节点代码。IP 信誉使用 Proxycheck 的免 Key v3 接口查询 Claude 实测出口，分别展示风险分、网络类型和代理等标记；失败、未知和查询额度耗尽均保留为未完成。该来源评分与住宅分类不代表 Claude 账号风控结论。面板复用项目的 Dialog、Select、设置行、按钮与加载提示。
+
 Claude Code 共享正文目录默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~/.claude`。可选桌面会话索引默认目录：macOS 为 `~/Library/Application Support/Claude/claude-code-sessions`，Windows 为 `%APPDATA%/Claude/claude-code-sessions`，Linux 为 `$XDG_CONFIG_HOME/Claude/claude-code-sessions` 或 `~/.config/Claude/claude-code-sessions`。索引目录不存在时仍读取共享正文，不要求创建目录或搬动正文。索引路径保留在 Claude Code 设置卡片的“补充会话索引”中，旧 `--claude-desktop-home` 参数仍兼容。本机已核验桌面与 CLI 读取同一份 JSONL，而非两份同步副本。DSH 默认根目录为 `~/.dsh`。
 
 Cursor 默认目录：macOS 为 `~/Library/Application Support/Cursor/User`，Windows 为 `%APPDATA%/Cursor/User`，Linux 为 `$XDG_CONFIG_HOME/Cursor/User` 或 `~/.config/Cursor/User`。设置也接受上一级 `Cursor` 目录；便携或自定义用户目录可手动配置，读取命令使用 `--cursor-home`。目录读取只查询原生头部索引，消息与工具结果按会话和消息键读取，不把整个数据库导出到缓存。使用只读事务处理 WAL，一并观察主库与 WAL 版本来识别增量更新。项目优先取原生 `workspaceIdentifier`，旧工作区记录使用自身 `workspace.json`，不借用 Codex 项目名称。适配依据本机原始数据库与安装包实现，后续存储格式变化需另行核验；2026-10-02 已核验本机 3.15.19，旧内嵌格式与头部表迁移通过 fixture 验证。
@@ -68,7 +72,7 @@ Rust 外壳：`desktop/src/main.rs`。React + TypeScript 界面：`frontend/src/
 
 macOS 主窗口使用 Overlay 标题栏并隐藏原生标题文字。系统红黄绿按钮保留在侧栏顶部，网页头部提供拖动区域；收起侧栏后预留窗口按钮位置。设置采用 DSH 的固定尺寸分栏面板，仅提供本应用支持的通用设置与会话来源。
 
-侧栏“关于 Agent Sessions”在 macOS 中直接打开系统原生关于窗口，与应用菜单复用同一窗口，显示包内图标、应用名和版本，不叠加网页模态层。浏览器及其他系统使用标准提示框；桌面版本号来自安装包。
+侧栏底部只保留「Claude 检测」和「设置」入口；关于信息通过 macOS 应用菜单查看。检测结果以中文国家 / 地区名和国旗展示出口位置；Cloudflare 边缘节点单独标注城市及原始代码，请求耗时使用毫秒。
 
 侧栏和详情展开时一次性确定布局，再以位移过渡，避免动画每帧改变正文宽度。详情关闭时立即释放宽度占位，使列表在详情下方铺满；保留当前页签和正文，面板保持不透明并滑出，逐步露出列表，不留等待占位造成的空白。关闭时立即取消交互与读取，快速重开从当前位移反向过渡。轨迹列宽在响应式断点处立即确定，不对多行同时做宽度动画。折叠内容超过 360 像素时只做淡入，短列表保留高度过渡。滚动位置独立保存，不通知整个界面重绘；后台检查遇到同一历史版本时保持静默，新增记录和读取错误仍及时更新。动画关闭或系统减少动态效果时跳过位移动画。
 

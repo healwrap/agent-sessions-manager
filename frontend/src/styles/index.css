@@ -30,6 +30,8 @@
 @import './json-inspector.css' layer(components);
 @import './dsh/overview-sections.css' layer(components);
 @import './settings.css' layer(components);
+@import './diagnostics.css' layer(components);
+@import './diagnostics-results.css' layer(components);
 @import './motion.css' layer(components);
 @import './startup.css' layer(components);
 @import './loading.css' layer(components);

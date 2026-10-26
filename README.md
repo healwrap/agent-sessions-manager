@@ -37,6 +37,16 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 后台是 Python 包，DSH 压缩日志使用 `zstandard`，依赖固定在 `requirements.txt`。来源适配器将各 Agent 的原生记录映射为稳定引用，HTTP 层负责接口和资源，不混入前端模板。Tauri 管理窗口、常驻菜单、剪贴板和 sidecar 生命周期。构建输出不纳入源码版本控制。
 
+## Claude 检测
+
+侧栏底部的「Claude 检测」提供按需采样。可选择系统路由或显式 HTTP / HTTPS / SOCKS5h 代理，分别取得 Claude、Cloudflare 域名出口，查看 Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机 Claude 配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测，不修改系统、账号、语言、时区或其他应用。
+
+网络探测依赖本机 `curl`，请求固定的 Claude / Cloudflare / IPify 地址，并向 IPinfo 查询取得的 Claude 出口 IP。HTTP 401 表示未认证的 API 已到达；403 保留为访问受限，不判断账号状态。界面中的语言、时区、UA、WebGL、Canvas 和 WebRTC 采样来自当前 Agent Sessions 窗口；WebRTC 使用 Google STUN。它们与后台代理检测分区展示，不作为官方 Claude App 的实际环境证据。DNS 公网出口和官方 App 链路当前标为未验证；ASN 不用于推断住宅属性或计算可信评分。
+
+IP 信誉向 [Proxycheck v3](https://proxycheck.io/api/) 显式查询实测的 Claude 出口 IP，展示来源风险分（0–100，越高风险越高）、住宅／商业／无线／机房分类、代理／VPN／Tor 等标记及数据时间。使用免 Key 接口，官方当前额度为每查询出口每天 100 次；失败或限额显示未完成。内存缓存最多 128 个 IP，匿名或代理标记结果缓存 1 分钟，其余结果缓存 10 分钟，退出后台后清空。分类来自第三方数据，不用运营商名称推断住宅，也不将来源分数称为 Claude 信任分。
+
+最近 30 次出口记录保存在应用数据目录的 `diagnostics/claude-history.json`，可在面板清除。代理凭据仅交给本次请求，不保存到历史或进程参数。检测模块独立位于 `backend/agent_sessions/diagnostics/`，会话来源保持只读。项目分类参考 [Net.Coffee Claude 检测](https://ip.net.coffee/claude/)，未使用其评分或内部接口。
+
 ## 持续同步
 
 应用自动跟进已写入本地历史的消息、工具结果与轮次状态。正在工作的会话每 750 毫秒检查来源的轻量版本标记，只有记录变化才更新正文和轨迹；闲置检查沿用设置中的同步间隔。桌面窗口在后台仍可同步，关闭到状态栏或暂停同步时停止检查。

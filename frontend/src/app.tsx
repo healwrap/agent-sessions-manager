@@ -14,6 +14,7 @@ import { durationAvailable, usesRecordedDuration } from './lib/recorded-time';
 import { sessionTitle } from './lib/selectors';
 import { Sidebar } from './components/sidebar';
 import { SettingsDialog } from './components/settings-dialog';
+import { ClaudeDiagnostics } from './components/claude-diagnostics';
 import { SessionActions, type SessionMenu } from './components/session-actions';
 import { ChatPane } from './components/chat-pane';
 import { TraceTable } from './components/trace-table';
@@ -26,6 +27,7 @@ import { Subagents } from './components/subagents';
 export function App() {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
+    [diagnosticsOpen, setDiagnosticsOpen] = useState(false),
     [search, setSearch] = useState('');
   const closeMenu = useCallback(() => setMenu(null), []);
   const main = useRef<HTMLElement>(null);
@@ -62,6 +64,7 @@ export function App() {
       >
         <Sidebar
           state={state}
+          onDiagnostics={() => setDiagnosticsOpen(true)}
           managedId={menu?.item.id}
           onManage={(item, x, y) => setMenu({ item, x, y })}
         />
@@ -246,6 +249,10 @@ export function App() {
         </main>
       </div>
       <SettingsDialog open={state.settingsOpen} />
+      <ClaudeDiagnostics
+        open={diagnosticsOpen}
+        onClose={() => setDiagnosticsOpen(false)}
+      />
       <SessionActions menu={menu} onClose={closeMenu} />
       {state.toast && (
         <div id="toast" role="status">

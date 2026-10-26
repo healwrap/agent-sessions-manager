@@ -48,7 +48,8 @@ class Handler(BaseHTTPRequestHandler):
             get = lambda name, default='': q.get(name, [default])[0]
             integer = lambda name, default, low, high: max(low, min(high, int(get(name, str(default)))))
             if parsed.path == '/api/health':
-                result = {'ready': True, 'application': 'Agent Sessions'}
+                result = {'ready': True, 'application': 'Agent Sessions', 'manager_protocol': 2,
+                          'shared_state': self.server.app_settings.path.parent.resolve() == state_root().resolve()}
             elif parsed.path == '/api/preferences':
                 result = self.server.settings.read() if hasattr(self.server, 'settings') else {'saved': False, 'value': {}}
             elif parsed.path == '/api/settings':
@@ -198,7 +199,7 @@ def configured_store(config, preferences):
 
 def main():
     parser = argparse.ArgumentParser(description='打开 Agent Sessions 本地会话应用')
-    parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--port', type=int, default=8766)
     parser.add_argument('--codex-home', type=Path, default=codex_root())
     parser.add_argument('--claude-home', type=Path, default=claude_root())
     parser.add_argument('--claude-desktop-home', type=Path, default=claude_desktop_root())
@@ -258,7 +259,7 @@ def main():
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.
         def owner_closed():
-            sys.stdin.buffer.read()
+            sys.stdin.buffer.readline()
             server.shutdown()
         threading.Thread(target=owner_closed, daemon=True).start()
     try:

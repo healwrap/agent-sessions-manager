@@ -77,14 +77,16 @@ npm ci
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python3 scripts/trajectory_server.py --port 8765
+python3 scripts/trajectory_server.py --port 8766
 ```
+
+桌面端与网页端统一使用 `http://127.0.0.1:8766/` 和应用自己的状态目录；桌面端会复用已启动的兼容后台，避免分别管理同一批环境。
 
 Windows 使用 `.venv\Scripts\Activate.ps1` 激活环境。另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
 
 ```bash
 npm run build:ui
-python3 scripts/trajectory_server.py --port 8765
+python3 scripts/trajectory_server.py --port 8766
 ```
 
 如果只使用上下文恢复 CLI，无需安装 Node 或构建前端；Codex 专用恢复不依赖 `zstandard`。既有 `scripts/session_context.py` 命令与 `scripts/trajectory_server.py --read-session` 继续可用。所有 Python 内部导入从 `agent_sessions` 包进行，不依赖当前工作目录；兼容入口自行设置包路径。

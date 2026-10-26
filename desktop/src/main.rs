@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod appearance;
+mod local_backend;
 mod resources;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
@@ -35,8 +36,12 @@ fn stop(app: &tauri::AppHandle) {
     app.state::<Backend>()
         .generation
         .fetch_add(1, Ordering::SeqCst);
-    if let Some(child) = app.state::<Backend>().child.lock().unwrap().take() {
-        let _ = child.kill();
+    if let Some(mut child) = app.state::<Backend>().child.lock().unwrap().take() {
+        if child.write(b"shutdown\n").is_err() {
+            let _ = child.kill();
+        } else {
+            local_backend::wait_for_shutdown();
+        }
     }
 }
 
@@ -70,12 +75,20 @@ fn show_about(app: tauri::AppHandle) -> Result<Option<String>, String> {
 fn restart_backend(app: tauri::AppHandle) -> Result<(), String> {
     stop(&app);
     app.state::<Backend>().failed.store(false, Ordering::SeqCst);
+    if local_backend::available() {
+        if let Some(window) = app.get_webview_window("main") {
+            window
+                .navigate(tauri::Url::parse(local_backend::URL).unwrap())
+                .map_err(|error| error.to_string())?;
+        }
+        return Ok(());
+    }
     let generation = app.state::<Backend>().generation.load(Ordering::SeqCst);
     let command = app
         .shell()
         .sidecar("agent-sessions-server")
         .map_err(|e| e.to_string())?
-        .args(["--port", "0", "--desktop"]);
+        .args(["--port", "8766", "--desktop"]);
     let (mut rx, child) = command.spawn().map_err(|e| e.to_string())?;
     *app.state::<Backend>().child.lock().unwrap() = Some(child);
     tauri::async_runtime::spawn(async move {

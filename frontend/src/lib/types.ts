@@ -60,6 +60,7 @@ export interface Settings {
 }
 export interface Preferences {
   sidebarWidth?: number;
+  detailWidth?: number;
   showSubagents?: boolean;
   pinned: string[];
   archived: string[];

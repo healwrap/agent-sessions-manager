@@ -1,31 +1,51 @@
-.sidebar-resize-handle {
+.pane-resize-handle {
   position: absolute;
-  z-index: 5;
-  inset: 0 -4px 0 auto;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
   width: 8px;
   cursor: col-resize;
   touch-action: none;
+  user-select: none;
 }
-.sidebar-resize-handle::after {
+.pane-resize-handle[data-resize-edge='right'] {
+  right: 0;
+}
+.pane-resize-handle[data-resize-edge='left'] {
+  left: 0;
+}
+.pane-resize-handle::after {
   content: '';
   position: absolute;
-  inset: 0 3px;
+  inset: 0 auto 0 0;
+  width: 2px;
   border-radius: 2px;
   background: transparent;
 }
-.sidebar-resize-handle:hover::after,
-.sidebar-resize-handle:focus-visible::after,
-.sidebar-resize-handle[data-resizing]::after {
+.pane-resize-handle[data-resize-edge='right']::after {
+  left: auto;
+  right: 0;
+}
+.pane-resize-handle:hover::after,
+.pane-resize-handle:focus-visible::after,
+.pane-resize-handle[data-resizing]::after {
   background: var(--dsw-alias-state-business-primary);
 }
-.sidebar-resize-handle:focus-visible {
+.pane-resize-handle:focus-visible {
   outline: none;
 }
-.sidebar-slot[data-closed='true'] .sidebar-resize-handle {
+.sidebar-slot[data-closed='true'] > .pane-resize-handle,
+.detail-slot[data-open='false'] .pane-resize-handle {
   display: none;
 }
-body:has(.sidebar-resize-handle[data-resizing]) {
+body:has(.pane-resize-handle[data-resizing]) {
   cursor: col-resize;
   user-select: none;
   -webkit-user-select: none;
+}
+
+@media (max-width: 700px) {
+  .details .pane-resize-handle {
+    display: none;
+  }
 }

@@ -92,13 +92,15 @@ class ViewSettings:
             return {'saved': True, 'value': json.loads(self.path.read_text(encoding='utf-8'))}
 
     def write(self, value):
-        allowed = {'pinned', 'archived', 'aliases', 'metadata', 'projectAssignments', 'showSubagents', 'sidebarWidth'}
+        allowed = {'pinned', 'archived', 'aliases', 'metadata', 'projectAssignments', 'showSubagents', 'sidebarWidth', 'detailWidth'}
         if not isinstance(value, dict) or set(value)-allowed:
             raise ValueError('会话视图设置格式无效')
         if 'showSubagents' in value and type(value['showSubagents']) is not bool:
             raise ValueError('子代理显示选项无效')
         if 'sidebarWidth' in value and (type(value['sidebarWidth']) is not int or not 180 <= value['sidebarWidth'] <= 520):
             raise ValueError('侧栏宽度应为 180 到 520 像素')
+        if 'detailWidth' in value and (type(value['detailWidth']) is not int or not 320 <= value['detailWidth'] <= 720):
+            raise ValueError('详情宽度应为 320 到 720 像素')
         if any(not isinstance(value.get(k, []), list) for k in ('pinned', 'archived')) or any(not isinstance(value.get(k, {}), dict) for k in ('aliases', 'metadata', 'projectAssignments')):
             raise ValueError('会话视图设置格式无效')
         with self.lock:

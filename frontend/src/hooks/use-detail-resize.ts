@@ -1,95 +1,66 @@
-import {
-  useCallback,
-  useRef,
-  useState,
-  type HTMLAttributes,
-  type RefCallback,
-} from 'react';
+import { useRef } from 'react';
 import { sessionStore, type AppState } from '../state/session-store';
+import { usePaneResize } from './use-pane-resize';
 
-const clamp = (width: number, split: number) =>
-  Math.round(
-    Math.min(Math.max(320, width), Math.max(320, Math.min(720, split - 280))),
-  );
-const defaultToolWidth = (width: number) =>
-  Math.min(480, Math.max(180, width * 0.36 - 56));
-export function useDetailResize(
-  state: AppState,
-): HTMLAttributes<HTMLDivElement> & { ref: RefCallback<HTMLDivElement> } {
-  const [measuredWidth, setMeasuredWidth] = useState<number>();
-  const resizeRef = useCallback<RefCallback<HTMLDivElement>>((handle) => {
-    const details = handle?.parentElement;
-    if (!details) return;
-    const measure = () =>
-      setMeasuredWidth(Math.round(details.getBoundingClientRect().width));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(details);
-    return () => observer.disconnect();
-  }, []);
-  const drag = useRef<{
-    pointer: number;
-    x: number;
-    width: number;
-    split: number;
-    offset: number;
-  } | null>(null);
-  const dimensions = (handle: HTMLElement) => {
-    const details = handle.parentElement,
-      split = details?.closest<HTMLElement>('.split');
-    if (!details || !split) return null;
-    const width = details.getBoundingClientRect().width,
-      splitWidth = split.getBoundingClientRect().width;
-    return {
-      width,
-      split: splitWidth,
-      offset:
-        state.toolRequestOffset ??
-        splitWidth * 0.58 - defaultToolWidth(splitWidth),
-    };
-  };
-  const update = (
-    width: number,
-    start: { width: number; split: number; offset: number },
-  ) => {
-    const next = clamp(width, start.split);
-    sessionStore.update({
-      detailWidth: next,
-      toolRequestOffset: start.offset + (next - start.width) * 0.58,
-    });
-  };
-  return {
-    ref: resizeRef,
-    'aria-valuenow': measuredWidth,
-    onDoubleClick: () =>
-      sessionStore.update({ detailWidth: null, toolRequestOffset: null }),
-    onKeyDown: (event) => {
-      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-      const start = dimensions(event.currentTarget);
-      if (!start) return;
-      event.preventDefault();
-      update(start.width + (event.key === 'ArrowLeft' ? 16 : -16), start);
+export function useDetailResize(state: AppState) {
+  const drag = useRef({ width: 0, offset: 0 });
+  return usePaneResize({
+    edge: 'left',
+    width: state.detailWidth ?? state.preferences.detailWidth,
+    min: 320,
+    max: (pane) =>
+      Math.max(
+        180,
+        Math.min(
+          720,
+          pane.closest('.split')!.getBoundingClientRect().width - 280,
+        ),
+      ),
+    property: '--detail-width',
+    target: (pane) => pane.parentElement!,
+    onStart: (pane) => {
+      const splitWidth = pane.closest('.split')!.getBoundingClientRect().width;
+      const defaultToolWidth = Math.min(
+        480,
+        Math.max(180, splitWidth * 0.36 - 56),
+      );
+      drag.current = {
+        width: pane.getBoundingClientRect().width,
+        offset: state.toolRequestOffset ?? splitWidth * 0.58 - defaultToolWidth,
+      };
     },
-    onPointerDown: (event) => {
-      if (event.button !== 0) return;
-      const start = dimensions(event.currentTarget);
-      if (!start) return;
-      drag.current = { ...start, pointer: event.pointerId, x: event.clientX };
-      event.currentTarget.setPointerCapture(event.pointerId);
-      event.preventDefault();
+    onMove: (width, pane) => {
+      if (!drag.current.width) return;
+      const offset = drag.current.offset + (width - drag.current.width) * 0.58;
+      pane
+        .closest<HTMLElement>('.split')!
+        .style.setProperty(
+          '--trajectory-tool-request-width',
+          `calc(58cqw - ${offset}px)`,
+        );
     },
-    onPointerMove: (event) => {
-      const start = drag.current;
-      if (start?.pointer === event.pointerId)
-        update(start.width + start.x - event.clientX, start);
+    onReset: (pane) => {
+      drag.current.width = 0;
+      pane
+        .closest<HTMLElement>('.split')!
+        .style.removeProperty('--trajectory-tool-request-width');
     },
-    onPointerUp: (event) => {
-      if (drag.current?.pointer !== event.pointerId) return;
-      drag.current = null;
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    onCommit: (width) => {
+      const offset =
+        width == null
+          ? null
+          : drag.current.offset + (width - drag.current.width) * 0.58;
+      sessionStore.update({
+        detailWidth: width == null ? null : Math.max(320, width),
+        toolRequestOffset: offset,
+      });
+      const { detailWidth: _, ...preferences } = sessionStore.state.preferences;
+      void sessionStore.savePreferences(
+        width == null
+          ? preferences
+          : { ...preferences, detailWidth: Math.max(320, width) },
+      );
+      drag.current.width = 0;
     },
-    onPointerCancel: () => {
-      drag.current = null;
-    },
-  };
+  });
 }

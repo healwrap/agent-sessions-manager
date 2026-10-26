@@ -8,7 +8,6 @@ import {
   sourceId,
 } from '../lib/selectors';
 import { sourceNames, type Session } from '../lib/types';
-import { showAbout } from '../lib/api';
 import { Collapse, Icon, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
 import { MarqueeTitle } from './marquee-title';
@@ -346,15 +345,6 @@ export function Sidebar({
             <Icon name="settings" />
             设置
           </button>
-          <IconButton
-            icon="info"
-            label="关于 Agent Sessions"
-            onClick={() =>
-              void showAbout().catch((error) =>
-                sessionStore.notify(String(error)),
-              )
-            }
-          />
         </footer>
       </aside>
     </div>

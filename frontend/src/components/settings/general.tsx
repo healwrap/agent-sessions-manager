@@ -1,5 +1,6 @@
 import type { Settings } from '../../lib/types';
 import { Appearance } from './appearance';
+import { SettingsRow } from './row';
 export function GeneralSettings({
   draft,
   onChange,
@@ -13,11 +14,11 @@ export function GeneralSettings({
         value={draft.theme}
         onChange={(theme) => onChange({ ...draft, theme })}
       />
-      <div className="settings-row">
-        <div className="settings-row-label">
-          <label htmlFor="settings-font">字号大小</label>
-          <p>仅影响会话内容的字号</p>
-        </div>
+      <SettingsRow
+        label="字号大小"
+        htmlFor="settings-font"
+        description="仅影响会话内容的字号"
+      >
         <input
           id="settings-font"
           type="number"
@@ -29,12 +30,12 @@ export function GeneralSettings({
           }
         />
         <span>px</span>
-      </div>
-      <div className="settings-row">
-        <div className="settings-row-label">
-          <label htmlFor="settings-detail">工作步骤展示</label>
-          <p>选择希望看到多少工具调用细节</p>
-        </div>
+      </SettingsRow>
+      <SettingsRow
+        label="工作步骤展示"
+        htmlFor="settings-detail"
+        description="选择希望看到多少工具调用细节"
+      >
         <select
           id="settings-detail"
           value={draft.chatDetail}
@@ -50,12 +51,12 @@ export function GeneralSettings({
           <option value="detailed">详细</option>
           <option value="verbose">全部</option>
         </select>
-      </div>
-      <div className="settings-row">
-        <div className="settings-row-label">
-          <label htmlFor="settings-sync">闲置同步间隔</label>
-          <p>工作中的会话会加快同步，更新已保存的消息和工具结果</p>
-        </div>
+      </SettingsRow>
+      <SettingsRow
+        label="闲置同步间隔"
+        htmlFor="settings-sync"
+        description="工作中的会话会加快同步，更新已保存的消息和工具结果"
+      >
         <select
           id="settings-sync"
           value={draft.syncSeconds}
@@ -72,12 +73,12 @@ export function GeneralSettings({
             </option>
           ))}
         </select>
-      </div>
-      <div className="settings-row">
-        <div className="settings-row-label">
-          <label htmlFor="settings-motion">界面过渡动画</label>
-          <p>展开、收起时使用短过渡，遵循系统减少动态效果设置</p>
-        </div>
+      </SettingsRow>
+      <SettingsRow
+        label="界面过渡动画"
+        htmlFor="settings-motion"
+        description="展开、收起时使用短过渡，遵循系统减少动态效果设置"
+      >
         <input
           id="settings-motion"
           className="settings-switch"
@@ -88,7 +89,7 @@ export function GeneralSettings({
             onChange({ ...draft, animations: event.target.checked })
           }
         />
-      </div>
+      </SettingsRow>
     </section>
   );
 }

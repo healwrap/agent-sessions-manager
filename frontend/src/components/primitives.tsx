@@ -36,6 +36,29 @@ export function IconButton({
     </button>
   );
 }
+export function Button({
+  children,
+  icon,
+  variant = 'secondary',
+  className = '',
+  type = 'button',
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  icon?: string;
+  variant?: 'primary' | 'secondary' | 'text';
+}) {
+  return (
+    <button
+      type={type}
+      className={'action-button ' + className}
+      data-variant={variant}
+      {...props}
+    >
+      {icon && <Icon name={icon} />}
+      {children}
+    </button>
+  );
+}
 export function Collapse({
   open,
   children,

@@ -1,4 +1,10 @@
-export function TrajectoryLoading({ empty = false }: { empty?: boolean }) {
+export function TrajectoryLoading({
+  empty = false,
+  label,
+}: {
+  empty?: boolean;
+  label?: string;
+}) {
   return (
     <div
       className={
@@ -7,7 +13,7 @@ export function TrajectoryLoading({ empty = false }: { empty?: boolean }) {
     >
       <div className="history-load-status" role="status">
         <i className="loading-dot" aria-hidden="true" />
-        {empty ? '正在读取轨迹…' : '正在更新轨迹…'}
+        {label ?? (empty ? '正在读取轨迹…' : '正在更新轨迹…')}
       </div>
       {empty && (
         <div className="trajectory-skeleton" aria-hidden="true">

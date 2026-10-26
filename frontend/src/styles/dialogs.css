@@ -21,6 +21,30 @@ dialog pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--dsw-radius-md, 12px);
+  background: var(--dsw-alias-bg-layer-3);
+  color: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.action-button[data-variant='primary'] {
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+.action-button[data-variant='text'] {
+  background: transparent;
+}
+.action-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
 .dialog-close {
   float: right;
   border: 0;

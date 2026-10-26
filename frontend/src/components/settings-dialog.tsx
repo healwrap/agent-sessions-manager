@@ -3,7 +3,7 @@ import type { Settings, SettingsResponse } from '../lib/types';
 import { GeneralSettings } from './settings/general';
 import { SourceSettings } from './settings/sources';
 import { sessionStore } from '../state/session-store';
-import { Dialog, Icon, IconButton } from './primitives';
+import { Button, Dialog, Icon, IconButton } from './primitives';
 export function SettingsDialog({ open }: { open: boolean }) {
   const [data, setData] = useState<SettingsResponse | null>(null),
     [draft, setDraft] = useState<Settings | null>(null),
@@ -93,20 +93,23 @@ export function SettingsDialog({ open }: { open: boolean }) {
               </p>
             )}
             <div className="settings-actions">
-              <button
+              <Button
                 id="settings-defaults"
                 type="button"
                 disabled={!data}
                 onClick={() => data && change(structuredClone(data.defaults))}
               >
                 恢复默认
-              </button>
-              <button type="button" onClick={close}>
-                取消
-              </button>
-              <button id="settings-save" disabled={!draft || saving}>
+              </Button>
+              <Button onClick={close}>取消</Button>
+              <Button
+                id="settings-save"
+                type="submit"
+                variant="primary"
+                disabled={!draft || saving}
+              >
                 {saving ? '保存中…' : '保存'}
-              </button>
+              </Button>
             </div>
           </footer>
         </div>

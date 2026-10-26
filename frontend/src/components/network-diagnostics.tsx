@@ -61,7 +61,14 @@ export function NetworkDiagnostics({
       const result = await request<ClaudeReport>(
         '/api/claude-diagnostics/run',
         {},
-        { mode, ...(mode === 'proxy' ? { proxy } : {}) },
+        {
+          mode: mode === 'lookup-proxy' ? 'direct' : mode,
+          ...(mode === 'proxy'
+            ? { proxy }
+            : mode === 'lookup-proxy'
+              ? { lookup_proxy: proxy }
+              : {}),
+        },
       );
       setReport(result);
       setHistory(result.history);
@@ -105,7 +112,9 @@ export function NetworkDiagnostics({
           description={
             mode === 'direct'
               ? '遵循系统 VPN / TUN 路由，忽略 HTTP / PAC 代理。'
-              : '为本次后台检测指定独立代理。'
+              : mode === 'lookup-proxy'
+                ? '出口与连通性走系统路由；仅 Net.Coffee / IPinfo 资料查询走代理。'
+                : '为本次后台检测指定独立代理。'
           }
         >
           <Select
@@ -116,12 +125,13 @@ export function NetworkDiagnostics({
             options={[
               { value: 'direct', label: '系统路由' },
               { value: 'proxy', label: '指定代理' },
+              { value: 'lookup-proxy', label: '仅 IP 资料走代理' },
             ]}
           />
         </SettingsRow>
-        {mode === 'proxy' && (
+        {mode !== 'direct' && (
           <SettingsRow
-            label="代理地址"
+            label={mode === 'lookup-proxy' ? 'IP 资料查询代理' : '代理地址'}
             htmlFor="diagnostic-proxy"
             description="支持 HTTP、HTTPS 和 SOCKS5h"
           >
@@ -156,7 +166,7 @@ export function NetworkDiagnostics({
         </p>
       )}
       {running && (
-        <TrajectoryLoading label="正在检查出口与网络连接，通常需要 10–25 秒。" />
+        <TrajectoryLoading label="正在检查出口与网络连接；临时连接失败会自动重试一次。" />
       )}
       {report ? (
         <>

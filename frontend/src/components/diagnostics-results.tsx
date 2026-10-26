@@ -110,7 +110,8 @@ export function DiagnosticEgress({ report }: { report: ClaudeReport }) {
                 <strong>{exit.ip || '出口未取得'}</strong>
               </div>
               <p className="diagnostic-egress-location">
-                {countryLabel(exit.country) || '地区未知'}
+                {exit.error || countryLabel(exit.country) || '地区未知'}
+                {(exit.attempts || 0) > 1 && <span>已重试一次</span>}
                 {exit.colo && <span>边缘节点 · {nodeLabel(exit.colo)}</span>}
               </p>
             </DiagnosticCard>

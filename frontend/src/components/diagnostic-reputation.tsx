@@ -1,6 +1,6 @@
 import { MapPin, ShieldCheck, ShieldHalf } from 'lucide-react';
 import type { ClaudeReport } from '../lib/claude-diagnostics';
-import { checkedTime } from '../lib/claude-diagnostics';
+import { checkedTime, routeLabel } from '../lib/claude-diagnostics';
 import { countryLabel } from '../lib/diagnostic-labels';
 import {
   DiagnosticBadge,
@@ -106,6 +106,12 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
           · {checkedTime(value.queried_at)}
           {value.cached ? ' · 缓存' : ''}
           <br />
+          {report.lookup_route && (
+            <>
+              资料查询：{routeLabel(report.lookup_route)}
+              <br />
+            </>
+          )}
           来源评分用于评估 IP，不等同于 Claude 账号评分。
         </p>
       </DiagnosticCard>

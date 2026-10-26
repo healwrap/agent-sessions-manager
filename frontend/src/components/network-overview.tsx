@@ -1,4 +1,5 @@
 import { Activity, Network } from 'lucide-react';
+import { ResourceLink } from './resource-link';
 import type { ClaudeReport } from '../lib/claude-diagnostics';
 import {
   DiagnosticBadge,
@@ -22,17 +23,25 @@ export function NetworkOverview({ report }: { report: ClaudeReport }) {
               label={item.id === 'claude-web' ? 'Claude 网页' : 'Anthropic API'}
             >
               <DiagnosticBadge state={item.state}>
-                {item.state === 'pass'
-                  ? '已到达'
-                  : item.state === 'fail'
-                    ? '连接失败'
-                    : '需关注'}
+                {item.label ||
+                  (item.state === 'pass'
+                    ? '已到达'
+                    : item.state === 'fail'
+                      ? '连接失败'
+                      : item.state === 'info'
+                        ? '信息'
+                        : '需关注')}
               </DiagnosticBadge>
               <small>{item.value}</small>
+              {item.label === '需浏览器验证' && (
+                <ResourceLink href="https://claude.ai/">
+                  打开 Claude 网页
+                </ResourceLink>
+              )}
             </DiagnosticField>
           ))}
           <DiagnosticField label="IPv6 出口">
-            <span className="diagnostic-mono">{ipv6?.value || '未取得'}</span>
+            <span title={ipv6?.detail}>{ipv6?.value || '未取得'}</span>
           </DiagnosticField>
         </dl>
         <p className="diagnostic-card-footnote">

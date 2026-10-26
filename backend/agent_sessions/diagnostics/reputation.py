@@ -25,7 +25,8 @@ class IpReputation:
             return {**cached[1], 'cached': True}
         result = fetch(f'https://ip.net.coffee/api/ip/lookup/{ip}', proxy)
         if not result.get('ok'):
-            return {**report, 'message': result.get('error', 'Net.Coffee 连接失败')}
+            return {**report, 'message': 'Net.Coffee 查询失败：' + result.get('error', '连接失败') +
+                    ('；已重试一次。' if result.get('attempts', 1) > 1 else '。')}
         code = result.get('code')
         if code != 200:
             return {**report, 'message': 'Net.Coffee 查询频率已达上限，请稍后重试。' if code == 429

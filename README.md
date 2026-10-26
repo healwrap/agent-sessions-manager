@@ -47,7 +47,7 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 在「账号与环境管理 → 环境检测」直接选择检测对象并查看结果。网络、浏览器与 Claude App 复用结果组件，分别采样：网络检测由后台使用系统路由或显式代理发起，浏览器检测采样当前 Agent Sessions 窗口，App 检测读取真实安装信息、App 进程与配置继承。App 页的「检查 App 环境」直接进入 App 对象，代理列表的「检测」进入网络对象并带入代理地址。
 
-网络检测分别取得 Claude、Cloudflare 域名出口、Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机网络配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测。
+网络检测分别取得 Claude、Cloudflare 域名出口、Claude 网页与 Anthropic API 的无认证传输、IPv6 出口、IP 地理库属性和本机网络配置。系统路由忽略 HTTP / PAC / 环境变量代理，仍遵循操作系统的 VPN / TUN 路由；显式代理仅作用于本次后台探测。「仅 IP 资料走代理」保留系统路由测得的出口，只让 Net.Coffee / IPinfo 查询使用指定代理，结果标注资料查询链路。临时连接失败沿同一路由重试一次；超时区分建连、TLS 握手、等待响应与接收响应。Claude 网页的 Cloudflare challenge 标注为需浏览器验证；无 IPv6 路由时跳过公网请求，HTTP / SOCKS 代理端的 IPv6 单独标为待验证。
 
 网络探测依赖本机 `curl`，请求固定的 Claude / Cloudflare / IPify 地址，并向 IPinfo 查询取得的 Claude 出口 IP。HTTP 401 表示未认证的 API 已到达；403 保留为访问受限，不判断账号状态。界面中的语言、时区、UA、WebGL、Canvas 和 WebRTC 采样来自当前 Agent Sessions 窗口；WebRTC 使用 Google STUN。它们与后台代理检测分区展示，不作为官方 Claude App 的实际环境证据。DNS 公网出口和官方 App 链路当前标为未验证；ASN 不用于推断住宅属性或计算可信评分。
 

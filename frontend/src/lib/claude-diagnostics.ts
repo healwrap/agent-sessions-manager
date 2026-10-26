@@ -6,6 +6,7 @@ export interface DiagnosticItem {
   value: string;
   detail: string;
   scope: string;
+  label?: string;
 }
 export interface DiagnosticRoute {
   mode: 'direct' | 'proxy';
@@ -16,6 +17,8 @@ export interface EgressSample {
   ip?: string;
   country?: string;
   colo?: string;
+  error?: string;
+  attempts?: number;
   ms?: number;
 }
 export interface DiagnosticHistory {
@@ -57,6 +60,7 @@ export interface ClaudeReport {
     Record<'country' | 'region' | 'city' | 'org' | 'timezone', string>
   >;
   ip_reputation: IpReputation;
+  lookup_route?: DiagnosticRoute;
   checks: DiagnosticItem[];
   local_checks: DiagnosticItem[];
   history: DiagnosticHistory[];

@@ -13,7 +13,7 @@ export function SourceSettings({
   return (
     <section aria-label="会话来源">
       <p className="settings-description">
-        读取各 Agent 的本地会话，保存后生效。
+        读取各 Agent 的本地会话，修改后自动保存并生效。
       </p>
       {data?.sources.map((source) => {
         const paths = source.paths || [
@@ -63,7 +63,7 @@ export function SourceSettings({
             {input(main.key)}
             <p className="settings-path-status">
               {changed
-                ? '保存后检查路径'
+                ? '自动保存后检查路径'
                 : source.error ||
                   (!source.enabled
                     ? '已停用'

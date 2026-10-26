@@ -1,53 +1,22 @@
 import { useEffect, useState } from 'react';
-import type { Settings, SettingsResponse } from '../lib/types';
 import { GeneralSettings } from './settings/general';
 import { SourceSettings } from './settings/sources';
-import { sessionStore } from '../state/session-store';
+import { useSettingsAutosave } from '../hooks/use-settings-autosave';
 import { Button, Dialog, Icon, IconButton } from './primitives';
 export function SettingsDialog({ open }: { open: boolean }) {
-  const [data, setData] = useState<SettingsResponse | null>(null),
-    [draft, setDraft] = useState<Settings | null>(null),
-    [section, setSection] = useState('general'),
-    [error, setError] = useState(''),
-    [saving, setSaving] = useState(false);
+  const [section, setSection] = useState('general');
+  const { data, draft, error, status, change, close, flush } =
+    useSettingsAutosave(open);
   useEffect(() => {
-    if (!open) return;
-    let current = true;
-    setSection('general');
-    setError('');
-    void sessionStore
-      .api<SettingsResponse>('/api/settings')
-      .then((value) => {
-        if (current) {
-          setData(value);
-          setDraft(structuredClone(value.value));
-        }
-      })
-      .catch((e) => current && setError(String(e)));
-    return () => {
-      current = false;
-    };
+    if (open) setSection('general');
   }, [open]);
-  const change = (value: Settings) => {
-    setDraft(value);
-    if (value.theme !== draft?.theme)
-      sessionStore.update({ themePreview: value.theme });
-  };
-  const close = () =>
-    sessionStore.update({ settingsOpen: false, themePreview: null });
   return (
     <Dialog open={open} onClose={close} id="settings-dialog" title="设置">
       <form
         id="settings-form"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!draft) return;
-          setSaving(true);
-          setError('');
-          void sessionStore
-            .saveSettings(draft)
-            .catch((e) => setError(String(e)))
-            .finally(() => setSaving(false));
+          void flush();
         }}
       >
         <nav className="settings-nav" aria-label="设置分类">
@@ -101,15 +70,22 @@ export function SettingsDialog({ open }: { open: boolean }) {
               >
                 恢复默认
               </Button>
-              <Button onClick={close}>取消</Button>
-              <Button
-                id="settings-save"
-                type="submit"
-                variant="primary"
-                disabled={!draft || saving}
+              <span
+                className="settings-save-status"
+                data-state={status}
+                role="status"
+                aria-live="polite"
               >
-                {saving ? '保存中…' : '保存'}
-              </Button>
+                {status === 'saving'
+                  ? '正在保存…'
+                  : status === 'waiting'
+                    ? '等待自动保存…'
+                    : status === 'saved'
+                      ? '已自动保存'
+                      : status === 'error'
+                        ? '尚未保存'
+                        : '修改后自动保存'}
+              </span>
             </div>
           </footer>
         </div>

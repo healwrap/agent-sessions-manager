@@ -1,10 +1,15 @@
 import { useEffect } from 'react';
 import { sessionStore } from '../state/session-store';
-export function useLiveSync(seconds: number, animations: boolean) {
+export function useLiveSync(
+  seconds: number,
+  animations: boolean,
+  active = true,
+) {
   useEffect(() => {
     document.documentElement.classList.toggle('motion-off', !animations);
   }, [animations]);
   useEffect(() => {
+    if (!active) return;
     let stopped = false,
       busy = false,
       catalogueBusy = false;
@@ -115,5 +120,5 @@ export function useLiveSync(seconds: number, animations: boolean) {
       delete window.loadTrace;
       delete window.loadSessions;
     };
-  }, [seconds]);
+  }, [seconds, active]);
 }

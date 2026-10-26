@@ -20,11 +20,13 @@ export function Sidebar({
   onManage,
   managedId,
   onDiagnostics,
+  onHome,
 }: {
   state: AppState;
   onManage: (item: Session, x: number, y: number) => void;
   managedId?: string;
   onDiagnostics?: () => void;
+  onHome?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
   const groups = projectGroups(
@@ -57,6 +59,12 @@ export function Sidebar({
         </div>
         <div className="brand-row">
           <span className="brand-name">Agent Sessions</span>
+          {onHome && (
+            <button type="button" className="workspace-back" onClick={onHome}>
+              <Icon name="back" />
+              返回开始页
+            </button>
+          )}
         </div>
         <div className="source-filter">
           <span>来源</span>

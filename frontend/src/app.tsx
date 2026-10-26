@@ -7,7 +7,6 @@ import {
 } from 'react';
 import { sessionStore } from './state/session-store';
 import { useSessionStore } from './hooks/use-session-store';
-import { useTheme } from './hooks/use-theme';
 import { useLiveSync } from './hooks/use-live-sync';
 import { useLayoutSlide } from './hooks/use-layout-slide';
 import { durationAvailable, usesRecordedDuration } from './lib/recorded-time';
@@ -24,7 +23,13 @@ import { Icon, IconButton } from './components/primitives';
 import { StartupContent } from './components/startup-content';
 import { SearchField } from './components/search-field';
 import { Subagents } from './components/subagents';
-export function App() {
+export function App({
+  active = true,
+  onHome,
+}: {
+  active?: boolean;
+  onHome?: () => void;
+}) {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
     [diagnosticsOpen, setDiagnosticsOpen] = useState(false),
@@ -36,17 +41,12 @@ export function App() {
   useEffect(() => {
     void sessionStore.initialize();
   }, []);
-  useTheme(
-    state.themePreview ?? state.settings.theme,
-    !state.initializing,
-    state.settings.theme,
-  );
-  useLiveSync(state.settings.syncSeconds, state.settings.animations);
+  useLiveSync(state.settings.syncSeconds, state.settings.animations, active);
   useEffect(() => {
-    if (search === sessionStore.view.query) return;
+    if (!active || search === sessionStore.view.query) return;
     const timer = setTimeout(() => void sessionStore.searchTrace(search), 250);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, active]);
   useEffect(() => {
     setSearch(state.views.trace.query);
   }, [state.views.trace.query]);
@@ -64,12 +64,16 @@ export function App() {
       >
         <Sidebar
           state={state}
+          onHome={onHome}
           onDiagnostics={() => setDiagnosticsOpen(true)}
           managedId={menu?.item.id}
           onManage={(item, x, y) => setMenu({ item, x, y })}
         />
         <main ref={main} className="main">
           <header className="main-header" data-tauri-drag-region>
+            {onHome && state.sidebarClosed && (
+              <IconButton icon="back" label="返回开始页" onClick={onHome} />
+            )}
             {state.sidebarClosed && (
               <IconButton
                 icon="panel"
@@ -81,7 +85,7 @@ export function App() {
               {title}
             </div>
             <div className="header-actions">
-              {state.id && (
+              {active && state.id && (
                 <Subagents
                   key={state.id}
                   id={state.id}

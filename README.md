@@ -2,6 +2,8 @@
 
 用于管理本机 Codex、Claude Code、Cursor、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。Claude Code 桌面端与 CLI 共用会话正文，在界面中合并展示。Cursor 读取桌面端本地 Agent / Composer 会话数据库。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
 
+应用默认打开开始页，选择进入「会话管理」或「账号与环境管理」。会话页与账号环境工作区均提供返回开始页的入口；返回后保留已打开的会话、筛选和检测结果，会话同步在其他工作区暂停。会话目录在首次进入会话管理时加载，原有会话引用链接仍可直接进入。账号环境工作区面向 Claude、Codex 等 Agent，已接入 Claude 环境检测，账号切换和独立浏览器管理目前展示为待接入。
+
 ## 项目结构
 
 源码目录为 `agent-sessions-manager/`，Skill 安装入口仍为 `agent-sessions`，应用名仍为 Agent Sessions。

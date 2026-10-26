@@ -1,4 +1,4 @@
 import { renderToString } from 'react-dom/server';
-import { App } from './app';
+import { Workspace } from './workspace';
 // Build-time shell only: no histories, user data, or Node runtime are bundled here.
-export const render = () => renderToString(<App />);
+export const render = () => renderToString(<Workspace />);

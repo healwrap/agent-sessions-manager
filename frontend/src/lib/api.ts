@@ -8,7 +8,10 @@ export const request: Request = async <T>(
     Object.entries(params).map(([k, v]) => [k, String(v)]),
   ).toString();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    path === '/api/claude-diagnostics/run' ? 60_000 : 30_000,
+  );
   try {
     const response = await fetch(
       path + (query ? '?' + query : ''),

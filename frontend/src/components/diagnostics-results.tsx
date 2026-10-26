@@ -8,7 +8,11 @@ import {
   type DiagnosticItem,
 } from '../lib/claude-diagnostics';
 import { Icon } from './primitives';
-import { countryLabel, exitDescription } from '../lib/diagnostic-labels';
+import { Clock3, Globe2 } from 'lucide-react';
+import cloudflareIcon from '../assets/agents/cloudflare.svg';
+import { countryFlag, countryLabel, nodeLabel } from '../lib/diagnostic-labels';
+import { AgentIcon } from './agent-icon';
+import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 
 export function DiagnosticSection({
   title,
@@ -61,46 +65,64 @@ export function DiagnosticRows({ items }: { items: DiagnosticItem[] }) {
 
 export function DiagnosticEgress({ report }: { report: ClaudeReport }) {
   const { claude, cloudflare } = report.exits;
-  const location = [
-    countryLabel(report.ip_details.country || claude.country),
-    report.ip_details.region,
-    report.ip_details.city,
-  ]
-    .filter(Boolean)
-    .join(' · ');
   const split = claude.ip && cloudflare.ip && claude.ip !== cloudflare.ip;
   return (
     <>
       <div className="diagnostic-egress">
         {[
-          ['Claude 域名出口', claude],
-          ['Cloudflare 域名出口', cloudflare],
-        ].map(([title, value]) => {
-          const exit = value as typeof claude;
+          {
+            title: 'Claude 域名出口',
+            exit: claude,
+            brand: 'claude',
+            icon: <AgentIcon source="claude" />,
+          },
+          {
+            title: 'Cloudflare 域名出口',
+            exit: cloudflare,
+            brand: 'cloudflare',
+            icon: (
+              <img
+                className="diagnostic-cloudflare-logo"
+                src={cloudflareIcon}
+                alt=""
+                aria-hidden="true"
+              />
+            ),
+          },
+        ].map(({ title, exit, brand, icon }) => {
           return (
-            <div className="diagnostic-egress-card" key={String(title)}>
-              <span>{String(title)}</span>
-              <strong>{exit.ip || '未取得'}</strong>
-              <small>{exitDescription(exit) || '查看下方连接结果'}</small>
-            </div>
+            <DiagnosticCard
+              key={title}
+              title={title}
+              icon={icon}
+              className={'diagnostic-egress-card diagnostic-egress-' + brand}
+              extra={
+                <DiagnosticBadge state={exit.ip ? 'info' : 'unknown'}>
+                  <Clock3 size={11} />
+                  {exit.ms == null ? '未取得' : `${exit.ms} ms`}
+                </DiagnosticBadge>
+              }
+            >
+              <div className="diagnostic-egress-ip">
+                <span className="diagnostic-flag" aria-hidden="true">
+                  {countryFlag(exit.country) || <Globe2 size={25} />}
+                </span>
+                <strong>{exit.ip || '出口未取得'}</strong>
+              </div>
+              <p className="diagnostic-egress-location">
+                {countryLabel(exit.country) || '地区未知'}
+                {exit.colo && <span>边缘节点 · {nodeLabel(exit.colo)}</span>}
+              </p>
+            </DiagnosticCard>
           );
         })}
       </div>
-      <div className="diagnostic-ip-details">
-        <span>
-          地区<strong>{location || '未取得'}</strong>
-        </span>
-        <span>
-          ASN / 运营商<strong>{report.ip_details.org || '未取得'}</strong>
-        </span>
-        <span>
-          IP 地理库时区<strong>{report.ip_details.timezone || '未取得'}</strong>
-        </span>
-      </div>
-      <p className="diagnostic-note">
-        {split ? '两个域名取得不同出口，当前链路存在分流。' : ''}
-        地区与运营商数据来自 IPinfo；IP 信誉与网络类型见下方。
-      </p>
+      {split && (
+        <p className="diagnostic-route-note">
+          <Globe2 size={13} />
+          两个域名使用不同出口，当前链路存在分流。
+        </p>
+      )}
     </>
   );
 }

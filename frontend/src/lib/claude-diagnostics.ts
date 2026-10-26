@@ -33,18 +33,16 @@ export interface IpReputation {
   queried_at: string;
   cached: boolean;
   message?: string;
+  source_url?: string;
+  metadata?: Partial<
+    Record<'country' | 'region' | 'city' | 'org' | 'isp', string>
+  >;
   network_type?: 'Residential' | 'Business' | 'Wireless' | 'Hosting' | null;
-  risk?: number | null;
+  trust_score?: number | null;
   confidence?: number | null;
   detections?: Partial<
     Record<
-      | 'proxy'
-      | 'vpn'
-      | 'tor'
-      | 'hosting'
-      | 'compromised'
-      | 'scraper'
-      | 'anonymous',
+      'proxy' | 'vpn' | 'tor' | 'hosting' | 'abuse' | 'scraper' | 'anonymous',
       boolean | null
     >
   >;

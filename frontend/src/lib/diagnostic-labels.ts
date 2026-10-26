@@ -51,23 +51,32 @@ const nodes: Record<string, string> = {
   GRU: '圣保罗',
 };
 
+export function countryFlag(code?: string): string {
+  if (!code || !/^[A-Z]{2}$/i.test(code) || !countries.of(code.toUpperCase()))
+    return '';
+  return String.fromCodePoint(
+    ...[...code.toUpperCase()].map(
+      (letter) => 0x1f1e6 + letter.charCodeAt(0) - 65,
+    ),
+  );
+}
+
 export function countryLabel(code?: string): string {
   if (!code) return '';
   const region = code.toUpperCase();
   if (!/^[A-Z]{2}$/.test(region)) return `地区代码：${code}`;
   const name = countries.of(region);
   if (!name) return `地区代码：${region}`;
-  const flag = String.fromCodePoint(
-    ...[...region].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65),
-  );
-  return `${flag} ${name}`;
+  return `${countryFlag(region)} ${name}`;
 }
+
+export const nodeLabel = (code: string) =>
+  nodes[code] ? `${nodes[code]}（${code}）` : code;
 
 export function exitDescription(exit: EgressSample): string {
   return [
     exit.country && `出口地区：${countryLabel(exit.country)}`,
-    exit.colo &&
-      `边缘节点：${nodes[exit.colo] ? `${nodes[exit.colo]}（${exit.colo}）` : exit.colo}`,
+    exit.colo && `边缘节点：${nodeLabel(exit.colo)}`,
     exit.ms !== undefined && `耗时 ${exit.ms} 毫秒`,
   ]
     .filter(Boolean)

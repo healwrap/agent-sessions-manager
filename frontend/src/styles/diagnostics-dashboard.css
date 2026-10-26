@@ -1,0 +1,267 @@
+.diagnostic-dashboard {
+  margin-top: 18px;
+}
+.diagnostic-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.diagnostic-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 16px;
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow:
+    0 2px 5px rgb(0 0 0 / 3%),
+    0 8px 24px rgb(0 0 0 / 2%);
+}
+.diagnostic-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.diagnostic-card-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.diagnostic-card-heading h3 > svg {
+  color: var(--dsw-alias-label-tertiary);
+  flex: none;
+}
+.diagnostic-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 4px 9px;
+  border-radius: 7px;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+  font-size: 10px;
+  font-weight: 550;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.diagnostic-badge[data-state='pass'] {
+  color: color-mix(
+    in srgb,
+    var(--dsw-alias-state-success-primary) 60%,
+    var(--dsw-alias-label-primary)
+  );
+  background: var(--dsw-alias-state-success-tertiary);
+}
+.diagnostic-badge[data-state='warn'] {
+  color: var(--dsw-alias-state-warn-label);
+  background: var(--dsw-alias-state-warn-tertiary);
+}
+.diagnostic-badge[data-state='fail'] {
+  color: var(--dsw-alias-state-error-primary);
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-error-primary) 10%,
+    var(--dsw-alias-bg-layer-1)
+  );
+}
+.diagnostic-badge[data-state='info'] {
+  color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-state-business-tertiary);
+}
+.diagnostic-fields {
+  margin: 0;
+}
+.diagnostic-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 9px 0;
+  font-size: 11px;
+}
+.diagnostic-field + .diagnostic-field {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+.diagnostic-field dt {
+  flex: none;
+  max-width: 44%;
+  color: var(--dsw-alias-label-secondary);
+}
+.diagnostic-field dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.diagnostic-field small {
+  width: 100%;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  font-weight: 400;
+}
+.diagnostic-mono {
+  font-family: var(--ds-font-family-code);
+  font-size: 10px;
+}
+.diagnostic-card-footnote {
+  margin: auto 0 0;
+  padding-top: 16px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.diagnostic-card-footnote a {
+  color: inherit;
+  text-decoration: underline;
+}
+.diagnostic-risk-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+}
+.diagnostic-risk-score strong {
+  color: var(--dsw-alias-label-primary);
+  font-size: 62px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.diagnostic-risk-score[data-state='pass'] strong {
+  color: #1aa264;
+}
+.diagnostic-risk-score[data-state='warn'] strong {
+  color: var(--dsw-alias-state-warn-label);
+}
+.diagnostic-risk-score[data-state='fail'] strong {
+  color: var(--dsw-alias-state-error-primary);
+}
+.diagnostic-risk-caption {
+  margin: 10px 0 0;
+  text-align: center;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.diagnostic-risk-scale {
+  margin: 30px 3px 20px;
+}
+.diagnostic-risk-track {
+  position: relative;
+  height: 9px;
+  border-radius: 20px;
+  background: linear-gradient(
+    90deg,
+    #dc4a43,
+    #ef8d54 24%,
+    #edca4f 45%,
+    #8bcf73 70%,
+    #1aa264
+  );
+}
+.diagnostic-risk-track i {
+  position: absolute;
+  top: -5px;
+  width: 5px;
+  height: 19px;
+  border: 1px solid var(--dsw-alias-bg-layer-1);
+  border-radius: 4px;
+  background: var(--dsw-alias-label-primary);
+  transform: translateX(-50%);
+}
+.diagnostic-risk-ticks {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 9px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 9px;
+}
+.diagnostic-score-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+}
+.diagnostic-risk-empty {
+  padding: 32px 0;
+  text-align: center;
+  font-size: 12px;
+}
+.diagnostic-detail-disclosure {
+  margin-top: 18px;
+}
+.diagnostic-detail-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.diagnostic-detail-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.diagnostic-detail-disclosure[open] summary .dsh-icon {
+  transform: rotate(180deg);
+}
+.diagnostic-detail-disclosure .diagnostic-rows {
+  margin-top: 10px;
+}
+.diagnostic-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.diagnostic-card .diagnostic-rows {
+  border: 0;
+  border-radius: 0;
+}
+.diagnostic-card .diagnostic-row {
+  background: transparent;
+  padding-right: 0;
+  padding-left: 0;
+}
+@media (max-width: 850px) {
+  .diagnostic-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .diagnostic-card-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 580px) {
+  .diagnostic-card-grid,
+  .diagnostic-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

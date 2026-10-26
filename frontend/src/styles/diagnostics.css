@@ -1,11 +1,11 @@
 #claude-diagnostics {
-  width: 880px;
+  width: 1160px;
   max-width: calc(100vw - 48px);
-  height: min(840px, calc(100vh - 48px));
+  height: min(920px, calc(100vh - 48px));
   max-height: calc(100vh - 48px);
   padding: 0;
   border: 0;
-  background: var(--dsw-alias-bg-layer-2);
+  background: var(--dsw-alias-bg-module-platform);
   overflow: hidden;
 }
 #claude-diagnostics[open] {
@@ -22,6 +22,7 @@
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
 }
 .diagnostic-header > div {
   display: flex;
@@ -36,6 +37,11 @@
   margin: 0;
   font-size: 18px;
 }
+.diagnostic-header-caption {
+  margin-left: 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
 .diagnostic-body {
   padding: 0 24px 24px;
   min-height: 0;
@@ -45,22 +51,51 @@
   margin: 20px 0 16px;
   font-size: 13px;
 }
+.diagnostic-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(200px, 1.3fr) auto;
+  align-items: end;
+  gap: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 14px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+.diagnostic-form[data-mode='direct'] {
+  grid-template-columns: 1fr auto;
+}
 .diagnostic-form .settings-row {
-  padding: 12px 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.diagnostic-form .settings-row-label {
+  flex: initial;
+}
+.diagnostic-form .settings-row-label label {
+  font-size: 12px;
+  font-weight: 550;
+}
+.diagnostic-form .settings-row-label p {
+  margin: 2px 0 0;
+  font-size: 11px;
 }
 .diagnostic-form .custom-select {
   flex: none;
-  width: 160px;
+  width: 100%;
 }
 .diagnostic-form .settings-text-input {
   flex: none;
-  width: 56%;
+  width: 100%;
   min-width: 140px;
 }
 .diagnostic-toolbar {
   display: flex;
   justify-content: flex-end;
-  padding-top: 12px;
+  padding-bottom: 1px;
 }
 .diagnostic-body .trajectory-loading {
   padding: 16px 0;
@@ -71,6 +106,11 @@
   font-size: 12px;
   line-height: 1.7;
   color: var(--dsw-alias-label-tertiary);
+}
+.diagnostic-summary-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .diagnostic-note {
   margin: 8px 0 12px;
@@ -165,6 +205,18 @@
   text-decoration: underline;
 }
 @media (max-width: 650px) {
+  #claude-diagnostics {
+    max-width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
+    max-height: calc(100vh - 24px);
+  }
+  .diagnostic-header-caption {
+    display: none;
+  }
+  .diagnostic-form,
+  .diagnostic-form[data-mode='direct'] {
+    grid-template-columns: 1fr;
+  }
   .diagnostic-body {
     padding: 0 16px 20px;
   }

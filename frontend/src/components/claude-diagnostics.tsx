@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Fingerprint, Settings2 } from 'lucide-react';
 import { request } from '../lib/api';
 import {
   checkedTime,
@@ -16,6 +17,8 @@ import { Select } from './select';
 import { SettingsRow } from './settings/row';
 import { TrajectoryLoading } from './trajectory-loading';
 import { DiagnosticReputation } from './diagnostic-reputation';
+import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
+import { DiagnosticOverview } from './diagnostic-overview';
 import {
   DiagnosticEgress,
   DiagnosticHistoryList,
@@ -98,6 +101,7 @@ export function ClaudeDiagnostics({
         <div>
           <AgentIcon source="claude:local" />
           <h2>Claude 检测</h2>
+          <span className="diagnostic-header-caption">网络与环境看板</span>
         </div>
         <IconButton icon="close" label="关闭 Claude 检测" onClick={onClose} />
       </header>
@@ -107,6 +111,7 @@ export function ClaudeDiagnostics({
         </p>
         <form
           className="diagnostic-form"
+          data-mode={mode}
           onSubmit={(event) => {
             event.preventDefault();
             void run();
@@ -116,8 +121,8 @@ export function ClaudeDiagnostics({
             label="检测链路"
             description={
               mode === 'direct'
-                ? '遵循系统路由，不读取 HTTP、PAC 或环境变量代理。'
-                : '仅本次检测使用指定代理，不修改系统或 Claude 的配置。'
+                ? '遵循系统 VPN / TUN 路由，忽略 HTTP / PAC 代理。'
+                : '为本次后台检测指定独立代理。'
             }
           >
             <Select
@@ -178,36 +183,47 @@ export function ClaudeDiagnostics({
                 <time>{checkedTime(report.checked_at)}</time>
                 <span>{routeLabel(report.route)}</span>
               </div>
-              <div>
-                {counts?.pass || 0} 项通过 ·{' '}
-                {(counts?.warn || 0) + (counts?.fail || 0)} 项需关注 ·{' '}
-                {counts?.unknown || 0} 项未验证
+              <div className="diagnostic-summary-badges">
+                <DiagnosticBadge state="pass">
+                  {counts?.pass || 0} 项通过
+                </DiagnosticBadge>
+                <DiagnosticBadge state="warn">
+                  {(counts?.warn || 0) + (counts?.fail || 0)} 项需关注
+                </DiagnosticBadge>
+                <DiagnosticBadge>
+                  {counts?.unknown || 0} 项未验证
+                </DiagnosticBadge>
               </div>
             </div>
-            <DiagnosticSection
-              title="网络出口"
-              note="从 Agent Sessions 后台通过所选链路采样。"
-            >
+            <div className="diagnostic-dashboard">
               <DiagnosticEgress report={report} />
-            </DiagnosticSection>
-            <DiagnosticSection title="IP 信誉与网络类型">
-              <DiagnosticReputation value={report.ip_reputation} />
-            </DiagnosticSection>
-            <DiagnosticSection title="连接与出口检查">
+              <DiagnosticReputation report={report} />
+              <DiagnosticOverview report={report} windowChecks={windowChecks} />
+            </div>
+            <details className="diagnostic-detail-disclosure">
+              <summary>
+                连接与出口明细
+                <Icon name="down" />
+              </summary>
               <DiagnosticRows items={networkChecks(report)} />
-            </DiagnosticSection>
-            <DiagnosticSection
-              title="本机 Claude 与网络配置"
-              note="只读检查，不启动、退出或修改其他应用。"
-            >
-              <DiagnosticRows items={report.local_checks} />
-            </DiagnosticSection>
-            <DiagnosticSection
-              title="当前窗口环境"
-              note="以下是 Agent Sessions 窗口的实际值，不代表 Claude App 或其他浏览器。WebRTC 使用 Google STUN 采样。"
-            >
-              <DiagnosticRows items={windowChecks} />
-            </DiagnosticSection>
+            </details>
+            <div className="diagnostic-detail-grid">
+              <DiagnosticCard
+                title="本机 Claude 与网络配置"
+                icon={<Settings2 size={17} />}
+              >
+                <DiagnosticRows items={report.local_checks} />
+              </DiagnosticCard>
+              <DiagnosticCard
+                title="当前窗口环境"
+                icon={<Fingerprint size={17} />}
+                extra={
+                  <DiagnosticBadge state="info">Agent Sessions</DiagnosticBadge>
+                }
+              >
+                <DiagnosticRows items={windowChecks} />
+              </DiagnosticCard>
+            </div>
           </>
         ) : (
           !running && (

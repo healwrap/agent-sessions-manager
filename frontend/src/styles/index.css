@@ -34,6 +34,7 @@
 @import './settings.css' layer(components);
 @import './diagnostics.css' layer(components);
 @import './diagnostics-results.css' layer(components);
+@import './diagnostics-dashboard.css' layer(components);
 @import './motion.css' layer(components);
 @import './startup.css' layer(components);
 @import './loading.css' layer(components);

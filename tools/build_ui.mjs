@@ -9,7 +9,7 @@ await build({ configFile });
 const shellDir = resolve(root, 'build/ui-shell');
 await build({ configFile, publicDir: false, build: {
   ssr: resolve(root, 'frontend/src/shell.tsx'), outDir: shellDir, emptyOutDir: true,
-  rollupOptions: { output: { entryFileNames: 'shell.mjs' } },
+  rollupOptions: { input: resolve(root, 'frontend/src/shell.tsx'), output: { entryFileNames: 'shell.mjs' } },
 } });
 const { render } = await import(pathToFileURL(resolve(shellDir, 'shell.mjs')));
 const file = resolve(root, 'frontend/dist/index.html');

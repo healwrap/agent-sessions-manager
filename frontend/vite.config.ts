@@ -20,6 +20,17 @@ export default defineConfig({
       },
     },
   },
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        browserCheck: fileURLToPath(
+          new URL('./browser-check.html', import.meta.url),
+        ),
+      },
+    },
+  },
   test: { include: ['../tests/frontend/**/*.test.{ts,tsx}'] },
 });

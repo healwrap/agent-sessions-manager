@@ -29,7 +29,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        extra_connect = ' https://claude.ai https://www.cloudflare.com' if urlparse(self.path).path == '/browser-check.html' else ''
+        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'{extra_connect}; frame-ancestors 'none'; base-uri 'none'")
         self.end_headers()
         self.wfile.write(body)
 
@@ -38,10 +39,11 @@ class Handler(BaseHTTPRequestHandler):
             host = self.headers.get('Host', '')
             expected = {f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'}
             origin = self.headers.get('Origin')
-            if host not in expected or self.headers.get('Sec-Fetch-Site') == 'cross-site' or (origin and origin != f'http://{host}'):
+            parsed = urlparse(self.path)
+            probe_navigation = parsed.path == '/browser-check.html' and self.headers.get('Sec-Fetch-Dest') == 'document'
+            if host not in expected or (not probe_navigation and (self.headers.get('Sec-Fetch-Site') == 'cross-site' or (origin and origin != f'http://{host}'))):
                 self.respond(403, {'error': '仅允许本机页面访问'})
                 return
-            parsed = urlparse(self.path)
             q = parse_qs(parsed.query)
             get = lambda name, default='': q.get(name, [default])[0]
             integer = lambda name, default, low, high: max(low, min(high, int(get(name, str(default)))))
@@ -58,6 +60,8 @@ class Handler(BaseHTTPRequestHandler):
                 from agent_sessions.diagnostics.local import inspect_app
                 config = self.server.app_settings.read()
                 result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
+            elif parsed.path.startswith('/api/browser-checks/'):
+                result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path == '/api/environments':
                 result = self.server.environments.read()
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
@@ -117,8 +121,9 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
+        browser_probe = self.path.startswith('/api/browser-checks/')
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -130,8 +135,16 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < length <= 2_000_000: raise ValueError('会话视图设置过大')
             if diagnostic and (length > 4096 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('检测参数应使用 JSON，大小不能超过 4 KB')
+            if browser_probe and (length > 65536 or self.headers.get_content_type() != 'application/json'):
+                raise ValueError('浏览器采样应使用 JSON，大小不能超过 64 KB')
             value = json.loads(self.rfile.read(length))
-            if diagnostic:
+            if browser_probe:
+                result = (self.server.browser_diagnostics.start(value) if self.path.endswith('/start') else
+                          self.server.browser_diagnostics.complete(self.path.rsplit('/', 1)[-1], value))
+                if self.path.endswith('/start'):
+                    result['url'] = f"http://{host}/browser-check.html?ticket={result['token']}"
+                self.respond(200, result)
+            elif diagnostic:
                 if self.path.endswith('/clear'):
                     self.respond(200, self.server.claude_diagnostics.clear())
                 else:
@@ -217,6 +230,8 @@ def main():
     server.claude_diagnostics = ClaudeDiagnostics(args.state_home)
     from agent_sessions.environments import EnvironmentSettings
     server.environments = EnvironmentSettings(args.state_home)
+    from agent_sessions.diagnostics.browser import BrowserDiagnostics
+    server.browser_diagnostics = BrowserDiagnostics(server.environments)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

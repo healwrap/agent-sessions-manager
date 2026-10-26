@@ -88,7 +88,7 @@ const deviceItem = (
   value,
   detail,
   state,
-  scope: '当前 Agent Sessions 窗口',
+  scope: '独立浏览器检测页',
 });
 
 async function canvasFingerprint(): Promise<DiagnosticItem> {
@@ -114,13 +114,13 @@ async function canvasFingerprint(): Promise<DiagnosticItem> {
       'canvas',
       'Canvas 指纹',
       value,
-      '固定绘制样本的 SHA-256；用于比较此窗口，不用于判断账号状态。',
+      '固定绘制样本的 SHA-256；用于比较此独立浏览器环境。',
     );
   } catch {
     return deviceItem(
       'canvas',
       'Canvas 指纹',
-      '当前窗口未提供绘制或摘要能力',
+      '此浏览器未提供绘制或摘要能力',
       '',
       'unknown',
     );
@@ -144,7 +144,7 @@ function webglRenderer(): DiagnosticItem {
     return deviceItem(
       'webgl',
       'WebGL 渲染器',
-      '当前窗口未提供 WebGL',
+      '此浏览器未提供 WebGL',
       '',
       'unknown',
     );
@@ -156,7 +156,7 @@ async function webrtcCandidates(): Promise<DiagnosticItem> {
     return deviceItem(
       'webrtc',
       'WebRTC 候选地址',
-      '当前窗口不支持 WebRTC',
+      '此浏览器不支持 WebRTC',
       '',
       'unknown',
     );
@@ -193,7 +193,7 @@ async function webrtcCandidates(): Promise<DiagnosticItem> {
       'WebRTC 候选地址',
       candidates.size ? [...candidates].join('；') : '未取得候选地址',
       candidates.size
-        ? '本窗口采样，可能包含本地、mDNS、服务器反射地址；未与 Claude 目标环境进行泄漏判定。'
+        ? '此浏览器的实际 ICE 候选；host 为本地或 mDNS 地址，srflx 为 STUN 测得的 UDP 出口。'
         : 'STUN 无回包或未产生候选；不能据此认定没有泄漏。',
       candidates.size ? 'info' : 'unknown',
     );
@@ -202,7 +202,7 @@ async function webrtcCandidates(): Promise<DiagnosticItem> {
       'webrtc',
       'WebRTC 候选地址',
       '未完成采样',
-      '当前窗口或网络未完成 ICE 收集。',
+      '此浏览器或网络未完成 ICE 收集。',
       'unknown',
     );
   } finally {

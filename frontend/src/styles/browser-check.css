@@ -1,0 +1,46 @@
+.browser-probe-page {
+  height: 100dvh;
+  overflow: auto;
+  padding: 40px max(24px, calc((100vw - 980px) / 2));
+  background: var(--dsw-alias-bg-layer-1);
+}
+.browser-probe-intro {
+  margin-bottom: 28px;
+}
+.browser-probe-intro svg {
+  color: var(--dsw-alias-state-business-primary);
+}
+.browser-probe-intro h1 {
+  font-size: 24px;
+  margin: 12px 0;
+}
+.browser-probe-intro p {
+  color: var(--dsw-alias-label-secondary);
+  line-height: 1.7;
+}
+.browser-probe-success {
+  color: var(--dsw-alias-state-success-primary, #24904e);
+  margin: 20px 0;
+}
+.browser-probe-link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0;
+}
+.browser-probe-link input {
+  min-width: 0;
+  flex: 1;
+}
+.browser-probe-wait {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dsw-alias-label-secondary);
+}
+.browser-probe-compare {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}

@@ -3,7 +3,7 @@ import ctypes
 import sys
 
 
-def focus_process(pid):
+def _application_action(pid, action):
     if sys.platform != 'darwin': return False
     ctypes.CDLL('/System/Library/Frameworks/AppKit.framework/AppKit')
     objc = ctypes.CDLL('/usr/lib/libobjc.A.dylib')
@@ -19,6 +19,16 @@ def focus_process(pid):
     pool = message(objc.objc_getClass(b'NSAutoreleasePool'), selector('new'))
     try:
         app = lookup(objc.objc_getClass(b'NSRunningApplication'), selector('runningApplicationWithProcessIdentifier:'), pid)
-        return bool(app and activate(app, selector('activateWithOptions:'), 3))
+        if action == 'activate': return bool(app and activate(app, selector('activateWithOptions:'), 3))
+        terminate = ctypes.CFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(address)
+        return bool(app and terminate(app, selector('terminate')))
     finally:
         message(pool, selector('drain'))
+
+
+def focus_process(pid):
+    return _application_action(pid, 'activate')
+
+
+def quit_process(pid):
+    return _application_action(pid, 'terminate')

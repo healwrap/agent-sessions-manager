@@ -42,6 +42,7 @@
 - 已在实际界面完成账号创建、自动创建两个环境、重命名和代理绑定；删除账号配置后，绑定环境仍然保留。运行中的环境拒绝修改或删除。
 - 已使用不可用的专用代理验证启动拦截：没有创建浏览器进程，也没有回退直连。
 - 已进入官方 Claude App 的邮箱登录表单，App 的代理转发器观测到 `claude.ai` 与官方认证资源域名。
+- 已实测官方 App 账号 A → B → A：先正常退出原进程再启动目标环境，三个启动均成功；A 重用原目录，B 使用另一目录，语言配置各自保留。
 - 已检查官方 App 进程的独立 `CLAUDE_CONFIG_DIR`，且未继承 API Key、供应商地址或思考强度环境变量。
 - 真实 Claude 登录需要用户在独立窗口完成 Cloudflare 真人验证与官方登录，之后再验收关闭重开后的账号保持。
 - 当前官方 Claude App 拒绝调试参数，因此不添加调试参数、不修改 App 包；语言设置文件和进程时区分别配置，App 运行时指纹与公网出口不冒充浏览器检测结果。
@@ -51,6 +52,7 @@
 - [Chromium 独立数据目录](https://www.chromium.org/developers/creating-and-using-profiles/)
 - [Chrome 自定义目录的调试连接](https://developer.chrome.com/blog/remote-debugging-port)
 - [Chrome DevTools Target 协议](https://chromedevtools.github.io/devtools-protocol/tot/Target/)
+- [macOS 应用正常退出接口](https://developer.apple.com/documentation/appkit/nsrunningapplication/terminate())
 - [BrowserLeaks DNS 测试说明](https://browserleaks.com/dns)
 
 浏览器管理连接只监听回环地址，仅连接本应用创建的独立目录。DNS 使用第三方观测服务，服务失败、无回包或未配置预期解析器时保留未验证结果。

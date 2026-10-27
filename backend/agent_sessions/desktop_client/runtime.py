@@ -13,7 +13,7 @@ from agent_sessions.browser.proxy import ProxyRelay
 from agent_sessions.browser.session_state import session_state
 from agent_sessions.browser.process_state import ProcessState
 from .conflicts import warnings
-from .focus import focus_process
+from .focus import focus_process, quit_process
 
 
 def app_processes():
@@ -157,8 +157,8 @@ class AppRuntime:
             self.runs[key]['cancelled'] = True
             process = self.processes.get(key)
             if process and process.poll() is None:
-                process.terminate()
-                try: process.wait(timeout=8)
+                if not quit_process(process.pid): process.terminate()
+                try: process.wait(timeout=20)
                 except subprocess.TimeoutExpired: raise ValueError('App 尚未退出，请关闭它的窗口后重试') from None
             relay = self.relays.pop(key, None)
             if relay: relay.close()

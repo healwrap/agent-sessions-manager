@@ -117,7 +117,7 @@
   font-size: 15px;
   line-height: 1.6;
 }
-.diagnostic-overview-grid {
+.diagnostic-card-grid.diagnostic-overview-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
 }
 .diagnostic-field:has(.diagnostic-dns-resolvers) {

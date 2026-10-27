@@ -15,8 +15,12 @@ export function DnsResolvers({ servers }: { servers: DnsServer[] }) {
           key={server.ip}
         >
           <span className="diagnostic-mono">{server.ip}</span>
-          <span>{countryLabel(server.country) || '地区未知'}</span>
-          <span>{server.info.join(' · ') || '运营商未知'}</span>
+          <span title={server.info[0]}>
+            {countryLabel(server.country) || '地区未知'}
+          </span>
+          <span>
+            {server.info.slice(1).join(' · ') || server.info[0] || '运营商未知'}
+          </span>
         </div>
       ))}
     </div>

@@ -64,9 +64,11 @@ export function EditorDialog({
             disabled={busy}
           />
         </header>
-        <fieldset className="editor-dialog-fields" disabled={busy}>
-          {children}
-        </fieldset>
+        <div className="editor-dialog-body">
+          <fieldset className="editor-dialog-fields" disabled={busy}>
+            {children}
+          </fieldset>
+        </div>
         <footer className="editor-dialog-footer">{footer}</footer>
       </form>
     </Dialog>

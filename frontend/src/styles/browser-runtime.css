@@ -1,6 +1,7 @@
 .environment-gate-editor {
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: var(--dsw-radius-md);
+  overflow: hidden;
 }
 .environment-gate-editor > .disclosure-collapse > div > .disclosure-content {
   padding: 0 16px 16px;
@@ -17,11 +18,7 @@
   flex: none;
 }
 .environment-gate-editor .settings-row-label label {
-  font-size: 13px;
-}
-.environment-gate-editor .settings-row-label p {
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
 }
 .environment-region-preview {
   display: flex;

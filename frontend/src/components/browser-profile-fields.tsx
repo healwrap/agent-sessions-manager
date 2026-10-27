@@ -179,7 +179,11 @@ export function BrowserProfileFields({
           </div>
         </>
       )}
-      <Disclosure className="environment-gate-editor" title="启动门控">
+      <Disclosure
+        className="environment-gate-editor"
+        title="启动门控"
+        scrollToEndOnOpen
+      >
         {gates
           .filter(
             (gate) =>
@@ -187,11 +191,7 @@ export function BrowserProfileFields({
               ['proxy', 'region', 'exit_ip'].includes(gate.id),
           )
           .map((gate) => (
-            <SettingsRow
-              key={gate.id}
-              label={gate.title}
-              description={gate.description}
-            >
+            <SettingsRow key={gate.id} label={gate.title}>
               <Select
                 label={`${gate.title}门控`}
                 value={value.gates?.[gate.id] || gate.default_mode}

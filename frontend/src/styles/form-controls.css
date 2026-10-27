@@ -71,13 +71,16 @@
   background: var(--dsw-alias-bg-mask-1);
   backdrop-filter: var(--dsw-mask-blur, none);
 }
-.editor-dialog form {
+.editor-dialog > form {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 48px);
+  min-height: 0;
+  overflow: hidden;
 }
 .editor-dialog-heading {
   display: flex;
+  flex: none;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -95,6 +98,13 @@
   font-size: 12px;
   line-height: 20px;
 }
+.editor-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .editor-dialog-fields {
   display: grid;
   gap: 20px;
@@ -102,7 +112,6 @@
   min-width: 0;
   margin: 0;
   padding: 0 24px 24px;
-  overflow-y: auto;
   border: 0;
 }
 .editor-dialog-footer {
@@ -112,6 +121,7 @@
   flex: none;
   padding: 16px 24px 20px;
   border-top: 0.5px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-2);
 }
 .editor-dialog .environment-field .select-trigger {
   height: 36px;

@@ -40,12 +40,10 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
             <StatusBadge tone={tone}>
               {check.policy === 'off'
                 ? '已关闭'
-                : check.label ||
-                  (check.state === 'pass'
-                    ? '通过'
-                    : check.state === 'unknown'
-                      ? '无法判定'
-                      : '失败')}
+                : check.state === 'pass'
+                  ? '通过'
+                  : check.label ||
+                    (check.state === 'unknown' ? '无法判定' : '失败')}
             </StatusBadge>
           </div>
         );

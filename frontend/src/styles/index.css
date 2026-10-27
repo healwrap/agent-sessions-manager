@@ -1,5 +1,6 @@
 @layer theme, base, components, utilities;
 @import './dsh/index.css' layer(base);
+@import './dsh/controls-theme.css' layer(base);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import './theme.css' layer(components);
@@ -62,6 +63,8 @@
 @import './accounts.css' layer(components);
 @import './account-details.css' layer(components);
 @import './account-client.css' layer(components);
+@import './dsh/controls.css' layer(components);
+@import './dsh/choices.css' layer(components);
 @import './ui-foundations.css' layer(components);
 @import './ui-controls.css' layer(components);
 

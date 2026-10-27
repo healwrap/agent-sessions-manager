@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { SearchField } from '../search-field';
 
 export function ChoiceGroup<T extends string>({
@@ -26,6 +26,14 @@ export function ChoiceGroup<T extends string>({
     <div
       className={`ui-choices ${className}`}
       data-variant={variant}
+      style={
+        {
+          '--dsh-segment-count': items.length,
+          '--dsh-segment-index': items.findIndex(
+            (item) => item.value === value,
+          ),
+        } as CSSProperties
+      }
       role="group"
       aria-label={label}
       onKeyDown={(event) => {
@@ -54,6 +62,7 @@ export function ChoiceGroup<T extends string>({
         buttons[next].click();
       }}
     >
+      <span className="ui-choice-indicator" aria-hidden="true" />
       {items.map((item) => (
         <button
           key={item.value}

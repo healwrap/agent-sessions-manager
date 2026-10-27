@@ -1,12 +1,12 @@
 .skill-workspace .main-header {
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1);
 }
 .skill-overview {
   margin-bottom: 24px;
 }
 .skill-sidebar-label {
   margin: 26px 12px 10px;
-  color: var(--ui-muted);
+  color: var(--dsw-alias-label-secondary);
   font-size: 14px;
 }
 .skill-sidebar-dot {
@@ -36,7 +36,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ui-accent);
+  color: var(--dsw-alias-label-primary);
   font: inherit;
   cursor: pointer;
 }

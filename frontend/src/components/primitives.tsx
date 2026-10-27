@@ -50,7 +50,7 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: string;
-  variant?: 'primary' | 'secondary' | 'text';
+  variant?: 'primary' | 'secondary' | 'text' | 'ghost' | 'outline' | 'toolbar';
   size?: 'normal' | 'small';
 }) {
   return (

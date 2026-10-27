@@ -101,7 +101,7 @@ export function RemoveButton({
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="outline"
                 className="ui-danger"
                 disabled={disabled}
               >

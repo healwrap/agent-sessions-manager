@@ -14,7 +14,7 @@ export function PageHeading({
   return (
     <header className="ui-page-heading">
       <div>
-        {icon && <IconTile>{icon}</IconTile>}
+        {icon && <LeadingIcon>{icon}</LeadingIcon>}
         <h1>{title}</h1>
         {count !== undefined && <span className="ui-count">{count}</span>}
       </div>
@@ -72,21 +72,9 @@ export function Panel({
   );
 }
 
-export function IconTile({
-  children,
-  tone = 'accent',
-  className = '',
-}: {
-  children: ReactNode;
-  tone?: 'accent' | 'neutral';
-  className?: string;
-}) {
+export function LeadingIcon({ children }: { children: ReactNode }) {
   return (
-    <span
-      className={`ui-icon-tile ${className}`}
-      data-tone={tone}
-      aria-hidden="true"
-    >
+    <span className="ui-leading-icon" aria-hidden="true">
       {children}
     </span>
   );

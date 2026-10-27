@@ -23,8 +23,8 @@
   align-items: end;
   gap: 18px;
   padding: 16px 18px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 14px;
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
   background: var(--dsw-alias-bg-layer-1);
 }
 .diagnostic-form[data-mode='direct'] {
@@ -91,7 +91,7 @@
 }
 .diagnostic-history {
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-2);
 }
@@ -124,7 +124,7 @@
   width: 26%;
 }
 .diagnostic-history tbody tr {
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
 }
 .diagnostic-history td > span {
   display: block;

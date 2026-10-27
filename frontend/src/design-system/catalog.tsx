@@ -47,7 +47,7 @@ export function ComponentCatalog() {
   return (
     <main className="component-catalog ui-page">
       <PageHeading
-        title="Agent Sessions · 组件预览"
+        title="DSH · 组件预览"
         icon={<Layers3 size={22} />}
         actions={
           <ChoiceGroup
@@ -68,19 +68,19 @@ export function ComponentCatalog() {
         onChange={setTab}
         items={[
           { value: 'components', label: '组件与交互' },
-          { value: 'tokens', label: '设计变量' },
+          { value: 'tokens', label: 'DSH 变量' },
         ]}
       />
       {tab === 'tokens' ? (
         <div className="catalog-grid">
-          <Panel title="颜色">
+          <Panel title="DSH 原始颜色变量">
             <div className="catalog-swatches">
               {[
-                '--ui-accent',
-                '--ui-canvas',
-                '--ui-panel',
-                '--ui-soft',
-                '--ui-line',
+                '--dsw-alias-button-primary-fill',
+                '--dsw-alias-bg-layer-1',
+                '--dsw-alias-settings-card-fill',
+                '--dsw-alias-bg-module-platform',
+                '--dsw-alias-settings-card-stroke',
               ].map((token) => (
                 <div key={token}>
                   <span style={{ background: `var(${token})` }} />
@@ -92,12 +92,12 @@ export function ComponentCatalog() {
           <Panel title="排版与间距">
             <FactsGrid
               items={[
-                { label: '正文', value: '15 px' },
-                { label: '控件文字', value: '14 px' },
-                { label: '页面标题', value: '23 px' },
-                { label: '区块间距', value: '20 px' },
-                { label: '圆角', value: 'DSH radius-lg' },
-                { label: '过渡', value: '160 ms' },
+                { label: '正文', value: '14 px / 22 px' },
+                { label: '标准按钮', value: '36 px · R12' },
+                { label: '紧凑按钮', value: '28 px · R8' },
+                { label: '输入框', value: '32 px · R12' },
+                { label: '设置卡片', value: 'R20 · 0.5 px 描边' },
+                { label: '分段选择', value: 'DSH 滑动指示器' },
               ]}
             />
           </Panel>
@@ -110,8 +110,8 @@ export function ComponentCatalog() {
                 <Plus size={16} />
                 新建环境
               </Button>
-              <Button>次要操作</Button>
-              <Button variant="text">文字按钮</Button>
+              <Button variant="outline">描边按钮</Button>
+              <Button variant="ghost">无底色按钮</Button>
               <Button disabled>不可用</Button>
             </div>
             <div className="catalog-statuses">

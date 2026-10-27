@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { IconTile, Panel } from './layout';
+import { LeadingIcon, Panel } from './layout';
 
 export function ResourceCard({
   title,
@@ -27,7 +27,7 @@ export function ResourceCard({
       aria-label={title}
     >
       <header className="ui-resource-heading">
-        <IconTile tone="neutral">{icon}</IconTile>
+        <LeadingIcon>{icon}</LeadingIcon>
         <div className="ui-resource-identity">
           <h2>{title}</h2>
           {subtitle && <span>{subtitle}</span>}

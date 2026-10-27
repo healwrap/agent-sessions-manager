@@ -1,0 +1,65 @@
+/* Adapted from ui-primitives/Button.module.css (DSH, MIT).
+ * Existing secondary/text names map to DSH outline/ghost. */
+.action-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--dsw-radius-md);
+  color: var(--dsw-alias-label-primary);
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.action-button[data-size='small'] {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--dsw-radius-sm);
+  font-size: 12px;
+  line-height: 18px;
+}
+.action-button[data-variant='primary'] {
+  background: var(--dsw-alias-button-primary-fill);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+.action-button[data-variant='primary']:hover:not(:disabled) {
+  background: var(--dsw-alias-button-primary-hover);
+}
+.action-button:is([data-variant='secondary'], [data-variant='outline']) {
+  border: 0.5px solid var(--dsw-alias-border-l3);
+}
+.action-button:is(
+    [data-variant='secondary'],
+    [data-variant='outline'],
+    [data-variant='text'],
+    [data-variant='ghost']
+  ):hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.action-button:is([data-variant='text'], [data-variant='ghost']):active:not(
+    :disabled
+  ) {
+  background: var(--dsw-alias-interactive-bg-active);
+}
+.action-button[data-variant='toolbar'] {
+  background: var(--dsw-alias-button-tool-bar-fill);
+}
+.action-button[data-variant='toolbar']:hover:not(:disabled) {
+  background: var(--dsw-alias-button-tool-bar-hover);
+}
+.icon-button {
+  border-radius: var(--dsw-radius-sm);
+}
+.ui-danger.action-button {
+  color: var(--dsw-alias-state-error-primary);
+}

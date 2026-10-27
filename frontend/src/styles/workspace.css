@@ -40,8 +40,8 @@
 }
 .workspace-choices {
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsw-radius-lg);
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
   background: var(--dsw-alias-bg-layer-2);
 }
 .workspace-choice {
@@ -62,7 +62,7 @@
   transition: background 140ms ease;
 }
 .workspace-choice + .workspace-choice {
-  border-top: 1px solid var(--dsw-alias-border-l1);
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
 }
 .workspace-choice:hover {
   background: var(--dsw-alias-interactive-bg-hover);
@@ -82,10 +82,11 @@
   width: 100%;
 }
 .workspace-picker .select-trigger {
-  height: 42px;
+  height: 40px;
   gap: 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  background: var(--ui-panel);
+  border-radius: var(--dsw-radius-md);
+  border: 0;
+  background: var(--dsw-alias-bg-layer-2);
   font-size: 14px;
 }
 .main-header .workspace-picker {

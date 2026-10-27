@@ -1,7 +1,7 @@
 .account-launch-progress {
   margin: 0 24px 24px;
   padding: 16px 18px;
-  border: 1px solid color-mix(in srgb, var(--account-accent) 20%, transparent);
+  border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: var(--dsw-radius-md);
   background: var(--account-soft);
 }
@@ -58,7 +58,7 @@
   overflow-wrap: anywhere;
 }
 .account-check-details .launch-check {
-  border-top: 1px solid var(--dsw-alias-border-l1);
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
 }
 .account-detail .disclosure-trigger {
   padding-inline: 24px;
@@ -82,7 +82,7 @@
   font-size: 13px;
 }
 .account-detail :is(button, input):focus-visible {
-  outline: 2px solid var(--account-accent);
+  outline: 2px solid var(--dsw-alias-state-business-primary);
   outline-offset: 3px;
 }
 .account-detail .disclosure-trigger:focus-visible {
@@ -90,7 +90,7 @@
 }
 .accounts-list button:focus-visible,
 .accounts-filters button:focus-visible {
-  outline: 2px solid var(--account-accent);
+  outline: 2px solid var(--dsw-alias-state-business-primary);
   outline-offset: 2px;
 }
 @container (max-width: 430px) {

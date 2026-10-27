@@ -9,5 +9,6 @@
 ## UI 组件积累
 
 - 管理类页面优先从 `frontend/src/components/ui` 复用公共组件；页面样式只负责业务布局。
-- 颜色、间距、圆角和动效沿用 DSH 与 `styles/ui-foundations.css` 的语义变量。
+- UI 以 DSH 原组件源码和 `docs/ui-radius.zh.md`、`docs/web-styling.zh.md` 为准；不只借用颜色变量后另行设计按钮、卡片或页签。原组件对应关系见 `frontend/src/components/ui/README.md`。
+- 基础控件适配放在 `styles/dsh/`，直接使用 DSH 语义变量。`styles/ui-foundations.css` 只组合业务布局，不定义第二套主色、圆角或控件尺寸。
 - 新公共组件同步加入 `frontend/src/design-system/catalog.tsx` 的交互预览，并在真实页面使用；组件规范见 `components/ui/README.md`。

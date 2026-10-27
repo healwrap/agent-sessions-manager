@@ -1,16 +1,16 @@
 dialog {
   max-width: 650px;
   width: calc(100% - 60px);
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 16px;
+  border: 0;
+  border-radius: var(--dsw-radius-panel);
   padding: 22px;
-  box-shadow: 0 20px 80px #0002;
+  box-shadow: var(--dsw-elevation-prominent);
   color: inherit;
   background: var(--dsw-alias-bg-layer-1);
   overflow-wrap: anywhere;
 }
 dialog::backdrop {
-  background: #0003;
+  background: var(--dsw-alias-bg-mask-1);
 }
 dialog h2 {
   font-size: 16px;
@@ -20,30 +20,6 @@ dialog pre {
   font: 12px/1.7 var(--dsw-font-family);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.action-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 34px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: var(--dsw-radius-md, 12px);
-  background: var(--dsw-alias-bg-layer-3);
-  color: inherit;
-  font-size: 13px;
-  white-space: nowrap;
-}
-.action-button[data-variant='primary'] {
-  background: var(--dsw-alias-brand-primary);
-  color: var(--dsw-alias-label-primary-foreground);
-}
-.action-button[data-variant='text'] {
-  background: transparent;
-}
-.action-button:hover:not(:disabled) {
-  opacity: 0.8;
 }
 .dialog-close {
   float: right;
@@ -71,7 +47,7 @@ dialog pre {
   height: 300px;
   resize: vertical;
   padding: 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0;
   border-radius: 8px;
   background: var(--dsw-alias-bg-layer-2);
   color: inherit;

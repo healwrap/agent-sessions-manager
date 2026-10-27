@@ -32,9 +32,9 @@
 }
 .skill-target-columns {
   min-height: 40px;
-  border-block: 1px solid var(--dsw-alias-border-l1);
-  background: var(--ui-canvas);
-  color: var(--ui-muted);
+  border-block: 0.5px solid var(--dsw-alias-border-l1);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-secondary);
   font-size: 14px;
 }
 .skill-target-columns > span:last-child {
@@ -42,14 +42,14 @@
 }
 .skill-target-row {
   min-height: 76px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
-  transition: background var(--ui-motion) ease;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1);
+  transition: background 160ms ease;
 }
 .skill-target-row:last-child {
   border-bottom: 0;
 }
 .skill-target-row[data-selected='true'] {
-  background: var(--ui-soft);
+  background: var(--dsw-alias-bg-module-platform);
 }
 .skill-agent-select,
 .skill-state-select {
@@ -76,9 +76,9 @@
   flex: none;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 0.5px solid var(--dsw-alias-border-l1);
   border-radius: 10px;
-  background: var(--ui-panel);
+  background: var(--dsw-alias-bg-layer-2);
 }
 .skill-agent-mark .agent-icon {
   width: 23px;
@@ -110,7 +110,7 @@
 }
 .skill-detail-description {
   margin: 12px 0 20px;
-  color: var(--ui-muted);
+  color: var(--dsw-alias-label-secondary);
   font-size: 14px;
   line-height: 23px;
 }
@@ -120,15 +120,15 @@
 }
 .skill-path-block {
   padding: 14px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 0.5px solid var(--dsw-alias-border-l1);
   border-radius: var(--dsw-radius-md);
-  background: var(--ui-canvas);
+  background: var(--dsw-alias-bg-layer-1);
 }
 .skill-path-block > span {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--ui-muted);
+  color: var(--dsw-alias-label-secondary);
   font-size: 14px;
 }
 .skill-path-block code {

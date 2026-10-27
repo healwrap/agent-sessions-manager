@@ -11,7 +11,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  gap: 24px;
+  gap: 16px;
   max-width: 1400px;
   margin: auto;
 }
@@ -22,7 +22,7 @@
   margin-top: 24px;
 }
 .catalog-grid .ui-resource-footer .ui-notice {
-  margin: 0 20px 20px;
+  margin: 0 16px 16px;
 }
 .catalog-grid .ui-collection-toolbar .search-field {
   min-width: 180px;
@@ -40,8 +40,8 @@
 .catalog-swatches span {
   width: 48px;
   height: 48px;
-  border: 1px solid var(--ui-line);
-  border-radius: 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
 }
 @container (max-width: 900px) {
   .catalog-grid {

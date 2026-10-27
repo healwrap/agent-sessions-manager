@@ -1,6 +1,6 @@
 import { ArrowRight, PanelsTopLeft } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
-import { IconTile } from './ui';
+import { LeadingIcon } from './ui';
 import { workspaceChoices } from './workspace-picker';
 
 export function StartPage({
@@ -25,7 +25,7 @@ export function StartPage({
               key={item.value}
               onClick={() => onNavigate(item.value)}
             >
-              <IconTile>{item.icon}</IconTile>
+              <LeadingIcon>{item.icon}</LeadingIcon>
               <span>{item.label}</span>
               <ArrowRight
                 size={18}

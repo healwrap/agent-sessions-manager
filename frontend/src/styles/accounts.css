@@ -1,6 +1,6 @@
 .environment-content[data-section='accounts'] {
-  --account-accent: var(--ui-accent);
-  --account-soft: var(--ui-soft);
+  --account-accent: var(--dsw-alias-label-primary);
+  --account-soft: var(--dsw-alias-bg-module-platform);
 }
 .accounts-split {
   display: grid;
@@ -35,7 +35,7 @@
 }
 .account-list-item[aria-pressed='true'] {
   background: var(--account-soft);
-  border-color: color-mix(in srgb, var(--account-accent) 24%, transparent);
+  border-color: var(--dsw-alias-border-l3);
 }
 .account-avatar {
   display: inline-flex;
@@ -44,7 +44,7 @@
   width: 40px;
   height: 40px;
   flex: none;
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: 0.5px solid var(--dsw-alias-border-l1);
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-2);
 }

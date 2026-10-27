@@ -1,44 +1,55 @@
-# Agent Sessions UI
+# Agent Sessions UI · DSH 组件适配
 
-所有管理类页面从 `components/ui` 导入公共组件。底层沿用 DSH tokens 与现有控件，不安装第二套组件库。
+公共组件从 `components/ui` 导入。基础控件以 DSH 原组件源码为准，页面组合延续相同材质与几何，不建立第二套视觉规范。
 
-## 层级
+## DSH 来源
 
-| 层级     | 内容                                                                                      | 所属文件                            |
-| -------- | ----------------------------------------------------------------------------------------- | ----------------------------------- |
-| 设计变量 | 主色、画布、面板、边框、间距、圆角、动效                                                  | `styles/ui-foundations.css`         |
-| 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、EditorDialog | 原有组件，由 `ui/index.ts` 统一导出 |
-| 页面组合 | PageHeading、SectionHeading、Panel、IconTile、FactsGrid                                   | `ui/layout.tsx`                     |
-| 集合操作 | ChoiceGroup、CollectionToolbar                                                            | `ui/collection.tsx`                 |
-| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                               | `ui/feedback.tsx`                   |
-| 资源展示 | ResourceCard                                                                              | `ui/resource-card.tsx`              |
-| 表单     | Field                                                                                     | `ui/field.tsx`                      |
+对应本机 `deepseek-harness` 源码版本 `717ed6700ae3128f90fe05cbfd22fe6f9483eb18`。DSH 为 MIT 许可，声明保留在 `public/harness-license.txt`。
 
-工作区外壳、侧栏与工作区切换器同样由公共入口导出，沿用 `WorkspaceLayout`、`WorkspaceSidebar`、`WorkspacePicker`。
+| 组件 / 规则               | DSH 原始来源（相对 DSH 仓库）                                                                                                                                              | 本项目适配                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Button                    | `packages/client/ui-primitives/src/Button.module.css`                                                                                                                      | `styles/dsh/controls.css`                                      |
+| Input / SearchField       | `packages/client/ui-primitives/src/Input.module.css`                                                                                                                       | `styles/form-controls.css`、`styles/search-field.css`          |
+| ChoiceGroup 分段选择      | `packages/client/ui-primitives/src/SegmentedControl.module.css`                                                                                                            | `styles/dsh/choices.css`，保留滑动指示器                       |
+| ChoiceGroup 下划线导航    | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                       |
+| Select / 菜单             | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                            |
+| 状态标签几何              | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名            |
+| EditorDialog              | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，业务表单使用更宽内容区与独立滚动体 |
+| 设置面板                  | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                          |
+| Panel / ResourceCard 材质 | `docs/ui-radius.zh.md` 的设置卡片规范                                                                                                                                      | `styles/ui-foundations.css`                                    |
+| 主题补充                  | `packages/client/ui-theme/src/styles/{design-platform,base,gradient-shadow-text}.css`                                                                                      | `styles/dsh/controls-theme.css`，只补充实际使用的原始别名      |
+
+修改视觉前先对照 DSH 原组件和 `docs/web-styling.zh.md`、`docs/ui-radius.zh.md`。主按钮为中性黑白色；业务蓝用于链接与焦点等既有语义，不替换主按钮色。
+
+## 公共组件
+
+| 类别     | 组件                                                                                      | 职责                               |
+| -------- | ----------------------------------------------------------------------------------------- | ---------------------------------- |
+| 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、EditorDialog | 适配 DSH 控件与交互                |
+| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                | 标题、信息分组、图标与事实展示     |
+| 集合操作 | ChoiceGroup、CollectionToolbar                                                            | 互斥选择、搜索与筛选               |
+| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                               | 空列表、加载、操作反馈与移除确认   |
+| 资源展示 | ResourceCard                                                                              | 组合身份、状态、操作、内容及折叠区 |
+| 表单     | Field                                                                                     | 标签与控件关联                     |
+| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker                                        | 页面外壳、导航与工作区切换         |
+
+页面组合是 Agent Sessions 的业务组件，并非声称 DSH 存在同名组件。它们只组合布局与数据，复用 DSH 控件、设置卡片材质和文字层级。
 
 ## 使用约定
 
-- 页面容器使用 `ui-page`。主要内容使用 Panel 或 ResourceCard，页面标题使用 PageHeading。
-- 一个操作区域只保留一个主要按钮。已有窗口显示“切回窗口”；检查中显示进度并禁用重复启动。
-- ChoiceGroup 用于互斥选择，支持左右方向键、Home、End。CollectionToolbar 统一搜索与筛选，业务页面维护筛选值。
-- FactsGrid 传入 `{ label, value, icon? }[]`，用于环境、账号、安装等事实；长 IP、路径和时区允许换行。
-- Field 的文本输入通过 `htmlFor` 和输入 `id` 关联；Select 自身必须有 `label`。
-- Notice 只承载可操作的反馈。一般信息不新增小字说明；错误保留原始反馈。BusyState 和空状态分别渲染。
-- 各组件只负责呈现与交互，不请求接口、不读写账号、不修改全局系统设置。
-- 颜色来自 DSH，新增语义变量统一放在 `ui-foundations.css`。避免在业务样式中重复实现按钮、标签、空状态或折叠交互。
-- 正文 15px，控件 14px，页面标题 23px。控件不靠缩小文字适配空间。
-- 动效使用 `--ui-motion`，沿用全局减少动态效果和关闭动画设置。
+- 页面使用 `ui-page` 与 PageHeading；按信息分组选择 Panel / ResourceCard，不为装饰而重复套卡片。
+- Button 标准 H36 / R12，紧凑 H28 / R8；`primary`、`outline`、`ghost`、`toolbar` 对应 DSH 原变体。兼容原 API：`secondary` 为描边按钮，`text` 为 ghost。
+- Input H32 / R12、选择器 H36 / R12；控件正文 14px / 22px。不在业务页面覆盖按钮填充、圆角与字号。
+- Panel / ResourceCard 使用 DSH 设置卡片：R20、0.5px 描边、layer-2 底色，无额外投影。高层级弹窗保留 DSH elevation 与遮罩。
+- ChoiceGroup 分段指示器按 DSH 算法滑动，支持方向键、Home、End，并尊重关闭动画与减少动态效果。
+- LeadingIcon 只容纳图标，不额外添加彩色底框。FactsGrid 展示真实字段，长 IP、路径和时区可换行。
+- Field 的文本标签通过 `htmlFor` 与输入 `id` 关联；Select 必须有 `label`。
+- Notice 只显示可操作反馈。一般信息不添加小字说明；错误保留原始反馈。
+- 一个操作区域只保留一个主要按钮。已有窗口显示“切回窗口”；检查中禁用重复启动。
+- 组件不请求业务接口、不读写账号、不修改系统设置。页面持有真实状态。
 
 ## 开发预览
 
-启动现有 Vite 开发服务后访问 `/?components=1`。预览包含浅深色、按钮、搜索与筛选、资源状态、表单弹窗、错误、加载及空列表。示例只维护页面内状态。
+启动现有 Vite 服务后访问 `/?components=1`，查看浅深色、按钮、搜索筛选、资源状态、表单弹窗、加载与空列表。示例只维护页面内状态。
 
-组件预览入口仅在开发模式加载，不进入生产应用的用户导航。新增组件应先加入这里，再在至少一个真实页面使用。
-
-```tsx
-import { CollectionToolbar, FactsGrid, ResourceCard } from './ui';
-
-<ResourceCard title={profile.name} icon={<BrowserIcon />} actions={actions}>
-  <FactsGrid items={facts} />
-</ResourceCard>;
-```
+预览仅在开发模式加载，不进入生产导航。新增公共组件同步加入预览并在至少一个真实页面使用。

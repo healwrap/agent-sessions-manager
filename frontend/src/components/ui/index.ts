@@ -7,7 +7,7 @@ export {
   PageHeading,
   Panel,
   SectionHeading,
-  IconTile,
+  LeadingIcon,
   FactsGrid,
   type Fact,
 } from './layout';

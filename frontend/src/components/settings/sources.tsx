@@ -12,9 +12,6 @@ export function SourceSettings({
 }) {
   return (
     <section aria-label="会话来源">
-      <p className="settings-description">
-        读取各 Agent 的本地会话，修改后自动保存并生效。
-      </p>
       {data?.sources.map((source) => {
         const paths = source.paths || [
           { key: source.id, label: '会话目录', hint: '' },

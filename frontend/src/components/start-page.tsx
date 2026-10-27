@@ -1,6 +1,8 @@
 import { ArrowRight, PanelsTopLeft } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import { workspaceChoices } from './workspace-picker';
+import { SettingsButton } from './ui';
+import { sessionStore } from '../state/session-store';
 
 export function StartPage({
   onNavigate,
@@ -14,6 +16,11 @@ export function StartPage({
           <PanelsTopLeft size={18} aria-hidden="true" />
           Agent Sessions
         </span>
+        <div className="header-actions">
+          <SettingsButton
+            onClick={() => sessionStore.update({ settingsOpen: true })}
+          />
+        </div>
       </header>
       <main className="start-content">
         <h1>工作区</h1>

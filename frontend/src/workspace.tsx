@@ -8,6 +8,7 @@ import { useTheme } from './hooks/use-theme';
 import { request } from './lib/api';
 import type { SettingsResponse } from './lib/types';
 import { sessionStore } from './state/session-store';
+import { SettingsDialog } from './components/settings-dialog';
 
 export type WorkspacePage = 'sessions' | 'accounts' | 'skills';
 
@@ -52,6 +53,24 @@ export function Workspace() {
       !state.settings.animations,
     );
   }, [state.settings.animations]);
+  useEffect(() => {
+    const openSettings = (event: KeyboardEvent) => {
+      if (
+        event.isComposing ||
+        event.altKey ||
+        event.shiftKey ||
+        event.key !== ',' ||
+        !(event.metaKey || event.ctrlKey)
+      )
+        return;
+      const dialog = document.querySelector('dialog[open]');
+      if (dialog && dialog.id !== 'settings-dialog') return;
+      event.preventDefault();
+      sessionStore.update({ settingsOpen: true });
+    };
+    window.addEventListener('keydown', openSettings);
+    return () => window.removeEventListener('keydown', openSettings);
+  }, []);
   function navigate(next: WorkspacePage) {
     if (next === 'sessions') setSessionsOpened(true);
     else history.replaceState(null, '', location.pathname);
@@ -94,6 +113,12 @@ export function Workspace() {
             onAccounts={() => navigate('accounts')}
             onSkills={() => navigate('skills')}
           />
+        </div>
+      )}
+      <SettingsDialog open={state.settingsOpen} />
+      {state.toast && (
+        <div id="toast" role="status">
+          {state.toast}
         </div>
       )}
     </>

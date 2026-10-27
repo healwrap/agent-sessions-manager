@@ -1,4 +1,5 @@
 export { Button, IconButton } from '../primitives';
+export { SettingsButton } from './settings-button';
 export {
   TextInput,
   StatusBadge,

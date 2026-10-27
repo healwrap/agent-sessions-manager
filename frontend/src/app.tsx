@@ -5,7 +5,6 @@ import { useLiveSync } from './hooks/use-live-sync';
 import { durationAvailable, usesRecordedDuration } from './lib/recorded-time';
 import { sessionTitle } from './lib/selectors';
 import { Sidebar } from './components/sidebar';
-import { SettingsDialog } from './components/settings-dialog';
 import { SessionActions, type SessionMenu } from './components/session-actions';
 import { ChatPane } from './components/chat-pane';
 import { TraceTable } from './components/trace-table';
@@ -234,13 +233,7 @@ export function App({
             : '本地会话'}
         </div>
       </WorkspaceLayout>
-      <SettingsDialog open={state.settingsOpen} />
       <SessionActions menu={menu} onClose={closeMenu} />
-      {state.toast && (
-        <div id="toast" role="status">
-          {state.toast}
-        </div>
-      )}
     </>
   );
 }

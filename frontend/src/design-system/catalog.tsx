@@ -26,6 +26,7 @@ import {
   Panel,
   ResourceCard,
   Select,
+  SettingsButton,
   StatusBadge,
   TextInput,
 } from '../components/ui';
@@ -41,6 +42,7 @@ export function ComponentCatalog() {
   const [state, setState] = useState('stopped');
   const [dialog, setDialog] = useState(false);
   const [contentDialog, setContentDialog] = useState(false);
+  const [settingsPreview, setSettingsPreview] = useState(false);
   const [name, setName] = useState('工作浏览器');
   const [proxy, setProxy] = useState('dedicated');
   const [notice, setNotice] = useState(false);
@@ -265,7 +267,10 @@ export function ComponentCatalog() {
             </div>
           </Panel>
           <Panel title="工作区导航">
-            <WorkspacePicker value={workspace} onChange={setWorkspace} />
+            <div className="workspace-sidebar-actions">
+              <WorkspacePicker value={workspace} onChange={setWorkspace} />
+              <SettingsButton onClick={() => setSettingsPreview(true)} />
+            </div>
           </Panel>
           <Panel title="空列表">
             <EmptyState
@@ -280,6 +285,21 @@ export function ComponentCatalog() {
             />
           </Panel>
         </div>
+      )}
+      {settingsPreview && (
+        <ContentDialog title="设置" onClose={() => setSettingsPreview(false)}>
+          <Field label="外观">
+            <ChoiceGroup
+              label="示例外观设置"
+              value={theme}
+              onChange={setTheme}
+              items={[
+                { value: 'light', label: '浅色' },
+                { value: 'dark', label: '深色' },
+              ]}
+            />
+          </Field>
+        </ContentDialog>
       )}
       {contentDialog && (
         <ContentDialog

@@ -2,6 +2,8 @@ import { useRef, type ReactNode } from 'react';
 import { useLayoutSlide } from '../hooks/use-layout-slide';
 import { useSidebarResize } from '../hooks/use-sidebar-resize';
 import { IconButton } from './primitives';
+import { SettingsButton } from './ui/settings-button';
+import { sessionStore } from '../state/session-store';
 
 export function WorkspaceSidebar({
   label,
@@ -39,7 +41,12 @@ export function WorkspaceSidebar({
         </div>
         {children}
         <footer>
-          <div className="workspace-sidebar-actions">{footer}</div>
+          <div className="workspace-sidebar-actions">
+            {footer}
+            <SettingsButton
+              onClick={() => sessionStore.update({ settingsOpen: true })}
+            />
+          </div>
         </footer>
       </aside>
       <div
@@ -93,7 +100,14 @@ export function WorkspaceLayout({
           <div className="session-title" data-tauri-drag-region>
             {title}
           </div>
-          <div className="header-actions">{actions}</div>
+          <div className="header-actions">
+            {actions}
+            {closed && (
+              <SettingsButton
+                onClick={() => sessionStore.update({ settingsOpen: true })}
+              />
+            )}
+          </div>
         </header>
         {children}
       </main>

@@ -67,15 +67,6 @@ export function Sidebar({
               }}
             />
           )}
-          <button
-            className="panel-row"
-            aria-haspopup="dialog"
-            aria-expanded={state.settingsOpen}
-            onClick={() => sessionStore.update({ settingsOpen: true })}
-          >
-            <Icon name="settings" />
-            设置
-          </button>
         </>
       }
     >

@@ -24,15 +24,15 @@
 
 ## 公共组件
 
-| 类别     | 组件                                                                                                     | 职责                               |
-| -------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                |
-| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                               | 标题、信息分组、图标与事实展示     |
-| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                            | 互斥选择、搜索与筛选               |
-| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                              | 空列表、加载、操作反馈与移除确认   |
-| 资源展示 | ResourceCard、ResourceRow                                                                                | 组合身份、状态、操作、内容及折叠区 |
-| 表单     | Field                                                                                                    | 标签与控件关联                     |
-| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker                                                       | 页面外壳、导航与工作区切换         |
+| 类别     | 组件                                                                                                     | 职责                                     |
+| -------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                      |
+| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                               | 标题、信息分组、图标与事实展示           |
+| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                            | 互斥选择、搜索与筛选                     |
+| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                              | 空列表、加载、操作反馈与移除确认         |
+| 资源展示 | ResourceCard、ResourceRow                                                                                | 组合身份、状态、操作、内容及折叠区       |
+| 表单     | Field                                                                                                    | 标签与控件关联                           |
+| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                       | 页面外壳、导航、工作区切换与全局设置入口 |
 
 页面组合是 Agent Sessions 的业务组件，并非声称 DSH 存在同名组件。它们只组合布局与数据，复用 DSH 控件、设置卡片材质和文字层级。
 
@@ -47,6 +47,7 @@
 - Field 的文本标签通过 `htmlFor` 与输入 `id` 关联；Select 必须有 `label`。
 - Notice 只显示可操作反馈。一般信息不添加小字说明；错误保留原始反馈。
 - 一个操作区域只保留一个主要按钮。已有窗口显示“切回窗口”；检查中禁用重复启动。
+- SettingsButton 复用 DSH 灰色无底色图标按钮，使用标准 H32 / R12。WorkspaceSidebar 在工作区切换器右侧统一放置设置入口；WorkspaceLayout 在侧栏收起时将入口移到顶部右侧。设置弹窗由工作区根节点统一承载，关闭后保留当前页面。
 - 组件不请求业务接口、不读写账号、不修改系统设置。页面持有真实状态。
 - ContentDialog 承载检测结果等内容，保留 DSH 弹窗材质与独立滚动体。EditorDialog 复用它的外壳，增加表单提交与字段禁用；内容弹窗内的业务表单不嵌套在另一层 form 中。
 

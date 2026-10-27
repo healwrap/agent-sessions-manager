@@ -102,7 +102,14 @@
   }
 }
 .workspace-sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
+}
+.workspace-sidebar-actions .workspace-picker {
+  flex: 1;
+  min-width: 0;
 }
 .workspace-picker .custom-select {
   width: 100%;

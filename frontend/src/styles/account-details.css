@@ -10,27 +10,6 @@
   gap: 16px;
   padding: 24px 28px 20px;
 }
-.account-detail-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.account-detail-identity .account-avatar {
-  width: 36px;
-  height: 36px;
-}
-.account-detail-identity > div {
-  min-width: 0;
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 2px;
-}
-.account-detail-provider {
-  color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
-}
 .account-detail h2 {
   font-size: 18px;
   font-weight: 600;
@@ -112,33 +91,6 @@
 }
 .account-login-link {
   padding: 0 28px 20px;
-}
-.account-management {
-  border-top: 0.5px solid var(--dsw-alias-border-l2);
-}
-.account-management-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 4px 28px 20px;
-}
-.account-delete.action-button {
-  color: var(--dsw-alias-state-error-primary);
-}
-.account-delete-confirm {
-  display: grid;
-  gap: 14px;
-  margin: 0 28px 20px;
-  padding: 16px;
-  border-radius: var(--dsw-radius-lg);
-  background: var(--dsw-alias-bg-module-platform);
-  font-size: 14px;
-  line-height: 22px;
-}
-.account-delete-confirm > div {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 @keyframes account-detail-in {
   from {

@@ -4,15 +4,6 @@
   gap: 4px;
   padding: 12px;
 }
-.accounts-list-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px 10px;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
-}
 .account-list-item {
   position: relative;
   display: grid;
@@ -67,46 +58,22 @@
   align-self: center;
   color: var(--dsw-alias-label-tertiary);
 }
-.account-list-status {
+.account-list-caption {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  grid-column: 2 / -1;
+  flex-wrap: wrap;
   gap: 8px;
 }
-.account-list-status .status-badge {
+.account-list-caption .status-badge {
+  height: auto;
   padding: 0;
   background: transparent;
-}
-.account-list-clients {
-  display: inline-flex;
-  gap: 8px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.account-list-clients > span {
-  display: inline-flex;
-}
-.account-list-clients [data-live='true'] {
-  color: var(--dsw-alias-state-success-primary);
-}
-.account-list-proxy {
-  grid-column: 2 / -1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
 }
 @container (max-width: 680px) {
   .accounts-list {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x proximity;
-  }
-  .accounts-list-heading {
-    display: none;
   }
   .account-list-item {
     width: 220px;

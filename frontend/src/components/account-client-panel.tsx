@@ -222,14 +222,14 @@ export function AccountClientPanel({
               ]}
             />
           </section>
-          {target === 'app' && (
+          {target === 'app' && (saved || alive) && (
             <div className="account-login-link">
               <Button
                 onClick={() => onLogin(account)}
                 disabled={busy || checking}
               >
                 <LogIn size={16} />
-                打开 App 登录引导
+                重新登录 App
               </Button>
             </div>
           )}
@@ -237,7 +237,11 @@ export function AccountClientPanel({
       )}
       {run && (
         <div className="account-check-details">
-          <BrowserLaunchReport run={run} title="启动检查详情" />
+          <BrowserLaunchReport
+            run={run}
+            title="启动检查详情"
+            showSummary={!checking && !issue}
+          />
         </div>
       )}
     </div>

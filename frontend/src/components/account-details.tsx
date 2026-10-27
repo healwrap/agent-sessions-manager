@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { Monitor, PanelsTopLeft, Pencil, Trash2 } from 'lucide-react';
+import { Monitor, PanelsTopLeft, Pencil } from 'lucide-react';
 import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { accountClients, type AccountActions } from '../lib/account-view';
-import { AgentIcon } from './agent-icon';
-import { Button, ChoiceGroup, IconButton } from './ui';
+import { ChoiceGroup, IconButton, RemoveButton } from './ui';
 import { AccountClientPanel } from './account-client-panel';
-import { Disclosure } from './disclosure';
 
 export function AccountDetails({
   account,
@@ -31,28 +29,25 @@ export function AccountDetails({
   const live = clients.some(
     (item) => item.run?.alive || item.run?.status === 'checking',
   );
-  const [deleting, setDeleting] = useState(false);
   return (
     <section className="account-detail" aria-label={`${account.name} 账号详情`}>
       <header className="account-detail-header">
-        <div className="account-detail-identity">
-          <span className="account-avatar">
-            <AgentIcon source={account.provider} />
-          </span>
-          <div>
-            <span className="account-detail-provider">
-              {account.provider === 'claude' ? 'Claude' : 'Codex'}
-            </span>
-            <h2>{account.name}</h2>
-          </div>
+        <h2>{account.name}</h2>
+        <div className="ui-actions">
+          <IconButton
+            label="编辑账号与绑定"
+            icon={<Pencil size={17} />}
+            disabled={busy || live}
+            title={live ? '先停止环境，再编辑账号' : '编辑账号与绑定'}
+            onClick={() => actions.onEditAccount(account)}
+          />
+          <RemoveButton
+            label="移除账号"
+            message={`移除“${account.name}”的账号入口？环境与登录数据会保留。`}
+            disabled={busy || live}
+            onRemove={() => actions.onDelete(account.id)}
+          />
         </div>
-        <IconButton
-          label="编辑账号"
-          icon={<Pencil size={17} />}
-          disabled={busy || live}
-          title={live ? '先停止环境，再编辑账号' : '编辑账号'}
-          onClick={() => actions.onEditAccount(account)}
-        />
       </header>
       <div className="account-client-switch">
         <ChoiceGroup
@@ -87,47 +82,6 @@ export function AccountDetails({
         busy={busy}
         {...actions}
       />
-      <Disclosure className="account-management" title="账号管理">
-        <div className="account-management-actions">
-          <Button
-            disabled={busy || live}
-            title={live ? '先停止环境，再编辑账号' : undefined}
-            onClick={() => actions.onEditAccount(account)}
-          >
-            <Pencil size={16} />
-            编辑账号与绑定
-          </Button>
-          <Button
-            disabled={busy || live}
-            className="account-delete"
-            title={live ? '先停止环境，再移除账号' : undefined}
-            onClick={() => setDeleting(true)}
-          >
-            <Trash2 size={16} />
-            移除账号
-          </Button>
-        </div>
-        {deleting && (
-          <div className="account-delete-confirm" role="alert">
-            <span>移除“{account.name}”的账号入口？环境与登录数据会保留。</span>
-            <div>
-              <Button disabled={busy} onClick={() => setDeleting(false)}>
-                取消
-              </Button>
-              <Button
-                disabled={busy}
-                className="account-delete"
-                onClick={() => {
-                  actions.onDelete(account.id);
-                  setDeleting(false);
-                }}
-              >
-                确认移除
-              </Button>
-            </div>
-          </div>
-        )}
-      </Disclosure>
     </section>
   );
 }

@@ -1,12 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  ChevronRight,
-  Monitor,
-  PanelsTopLeft,
-  Plus,
-  SearchX,
-  Users,
-} from 'lucide-react';
+import { ChevronRight, Plus, SearchX, Users } from 'lucide-react';
 import type { EnvironmentSettings } from '../lib/environment-settings';
 import {
   accountClients,
@@ -163,11 +156,7 @@ export function BrowserAccounts({
           <MasterDetail
             navigation={
               <div className="accounts-list" role="group" aria-label="账号列表">
-                <div className="accounts-list-heading">
-                  <span>账号</span>
-                  <span>{visible.length}</span>
-                </div>
-                {visible.map(({ account, clients, status, proxies }) => (
+                {visible.map(({ account, status }) => (
                   <button
                     className="account-list-item"
                     type="button"
@@ -181,39 +170,16 @@ export function BrowserAccounts({
                     </span>
                     <span className="account-list-identity">
                       <strong>{account.name}</strong>
-                      <span>
+                      <span className="account-list-caption">
                         {account.provider === 'claude' ? 'Claude' : 'Codex'}
+                        {status.label !== '凭据已保存' && (
+                          <StatusBadge tone={status.tone}>
+                            {status.label}
+                          </StatusBadge>
+                        )}
                       </span>
                     </span>
                     <ChevronRight className="account-list-arrow" size={16} />
-                    <span className="account-list-status">
-                      <StatusBadge tone={status.tone}>
-                        {status.label}
-                      </StatusBadge>
-                      <span className="account-list-clients">
-                        {clients
-                          .filter((client) => client.profile)
-                          .map((client) => (
-                            <span
-                              key={client.target}
-                              title={`${client.title}：${client.run?.alive ? '运行中' : '未运行'}`}
-                              data-live={!!client.run?.alive}
-                            >
-                              {client.target === 'browser' ? (
-                                <PanelsTopLeft size={14} />
-                              ) : (
-                                <Monitor size={14} />
-                              )}
-                            </span>
-                          ))}
-                      </span>
-                    </span>
-                    <span
-                      className="account-list-proxy"
-                      title={Array.from(new Set(proxies)).join(' / ')}
-                    >
-                      {Array.from(new Set(proxies)).join(' / ')}
-                    </span>
                   </button>
                 ))}
               </div>

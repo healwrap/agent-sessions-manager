@@ -79,10 +79,6 @@ export function LayoutPreview() {
                 role="group"
                 aria-label="示例账号列表"
               >
-                <div className="accounts-list-heading">
-                  <span>账号</span>
-                  <span>{visible.length}</span>
-                </div>
                 {visible.map((item) => (
                   <button
                     key={item.id}
@@ -98,7 +94,6 @@ export function LayoutPreview() {
                       <span>Claude</span>
                     </span>
                     <span />
-                    <span className="account-list-status">已保存登录状态</span>
                   </button>
                 ))}
               </div>
@@ -106,15 +101,7 @@ export function LayoutPreview() {
           >
             <section className="account-detail" aria-label="示例账号详情">
               <header className="account-detail-header">
-                <div className="account-detail-identity">
-                  <span className="account-avatar">
-                    <AgentIcon source="claude" />
-                  </span>
-                  <div>
-                    <span className="account-detail-provider">Claude</span>
-                    <h2>{current.name}</h2>
-                  </div>
-                </div>
+                <h2>{current.name}</h2>
               </header>
               <div className="account-client-switch">
                 <ChoiceGroup

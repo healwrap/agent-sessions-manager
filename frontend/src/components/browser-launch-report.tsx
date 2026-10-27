@@ -51,9 +51,11 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
 export function BrowserLaunchReport({
   run,
   title = '启动检查',
+  showSummary = true,
 }: {
   run: BrowserRun;
   title?: string;
+  showSummary?: boolean;
 }) {
   return (
     <Disclosure
@@ -68,10 +70,10 @@ export function BrowserLaunchReport({
         </>
       }
     >
-      {run.status === 'checking' && (
+      {showSummary && run.status === 'checking' && (
         <p className="environment-launch-error">{run.stage}</p>
       )}
-      {run.error && (
+      {showSummary && run.error && (
         <p className="environment-error environment-launch-error" role="alert">
           {run.error}
         </p>

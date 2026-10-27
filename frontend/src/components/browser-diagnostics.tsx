@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Fingerprint, Link2 } from 'lucide-react';
+import { Fingerprint, Link2, PanelsTopLeft } from 'lucide-react';
 import { copyText, request } from '../lib/api';
 import type { BrowserCheckTicket } from '../lib/browser-check';
 import { checkedTime } from '../lib/claude-diagnostics';
@@ -17,11 +17,16 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
     loading,
     error: environmentError,
   } = useEnvironmentSettings(active, false);
-  const [target, setTarget] = useState('external');
+  const [target, setTarget] = useState('');
   const [ticket, setTicket] = useState<BrowserCheckTicket>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const selected =
+    target ||
+    (data.profiles[0] ? 'profile:' + data.profiles[0].id : 'external');
+  const profile = data.profiles.find((row) => 'profile:' + row.id === selected);
+  const managed = !!profile && profile.engine !== 'chrome';
   const create = async () => {
     setBusy(true);
     setError('');
@@ -29,9 +34,9 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
     try {
       setTicket(
         await request<BrowserCheckTicket>(
-          '/api/browser-checks/start',
+          managed ? '/api/browser-runtime/check' : '/api/browser-checks/start',
           {},
-          { target },
+          managed ? { profile_id: profile.id } : { target: selected },
         ),
       );
     } catch (reason) {
@@ -41,7 +46,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
     }
   };
   useEffect(() => {
-    if (!active || !ticket || ticket.state === 'complete') return;
+    if (!active || busy || !ticket || ticket.state !== 'waiting') return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
@@ -50,10 +55,11 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
           '/api/browser-checks/' + ticket.token,
         );
         if (stopped) return;
+        setError('');
         setTicket((current) =>
           current?.token === result.token ? { ...current, ...result } : current,
         );
-        if (result.state !== 'complete')
+        if (result.state === 'waiting')
           timer = setTimeout(() => void poll(), 1500);
       } catch (reason) {
         if (!stopped) setError(String(reason));
@@ -64,7 +70,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [active, ticket?.token, ticket?.state]);
+  }, [active, busy, ticket?.token, ticket?.state]);
   const checks = ticket?.report?.checks || [];
   const comparisons = ticket?.expected
     ? [
@@ -86,25 +92,44 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
         <div>
           <strong>检测登录 Claude 的独立浏览器</strong>
           <p>
-            生成链接后，在目标浏览器环境的新标签页打开；由那个浏览器采样并回传结果。
+            {managed
+              ? '直接在这个环境的独立浏览器中打开检测页；已运行的环境会沿用当前窗口与登录状态。'
+              : '生成链接后，在目标浏览器环境的新标签页打开；由那个浏览器采样并回传结果。'}
           </p>
         </div>
         <Button
           variant="primary"
           onClick={() => void create()}
-          disabled={busy || loading}
+          disabled={
+            busy ||
+            loading ||
+            (ticket?.state === 'waiting' && !error) ||
+            (managed && !data.browser.kernel.available)
+          }
         >
-          <Link2 size={15} />
-          {busy ? '正在生成…' : ticket ? '重新生成检测链接' : '生成检测链接'}
+          {managed ? <PanelsTopLeft size={15} /> : <Link2 size={15} />}
+          {busy
+            ? '正在准备…'
+            : managed
+              ? ticket
+                ? '重新检测'
+                : '打开环境并检测'
+              : ticket
+                ? '重新生成检测链接'
+                : '生成检测链接'}
         </Button>
       </div>
       <SettingsRow
         label="目标浏览器环境"
-        description="选择已保存的环境，或选择你正在使用的外部独立浏览器。"
+        description={
+          managed
+            ? '自动应用此环境保存的代理、独立数据目录、语言、时区和指纹配置。'
+            : '选择你正在使用的外部独立浏览器，复制检测链接后打开。'
+        }
       >
         <Select
           label="目标浏览器环境"
-          value={target}
+          value={selected}
           disabled={busy || loading}
           onChange={(value) => {
             setTarget(value);
@@ -125,9 +150,14 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
           ]}
         />
       </SettingsRow>
-      {(error || environmentError) && (
+      {managed && !loading && !data.browser.kernel.available && (
+        <p className="diagnostic-note">
+          请先在「浏览器环境」安装独立浏览器内核。
+        </p>
+      )}
+      {(error || environmentError || ticket?.error) && (
         <p role="alert" className="diagnostic-error">
-          {error || environmentError}
+          {error || environmentError || ticket?.error}
         </p>
       )}
       {ticket?.url && (
@@ -159,7 +189,9 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
       {ticket?.state === 'waiting' && (
         <p role="status" className="browser-probe-wait">
           <Fingerprint size={17} />
-          等待独立浏览器打开检测页并回传…
+          {managed
+            ? '正在打开目标环境并等待实测结果；首次启动请留意系统钥匙串提示。启动门控通过后自动采样。'
+            : '等待独立浏览器打开检测页并回传…'}
         </p>
       )}
       {ticket?.state === 'complete' && ticket.report && (

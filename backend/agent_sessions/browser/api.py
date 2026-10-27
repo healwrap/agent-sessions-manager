@@ -4,6 +4,9 @@ from .region import region_for
 
 def command(server, path, value):
     if not isinstance(value, dict): raise ValueError('浏览器参数无效')
+    if path.endswith('/check'):
+        from .diagnostics import start
+        return start(server.browser_runtime, value)
     if path.endswith('/install'):
         if value: raise ValueError('内核安装参数无效')
         return server.browser_runtime.installer.start()

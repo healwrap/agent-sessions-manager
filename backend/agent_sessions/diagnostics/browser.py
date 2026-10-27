@@ -37,7 +37,7 @@ class BrowserDiagnostics:
             token = secrets.token_urlsafe(24)
             self.tickets[token] = {'target': target, 'name': name, 'expected': {**expected, **context.get('expected', {})},
                                    'launch': context.get('launch'), 'probe_options': context.get('probe_options', {}),
-                                   'expires': now + 900, 'report': None}
+                                   'expires': now + 900, 'report': None, 'error': ''}
             return self.read(token)
 
     def read(self, token):
@@ -46,13 +46,15 @@ class BrowserDiagnostics:
             if not row or row['expires'] <= time.monotonic():
                 raise ValueError('检测链接已失效，请在 Agent Sessions 中重新生成')
             return {'token': token, 'name': row['name'], 'expected': row['expected'],
-                    'state': 'complete' if row['report'] else 'waiting', 'report': row['report'],
+                    'state': 'complete' if row['report'] else 'failed' if row['error'] else 'waiting',
+                    'report': row['report'], 'error': row['error'],
                     'launch': row['launch'], 'probe_options': row['probe_options']}
 
     def complete(self, token, value):
         with self.lock:
             self.read(token)
             row = self.tickets[token]
+            if row['error']: raise ValueError(row['error'])
             if row['report']: raise ValueError('此链接已完成采样；重新检测请生成新链接')
             if not isinstance(value, dict) or set(value) != {'checks'} or not isinstance(value['checks'], list):
                 raise ValueError('浏览器采样结果格式无效')
@@ -76,3 +78,13 @@ class BrowserDiagnostics:
             self.read(token)
             self.tickets[token]['launch'] = result
             return self.read(token)
+
+    def set_expected(self, token, value):
+        with self.lock:
+            self.read(token)
+            self.tickets[token]['expected'] = value
+
+    def fail(self, token, error):
+        with self.lock:
+            row = self.tickets.get(token)
+            if row and not row['report']: row['error'] = error

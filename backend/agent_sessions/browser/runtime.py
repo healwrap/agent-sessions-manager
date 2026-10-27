@@ -24,6 +24,10 @@ class BrowserRuntime:
         self.lock = threading.RLock()
         self.runs = {}
         self.processes, self.relays = {}, {}
+        self.inspections = {}
+
+    def profile_directory(self, key):
+        return self.directory/'profiles'/hashlib.sha256(key.encode()).hexdigest()[:32]
 
     def state(self):
         with self.lock:
@@ -92,7 +96,7 @@ class BrowserRuntime:
                     self.update(key, status='blocked', stage='强制启动检查未通过'); return
             if run.get('cancelled'): return
             self.directory.mkdir(parents=True, exist_ok=True)
-            profile_dir = self.directory/'profiles'/hashlib.sha256(key.encode()).hexdigest()[:32]
+            profile_dir = self.profile_directory(key)
             profile_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
             self._prepare_preferences(profile_dir)
             with self.lock:

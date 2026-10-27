@@ -27,6 +27,7 @@ function BrowserProbePage() {
       const path = '/api/browser-checks/' + encodeURIComponent(token);
       const pending = await request<BrowserCheckTicket>(path);
       if (current) setTicket(pending);
+      if (pending.state === 'failed') throw new Error(pending.error);
       let result = pending;
       if (pending.state !== 'complete') {
         const checks = await inspectTargetBrowser(pending.probe_options);

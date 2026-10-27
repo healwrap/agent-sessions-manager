@@ -23,7 +23,8 @@ export interface BrowserCheckTicket {
   url?: string;
   name: string;
   expected: { locale?: string; timezone?: string };
-  state: 'waiting' | 'complete';
+  state: 'waiting' | 'complete' | 'failed';
+  error?: string;
   report?: { checked_at: string; checks: DiagnosticItem[] } | null;
 }
 

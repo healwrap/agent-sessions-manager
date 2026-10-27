@@ -126,7 +126,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region'}
+        runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
         if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime) or not hasattr(self.server, 'settings'):

@@ -109,11 +109,24 @@
 }
 .workspace-picker .select-trigger {
   height: 40px;
-  gap: 10px;
+  gap: 12px;
+  padding: 0 10px;
   border-radius: var(--dsw-radius-md);
   border: 0;
-  background: var(--dsw-alias-bg-layer-2);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
   font-size: 14px;
+  line-height: 22px;
+}
+.workspace-picker .select-trigger:hover:not(:disabled),
+.workspace-picker .select-trigger[aria-expanded='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.workspace-picker .select-agent-icon {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-right: 0;
 }
 .main-header .workspace-picker {
   width: 188px;

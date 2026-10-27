@@ -6,14 +6,18 @@ export const workspaceChoices = [
   {
     value: 'sessions' as const,
     label: '会话管理',
-    icon: <MessagesSquare size={18} />,
+    icon: <MessagesSquare size={17} strokeWidth={1.7} />,
   },
   {
     value: 'accounts' as const,
     label: '账号与环境管理',
-    icon: <UsersRound size={18} />,
+    icon: <UsersRound size={17} strokeWidth={1.7} />,
   },
-  { value: 'skills' as const, label: 'Skill 管理', icon: <Puzzle size={18} /> },
+  {
+    value: 'skills' as const,
+    label: 'Skill 管理',
+    icon: <Puzzle size={17} strokeWidth={1.7} />,
+  },
 ];
 
 export function WorkspacePicker({

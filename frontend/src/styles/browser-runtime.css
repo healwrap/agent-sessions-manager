@@ -79,17 +79,17 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--dsw-static-amber-600);
+  background: var(--dsw-alias-state-warn-label);
   flex-shrink: 0;
   margin-top: 6px;
 }
-.environment-gate-result[data-state='pass'] .environment-gate-dot {
+.environment-gate-result[data-tone='success'] .environment-gate-dot {
   background: var(--dsw-alias-state-success-primary);
 }
-.environment-gate-result[data-state='fail'] .environment-gate-dot {
+.environment-gate-result[data-tone='error'] .environment-gate-dot {
   background: var(--dsw-alias-state-error-primary);
 }
-.environment-gate-result[data-state='skip'] .environment-gate-dot {
+.environment-gate-result[data-tone='neutral'] .environment-gate-dot {
   background: var(--dsw-alias-label-tertiary);
 }
 @media (max-width: 680px) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
 import type {
   BrowserRuntimeState,
@@ -30,11 +30,27 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pollError, setPollError] = useState('');
+  const revision = useRef(0);
+  const pending = useRef(false);
+  const begin = () => {
+    revision.current++;
+    pending.current = true;
+    setBusy(true);
+    setError('');
+  };
+  const finish = () => {
+    revision.current++;
+    pending.current = false;
+    setBusy(false);
+  };
   const reload = useCallback(async () => {
+    const version = revision.current;
     setLoading(true);
     setError('');
     try {
-      setData(await request<EnvironmentSettings>('/api/environments'));
+      const latest = await request<EnvironmentSettings>('/api/environments');
+      if (version === revision.current && !pending.current) setData(latest);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -49,11 +65,19 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     let current = true;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
+      const version = revision.current;
       try {
-        const latest = await request<EnvironmentSettings>('/api/environments');
-        if (current) setData(latest);
-      } catch {
-        /* Explicit actions display request errors. */
+        if (!pending.current) {
+          const latest =
+            await request<EnvironmentSettings>('/api/environments');
+          if (current && version === revision.current && !pending.current) {
+            setData(latest);
+            setPollError('');
+          }
+        }
+      } catch (reason) {
+        if (current && !pending.current)
+          setPollError('运行状态更新失败：' + String(reason));
       }
       if (current) timer = setTimeout(() => void poll(), 1500);
     };
@@ -64,8 +88,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     };
   }, [active, watchRuntime]);
   const change = async (body: unknown) => {
-    setBusy(true);
-    setError('');
+    begin();
     try {
       setData(
         await request<EnvironmentSettings>('/api/environments', {}, body),
@@ -74,7 +97,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       setError(String(reason));
       throw reason;
     } finally {
-      setBusy(false);
+      finish();
     }
   };
   const save = (collection: EnvironmentCollection, item: EnvironmentItem) =>
@@ -95,8 +118,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     body: { profile_id?: string; account_id?: string },
     target: 'browser' | 'app' = 'browser',
   ) => {
-    setBusy(true);
-    setError('');
+    begin();
     try {
       const result = await request<BrowserRuntimeState>(
         '/api/' + target + '-runtime/' + action,
@@ -115,13 +137,13 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     } catch (reason) {
       setError(String(reason));
     } finally {
-      setBusy(false);
+      finish();
     }
   };
   return {
     data,
     loading,
-    error,
+    error: error || pollError,
     busy,
     reload,
     save,

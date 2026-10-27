@@ -115,9 +115,6 @@ export function AccountWorkspace({
                     <SectionIcon size={17} strokeWidth={1.7} />
                   )}
                   <span>{title}</span>
-                  {id === 'accounts' && <small>{data.accounts.length}</small>}
-                  {id === 'browser' && <small>{data.profiles.length}</small>}
-                  {id === 'proxies' && <small>{data.proxies.length}</small>}
                 </button>
               ))}
             </nav>

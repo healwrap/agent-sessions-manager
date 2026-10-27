@@ -2,18 +2,20 @@ import { useEffect, useState } from 'react';
 import { App } from './app';
 import { StartPage } from './components/start-page';
 import { AccountWorkspace } from './components/account-workspace';
+import { SkillWorkspace } from './components/skill-workspace';
 import { useSessionStore } from './hooks/use-session-store';
 import { useTheme } from './hooks/use-theme';
 import { request } from './lib/api';
 import type { SettingsResponse } from './lib/types';
 import { sessionStore } from './state/session-store';
 
-export type WorkspacePage = 'sessions' | 'accounts';
+export type WorkspacePage = 'sessions' | 'accounts' | 'skills';
 
 export function Workspace() {
   const [page, setPage] = useState<WorkspacePage | 'home'>('home');
   const [sessionsOpened, setSessionsOpened] = useState(false);
   const [accountsOpened, setAccountsOpened] = useState(false);
+  const [skillsOpened, setSkillsOpened] = useState(false);
   const [preferencesReady, setPreferencesReady] = useState(false);
   const state = useSessionStore();
   useTheme(
@@ -34,6 +36,11 @@ export function Workspace() {
     if (new URLSearchParams(location.search).has('id')) {
       setSessionsOpened(true);
       setPage('sessions');
+    } else if (
+      new URLSearchParams(location.search).get('workspace') === 'skills'
+    ) {
+      setSkillsOpened(true);
+      setPage('skills');
     }
     return () => {
       current = false;
@@ -49,11 +56,21 @@ export function Workspace() {
     if (next === 'sessions') setSessionsOpened(true);
     else history.replaceState(null, '', location.pathname);
     if (next === 'accounts') setAccountsOpened(true);
+    if (next === 'skills') setSkillsOpened(true);
     setPage(next);
   }
   return (
     <>
       {page === 'home' && <StartPage onNavigate={navigate} />}
+      {skillsOpened && (
+        <div
+          className="workspace-session"
+          hidden={page !== 'skills'}
+          inert={page !== 'skills'}
+        >
+          <SkillWorkspace onNavigate={navigate} />
+        </div>
+      )}
       {accountsOpened && (
         <div
           className="workspace-session"
@@ -75,6 +92,7 @@ export function Workspace() {
           <App
             active={page === 'sessions'}
             onAccounts={() => navigate('accounts')}
+            onSkills={() => navigate('skills')}
           />
         </div>
       )}

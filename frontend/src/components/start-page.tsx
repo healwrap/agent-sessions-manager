@@ -2,6 +2,7 @@ import {
   ArrowRight,
   MessagesSquare,
   PanelsTopLeft,
+  Puzzle,
   UsersRound,
 } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
@@ -43,6 +44,19 @@ export function StartPage({
           >
             <UsersRound size={22} strokeWidth={1.7} aria-hidden="true" />
             <span>账号与环境管理</span>
+            <ArrowRight
+              size={18}
+              className="workspace-choice-arrow"
+              aria-hidden="true"
+            />
+          </Button>
+          <Button
+            variant="text"
+            className="workspace-choice"
+            onClick={() => onNavigate('skills')}
+          >
+            <Puzzle size={22} strokeWidth={1.7} aria-hidden="true" />
+            <span>Skill 管理</span>
             <ArrowRight
               size={18}
               className="workspace-choice-arrow"

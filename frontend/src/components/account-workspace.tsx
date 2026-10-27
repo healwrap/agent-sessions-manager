@@ -114,9 +114,14 @@ export function AccountWorkspace({
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (
-            <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-              进入会话管理
-            </WorkspaceSwitch>
+            <>
+              <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
+                进入会话管理
+              </WorkspaceSwitch>
+              <WorkspaceSwitch onClick={() => onNavigate('skills')}>
+                Skill 管理
+              </WorkspaceSwitch>
+            </>
           )
         }
         sidebar={
@@ -128,9 +133,14 @@ export function AccountWorkspace({
             onResize={setSidebarWidth}
             onCollapse={() => setSidebarClosed(true)}
             footer={
-              <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-                进入会话管理
-              </WorkspaceSwitch>
+              <>
+                <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
+                  进入会话管理
+                </WorkspaceSwitch>
+                <WorkspaceSwitch onClick={() => onNavigate('skills')}>
+                  Skill 管理
+                </WorkspaceSwitch>
+              </>
             }
           >
             <nav className="environment-navigation" aria-label="管理功能">

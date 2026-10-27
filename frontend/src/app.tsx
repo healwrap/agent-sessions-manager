@@ -22,9 +22,11 @@ import {
 export function App({
   active = true,
   onAccounts,
+  onSkills,
 }: {
   active?: boolean;
   onAccounts?: () => void;
+  onSkills?: () => void;
 }) {
   const state = useSessionStore(),
     [menu, setMenu] = useState<SessionMenu | null>(null),
@@ -59,6 +61,7 @@ export function App({
           <Sidebar
             state={state}
             onAccounts={onAccounts}
+            onSkills={onSkills}
             managedId={menu?.item.id}
             onManage={(item, x, y) => setMenu({ item, x, y })}
           />
@@ -69,6 +72,9 @@ export function App({
               <WorkspaceSwitch onClick={onAccounts}>
                 账号与环境管理
               </WorkspaceSwitch>
+            )}
+            {state.sidebarClosed && onSkills && (
+              <WorkspaceSwitch onClick={onSkills}>Skill 管理</WorkspaceSwitch>
             )}
             {active && state.id && (
               <Subagents

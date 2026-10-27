@@ -21,11 +21,13 @@ export function Sidebar({
   onManage,
   managedId,
   onAccounts,
+  onSkills,
 }: {
   state: AppState;
   onManage: (item: Session, x: number, y: number) => void;
   managedId?: string;
   onAccounts?: () => void;
+  onSkills?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
   const groups = projectGroups(
@@ -58,6 +60,9 @@ export function Sidebar({
             <WorkspaceSwitch onClick={onAccounts}>
               账号与环境管理
             </WorkspaceSwitch>
+          )}
+          {onSkills && (
+            <WorkspaceSwitch onClick={onSkills}>Skill 管理</WorkspaceSwitch>
           )}
           <button
             className="panel-row"

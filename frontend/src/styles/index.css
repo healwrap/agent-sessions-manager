@@ -6,6 +6,9 @@
 @import './shell.css' layer(components);
 @import './workspace.css' layer(components);
 @import './account-workspace.css' layer(components);
+@import './skills.css' layer(components);
+@import './skill-installations.css' layer(components);
+@import './skill-dialog.css' layer(components);
 @import './environment-panels.css' layer(components);
 @import './environment-integrations.css' layer(components);
 @import './environment-editor.css' layer(components);

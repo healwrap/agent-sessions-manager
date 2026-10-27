@@ -2,15 +2,11 @@ import {
   Check,
   Circle,
   ExternalLink,
-  Globe2,
-  Languages,
   LoaderCircle,
   LogIn,
-  MapPin,
   Settings2,
   ShieldCheck,
   Square,
-  Clock3,
 } from 'lucide-react';
 import type {
   BrowserAccount,
@@ -176,7 +172,7 @@ export function AccountClientPanel({
         <>
           <section className="account-environment-summary">
             <div className="account-section-heading">
-              <h3>使用环境</h3>
+              <h3>{profile.name}</h3>
               <Button
                 variant="text"
                 disabled={busy || alive || checking}
@@ -189,19 +185,17 @@ export function AccountClientPanel({
                 }
               >
                 <Settings2 size={15} />
-                环境设置
+                配置环境
               </Button>
             </div>
             <FactsGrid
               items={[
                 {
                   label: '专用代理',
-                  icon: <Globe2 size={16} />,
                   value: proxy?.name || '系统路由',
                 },
                 {
                   label: '最近出口',
-                  icon: <MapPin size={16} />,
                   value: (
                     <span className="account-exit-ip">
                       {run?.resolved.ip || '尚未检测'}
@@ -213,7 +207,6 @@ export function AccountClientPanel({
                 },
                 {
                   label: '语言',
-                  icon: <Languages size={16} />,
                   value:
                     profile.locale_mode === 'proxy'
                       ? run?.resolved.locale || '跟随代理'
@@ -221,7 +214,6 @@ export function AccountClientPanel({
                 },
                 {
                   label: '时区',
-                  icon: <Clock3 size={16} />,
                   value:
                     profile.timezone_mode === 'proxy'
                       ? run?.resolved.timezone || '跟随代理'
@@ -229,7 +221,6 @@ export function AccountClientPanel({
                 },
               ]}
             />
-            <div className="account-environment-name">{profile.name}</div>
           </section>
           {target === 'app' && (
             <div className="account-login-link">

@@ -29,11 +29,12 @@ import {
   TextInput,
 } from '../components/ui';
 import './catalog.css';
+import { LayoutPreview } from './layout-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
   const [workspace, setWorkspace] = useState<WorkspacePage>('accounts');
-  const [tab, setTab] = useState('components');
+  const [tab, setTab] = useState('layouts');
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [state, setState] = useState('stopped');
@@ -67,11 +68,14 @@ export function ComponentCatalog() {
         value={tab}
         onChange={setTab}
         items={[
-          { value: 'components', label: '组件与交互' },
+          { value: 'layouts', label: '组合布局' },
+          { value: 'components', label: '基础组件' },
           { value: 'tokens', label: 'DSH 变量' },
         ]}
       />
-      {tab === 'tokens' ? (
+      {tab === 'layouts' ? (
+        <LayoutPreview />
+      ) : tab === 'tokens' ? (
         <div className="catalog-grid">
           <Panel title="DSH 原始颜色变量">
             <div className="catalog-swatches">

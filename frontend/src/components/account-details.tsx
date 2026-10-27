@@ -57,7 +57,7 @@ export function AccountDetails({
       <div className="account-client-switch">
         <ChoiceGroup
           label="选择使用方式"
-          variant="tabs"
+          variant="segmented"
           value={client.target}
           onChange={setTarget}
           items={clients.map((item) => ({

@@ -48,3 +48,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.catalog-layouts {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+.catalog-layouts > .ui-section-heading {
+  margin-bottom: 4px;
+}
+.catalog-layouts .ui-master-detail {
+  min-height: 440px;
+}

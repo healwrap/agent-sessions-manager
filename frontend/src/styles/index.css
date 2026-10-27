@@ -69,3 +69,4 @@
 @import './ui-controls.css' layer(components);
 
 @import './management-pages.css' layer(components);
+@import './collection-panel.css' layer(components);

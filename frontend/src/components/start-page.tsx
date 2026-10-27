@@ -1,6 +1,5 @@
 import { ArrowRight, PanelsTopLeft } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
-import { LeadingIcon } from './ui';
 import { workspaceChoices } from './workspace-picker';
 
 export function StartPage({
@@ -17,7 +16,7 @@ export function StartPage({
         </span>
       </header>
       <main className="start-content">
-        <h1>选择工作区</h1>
+        <h1>工作区</h1>
         <nav className="workspace-choices" aria-label="选择功能">
           {workspaceChoices.map((item) => (
             <button
@@ -25,7 +24,9 @@ export function StartPage({
               key={item.value}
               onClick={() => onNavigate(item.value)}
             >
-              <LeadingIcon>{item.icon}</LeadingIcon>
+              <span className="workspace-choice-icon" aria-hidden="true">
+                {item.icon}
+              </span>
               <span>{item.label}</span>
               <ArrowRight
                 size={18}

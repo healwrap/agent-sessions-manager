@@ -1,52 +1,47 @@
-.environment-content[data-section='accounts'] {
-  --account-accent: var(--dsw-alias-label-primary);
-  --account-soft: var(--dsw-alias-bg-module-platform);
-}
-.accounts-split {
-  display: grid;
-  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
 .accounts-list {
   display: grid;
-  gap: 8px;
   align-content: start;
+  gap: 4px;
+  padding: 12px;
+}
+.accounts-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 10px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
 }
 .account-list-item {
+  position: relative;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 16px;
-  gap: 12px;
-  padding: 18px 16px;
+  grid-template-columns: 32px minmax(0, 1fr) 14px;
+  gap: 10px;
+  padding: 14px 12px;
   min-width: 0;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: var(--dsw-radius-lg);
   color: var(--dsw-alias-label-primary);
   background: transparent;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease;
+  transition: background 160ms ease;
 }
 .account-list-item:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-specific-sidebar-nav-item-hover);
 }
 .account-list-item[aria-pressed='true'] {
-  background: var(--account-soft);
-  border-color: var(--dsw-alias-border-l3);
+  background: var(--dsw-alias-bg-module-platform);
 }
 .account-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   flex: none;
-  border: 0.5px solid var(--dsw-alias-border-l1);
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-layer-2);
 }
 .account-avatar .agent-icon {
   width: 26px;
@@ -54,42 +49,38 @@
 }
 .account-list-identity {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 .account-list-identity strong {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 22px;
   overflow-wrap: anywhere;
 }
-.account-list-identity > span,
-.account-list-proxy {
-  color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
+.account-list-identity > span {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
 }
 .account-list-arrow {
   align-self: center;
   color: var(--dsw-alias-label-tertiary);
-  transition: transform 160ms ease;
-}
-.account-list-item[aria-pressed='true'] .account-list-arrow {
-  color: var(--account-accent);
-  transform: translateX(2px);
 }
 .account-list-status {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   gap: 8px;
 }
 .account-list-status .status-badge {
-  font-size: 13px;
+  padding: 0;
+  background: transparent;
 }
 .account-list-clients {
   display: inline-flex;
-  gap: 10px;
+  gap: 8px;
   color: var(--dsw-alias-label-tertiary);
 }
 .account-list-clients > span {
@@ -99,35 +90,27 @@
   color: var(--dsw-alias-state-success-primary);
 }
 .account-list-proxy {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-@container (max-width: 850px) {
-  .accounts-split {
-    grid-template-columns: 220px minmax(0, 1fr);
-    gap: 16px;
-  }
-  .account-list-item {
-    padding: 16px 12px;
-    gap: 10px;
-  }
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
 }
 @container (max-width: 680px) {
-  .accounts-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .accounts-list {
     display: flex;
     overflow-x: auto;
-    padding-bottom: 4px;
     scroll-snap-type: x proximity;
   }
+  .accounts-list-heading {
+    display: none;
+  }
   .account-list-item {
-    width: 240px;
-    flex: 0 0 240px;
+    width: 220px;
+    flex: 0 0 220px;
     scroll-snap-align: start;
   }
 }

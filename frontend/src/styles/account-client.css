@@ -1,9 +1,9 @@
 .account-launch-progress {
-  margin: 0 24px 24px;
+  margin: 0 28px 24px;
   padding: 16px 18px;
   border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: var(--dsw-radius-md);
-  background: var(--account-soft);
+  background: var(--dsw-alias-bg-module-platform);
 }
 .account-progress-steps {
   display: flex;
@@ -18,7 +18,7 @@
   color: var(--dsw-alias-label-tertiary);
 }
 .account-progress-steps [data-state='current'] {
-  color: var(--account-accent);
+  color: var(--dsw-alias-label-primary);
 }
 .account-progress-steps [data-state='complete'] {
   color: var(--dsw-alias-state-success-primary);
@@ -41,7 +41,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
-  margin: 0 24px 24px;
+  margin: 0 28px 24px;
   padding: 16px;
   border-radius: var(--dsw-radius-md);
   background: color-mix(
@@ -61,12 +61,12 @@
   border-top: 0.5px solid var(--dsw-alias-border-l1);
 }
 .account-detail .disclosure-trigger {
-  padding-inline: 24px;
+  padding-inline: 28px;
   min-height: 48px;
   font-size: 14px;
 }
 .account-check-details .environment-gate-result {
-  padding: 18px 24px;
+  padding: 18px 28px;
 }
 .account-check-details .environment-gate-result strong {
   font-size: 14px;

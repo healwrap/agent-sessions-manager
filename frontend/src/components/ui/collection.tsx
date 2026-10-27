@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { SearchField } from '../search-field';
+import { Panel } from './layout';
 
 export function ChoiceGroup<T extends string>({
   label,
@@ -104,6 +105,38 @@ export function CollectionToolbar({
         value={query}
         onChange={onQuery}
       />
+    </div>
+  );
+}
+
+export function CollectionPanel({
+  toolbar,
+  children,
+  className = '',
+}: {
+  toolbar: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Panel className={`ui-collection-panel ${className}`} padding="none">
+      <div className="ui-collection-panel-toolbar">{toolbar}</div>
+      <div className="ui-collection-panel-body">{children}</div>
+    </Panel>
+  );
+}
+
+export function MasterDetail({
+  navigation,
+  children,
+}: {
+  navigation: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="ui-master-detail">
+      <div className="ui-master-navigation">{navigation}</div>
+      <div className="ui-master-content">{children}</div>
     </div>
   );
 }

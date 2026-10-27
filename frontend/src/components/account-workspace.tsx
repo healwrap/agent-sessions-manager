@@ -105,12 +105,7 @@ export function AccountWorkspace({
         className="account-workspace"
         closed={sidebarClosed}
         animations={settings.animations}
-        title={
-          <>
-            账号与环境 <span className="workspace-title-separator">/</span>{' '}
-            {current.title}
-          </>
-        }
+        title="Agent Sessions"
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (

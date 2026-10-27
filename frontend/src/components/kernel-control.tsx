@@ -14,9 +14,9 @@ export function KernelControl({
   const update = installation?.state === 'update_available';
   return (
     <ResourceCard
-      className="kernel-control"
-      title="独立浏览器内核"
-      subtitle={`Fingerprint Chromium${kernel.version ? ' · ' + kernel.version : ''}`}
+      className="kernel-control ui-service-strip"
+      title="Fingerprint Chromium"
+      subtitle={kernel.version || '独立浏览器内核'}
       icon={<PanelsTopLeft size={22} />}
       badge={
         <StatusBadge tone={kernel.available ? 'success' : 'neutral'}>

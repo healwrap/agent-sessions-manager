@@ -27,9 +27,9 @@
 | -------- | ----------------------------------------------------------------------------------------- | ---------------------------------- |
 | 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、EditorDialog | 适配 DSH 控件与交互                |
 | 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                | 标题、信息分组、图标与事实展示     |
-| 集合操作 | ChoiceGroup、CollectionToolbar                                                            | 互斥选择、搜索与筛选               |
+| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                             | 互斥选择、搜索与筛选               |
 | 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                               | 空列表、加载、操作反馈与移除确认   |
-| 资源展示 | ResourceCard                                                                              | 组合身份、状态、操作、内容及折叠区 |
+| 资源展示 | ResourceCard、ResourceRow                                                                 | 组合身份、状态、操作、内容及折叠区 |
 | 表单     | Field                                                                                     | 标签与控件关联                     |
 | 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker                                        | 页面外壳、导航与工作区切换         |
 
@@ -53,3 +53,12 @@
 启动现有 Vite 服务后访问 `/?components=1`，查看浅深色、按钮、搜索筛选、资源状态、表单弹窗、加载与空列表。示例只维护页面内状态。
 
 预览仅在开发模式加载，不进入生产导航。新增公共组件同步加入预览并在至少一个真实页面使用。
+
+## 页面组合
+
+- CollectionPanel 将搜索筛选与列表放在同一个 DSH 设置卡片表面；空状态、加载和筛选无结果均留在这个表面内，避免页面跳动。
+- ResourceRow 用于同一集合的资源，行间使用发丝分割线。ResourceCard 保留给独立概览。两者共享身份、状态、操作、内容和展开区的实现。
+- MasterDetail 接收导航与详情两个区域，桌面并排，窄布局转为上下；业务页面持有选择和筛选状态。账号页已使用这个组合。
+- 同一页面保留一个主要的新建操作；集合内的打开、编辑、检测使用 DSH outline / ghost，避免每行都出现同等醒目的主按钮。
+- 可用性与内核信息使用紧凑服务条，详情按字段分组；避免在详情里再次套底色卡片。一般说明不增加小字注释。
+- 组合预览在 `design-system/layout-preview.tsx`，仅使用示例数据与页面内交互。

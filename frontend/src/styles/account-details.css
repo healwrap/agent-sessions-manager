@@ -1,9 +1,6 @@
 .account-detail {
   min-width: 0;
   overflow: hidden;
-  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
-  border-radius: var(--dsw-radius-xl);
-  background: var(--dsw-alias-bg-layer-2);
   animation: account-detail-in 160ms ease-out;
 }
 .account-detail-header {
@@ -11,27 +8,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 24px 20px;
+  padding: 24px 28px 20px;
 }
 .account-detail-identity {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 .account-detail-identity .account-avatar {
-  width: 48px;
-  height: 48px;
-  background: var(--dsw-alias-bg-module-platform);
+  width: 36px;
+  height: 36px;
 }
 .account-detail-identity > div {
   min-width: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
 }
 .account-detail-provider {
-  display: block;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 20px;
 }
 .account-detail h2 {
   font-size: 18px;
@@ -41,7 +39,7 @@
   overflow-wrap: anywhere;
 }
 .account-client-switch {
-  padding: 0 24px;
+  padding: 0 28px;
 }
 .account-live-dot {
   width: 6px;
@@ -58,22 +56,22 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
-  padding: 24px;
+  gap: 16px;
+  padding: 24px 28px;
 }
 .account-launch-status {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
-}
-.account-launch-status .status-badge {
-  font-size: 14px;
 }
 .account-session-state {
   display: flex;
   align-items: center;
   gap: 6px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 20px;
 }
 .account-session-state svg {
   color: var(--dsw-alias-label-tertiary);
@@ -83,55 +81,46 @@
   align-items: center;
   gap: 8px;
 }
-.account-launch-actions .action-button {
-  padding-inline: 14px;
-}
 .account-section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .account-section-heading h3 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .account-environment-summary {
-  margin: 0 24px 24px;
-  padding: 18px;
-  border: 0.5px solid var(--dsw-alias-border-l1);
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-module-platform);
+  margin: 0 28px 24px;
+  padding: 20px 0 0;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+.account-environment-summary .ui-facts {
+  gap: 20px 24px;
 }
 .account-exit-ip {
   font-variant-numeric: tabular-nums;
 }
 .account-exit-ip > span {
   margin-left: 8px;
-  font-size: 14px;
   color: var(--dsw-alias-label-secondary);
-}
-.account-environment-name {
-  border-top: 0.5px solid var(--dsw-alias-border-l1);
-  padding-top: 14px;
-  margin-top: 18px;
-  font-size: 14px;
-  color: var(--dsw-alias-label-secondary);
-  overflow-wrap: anywhere;
 }
 .account-login-link {
-  padding: 0 24px 20px;
+  padding: 0 28px 20px;
 }
 .account-management {
-  border-top: 0.5px solid var(--dsw-alias-border-l1);
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
 }
 .account-management-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 4px 24px 20px;
+  padding: 4px 28px 20px;
 }
 .account-delete.action-button {
   color: var(--dsw-alias-state-error-primary);
@@ -139,15 +128,12 @@
 .account-delete-confirm {
   display: grid;
   gap: 14px;
-  margin: 0 24px 20px;
+  margin: 0 28px 20px;
   padding: 16px;
-  border-radius: var(--dsw-radius-md);
-  background: color-mix(
-    in srgb,
-    var(--dsw-alias-state-error-primary) 7%,
-    transparent
-  );
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-module-platform);
   font-size: 14px;
+  line-height: 22px;
 }
 .account-delete-confirm > div {
   display: flex;
@@ -164,24 +150,13 @@
     transform: translateY(0);
   }
 }
-@container (min-width: 681px) and (max-width: 850px) {
-  .account-detail .ui-facts {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
-  }
-  .account-launch-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-@container (max-width: 430px) {
+@container (max-width: 480px) {
   .account-detail-header,
   .account-launch-bar {
     padding: 20px;
   }
   .account-client-switch {
     padding-inline: 20px;
-    gap: 20px;
   }
   .account-environment-summary {
     margin-inline: 20px;

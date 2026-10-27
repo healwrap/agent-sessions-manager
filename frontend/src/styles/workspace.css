@@ -27,53 +27,79 @@
   font-size: 14px;
   font-weight: 550;
 }
+.start-page.ui-page {
+  background: var(--dsw-specific-sidebar-fill);
+}
 .start-content {
-  width: min(560px, calc(100% - 48px));
+  width: min(840px, calc(100% - 64px));
   margin: auto;
   padding-block: 32px 80px;
 }
 .start-content h1 {
-  margin: 0 0 24px;
-  font-size: 22px;
-  line-height: 30px;
-  font-weight: 550;
+  margin: 0 0 28px;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
 }
 .workspace-choices {
-  overflow: hidden;
-  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
-  border-radius: var(--dsw-radius-xl);
-  background: var(--dsw-alias-bg-layer-2);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 .workspace-choice {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
-  width: 100%;
-  height: 80px;
-  padding: 0 24px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  gap: 28px 12px;
+  min-width: 0;
+  padding: 24px;
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-settings-card-fill);
   text-align: left;
   color: var(--dsw-alias-label-primary);
   font-size: 16px;
+  line-height: 24px;
   font-weight: 500;
-  transition: background 140ms ease;
-}
-.workspace-choice + .workspace-choice {
-  border-top: 0.5px solid var(--dsw-alias-border-l1);
+  cursor: pointer;
+  transition: background 160ms ease;
 }
 .workspace-choice:hover {
   background: var(--dsw-alias-interactive-bg-hover);
-  opacity: 1;
 }
-.workspace-choice > svg {
-  flex: none;
+.workspace-choice-icon {
+  grid-column: 1 / -1;
+  display: flex;
   color: var(--dsw-alias-label-secondary);
 }
+.workspace-choice-icon > svg {
+  width: 28px;
+  height: 28px;
+}
 .workspace-choice-arrow {
-  margin-left: auto;
+  color: var(--dsw-alias-label-tertiary);
+  transition: transform 160ms ease;
+}
+.workspace-choice:hover .workspace-choice-arrow {
+  transform: translateX(3px);
+}
+@media (max-width: 700px) {
+  .start-content {
+    width: min(480px, calc(100% - 40px));
+  }
+  .workspace-choices {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .workspace-choice {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    padding: 20px;
+    gap: 16px;
+  }
+  .workspace-choice-icon {
+    grid-column: auto;
+  }
 }
 .workspace-sidebar-actions {
   width: 100%;

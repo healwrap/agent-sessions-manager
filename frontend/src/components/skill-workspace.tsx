@@ -64,12 +64,7 @@ export function SkillWorkspace({
         closed={closed}
         onExpand={() => setClosed(false)}
         animations={settings.animations}
-        title={
-          <>
-            Skill 管理 <span className="workspace-title-separator">/</span>{' '}
-            Agent Sessions
-          </>
-        }
+        title="Agent Sessions"
         actions={
           closed && <WorkspacePicker value="skills" onChange={onNavigate} />
         }

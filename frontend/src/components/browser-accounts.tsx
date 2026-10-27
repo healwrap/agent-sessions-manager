@@ -19,6 +19,8 @@ import {
   BusyState,
   ChoiceGroup,
   CollectionToolbar,
+  CollectionPanel,
+  MasterDetail,
   EmptyState,
   Notice,
 } from './ui';
@@ -104,115 +106,129 @@ export function BrowserAccounts({
       {!loading && !data.browser.kernel.available && (
         <KernelControl kernel={data.browser.kernel} onInstall={onInstall} />
       )}
-      <CollectionToolbar
-        query={query}
-        onQuery={setQuery}
-        searchLabel="搜索账号"
-        placeholder="搜索账号或代理"
+      <CollectionPanel
+        toolbar={
+          <CollectionToolbar
+            query={query}
+            onQuery={setQuery}
+            searchLabel="搜索账号"
+            placeholder="搜索账号或代理"
+          >
+            <ChoiceGroup
+              label="筛选账号状态"
+              value={filter}
+              onChange={setFilter}
+              items={filters.map((item) => ({
+                value: item.id,
+                label: item.label,
+                count: item.count,
+              }))}
+            />
+          </CollectionToolbar>
+        }
       >
-        <ChoiceGroup
-          label="筛选账号状态"
-          value={filter}
-          onChange={setFilter}
-          items={filters.map((item) => ({
-            value: item.id,
-            label: item.label,
-            count: item.count,
-          }))}
-        />
-      </CollectionToolbar>
-      {loading && !accounts.length ? (
-        <BusyState label="正在读取账号" />
-      ) : !accounts.length ? (
-        <EmptyState
-          icon={<Users size={28} />}
-          title="添加你的第一个账号"
-          action={
-            <Button
-              variant="primary"
-              disabled={busy}
-              onClick={() => actions.onEditAccount()}
-            >
-              <Plus size={16} />
-              添加账号
-            </Button>
-          }
-        />
-      ) : !visible.length ? (
-        <EmptyState
-          icon={<SearchX size={28} />}
-          title="没有符合条件的账号"
-          action={
-            <Button
-              onClick={() => {
-                setQuery('');
-                setFilter('all');
-              }}
-            >
-              清除筛选
-            </Button>
-          }
-        />
-      ) : (
-        <div className="accounts-split">
-          <div className="accounts-list" role="group" aria-label="账号列表">
-            {visible.map(({ account, clients, status, proxies }) => (
-              <button
-                className="account-list-item"
-                type="button"
-                key={account.id}
-                aria-pressed={current.account.id === account.id}
-                aria-label={`查看账号 ${account.name}`}
-                onClick={() => setSelected(account.id)}
+        {loading && !accounts.length ? (
+          <BusyState label="正在读取账号" />
+        ) : !accounts.length ? (
+          <EmptyState
+            icon={<Users size={28} />}
+            title="添加你的第一个账号"
+            action={
+              <Button
+                variant="primary"
+                disabled={busy}
+                onClick={() => actions.onEditAccount()}
               >
-                <span className="account-avatar">
-                  <AgentIcon source={account.provider} />
-                </span>
-                <span className="account-list-identity">
-                  <strong>{account.name}</strong>
-                  <span>
-                    {account.provider === 'claude' ? 'Claude' : 'Codex'}
-                  </span>
-                </span>
-                <ChevronRight className="account-list-arrow" size={16} />
-                <span className="account-list-status">
-                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-                  <span className="account-list-clients">
-                    {clients
-                      .filter((client) => client.profile)
-                      .map((client) => (
-                        <span
-                          key={client.target}
-                          title={`${client.title}：${client.run?.alive ? '运行中' : '未运行'}`}
-                          data-live={!!client.run?.alive}
-                        >
-                          {client.target === 'browser' ? (
-                            <PanelsTopLeft size={14} />
-                          ) : (
-                            <Monitor size={14} />
-                          )}
-                        </span>
-                      ))}
-                  </span>
-                </span>
-                <span
-                  className="account-list-proxy"
-                  title={Array.from(new Set(proxies)).join(' / ')}
-                >
-                  {Array.from(new Set(proxies)).join(' / ')}
-                </span>
-              </button>
-            ))}
-          </div>
-          <AccountDetails
-            key={current.account.id}
-            account={current.account}
-            data={data}
-            busy={busy}
-            {...actions}
+                <Plus size={16} />
+                添加账号
+              </Button>
+            }
           />
-        </div>
-      )}
+        ) : !visible.length ? (
+          <EmptyState
+            icon={<SearchX size={28} />}
+            title="没有符合条件的账号"
+            action={
+              <Button
+                onClick={() => {
+                  setQuery('');
+                  setFilter('all');
+                }}
+              >
+                清除筛选
+              </Button>
+            }
+          />
+        ) : (
+          <MasterDetail
+            navigation={
+              <div className="accounts-list" role="group" aria-label="账号列表">
+                <div className="accounts-list-heading">
+                  <span>账号</span>
+                  <span>{visible.length}</span>
+                </div>
+                {visible.map(({ account, clients, status, proxies }) => (
+                  <button
+                    className="account-list-item"
+                    type="button"
+                    key={account.id}
+                    aria-pressed={current.account.id === account.id}
+                    aria-label={`查看账号 ${account.name}`}
+                    onClick={() => setSelected(account.id)}
+                  >
+                    <span className="account-avatar">
+                      <AgentIcon source={account.provider} />
+                    </span>
+                    <span className="account-list-identity">
+                      <strong>{account.name}</strong>
+                      <span>
+                        {account.provider === 'claude' ? 'Claude' : 'Codex'}
+                      </span>
+                    </span>
+                    <ChevronRight className="account-list-arrow" size={16} />
+                    <span className="account-list-status">
+                      <StatusBadge tone={status.tone}>
+                        {status.label}
+                      </StatusBadge>
+                      <span className="account-list-clients">
+                        {clients
+                          .filter((client) => client.profile)
+                          .map((client) => (
+                            <span
+                              key={client.target}
+                              title={`${client.title}：${client.run?.alive ? '运行中' : '未运行'}`}
+                              data-live={!!client.run?.alive}
+                            >
+                              {client.target === 'browser' ? (
+                                <PanelsTopLeft size={14} />
+                              ) : (
+                                <Monitor size={14} />
+                              )}
+                            </span>
+                          ))}
+                      </span>
+                    </span>
+                    <span
+                      className="account-list-proxy"
+                      title={Array.from(new Set(proxies)).join(' / ')}
+                    >
+                      {Array.from(new Set(proxies)).join(' / ')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            }
+          >
+            <AccountDetails
+              key={current.account.id}
+              account={current.account}
+              data={data}
+              busy={busy}
+              {...actions}
+            />
+          </MasterDetail>
+        )}
+      </CollectionPanel>
     </div>
   );
 }

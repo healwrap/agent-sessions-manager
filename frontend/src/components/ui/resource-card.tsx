@@ -1,16 +1,7 @@
 import type { ReactNode } from 'react';
 import { LeadingIcon, Panel } from './layout';
 
-export function ResourceCard({
-  title,
-  subtitle,
-  icon,
-  badge,
-  actions,
-  children,
-  footer,
-  className = '',
-}: {
+type ResourceProps = {
   title: string;
   subtitle?: ReactNode;
   icon: ReactNode;
@@ -19,13 +10,19 @@ export function ResourceCard({
   children?: ReactNode;
   footer?: ReactNode;
   className?: string;
-}) {
+};
+
+function ResourceContent({
+  title,
+  subtitle,
+  icon,
+  badge,
+  actions,
+  children,
+  footer,
+}: ResourceProps) {
   return (
-    <Panel
-      className={`ui-resource ${className}`}
-      padding="none"
-      aria-label={title}
-    >
+    <>
       <header className="ui-resource-heading">
         <LeadingIcon>{icon}</LeadingIcon>
         <div className="ui-resource-identity">
@@ -37,6 +34,30 @@ export function ResourceCard({
       </header>
       {children && <div className="ui-resource-body">{children}</div>}
       {footer && <div className="ui-resource-footer">{footer}</div>}
+    </>
+  );
+}
+
+export function ResourceCard(props: ResourceProps) {
+  return (
+    <Panel
+      className={`ui-resource ${props.className || ''}`}
+      padding="none"
+      aria-label={props.title}
+    >
+      <ResourceContent {...props} />
     </Panel>
+  );
+}
+
+export function ResourceRow(props: ResourceProps) {
+  return (
+    <article
+      className={`ui-resource ui-resource-row ${props.className || ''}`}
+      aria-label={props.title}
+      role="listitem"
+    >
+      <ResourceContent {...props} />
+    </article>
   );
 }

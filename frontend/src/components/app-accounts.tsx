@@ -35,7 +35,7 @@ export function AppAccounts({
         </Notice>
       ))}
       <ResourceCard
-        className="environment-service"
+        className="environment-service ui-service-strip"
         title="官方 Claude App"
         subtitle={app?.path || '尚未安装'}
         icon={<AgentIcon source="claude" />}

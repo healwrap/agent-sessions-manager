@@ -1,5 +1,5 @@
 .account-workspace .main-header {
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  border-bottom: 0;
 }
 .environment-navigation {
   display: grid;
@@ -14,7 +14,7 @@
   min-height: 0;
   flex: 1;
   min-width: 0;
-  padding: 28px clamp(24px, 3vw, 40px) 36px;
+  padding: 20px clamp(24px, 3vw, 40px) 36px;
   overflow-y: auto;
   container-type: inline-size;
 }
@@ -57,4 +57,15 @@
 .workspace-title-separator {
   margin-inline: 8px;
   color: var(--dsw-alias-label-tertiary);
+}
+
+.environment-content > * {
+  max-width: 1180px;
+  margin-inline: auto;
+}
+.account-workspace .main-header .session-title,
+.skill-workspace .main-header .session-title {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  font-weight: 400;
 }

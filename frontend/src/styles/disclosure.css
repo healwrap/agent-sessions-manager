@@ -23,6 +23,15 @@
   height: 14px;
   transition: transform 120ms ease;
 }
+.disclosure-trigger > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.disclosure-trigger > span > svg {
+  flex: none;
+}
 .disclosure[data-open='true'] > .disclosure-trigger > svg {
   transform: rotate(90deg);
 }

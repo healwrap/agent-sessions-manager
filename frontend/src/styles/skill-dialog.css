@@ -97,31 +97,16 @@
   border: 1px solid var(--dsw-alias-border-l1);
   border-radius: var(--dsw-radius-md);
 }
-.skill-plan code,
-.skill-history-row code {
+.skill-plan code {
   display: block;
   overflow-wrap: anywhere;
   font-size: 11px;
 }
-.skill-plan small,
-.skill-history-row small {
+.skill-plan small {
   color: var(--dsw-alias-label-tertiary);
 }
 .skill-plan p {
   margin: 0;
   line-height: 1.7;
   color: var(--dsw-static-amber-600);
-}
-.skill-history-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
-}
-.skill-history-row > div {
-  display: grid;
-  min-width: 0;
-  gap: 6px;
 }

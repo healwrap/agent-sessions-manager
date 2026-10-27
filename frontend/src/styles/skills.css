@@ -32,6 +32,43 @@
 .skill-history {
   margin-top: 24px;
 }
+.skill-history .disclosure-content {
+  padding: 0 20px 4px;
+}
+.skill-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 16px 0;
+}
+.skill-history-row + .skill-history-row {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+.skill-history-row > div {
+  display: grid;
+  flex: 1 1 240px;
+  min-width: 0;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.skill-history-row strong {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.skill-history-row span {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+.skill-history-row small,
+.skill-history-row code {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
 .ui-inline-action {
   padding: 0;
   border: 0;

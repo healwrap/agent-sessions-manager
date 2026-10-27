@@ -165,11 +165,11 @@ export function AccountWorkspace({
           </WorkspaceSidebar>
         }
       >
-        <div className="environment-content">
+        <div className="environment-content" data-section={section}>
           <header className="environment-page-heading">
             <div>
               <h1>{current.title}</h1>
-              <p>{current.description}</p>
+              {section !== 'accounts' && <p>{current.description}</p>}
             </div>
             <div className="environment-page-actions">
               {section === 'accounts' ? (
@@ -221,6 +221,7 @@ export function AccountWorkspace({
             <BrowserAccounts
               data={data}
               busy={busy}
+              loading={loading}
               onLogin={(account) => setLoginAccountId(account.id)}
               onEditAccount={(item) => setAccountEdit({ item })}
               onDelete={(id) => void remove('accounts', id)}

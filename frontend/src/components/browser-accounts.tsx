@@ -1,250 +1,226 @@
+import { useMemo, useState } from 'react';
 import {
-  ExternalLink,
+  ChevronRight,
   Monitor,
   PanelsTopLeft,
-  Pencil,
   Plus,
-  Square,
-  Trash2,
+  SearchX,
+  Users,
 } from 'lucide-react';
-import type {
-  BrowserAccount,
-  BrowserRun,
-  EnvironmentSettings,
-} from '../lib/environment-settings';
-import { browserAvailable, runLabels } from '../lib/environment-settings';
-import { Button, IconButton } from './primitives';
+import type { EnvironmentSettings } from '../lib/environment-settings';
+import {
+  accountClients,
+  accountStatus,
+  needsAttention,
+  type AccountActions,
+} from '../lib/account-view';
+import { Button } from './primitives';
 import { StatusBadge } from './form-controls';
 import { AgentIcon } from './agent-icon';
-import { BrowserLaunchReport } from './browser-launch-report';
 import { KernelControl } from './kernel-control';
+import { SearchField } from './search-field';
+import { AccountDetails } from './account-details';
+
 export function BrowserAccounts({
   data,
   busy,
-  onEditAccount,
-  onDelete,
-  onRuntime,
-  onEditProfile,
+  loading,
   onInstall,
-  onLogin,
-}: {
+  ...actions
+}: AccountActions & {
   data: EnvironmentSettings;
   busy: boolean;
-  onEditAccount: (account?: BrowserAccount) => void;
-  onDelete: (id: string) => void;
-  onEditProfile: (kind: 'profiles' | 'app_profiles', id: string) => void;
-  onRuntime: (
-    action: 'open' | 'stop',
-    body: { profile_id?: string; account_id?: string },
-    target: 'browser' | 'app',
-  ) => void;
+  loading: boolean;
   onInstall: (action: 'check' | 'install') => void;
-  onLogin: (account: BrowserAccount) => void;
 }) {
-  const renderReport = (run: BrowserRun, target: string) => (
-    <BrowserLaunchReport
-      key={target + run.profile_id}
-      run={run}
-      title={`${target}启动检查`}
-    />
+  const [selected, setSelected] = useState('');
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const accounts = useMemo(
+    () =>
+      data.accounts.map((account) => {
+        const clients = accountClients(account, data);
+        const proxies = clients
+          .filter((client) => client.profile)
+          .map(
+            (client) =>
+              data.proxies.find(
+                (proxy) => proxy.id === client.profile?.proxy_id,
+              )?.name || '系统路由',
+          );
+        return {
+          account,
+          clients,
+          proxies,
+          status: accountStatus(clients),
+          running: clients.some((client) => client.run?.alive),
+          attention: clients.some(needsAttention),
+        };
+      }),
+    [data],
   );
+  const filters = [
+    { id: 'all', label: '全部', count: accounts.length },
+    {
+      id: 'running',
+      label: '运行中',
+      count: accounts.filter((item) => item.running).length,
+    },
+    {
+      id: 'attention',
+      label: '待处理',
+      count: accounts.filter((item) => item.attention).length,
+    },
+  ];
+  const visible = accounts.filter(
+    (item) =>
+      (filter === 'all' ||
+        (filter === 'running' ? item.running : item.attention)) &&
+      [
+        item.account.name,
+        item.account.provider,
+        ...item.proxies,
+        ...item.clients.map((client) => client.profile?.name || ''),
+      ]
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes(query.trim().toLocaleLowerCase()),
+  );
+  const current =
+    visible.find((item) => item.account.id === selected) || visible[0];
   return (
-    <>
+    <div className="accounts-manager">
       {data.app_runtime.warnings?.map((message) => (
-        <p className="environment-error-bar" role="alert" key={message}>
+        <div className="environment-error-bar" role="alert" key={message}>
           {message}
-        </p>
+        </div>
       ))}
-      {!data.browser.kernel.available && (
+      {!loading && !data.browser.kernel.available && (
         <KernelControl kernel={data.browser.kernel} onInstall={onInstall} />
       )}
-      <div className="account-list-heading">
-        <span>{data.accounts.length} 个账号</span>
+      <div className="accounts-toolbar">
+        <div
+          className="accounts-filters"
+          role="group"
+          aria-label="筛选账号状态"
+        >
+          {filters.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              aria-pressed={filter === item.id}
+              onClick={() => setFilter(item.id)}
+            >
+              {item.label}
+              <span>{item.count}</span>
+            </button>
+          ))}
+        </div>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          label="搜索账号"
+          placeholder="搜索账号或代理"
+        />
       </div>
-      {!data.accounts.length && (
-        <section className="environment-panel environment-empty">
-          <h3>添加第一个账号</h3>
-          <Button onClick={() => onEditAccount()} disabled={busy}>
-            <Plus size={15} />
-            添加账号与环境
+      {loading && !accounts.length ? (
+        <div
+          className="accounts-loading"
+          role="status"
+          aria-label="正在读取账号"
+        >
+          {[0, 1, 2].map((item) => (
+            <div key={item} />
+          ))}
+        </div>
+      ) : !accounts.length ? (
+        <section className="accounts-empty">
+          <span className="accounts-empty-symbol">
+            <Users size={30} strokeWidth={1.5} />
+          </span>
+          <h2>添加你的第一个账号</h2>
+          <Button
+            variant="primary"
+            onClick={() => actions.onEditAccount()}
+            disabled={busy}
+          >
+            <Plus size={16} />
+            添加账号
           </Button>
         </section>
-      )}
-      <div className="account-list">
-        {data.accounts.map((account) => {
-          const browser = data.profiles.find(
-            (row) => row.id === account.profile_id,
-          );
-          const app = data.app_profiles.find(
-            (row) => row.id === account.app_profile_id,
-          );
-          const browserRun = data.browser.runs.find(
-            (row) => row.profile_id === account.profile_id,
-          );
-          const appRun = data.app_runtime.runs.find(
-            (row) => row.profile_id === account.app_profile_id,
-          );
-          const live = [browserRun, appRun].some(
-            (run) => run?.alive || run?.status === 'checking',
-          );
-          return (
-            <section
-              className="environment-panel account-card"
-              key={account.id}
-            >
-              <header className="account-card-heading">
-                <AgentIcon source={account.provider} />
-                <div>
-                  <h2>{account.name}</h2>
+      ) : !visible.length ? (
+        <section className="accounts-empty">
+          <SearchX size={30} strokeWidth={1.5} />
+          <h2>没有符合条件的账号</h2>
+          <Button
+            onClick={() => {
+              setQuery('');
+              setFilter('all');
+            }}
+          >
+            清除筛选
+          </Button>
+        </section>
+      ) : (
+        <div className="accounts-split">
+          <div className="accounts-list" role="group" aria-label="账号列表">
+            {visible.map(({ account, clients, status, proxies }) => (
+              <button
+                className="account-list-item"
+                type="button"
+                key={account.id}
+                aria-pressed={current.account.id === account.id}
+                aria-label={`查看账号 ${account.name}`}
+                onClick={() => setSelected(account.id)}
+              >
+                <span className="account-avatar">
+                  <AgentIcon source={account.provider} />
+                </span>
+                <span className="account-list-identity">
+                  <strong>{account.name}</strong>
                   <span>
                     {account.provider === 'claude' ? 'Claude' : 'Codex'}
                   </span>
-                </div>
-                <div className="environment-row-actions">
-                  <IconButton
-                    disabled={busy || live}
-                    label={`编辑账号 ${account.name}`}
-                    icon={<Pencil size={15} />}
-                    onClick={() => onEditAccount(account)}
-                  />
-                  <IconButton
-                    disabled={busy || live}
-                    label={`删除账号 ${account.name}`}
-                    icon={<Trash2 size={15} />}
-                    onClick={() => onDelete(account.id)}
-                  />
-                </div>
-              </header>
-              {(
-                [
-                  {
-                    target: 'browser',
-                    profile: browser,
-                    run: browserRun,
-                    label: '独立浏览器',
-                    icon: PanelsTopLeft,
-                  },
-                  ...(account.provider === 'claude'
-                    ? [
-                        {
-                          target: 'app',
-                          profile: app,
-                          run: appRun,
-                          label: 'Claude App',
-                          icon: Monitor,
-                        },
-                      ]
-                    : []),
-                ] as const
-              ).map(({ target, profile, run, label, icon: Icon }) => (
-                <div className="account-client-row" key={target}>
-                  <Icon size={18} />
-                  <div>
-                    <strong>{label}</strong>
-                    <p>{profile?.name || '尚未绑定环境'}</p>
-                    <div className="account-client-status">
-                      <StatusBadge
-                        tone={
-                          run?.alive
-                            ? 'success'
-                            : ['failed', 'blocked', 'interrupted'].includes(
-                                  run?.status || '',
-                                )
-                              ? 'error'
-                              : 'neutral'
-                        }
-                      >
-                        {run ? runLabels[run.status] : '尚未启动'}
-                      </StatusBadge>
-                      <small>
-                        {profile
-                          ? (target === 'browser'
-                              ? data.browser.sessions?.[profile.id]
-                              : data.app_runtime.sessions[profile.id]
-                            )?.label || '首次使用请登录'
-                          : '编辑账号以创建或绑定环境'}
-                      </small>
-                    </div>
-                  </div>
-                  {profile && (
-                    <div className="account-client-actions">
-                      {target === 'app' && (
-                        <Button
-                          disabled={busy || run?.status === 'checking'}
-                          onClick={() => onLogin(account)}
+                </span>
+                <ChevronRight className="account-list-arrow" size={16} />
+                <span className="account-list-status">
+                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                  <span className="account-list-clients">
+                    {clients
+                      .filter((client) => client.profile)
+                      .map((client) => (
+                        <span
+                          key={client.target}
+                          title={`${client.title}：${client.run?.alive ? '运行中' : '未运行'}`}
+                          data-live={!!client.run?.alive}
                         >
-                          登录引导
-                        </Button>
-                      )}
-                      <Button
-                        variant="text"
-                        disabled={
-                          busy || run?.alive || run?.status === 'checking'
-                        }
-                        onClick={() =>
-                          onEditProfile(
-                            target === 'browser' ? 'profiles' : 'app_profiles',
-                            profile.id,
-                          )
-                        }
-                      >
-                        环境设置
-                      </Button>
-                      <Button
-                        disabled={
-                          busy ||
-                          run?.status === 'checking' ||
-                          (target === 'browser' &&
-                            !browserAvailable(data, browser))
-                        }
-                        onClick={() => {
-                          if (
-                            target === 'app' &&
-                            data.app_runtime.sessions[profile.id]?.state !==
-                              'saved'
-                          )
-                            onLogin(account);
-                          else
-                            onRuntime(
-                              'open',
-                              { account_id: account.id },
-                              target as 'browser' | 'app',
-                            );
-                        }}
-                      >
-                        <ExternalLink size={14} />
-                        {run?.status === 'checking'
-                          ? '正在检查…'
-                          : target === 'browser'
-                            ? '打开浏览器'
-                            : '打开 App'}
-                      </Button>
-                      {(run?.alive || run?.status === 'checking') && (
-                        <Button
-                          variant="text"
-                          disabled={busy}
-                          onClick={() =>
-                            onRuntime(
-                              'stop',
-                              { profile_id: profile.id },
-                              target as 'browser' | 'app',
-                            )
-                          }
-                        >
-                          <Square size={13} />
-                          停止
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {browserRun && renderReport(browserRun, '浏览器')}
-              {appRun && renderReport(appRun, 'Claude App')}
-            </section>
-          );
-        })}
-      </div>
-    </>
+                          {client.target === 'browser' ? (
+                            <PanelsTopLeft size={14} />
+                          ) : (
+                            <Monitor size={14} />
+                          )}
+                        </span>
+                      ))}
+                  </span>
+                </span>
+                <span
+                  className="account-list-proxy"
+                  title={Array.from(new Set(proxies)).join(' / ')}
+                >
+                  {Array.from(new Set(proxies)).join(' / ')}
+                </span>
+              </button>
+            ))}
+          </div>
+          <AccountDetails
+            key={current.account.id}
+            account={current.account}
+            data={data}
+            busy={busy}
+            {...actions}
+          />
+        </div>
+      )}
+    </div>
   );
 }

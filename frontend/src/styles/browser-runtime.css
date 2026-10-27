@@ -112,74 +112,6 @@
 .environment-gate-result[data-state='skip'] .environment-gate-dot {
   margin-top: 0;
 }
-.account-list-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-.account-list-heading > span {
-  font-size: 14px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.account-list {
-  display: grid;
-  gap: 20px;
-}
-.account-card-heading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-}
-.account-card-heading > .agent-icon {
-  width: 24px;
-  height: 24px;
-}
-.account-card-heading > div:nth-child(2) {
-  flex: 1;
-}
-.account-card-heading h2 {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 600;
-}
-.account-card-heading span {
-  font-size: 13px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.account-client-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 18px 20px;
-  border-top: 1px solid var(--dsw-alias-border-l1);
-}
-.account-client-row > svg {
-  color: var(--dsw-alias-label-tertiary);
-  flex-shrink: 0;
-}
-.account-client-row > div:nth-child(2) {
-  flex: 1;
-  min-width: 0;
-}
-.account-client-row strong {
-  font-size: 14px;
-}
-.account-client-row p {
-  margin: 5px 0;
-  font-size: 13px;
-  color: var(--dsw-alias-label-secondary);
-}
-.account-client-row small {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 13px;
-}
-.account-client-actions {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-}
 .kernel-control {
   margin-bottom: 20px;
 }
@@ -187,28 +119,6 @@
   color: var(--dsw-alias-label-tertiary);
   font-size: 13px;
 }
-@media (max-width: 800px) {
-  .account-client-row {
-    flex-wrap: wrap;
-  }
-  .account-client-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-.account-client-status {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.account-client-status .status-badge {
-  font-size: 13px;
-  padding: 1px 7px;
-}
-
 .environment-launch-report > .disclosure {
   border-top: 1px solid var(--dsw-alias-border-l1);
 }

@@ -11,6 +11,8 @@ class SourceAdapter(Protocol):
 
     def available(self) -> bool: ...
     # Optional row fields: session_kind, native parent_id, agent_name, agent_role.
+    # execution_mode: non_interactive marks script-driven tasks independently of
+    # parent/child relationships; session_source preserves the native source label.
     # Optional session_activity(key): status, task_preview, result_preview, result_ref. Sources
     # without this hook retain readable child sessions with an unknown status.
     # Optional search_document(key) returns complete visible user/assistant text

@@ -1,12 +1,7 @@
 import { useSessionSearch } from '../hooks/use-session-search';
 import type { AppState } from '../state/session-store';
 import { sessionStore } from '../state/session-store';
-import {
-  projectGroups,
-  relativeDate,
-  sessionTitle,
-  sourceId,
-} from '../lib/selectors';
+import { projectGroups, relativeDate, sessionTitle } from '../lib/selectors';
 import { sourceNames, type Session } from '../lib/types';
 import { showAbout } from '../lib/api';
 import { Collapse, Icon, IconButton } from './primitives';
@@ -16,6 +11,7 @@ import { Select } from './select';
 import { SearchField } from './search-field';
 import { SessionFilters } from './session-filters';
 import { AgentIcon } from './agent-icon';
+import { SessionLabels } from './session-labels';
 export function Sidebar({
   state,
   onManage,
@@ -210,7 +206,9 @@ export function Sidebar({
                       key={item.id}
                       className="session-item"
                       data-source-visible={
-                        !state.provider || item.session_kind === 'subagent'
+                        !state.provider ||
+                        item.session_kind === 'subagent' ||
+                        item.execution_mode === 'non_interactive'
                       }
                       aria-current={item.id === state.id}
                       onContextMenu={(event) => {
@@ -245,27 +243,11 @@ export function Sidebar({
                             className="session-name"
                             text={sessionTitle(item, state.preferences)}
                           />
-                          {(!state.provider ||
-                            item.session_kind === 'subagent') && (
-                            <span className="provider-tag">
-                              {!state.provider && (
-                                <AgentIcon
-                                  source={sourceId(item, state.sources)}
-                                />
-                              )}
-                              <span className="provider-name">
-                                {!state.provider &&
-                                  (state.sources.find(
-                                    (source) =>
-                                      source.id ===
-                                      sourceId(item, state.sources),
-                                  )?.label ||
-                                    item.provider_label)}
-                                {item.session_kind === 'subagent' &&
-                                  (state.provider ? '子代理' : ' · 子代理')}
-                              </span>
-                            </span>
-                          )}
+                          <SessionLabels
+                            item={item}
+                            sources={state.sources}
+                            provider={state.provider}
+                          />
                         </span>
                         <span className="session-date">
                           {relativeDate(item.updated_at)}

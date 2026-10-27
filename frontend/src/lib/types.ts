@@ -7,6 +7,8 @@ export interface Project {
 }
 export interface Session extends Project {
   session_kind?: 'main' | 'subagent';
+  execution_mode?: 'non_interactive';
+  session_source?: string;
   parent_id?: string | null;
   parent_available?: boolean;
   agent_name?: string | null;

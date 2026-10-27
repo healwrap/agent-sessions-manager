@@ -21,6 +21,8 @@
 
 适配器还提供 `root: Path`、`rows: dict` 和支持上下文管理的 `lock`。聚合层在目录锁内调用 `discover()`；注册时同时校验这些属性。上下文引用命令使用统一的 `--source-path SOURCE=PATH`，仅保留所选来源插件登记的目录（包括必要的补充索引），不维护另一份 Agent 专用参数表。
 
+会话目录可返回 `execution_mode: non_interactive`，表示非交互式启动的任务；`session_source` 保留原生来源名称。执行模式与 `session_kind` 的父子关系独立，公共侧栏按字段展示“非交互任务”，有原生来源时附在括号中；筛选单个 Agent 后仍保留该标识。Codex 仅在原生 `session_meta.source` 明确为 `exec` 时填写，不从提示词、标题或父会话推断，也不将所有非交互任务标为子代理。
+
 ## 公共服务和展示
 
 `common.py` 的 `TrajectoryStore` 处理与来源无关的搜索、导轨、分页和范围定位。JSONL 来源可使用 `base.py` 的 `HistoryStore`，数据库来源可覆盖读取方法。它们不再继承 Codex 原生读取器。

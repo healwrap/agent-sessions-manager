@@ -22,7 +22,8 @@ def start(runtime, value):
         if run.get('status') != 'checking' and not (process and process.poll() is None):
             runtime.launch(value)
             run = runtime.runs[key]
-        ticket = runtime.diagnostics.start({'target': 'profile:'+key})
+        ticket = runtime.diagnostics.start({'target': 'profile:'+key}, context={
+            'probe_options': {'managed': True, 'exit_source': run.get('resolved', {}).get('probe_source', '')}})
         runtime.inspections[key] = ticket['token']
         threading.Thread(target=_open, args=(runtime, key, run, ticket['token']), daemon=True).start()
         return ticket

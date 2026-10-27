@@ -11,6 +11,7 @@ export async function browserDns(enabled = true): Promise<DiagnosticItem> {
     return {
       ...base,
       state: 'unknown',
+      label: '未执行',
       value: '本次未执行',
       detail: '',
     };
@@ -47,9 +48,15 @@ export async function browserDns(enabled = true): Promise<DiagnosticItem> {
       }),
     ),
   );
+  const resolvers = [...servers].map(([ip, info]) => ({
+    ip,
+    country: info[0] || '',
+    info: info.slice(1),
+  }));
   return {
     ...base,
     state: servers.size ? 'info' : 'unknown',
+    label: servers.size ? '已采样' : '检测失败',
     value: servers.size ? [...servers.keys()].join('、') : '未取得 DNS 解析器',
     detail: servers.size
       ? [...servers]
@@ -59,5 +66,11 @@ export async function browserDns(enabled = true): Promise<DiagnosticItem> {
           )
           .join('；')
       : [...new Set(errors)].join('；') || 'DNS 探针未返回解析器',
+    observation: {
+      kind: 'dns',
+      status: servers.size ? 'observed' : 'failed',
+      servers: resolvers,
+      errors: [...new Set(errors)],
+    },
   };
 }

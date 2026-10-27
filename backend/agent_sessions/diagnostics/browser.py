@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import secrets
 import threading
 import time
+from .leaks import describe_leaks, valid_observation
 
 
 class BrowserDiagnostics:
@@ -63,14 +64,17 @@ class BrowserDiagnostics:
                        'canvas', 'webgl', 'webrtc', 'dns', 'profile-storage', 'browser-http-ip', 'browser-cloudflare-ip'}
             ids = set()
             for item in checks:
-                if (not isinstance(item, dict) or set(item) != {'id', 'title', 'state', 'value', 'detail', 'scope'}
+                required = {'id', 'title', 'state', 'value', 'detail', 'scope'}
+                if (not isinstance(item, dict) or not required <= set(item) or set(item) - required - {'label', 'observation'}
                     or item.get('id') not in allowed or item['id'] in ids
-                    or any(not isinstance(item.get(key), str) or len(item[key]) > 4096 for key in item)
-                    or item['state'] not in {'pass', 'warn', 'fail', 'unknown', 'info'}):
+                    or any(not isinstance(item.get(key), str) or len(item[key]) > 4096 for key in required)
+                    or item['state'] not in {'pass', 'warn', 'fail', 'unknown', 'info'}
+                    or ('label' in item and (not isinstance(item['label'], str) or len(item['label']) > 80))
+                    or ('observation' in item and (not valid_observation(item['observation']) or item['observation']['kind'] != item['id']))):
                     raise ValueError('浏览器采样项目无效')
                 ids.add(item['id'])
             if ids != allowed: raise ValueError('浏览器采样项目不完整')
-            row['report'] = {'checked_at': datetime.now(timezone.utc).isoformat(), 'checks': checks}
+            row['report'] = {'checked_at': datetime.now(timezone.utc).isoformat(), 'checks': describe_leaks(checks)}
             return self.read(token)
 
     def set_launch(self, token, result):

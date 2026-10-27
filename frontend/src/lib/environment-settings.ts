@@ -1,4 +1,5 @@
 import type { DiagnosticItem } from './claude-diagnostics';
+import type { DnsServer } from './leak-observation';
 export type GateMode = 'block' | 'warn' | 'off';
 export interface GateDefinition {
   id: string;
@@ -14,6 +15,7 @@ export interface GateResult {
   value: string;
   detail: string;
   label?: string;
+  resolvers?: DnsServer[];
 }
 export interface ProfileRoute {
   id: string;

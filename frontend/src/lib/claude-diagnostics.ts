@@ -1,4 +1,5 @@
 import { webrtcCandidates } from './browser-webrtc';
+import type { DnsServer, LeakObservation } from './leak-observation';
 
 export type CheckState = 'pass' | 'warn' | 'fail' | 'unknown' | 'info';
 export interface DiagnosticItem {
@@ -9,6 +10,7 @@ export interface DiagnosticItem {
   detail: string;
   scope: string;
   label?: string;
+  observation?: LeakObservation;
 }
 export interface DiagnosticRoute {
   mode: 'direct' | 'proxy';
@@ -57,7 +59,7 @@ export interface IpReputation {
 export interface ClaudeReport {
   dns?: {
     state: 'observed' | 'unknown';
-    servers: { ip: string; country: string; info: string[] }[];
+    servers: DnsServer[];
     errors: string[];
   };
   checked_at: string;

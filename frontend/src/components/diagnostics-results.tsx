@@ -12,6 +12,7 @@ import cloudflareIcon from '../assets/agents/cloudflare.svg';
 import { countryFlag, countryLabel, nodeLabel } from '../lib/diagnostic-labels';
 import { AgentIcon } from './agent-icon';
 import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
+import { DnsResolvers } from './dns-resolvers';
 
 export function DiagnosticSection({
   title,
@@ -57,14 +58,19 @@ export function DiagnosticRows({
                     : 'info'
               }
             />
-            {checkLabels[item.state]}
+            {item.label || checkLabels[item.state]}
           </span>
           <div className="diagnostic-row-content">
             <div className="diagnostic-row-heading">
               <strong>{item.title}</strong>
               {showScope && <span>{item.scope}</span>}
             </div>
-            <div className="diagnostic-value">{item.value}</div>
+            {item.observation?.kind === 'dns' &&
+            item.observation.servers.length ? (
+              <DnsResolvers servers={item.observation.servers} />
+            ) : (
+              <div className="diagnostic-value">{item.value}</div>
+            )}
             {item.detail &&
               ['warn', 'fail', 'unknown'].includes(item.state) && (
                 <p>{item.detail}</p>

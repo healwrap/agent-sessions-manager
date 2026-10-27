@@ -6,6 +6,7 @@ import {
   DiagnosticCard,
   DiagnosticField,
 } from './diagnostic-card';
+import { DnsResolvers } from './dns-resolvers';
 
 export function NetworkOverview({ report }: { report: ClaudeReport }) {
   const connections = report.checks.filter((item) =>
@@ -61,13 +62,11 @@ export function NetworkOverview({ report }: { report: ClaudeReport }) {
             <span className="diagnostic-mono">{dns?.value || '未取得'}</span>
           </DiagnosticField>
           <DiagnosticField label="公网解析器">
-            {report.dns?.servers.length
-              ? report.dns.servers.map((server) => (
-                  <span className="diagnostic-mono" key={server.ip}>
-                    {server.ip}
-                  </span>
-                ))
-              : '未取得'}
+            {report.dns?.servers.length ? (
+              <DnsResolvers servers={report.dns.servers} />
+            ) : (
+              '未取得'
+            )}
           </DiagnosticField>
           {!!report.dns?.errors.length && (
             <DiagnosticField label="探针结果">

@@ -2,6 +2,7 @@ import type { BrowserRun, GateResult } from '../lib/environment-settings';
 import { DiagnosticRows } from './diagnostics-results';
 import { StatusBadge } from './form-controls';
 import { Disclosure } from './disclosure';
+import { DnsResolvers } from './dns-resolvers';
 export function GateResults({ checks }: { checks: GateResult[] }) {
   return (
     <div className="environment-gate-results">
@@ -16,7 +17,11 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
             <strong>{check.title}</strong>
             {check.policy !== 'off' && (
               <>
-                <p>{check.value}</p>
+                {check.resolvers?.length ? (
+                  <DnsResolvers servers={check.resolvers} />
+                ) : (
+                  <p>{check.value}</p>
+                )}
                 {check.state !== 'pass' && check.detail && (
                   <p>{check.detail}</p>
                 )}

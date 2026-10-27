@@ -169,7 +169,9 @@ export function NetworkDiagnostics({
               <DiagnosticBadge state="warn">
                 {(counts?.warn || 0) + (counts?.fail || 0)} 项需关注
               </DiagnosticBadge>
-              <DiagnosticBadge>{counts?.unknown || 0} 项无法判定</DiagnosticBadge>
+              <DiagnosticBadge>
+                {counts?.unknown || 0} 项无法判定
+              </DiagnosticBadge>
             </div>
           </div>
           <div className="diagnostic-dashboard">

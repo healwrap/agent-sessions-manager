@@ -7,12 +7,11 @@ import {
   type DiagnosticHistory,
 } from '../lib/claude-diagnostics';
 import { networkChecks } from '../lib/diagnostic-labels';
-import { Button, Icon } from './primitives';
+import { Button, BusyState, EmptyState, Field, Notice } from './ui';
+import { Network } from 'lucide-react';
 import { Select } from './select';
 import { TextInput } from './form-controls';
 import { Disclosure } from './disclosure';
-import { SettingsRow } from './settings/row';
-import { TrajectoryLoading } from './trajectory-loading';
 import { DiagnosticReputation } from './diagnostic-reputation';
 import { DiagnosticBadge } from './diagnostic-card';
 import { NetworkOverview } from './network-overview';
@@ -105,7 +104,7 @@ export function NetworkDiagnostics({
           void run();
         }}
       >
-        <SettingsRow label="检测链路">
+        <Field label="检测链路">
           <Select
             label="检测链路"
             value={mode}
@@ -117,9 +116,9 @@ export function NetworkDiagnostics({
               { value: 'lookup-proxy', label: '仅 IP 资料走代理' },
             ]}
           />
-        </SettingsRow>
+        </Field>
         {mode !== 'direct' && (
-          <SettingsRow
+          <Field
             label={mode === 'lookup-proxy' ? 'IP 资料查询代理' : '代理地址'}
             htmlFor="diagnostic-proxy"
           >
@@ -135,7 +134,7 @@ export function NetworkDiagnostics({
               placeholder="http://127.0.0.1:7897"
               spellCheck={false}
             />
-          </SettingsRow>
+          </Field>
         )}
         <div className="diagnostic-toolbar">
           <Button
@@ -148,12 +147,8 @@ export function NetworkDiagnostics({
           </Button>
         </div>
       </form>
-      {error && (
-        <p className="diagnostic-error" role="alert">
-          {error}
-        </p>
-      )}
-      {running && <TrajectoryLoading label="正在检测网络…" />}
+      {error && <Notice tone="error">{error}</Notice>}
+      {running && <BusyState label="正在检测网络" />}
       {report ? (
         <>
           <div className="diagnostic-summary">
@@ -188,14 +183,10 @@ export function NetworkDiagnostics({
         </>
       ) : (
         !running && (
-          <div className="diagnostic-empty">
-            <Icon name="search" />
-            <strong>准备检测网络环境</strong>
-            <p>
-              查看 Claude 域名出口、IP 信誉与网络响应。浏览器和 App
-              请在各自的检测页查看。
-            </p>
-          </div>
+          <EmptyState
+            icon={<Network size={28} />}
+            title="选择检测链路，开始环境检测"
+          />
         )
       )}
       <DiagnosticSection

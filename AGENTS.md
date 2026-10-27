@@ -5,3 +5,9 @@
 - 各 Agent 通过统一来源接口接入。原生格式解析留在来源模块，公共展示层按记录类型和可用数据渲染，不按 Agent 名称选择组件。
 - 历史文件只读，保留原始字段值。配置、缓存与视图设置写入应用自己的目录，不提交个人会话或凭据。
 - 按职责拆分文件。采用原子化提交与约定式提交规范，提交说明使用中文。
+
+## UI 组件积累
+
+- 管理类页面优先从 `frontend/src/components/ui` 复用公共组件；页面样式只负责业务布局。
+- 颜色、间距、圆角和动效沿用 DSH 与 `styles/ui-foundations.css` 的语义变量。
+- 新公共组件同步加入 `frontend/src/design-system/catalog.tsx` 的交互预览，并在真实页面使用；组件规范见 `components/ui/README.md`。

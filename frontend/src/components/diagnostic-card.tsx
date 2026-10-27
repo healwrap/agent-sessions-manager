@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { CheckState } from '../lib/claude-diagnostics';
+import { Panel, StatusBadge } from './ui';
 
 export function DiagnosticBadge({
   state = 'unknown',
@@ -9,9 +10,19 @@ export function DiagnosticBadge({
   children: ReactNode;
 }) {
   return (
-    <span className="diagnostic-badge" data-state={state}>
+    <StatusBadge
+      tone={
+        state === 'pass'
+          ? 'success'
+          : state === 'fail'
+            ? 'error'
+            : state === 'warn'
+              ? 'warning'
+              : 'neutral'
+      }
+    >
       {children}
-    </span>
+    </StatusBadge>
   );
 }
 
@@ -29,16 +40,15 @@ export function DiagnosticCard({
   children: ReactNode;
 }) {
   return (
-    <section className={'diagnostic-card ' + className} aria-label={title}>
-      <header className="diagnostic-card-heading">
-        <h3>
-          {icon}
-          {title}
-        </h3>
-        {extra}
-      </header>
+    <Panel
+      className={'diagnostic-card ' + className}
+      aria-label={title}
+      title={title}
+      icon={icon}
+      actions={extra}
+    >
       {children}
-    </section>
+    </Panel>
   );
 }
 

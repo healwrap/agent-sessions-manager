@@ -7,7 +7,7 @@ import type {
   EnvironmentCollection,
   EnvironmentItem,
 } from '../lib/environment-settings';
-import { Button } from './primitives';
+import { Button, Field, Notice } from './ui';
 import { EditorDialog, TextInput } from './form-controls';
 import { BrowserProfileFields } from './browser-profile-fields';
 
@@ -113,9 +113,9 @@ export function EnvironmentEditor({
         </>
       }
     >
-      <label className="environment-field">
-        名称
+      <Field label="名称" htmlFor="environment-editor-0">
         <TextInput
+          id="environment-editor-0"
           autoFocus
           ref={nameInput}
           required
@@ -124,7 +124,7 @@ export function EnvironmentEditor({
           onChange={(event) => field('name', event.target.value)}
           placeholder={profile ? '例如：Claude 日常使用' : '例如：美国固定出口'}
         />
-      </label>
+      </Field>
       {profile ? (
         <BrowserProfileFields
           value={browser}
@@ -135,22 +135,18 @@ export function EnvironmentEditor({
           }
         />
       ) : (
-        <label className="environment-field">
-          代理地址
+        <Field label="代理地址" htmlFor="environment-editor-1">
           <TextInput
+            id="environment-editor-1"
             required
             value={proxy.url}
             onChange={(event) => field('url', event.target.value)}
             placeholder="http://127.0.0.1:7897"
             spellCheck={false}
           />
-        </label>
+        </Field>
       )}
-      {error && (
-        <p className="environment-error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <Notice tone="error">{error}</Notice>}
     </EditorDialog>
   );
 }

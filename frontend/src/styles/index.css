@@ -10,7 +10,6 @@
 @import './skill-installations.css' layer(components);
 @import './skill-dialog.css' layer(components);
 @import './environment-panels.css' layer(components);
-@import './environment-integrations.css' layer(components);
 @import './environment-editor.css' layer(components);
 @import './select.css' layer(components);
 @import './agent-icon.css' layer(components);
@@ -24,7 +23,6 @@
 @import './dialogs.css' layer(components);
 @import './form-controls.css' layer(components);
 @import './disclosure.css' layer(components);
-@import './environment-profiles.css' layer(components);
 @import './markdown.css' layer(components);
 @import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);
@@ -64,3 +62,7 @@
 @import './accounts.css' layer(components);
 @import './account-details.css' layer(components);
 @import './account-client.css' layer(components);
+@import './ui-foundations.css' layer(components);
+@import './ui-controls.css' layer(components);
+
+@import './management-pages.css' layer(components);

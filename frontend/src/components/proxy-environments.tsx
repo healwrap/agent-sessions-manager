@@ -1,10 +1,19 @@
-import { Globe2, Pencil, Plus, ScanLine, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Globe2, Pencil, Plus, ScanLine } from 'lucide-react';
 import type {
   EnvironmentSettings,
   ProxyConfig,
 } from '../lib/environment-settings';
-import { Button, IconButton } from './primitives';
-import { StatusBadge } from './form-controls';
+import {
+  Button,
+  BusyState,
+  CollectionToolbar,
+  EmptyState,
+  IconButton,
+  RemoveButton,
+  ResourceCard,
+  StatusBadge,
+} from './ui';
 
 export function ProxyEnvironments({
   data,
@@ -21,59 +30,107 @@ export function ProxyEnvironments({
   onDelete: (id: string) => void;
   onInspect: (proxy: string) => void;
 }) {
+  const [query, setQuery] = useState('');
+  const visible = data.proxies.filter((item) =>
+    `${item.name} ${item.url}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
   return (
-    <section className="environment-profile-list" aria-label="代理配置列表">
-      {data.proxies.map((item) => {
-        const bindings = [...data.profiles, ...data.app_profiles].filter(
-          (profile) => profile.proxy_id === item.id,
-        ).length;
-        return (
-          <article
-            className="environment-panel environment-profile"
-            key={item.id}
-          >
-            <header className="environment-profile-heading">
-              <Globe2 size={22} />
-              <div className="environment-profile-name">
-                <h2>{item.name}</h2>
-              </div>
-              <StatusBadge>{bindings} 个环境</StatusBadge>
-              <div className="environment-row-actions">
-                <Button
-                  variant="text"
-                  aria-label={`检测代理 ${item.name}`}
-                  onClick={() => onInspect(item.url)}
-                >
-                  <ScanLine size={16} />
-                  检测
-                </Button>
-                <IconButton
-                  label={`编辑代理 ${item.name}`}
-                  icon={<Pencil size={16} />}
-                  onClick={() => onEdit(item)}
-                  disabled={busy}
-                />
-                <IconButton
-                  label={`删除代理配置 ${item.name}`}
-                  icon={<Trash2 size={16} />}
-                  onClick={() => onDelete(item.id)}
-                  disabled={busy}
-                />
-              </div>
-            </header>
-            <div className="environment-proxy-address">
-              <code>{item.url}</code>
-            </div>
-          </article>
-        );
-      })}
-      {!data.proxies.length && (
-        <div className="environment-panel environment-empty">
-          <h3>{loading ? '正在读取代理配置…' : '还没有代理配置'}</h3>
-          <Button onClick={() => onEdit()} disabled={loading || busy}>
-            <Plus size={16} />
-            添加代理
-          </Button>
+    <section aria-label="代理配置列表">
+      <CollectionToolbar
+        query={query}
+        onQuery={setQuery}
+        searchLabel="搜索代理"
+      >
+        <span className="ui-collection-count">
+          {data.proxies.length} 个专用代理
+        </span>
+      </CollectionToolbar>
+      {loading && !data.proxies.length ? (
+        <BusyState label="正在读取代理" />
+      ) : !visible.length ? (
+        <EmptyState
+          icon={<Globe2 size={28} />}
+          title={data.proxies.length ? '没有匹配的代理' : '还没有专用代理'}
+          action={
+            data.proxies.length ? (
+              <Button onClick={() => setQuery('')}>清除搜索</Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => onEdit()}
+                disabled={busy}
+              >
+                <Plus size={16} />
+                添加代理
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <div className="ui-stack">
+          {visible.map((item) => {
+            const bindings = [...data.profiles, ...data.app_profiles].filter(
+              (profile) => profile.proxy_id === item.id,
+            );
+            const running = bindings.some((profile) =>
+              [...data.browser.runs, ...data.app_runtime.runs].some(
+                (run) =>
+                  run.profile_id === profile.id &&
+                  (run.alive || run.status === 'checking'),
+              ),
+            );
+            return (
+              <ResourceCard
+                key={item.id}
+                title={item.name}
+                icon={<Globe2 size={22} />}
+                badge={<StatusBadge>{bindings.length} 个环境</StatusBadge>}
+                actions={
+                  <>
+                    <Button
+                      variant="text"
+                      aria-label={`检测代理 ${item.name}`}
+                      onClick={() => onInspect(item.url)}
+                    >
+                      <ScanLine size={16} />
+                      检测
+                    </Button>
+                    <IconButton
+                      label={`编辑代理 ${item.name}`}
+                      icon={<Pencil size={17} />}
+                      disabled={busy || running}
+                      title={
+                        running
+                          ? '先停止使用此代理的环境，再编辑'
+                          : `编辑代理 ${item.name}`
+                      }
+                      onClick={() => onEdit(item)}
+                    />
+                    <RemoveButton
+                      label={`移除代理配置 ${item.name}`}
+                      disabled={busy || running}
+                      message="移除此代理配置？绑定此代理的环境需要重新选择出口。"
+                      onRemove={() => onDelete(item.id)}
+                    />
+                  </>
+                }
+              >
+                <p className="ui-resource-address">{item.url}</p>
+                {!!bindings.length && (
+                  <div
+                    className="proxy-binding-list"
+                    aria-label="使用此代理的环境"
+                  >
+                    {bindings.map((profile) => (
+                      <span key={profile.id}>{profile.name}</span>
+                    ))}
+                  </div>
+                )}
+              </ResourceCard>
+            );
+          })}
         </div>
       )}
     </section>

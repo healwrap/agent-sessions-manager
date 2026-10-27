@@ -22,7 +22,7 @@ import {
   type AccountActions,
   type AccountClient,
 } from '../lib/account-view';
-import { Button } from './primitives';
+import { Button, FactsGrid } from './ui';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
 
@@ -192,47 +192,43 @@ export function AccountClientPanel({
                 环境设置
               </Button>
             </div>
-            <dl className="account-environment-facts">
-              <div>
-                <dt>
-                  <Globe2 size={16} />
-                  专用代理
-                </dt>
-                <dd title={proxy?.name}>{proxy?.name || '系统路由'}</dd>
-              </div>
-              <div>
-                <dt>
-                  <MapPin size={16} />
-                  最近出口
-                </dt>
-                <dd className="account-exit-ip">
-                  {run?.resolved.ip || '尚未检测'}
-                  {run?.resolved.country && <span>{run.resolved.country}</span>}
-                </dd>
-              </div>
-              <div>
-                <dt>
-                  <Languages size={16} />
-                  语言
-                </dt>
-                <dd>
-                  {profile.locale_mode === 'proxy'
-                    ? run?.resolved.locale || '跟随代理'
-                    : profile.locale}
-                </dd>
-              </div>
-              <div>
-                <dt>
-                  <Clock3 size={16} />
-                  时区
-                </dt>
-                <dd>
-                  {profile.timezone_mode === 'proxy'
-                    ? run?.resolved.timezone || '跟随代理'
-                    : profile.timezone}
-                </dd>
-              </div>
-            </dl>
+            <FactsGrid
+              items={[
+                {
+                  label: '专用代理',
+                  icon: <Globe2 size={16} />,
+                  value: proxy?.name || '系统路由',
+                },
+                {
+                  label: '最近出口',
+                  icon: <MapPin size={16} />,
+                  value: (
+                    <span className="account-exit-ip">
+                      {run?.resolved.ip || '尚未检测'}
+                      {run?.resolved.country && (
+                        <span>{run.resolved.country}</span>
+                      )}
+                    </span>
+                  ),
+                },
+                {
+                  label: '语言',
+                  icon: <Languages size={16} />,
+                  value:
+                    profile.locale_mode === 'proxy'
+                      ? run?.resolved.locale || '跟随代理'
+                      : profile.locale,
+                },
+                {
+                  label: '时区',
+                  icon: <Clock3 size={16} />,
+                  value:
+                    profile.timezone_mode === 'proxy'
+                      ? run?.resolved.timezone || '跟随代理'
+                      : profile.timezone,
+                },
+              ]}
+            />
             <div className="account-environment-name">{profile.name}</div>
           </section>
           {target === 'app' && (

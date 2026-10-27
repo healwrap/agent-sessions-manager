@@ -17,22 +17,6 @@
   gap: 7px;
   padding-bottom: 9px;
 }
-.diagnostic-target-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-.diagnostic-target-toolbar strong {
-  font-size: 14px;
-  font-weight: 550;
-}
-.diagnostic-target-toolbar p {
-  margin: 7px 0 0;
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 14px;
-}
 .diagnostic-form {
   display: grid;
   grid-template-columns: minmax(180px, 0.9fr) minmax(200px, 1.3fr) auto;
@@ -45,25 +29,6 @@
 }
 .diagnostic-form[data-mode='direct'] {
   grid-template-columns: 1fr auto;
-}
-.diagnostic-form .settings-row {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  min-width: 0;
-}
-.diagnostic-form .settings-row-label {
-  flex: initial;
-}
-.diagnostic-form .settings-row-label label {
-  font-size: 14px;
-  font-weight: 550;
-}
-.diagnostic-form .settings-row-label p {
-  margin: 2px 0 0;
-  font-size: 13px;
 }
 .diagnostic-form .custom-select {
   flex: none;
@@ -118,31 +83,6 @@
 .diagnostic-summary strong {
   color: var(--dsw-alias-label-primary);
   font-weight: 500;
-}
-.diagnostic-empty {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 12px;
-  padding: 34px 20px;
-  margin-top: 24px;
-  border-radius: 12px;
-  background: var(--dsw-alias-bg-layer-1);
-  text-align: center;
-}
-.diagnostic-empty > .dsh-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.diagnostic-empty strong {
-  font-size: 14px;
-  font-weight: 500;
-}
-.diagnostic-empty p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-clear {
   background: transparent;

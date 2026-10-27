@@ -102,30 +102,7 @@
 .session-search {
   margin: 4px 0 8px;
 }
-.session-search-modes {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-top: 6px;
-  font-size: 11px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.session-search-modes button {
-  padding: 3px 6px;
-  border: 0;
-  border-radius: 5px;
-  color: inherit;
-  background: transparent;
-}
-.session-search-modes button[aria-pressed='true'] {
-  background: var(--asm-sidebar-selected);
-  color: var(--dsw-alias-label-primary);
-}
-.session-search-modes span {
-  margin-left: auto;
-  white-space: nowrap;
-  font-size: 10px;
-}
+
 .sidebar .session-list {
   width: var(--sidebar-width);
   margin-inline: -12px;

@@ -14,11 +14,17 @@ import {
   needsAttention,
   type AccountActions,
 } from '../lib/account-view';
-import { Button } from './primitives';
+import {
+  Button,
+  BusyState,
+  ChoiceGroup,
+  CollectionToolbar,
+  EmptyState,
+  Notice,
+} from './ui';
 import { StatusBadge } from './form-controls';
 import { AgentIcon } from './agent-icon';
 import { KernelControl } from './kernel-control';
-import { SearchField } from './search-field';
 import { AccountDetails } from './account-details';
 
 export function BrowserAccounts({
@@ -91,76 +97,62 @@ export function BrowserAccounts({
   return (
     <div className="accounts-manager">
       {data.app_runtime.warnings?.map((message) => (
-        <div className="environment-error-bar" role="alert" key={message}>
+        <Notice tone="warning" key={message}>
           {message}
-        </div>
+        </Notice>
       ))}
       {!loading && !data.browser.kernel.available && (
         <KernelControl kernel={data.browser.kernel} onInstall={onInstall} />
       )}
-      <div className="accounts-toolbar">
-        <div
-          className="accounts-filters"
-          role="group"
-          aria-label="筛选账号状态"
-        >
-          {filters.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              aria-pressed={filter === item.id}
-              onClick={() => setFilter(item.id)}
-            >
-              {item.label}
-              <span>{item.count}</span>
-            </button>
-          ))}
-        </div>
-        <SearchField
-          value={query}
-          onChange={setQuery}
-          label="搜索账号"
-          placeholder="搜索账号或代理"
+      <CollectionToolbar
+        query={query}
+        onQuery={setQuery}
+        searchLabel="搜索账号"
+        placeholder="搜索账号或代理"
+      >
+        <ChoiceGroup
+          label="筛选账号状态"
+          value={filter}
+          onChange={setFilter}
+          items={filters.map((item) => ({
+            value: item.id,
+            label: item.label,
+            count: item.count,
+          }))}
         />
-      </div>
+      </CollectionToolbar>
       {loading && !accounts.length ? (
-        <div
-          className="accounts-loading"
-          role="status"
-          aria-label="正在读取账号"
-        >
-          {[0, 1, 2].map((item) => (
-            <div key={item} />
-          ))}
-        </div>
+        <BusyState label="正在读取账号" />
       ) : !accounts.length ? (
-        <section className="accounts-empty">
-          <span className="accounts-empty-symbol">
-            <Users size={30} strokeWidth={1.5} />
-          </span>
-          <h2>添加你的第一个账号</h2>
-          <Button
-            variant="primary"
-            onClick={() => actions.onEditAccount()}
-            disabled={busy}
-          >
-            <Plus size={16} />
-            添加账号
-          </Button>
-        </section>
+        <EmptyState
+          icon={<Users size={28} />}
+          title="添加你的第一个账号"
+          action={
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() => actions.onEditAccount()}
+            >
+              <Plus size={16} />
+              添加账号
+            </Button>
+          }
+        />
       ) : !visible.length ? (
-        <section className="accounts-empty">
-          <SearchX size={30} strokeWidth={1.5} />
-          <h2>没有符合条件的账号</h2>
-          <Button
-            onClick={() => {
-              setQuery('');
-              setFilter('all');
-            }}
-          >
-            清除筛选
-          </Button>
-        </section>
+        <EmptyState
+          icon={<SearchX size={28} />}
+          title="没有符合条件的账号"
+          action={
+            <Button
+              onClick={() => {
+                setQuery('');
+                setFilter('all');
+              }}
+            >
+              清除筛选
+            </Button>
+          }
+        />
       ) : (
         <div className="accounts-split">
           <div className="accounts-list" role="group" aria-label="账号列表">

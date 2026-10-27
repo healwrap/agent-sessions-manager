@@ -3,7 +3,7 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button } from './primitives';
+import { Button, Field, Notice } from './ui';
 import { EditorDialog, TextInput } from './form-controls';
 import { Select } from './select';
 export interface AccountRoute {
@@ -71,9 +71,9 @@ export function AccountEditor({
         </>
       }
     >
-      <label className="environment-field">
-        账号名称
+      <Field label="账号名称" htmlFor="account-editor-0">
         <TextInput
+          id="account-editor-0"
           ref={nameInput}
           autoFocus
           required
@@ -81,9 +81,8 @@ export function AccountEditor({
           onChange={(event) => setValue({ ...value, name: event.target.value })}
           placeholder="例如：Claude 工作账号"
         />
-      </label>
-      <div className="environment-field">
-        <span>Agent</span>
+      </Field>
+      <Field label="Agent">
         <Select
           label="账号 Agent"
           value={value.provider}
@@ -100,9 +99,8 @@ export function AccountEditor({
             })
           }
         />
-      </div>
-      <div className="environment-field">
-        <span>浏览器环境</span>
+      </Field>
+      <Field label="浏览器环境">
         <Select
           label="账号浏览器环境"
           value={value.profile_id}
@@ -125,10 +123,9 @@ export function AccountEditor({
           ]}
           onChange={(profile_id) => setValue({ ...value, profile_id })}
         />
-      </div>
+      </Field>
       {value.provider === 'claude' && (
-        <div className="environment-field">
-          <span>Claude App 环境</span>
+        <Field label="Claude App 环境">
           <Select
             label="账号 App 环境"
             value={value.app_profile_id || ''}
@@ -153,11 +150,10 @@ export function AccountEditor({
               setValue({ ...value, app_profile_id })
             }
           />
-        </div>
+        </Field>
       )}
       {creating && (
-        <div className="environment-field">
-          <span>新环境的代理</span>
+        <Field label="新环境的代理">
           <Select
             label="新环境代理"
             value={proxy}
@@ -181,7 +177,7 @@ export function AccountEditor({
               spellCheck={false}
             />
           )}
-        </div>
+        </Field>
       )}
       {error && (
         <p role="alert" className="environment-error">

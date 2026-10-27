@@ -14,11 +14,10 @@ import { DetailPanel } from './components/detail-panel';
 import { Icon, IconButton } from './components/primitives';
 import { StartupContent } from './components/startup-content';
 import { SearchField } from './components/search-field';
+import { ChoiceGroup } from './components/ui';
+import { WorkspacePicker } from './components/workspace-picker';
 import { Subagents } from './components/subagents';
-import {
-  WorkspaceLayout,
-  WorkspaceSwitch,
-} from './components/workspace-layout';
+import { WorkspaceLayout } from './components/workspace-layout';
 export function App({
   active = true,
   onAccounts,
@@ -68,13 +67,14 @@ export function App({
         }
         actions={
           <>
-            {state.sidebarClosed && onAccounts && (
-              <WorkspaceSwitch onClick={onAccounts}>
-                账号与环境管理
-              </WorkspaceSwitch>
-            )}
-            {state.sidebarClosed && onSkills && (
-              <WorkspaceSwitch onClick={onSkills}>Skill 管理</WorkspaceSwitch>
+            {state.sidebarClosed && (onAccounts || onSkills) && (
+              <WorkspacePicker
+                value="sessions"
+                onChange={(page) => {
+                  if (page === 'accounts') onAccounts?.();
+                  if (page === 'skills') onSkills?.();
+                }}
+              />
             )}
             {active && state.id && (
               <Subagents
@@ -120,22 +120,17 @@ export function App({
           </>
         }
       >
-        <nav className="main-tabs" role="tablist" aria-label="会话视图">
-          {[
-            ['chat', '对话'],
-            ['trace', '轨迹'],
-          ].map(([mode, label]) => (
-            <button
-              key={mode}
-              role="tab"
-              aria-selected={state.mode === mode}
-              className={state.mode === mode ? 'active' : ''}
-              onClick={() => sessionStore.switchMode(mode as 'chat' | 'trace')}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
+        <ChoiceGroup
+          className="session-view-switch"
+          label="会话视图"
+          variant="tabs"
+          value={state.mode}
+          onChange={(mode) => sessionStore.switchMode(mode)}
+          items={[
+            { value: 'chat', label: '对话' },
+            { value: 'trace', label: '轨迹' },
+          ]}
+        />
         <div hidden={state.mode !== 'trace'} className="trajectory-toolbar">
           <div className="TrajectoryToolbar-inner">
             <div className="TrajectoryToolbar-actions">

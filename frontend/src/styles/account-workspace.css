@@ -18,34 +18,6 @@
   overflow-y: auto;
   container-type: inline-size;
 }
-.environment-page-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-.environment-page-heading h1 {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.4;
-  letter-spacing: -0.5px;
-  font-weight: 600;
-}
-.environment-page-heading p {
-  margin: 9px 0 0;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 1.7;
-}
-.environment-page-actions {
-  display: flex;
-  gap: 8px;
-}
-.environment-page-actions .action-button {
-  min-height: 35px;
-}
 .environment-muted {
   color: var(--dsw-alias-label-tertiary);
   font-size: 13px;

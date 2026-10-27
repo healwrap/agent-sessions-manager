@@ -6,7 +6,7 @@ import type {
   ProxyConfig,
 } from '../lib/environment-settings';
 import { request } from '../lib/api';
-import { Button } from './primitives';
+import { Button, Field } from './ui';
 import { Select } from './select';
 import { TextInput } from './form-controls';
 import { SettingsRow } from './settings/row';
@@ -49,8 +49,7 @@ export function BrowserProfileFields({
     <>
       {'engine' in value && (
         <div className="environment-form-grid">
-          <div className="environment-field">
-            <span>Agent</span>
+          <Field label="Agent">
             <Select
               label="环境 Agent"
               value={value.provider}
@@ -62,9 +61,8 @@ export function BrowserProfileFields({
                 onChange({ provider: provider as BrowserProfile['provider'] })
               }
             />
-          </div>
-          <div className="environment-field">
-            <span>浏览器内核</span>
+          </Field>
+          <Field label="浏览器内核">
             <Select
               label="环境浏览器"
               value={
@@ -83,11 +81,10 @@ export function BrowserProfileFields({
                 onChange({ engine: engine as BrowserProfile['engine'] })
               }
             />
-          </div>
+          </Field>
         </div>
       )}
-      <div className="environment-field">
-        <span>专用代理</span>
+      <Field label="专用代理">
         <Select
           label="环境专用代理"
           value={value.proxy_id}
@@ -100,7 +97,7 @@ export function BrowserProfileFields({
             onChange({ proxy_id });
           }}
         />
-      </div>
+      </Field>
       <div className="environment-form-grid">
         {(['locale', 'timezone'] as const).map((field) => {
           const title = field === 'locale' ? '语言' : '时区';
@@ -136,29 +133,31 @@ export function BrowserProfileFields({
         </Button>
         {region && <span>{region}</span>}
       </div>
-      <label className="environment-field">
-        指定出口 IP（可选）
+      <Field label="指定出口 IP（可选）" htmlFor="browser-profile-fields-3">
         <TextInput
+          id="browser-profile-fields-3"
           value={value.expected_ip || ''}
           onChange={(event) => onChange({ expected_ip: event.target.value })}
           placeholder="留空时与启动预检出口比较"
         />
-      </label>
+      </Field>
       {'engine' in value && (
-        <label className="environment-field">
-          预期 DNS 服务器（可选）
+        <Field
+          label="预期 DNS 服务器（可选）"
+          htmlFor="browser-profile-fields-4"
+        >
           <TextInput
+            id="browser-profile-fields-4"
             value={value.expected_dns || ''}
             onChange={(event) => onChange({ expected_dns: event.target.value })}
             placeholder="填写 IP，以英文逗号分隔；留空时只展示解析器观测"
           />
-        </label>
+        </Field>
       )}
       {'fingerprint_seed' in value && value.engine !== 'chrome' && (
         <>
           {' '}
-          <div className="environment-field">
-            <label htmlFor="environment-fingerprint-seed">稳定指纹种子</label>
+          <Field label="稳定指纹种子" htmlFor="environment-fingerprint-seed">
             <div className="environment-seed">
               <TextInput
                 id="environment-fingerprint-seed"
@@ -176,7 +175,7 @@ export function BrowserProfileFields({
                 重新生成
               </Button>
             </div>
-          </div>
+          </Field>
         </>
       )}
       <Disclosure

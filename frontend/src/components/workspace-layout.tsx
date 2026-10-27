@@ -1,27 +1,7 @@
 import { useRef, type ReactNode } from 'react';
-import { ArrowLeftRight } from 'lucide-react';
 import { useLayoutSlide } from '../hooks/use-layout-slide';
 import { useSidebarResize } from '../hooks/use-sidebar-resize';
 import { IconButton } from './primitives';
-
-export function WorkspaceSwitch({
-  children,
-  onClick,
-}: {
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="panel-row workspace-switch"
-      onClick={onClick}
-    >
-      <ArrowLeftRight size={16} />
-      {children}
-    </button>
-  );
-}
 
 export function WorkspaceSidebar({
   label,

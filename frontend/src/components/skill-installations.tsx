@@ -3,14 +3,19 @@ import {
   CircleAlert,
   ChevronRight,
   FolderOpen,
-  Link2,
   Package,
   Trash2,
 } from 'lucide-react';
 import { AgentIcon } from './agent-icon';
 import { StatusBadge } from './form-controls';
 import { Button } from './primitives';
-import { SearchField } from './search-field';
+import {
+  CollectionToolbar,
+  EmptyState,
+  FactsGrid,
+  Panel,
+  SectionHeading,
+} from './ui';
 import { Select } from './select';
 import {
   installedTarget,
@@ -54,25 +59,20 @@ export function SkillInstallations({
   );
   return (
     <div className="skill-install-layout">
-      <section
-        className="environment-panel skill-target-panel"
+      <Panel
+        padding="none"
+        className="skill-target-panel"
         aria-label="各 Agent 安装情况"
       >
-        <div className="skill-panel-heading">
-          <div>
-            <h2>Agent 安装情况</h2>
-            <p>分别管理安装入口，独立更新与卸载。</p>
-          </div>
-          <span>{targets.length} 个入口</span>
-        </div>
-        <div className="skill-table-tools">
-          <SearchField
-            label="搜索 Agent"
-            placeholder="搜索 Agent"
-            value={query}
-            onChange={onQuery}
-            compact
-          />
+        <SectionHeading
+          title="Agent 安装情况"
+          actions={<span className="ui-count">{targets.length} 个入口</span>}
+        />
+        <CollectionToolbar
+          query={query}
+          onQuery={onQuery}
+          searchLabel="搜索 Agent"
+        >
           <Select
             label="筛选安装状态"
             value={filter}
@@ -86,7 +86,7 @@ export function SkillInstallations({
               { value: 'unconfigured', label: '待配置' },
             ]}
           />
-        </div>
+        </CollectionToolbar>
         <div className="skill-target-list" role="list" aria-label="Agent 列表">
           <div className="skill-target-columns" aria-hidden="true">
             <span>Agent</span>
@@ -111,7 +111,6 @@ export function SkillInstallations({
                 </span>
                 <span>
                   <strong>{target.name}</strong>
-                  <small>{target.client}</small>
                 </span>
               </button>
               <button
@@ -123,17 +122,6 @@ export function SkillInstallations({
                   {target.state === 'ready' && <Check size={12} />}
                   {skillStates[target.state].label}
                 </StatusBadge>
-                <small>
-                  {target.state === 'unconfigured'
-                    ? '安装入口未设置'
-                    : target.state === 'shared'
-                      ? '共享目录提供'
-                      : !target.exists
-                        ? '专用入口尚不存在'
-                        : target.method === 'copy'
-                          ? '独立副本 · 当前用户'
-                          : '链接安装 · 当前用户'}
-                </small>
               </button>
               <div className="skill-target-actions">
                 <Button
@@ -157,27 +145,27 @@ export function SkillInstallations({
             </div>
           ))}
           {!visible.length && (
-            <div className="environment-empty environment-empty-compact">
-              <Package size={26} />
-              <p>没有符合条件的 Agent</p>
-              <Button
-                onClick={() => {
-                  onQuery('');
-                  onFilter('all');
-                }}
-              >
-                显示全部
-              </Button>
-            </div>
+            <EmptyState
+              compact
+              icon={<Package size={26} />}
+              title="没有符合条件的 Agent"
+              action={
+                <Button
+                  onClick={() => {
+                    onQuery('');
+                    onFilter('all');
+                  }}
+                >
+                  清除筛选
+                </Button>
+              }
+            />
           )}
         </div>
-        <div className="skill-table-footer">
-          <span className="skill-live-dot" />
-          用户级安装 · 各 Agent 分别维护
-        </div>
-      </section>
-      <aside
-        className="environment-panel skill-detail"
+      </Panel>
+      <Panel
+        role="complementary"
+        className="skill-detail"
         aria-label={`${selected.name} 安装详情`}
       >
         <div className="skill-detail-heading">
@@ -190,35 +178,23 @@ export function SkillInstallations({
         <p className="skill-detail-description">
           {skillStates[selected.state].detail}
         </p>
-        <dl className="skill-detail-facts">
-          <div>
-            <dt>安装范围</dt>
-            <dd>当前用户</dd>
-          </div>
-          <div>
-            <dt>安装方式</dt>
-            <dd>
-              {selected.method === 'link' ? (
-                <>
-                  <Link2 size={13} />
-                  {selected.managed ? '跟随应用' : '本地链接'}
-                </>
-              ) : (
-                <>
-                  <Package size={13} /> 独立副本
-                </>
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt>提供方</dt>
-            <dd>{selected.source || '尚未安装'}</dd>
-          </div>
-          <div>
-            <dt>安装版本</dt>
-            <dd>{selected.version || '未登记'}</dd>
-          </div>
-        </dl>
+        <FactsGrid
+          columns={1}
+          items={[
+            { label: '安装范围', value: '当前用户' },
+            {
+              label: '安装方式',
+              value:
+                selected.method === 'link'
+                  ? selected.managed
+                    ? '跟随应用'
+                    : '本地链接'
+                  : '独立副本',
+            },
+            { label: '提供方', value: selected.source || '尚未安装' },
+            { label: '安装版本', value: selected.version || '未登记' },
+          ]}
+        />
         <div className="skill-path-block">
           <span>
             <FolderOpen size={14} />
@@ -246,14 +222,18 @@ export function SkillInstallations({
             配置路径 <ChevronRight size={12} />
           </Button>
         </div>
-        <div className="skill-detail-note">
-          {selected.state === 'ready' ? (
-            <Check size={15} />
-          ) : (
-            <CircleAlert size={15} />
-          )}
-          <p>{selected.note}</p>
-        </div>
+        {['outdated', 'broken', 'modified', 'error', 'unconfigured'].includes(
+          selected.state,
+        ) && (
+          <div className="skill-detail-note">
+            {selected.state === 'ready' ? (
+              <Check size={15} />
+            ) : (
+              <CircleAlert size={15} />
+            )}
+            <p>{selected.note}</p>
+          </div>
+        )}
         <div className="skill-detail-actions">
           <Button
             variant="primary"
@@ -282,7 +262,7 @@ export function SkillInstallations({
             </Button>
           )}
         </div>
-      </aside>
+      </Panel>
     </div>
   );
 }

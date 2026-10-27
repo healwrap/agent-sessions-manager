@@ -5,11 +5,12 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { AgentIcon } from './agent-icon';
-import { Button } from './primitives';
+import { Button, Notice, ResourceCard, StatusBadge } from './ui';
 import { EnvironmentProfileList } from './environment-profile-list';
 export function AppAccounts({
   data,
   busy,
+  loading,
   onEdit,
   onDelete,
   onRuntime,
@@ -18,6 +19,7 @@ export function AppAccounts({
 }: {
   data: EnvironmentSettings;
   busy: boolean;
+  loading: boolean;
   onEdit: (profile: AppProfile) => void;
   onDelete: (id: string) => void;
   onRuntime: (action: 'open' | 'stop', body: { profile_id: string }) => void;
@@ -28,27 +30,32 @@ export function AppAccounts({
   return (
     <>
       {data.app_runtime.warnings?.map((message) => (
-        <p className="environment-error-bar" role="alert" key={message}>
+        <Notice tone="warning" key={message}>
           {message}
-        </p>
+        </Notice>
       ))}
-      <section className="environment-connection">
-        <span className="environment-small-icon">
-          <AgentIcon source="claude" />
-        </span>
-        <div>
-          <strong>官方 Claude App</strong>
-          <p>{app?.path || '请先安装官方 Claude App'}</p>
-        </div>
-        <Button onClick={onInspect}>
-          <ScanLine size={15} />
-          检查 App 环境
-        </Button>
-      </section>
+      <ResourceCard
+        className="environment-service"
+        title="官方 Claude App"
+        subtitle={app?.path || '尚未安装'}
+        icon={<AgentIcon source="claude" />}
+        badge={
+          <StatusBadge tone={app ? 'success' : 'neutral'}>
+            {app ? '已安装' : '未安装'}
+          </StatusBadge>
+        }
+        actions={
+          <Button onClick={onInspect}>
+            <ScanLine size={15} />
+            检查 App 环境
+          </Button>
+        }
+      />
       <EnvironmentProfileList
         data={data}
         target="app"
         busy={busy}
+        loading={loading}
         onEdit={onEdit}
         onDelete={onDelete}
         onRuntime={onRuntime}

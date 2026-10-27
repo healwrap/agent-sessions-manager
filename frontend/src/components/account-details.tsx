@@ -6,7 +6,7 @@ import type {
 } from '../lib/environment-settings';
 import { accountClients, type AccountActions } from '../lib/account-view';
 import { AgentIcon } from './agent-icon';
-import { Button, IconButton } from './primitives';
+import { Button, ChoiceGroup, IconButton } from './ui';
 import { AccountClientPanel } from './account-client-panel';
 import { Disclosure } from './disclosure';
 
@@ -54,29 +54,30 @@ export function AccountDetails({
           onClick={() => actions.onEditAccount(account)}
         />
       </header>
-      <div
-        className="account-client-tabs"
-        role="group"
-        aria-label="选择使用方式"
-      >
-        {clients.map((item) => (
-          <button
-            key={item.target}
-            type="button"
-            aria-pressed={client.target === item.target}
-            onClick={() => setTarget(item.target)}
-          >
-            {item.target === 'browser' ? (
-              <PanelsTopLeft size={17} />
-            ) : (
-              <Monitor size={17} />
-            )}
-            {item.title}
-            {item.run?.alive && (
-              <span className="account-live-dot" aria-label="运行中" />
-            )}
-          </button>
-        ))}
+      <div className="account-client-switch">
+        <ChoiceGroup
+          label="选择使用方式"
+          variant="tabs"
+          value={client.target}
+          onChange={setTarget}
+          items={clients.map((item) => ({
+            value: item.target,
+            icon:
+              item.target === 'browser' ? (
+                <PanelsTopLeft size={17} />
+              ) : (
+                <Monitor size={17} />
+              ),
+            label: (
+              <>
+                {item.title}
+                {item.run?.alive && (
+                  <span className="account-live-dot" aria-label="运行中" />
+                )}
+              </>
+            ),
+          }))}
+        />
       </div>
       <AccountClientPanel
         key={client.target}

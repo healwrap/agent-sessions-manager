@@ -7,6 +7,7 @@ import { EnvironmentProfileList } from './environment-profile-list';
 export function BrowserEnvironments({
   data,
   busy,
+  loading,
   onEdit,
   onDelete,
   onRuntime,
@@ -27,6 +28,8 @@ export function BrowserEnvironments({
         data={data}
         target="browser"
         busy={busy}
+        loading={loading}
+        onCreate={() => onEdit()}
         onEdit={(profile) => onEdit(profile as BrowserProfile)}
         onDelete={onDelete}
         onRuntime={onRuntime}

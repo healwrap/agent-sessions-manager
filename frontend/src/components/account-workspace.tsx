@@ -25,12 +25,9 @@ import {
 } from './environment-diagnostics';
 import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
 import { ProxyEnvironments } from './proxy-environments';
-import { Button } from './primitives';
-import {
-  WorkspaceLayout,
-  WorkspaceSidebar,
-  WorkspaceSwitch,
-} from './workspace-layout';
+import { Button, Notice, PageHeading } from './ui';
+import { WorkspacePicker } from './workspace-picker';
+import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
 
 const sections = [
   {
@@ -117,14 +114,7 @@ export function AccountWorkspace({
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (
-            <>
-              <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-                进入会话管理
-              </WorkspaceSwitch>
-              <WorkspaceSwitch onClick={() => onNavigate('skills')}>
-                Skill 管理
-              </WorkspaceSwitch>
-            </>
+            <WorkspacePicker value="accounts" onChange={onNavigate} />
           )
         }
         sidebar={
@@ -135,16 +125,7 @@ export function AccountWorkspace({
             width={sidebarWidth}
             onResize={setSidebarWidth}
             onCollapse={() => setSidebarClosed(true)}
-            footer={
-              <>
-                <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-                  进入会话管理
-                </WorkspaceSwitch>
-                <WorkspaceSwitch onClick={() => onNavigate('skills')}>
-                  Skill 管理
-                </WorkspaceSwitch>
-              </>
-            }
+            footer={<WorkspacePicker value="accounts" onChange={onNavigate} />}
           >
             <nav className="environment-navigation" aria-label="管理功能">
               {sections.map(({ id, title, icon: SectionIcon }) => (
@@ -165,57 +146,58 @@ export function AccountWorkspace({
           </WorkspaceSidebar>
         }
       >
-        <div className="environment-content" data-section={section}>
-          <header className="environment-page-heading">
-            <div>
-              <h1>{current.title}</h1>
-              {section !== 'accounts' && <p>{current.description}</p>}
-            </div>
-            <div className="environment-page-actions">
-              {section === 'accounts' ? (
-                <Button
-                  variant="primary"
-                  disabled={loading || busy}
-                  onClick={() => setAccountEdit({})}
-                >
-                  <Plus size={16} />
-                  添加账号
-                </Button>
-              ) : section === 'claude-app' ? (
-                <Button
-                  variant="primary"
-                  disabled={loading || busy}
-                  onClick={() => setEdit({ kind: 'app_profiles' })}
-                >
-                  <Plus size={16} />
-                  新建 App 环境
-                </Button>
-              ) : section === 'browser' ? (
-                <Button
-                  variant="primary"
-                  onClick={() => setEdit({ kind: 'profiles' })}
-                  disabled={loading || busy}
-                >
-                  <Plus size={16} />
-                  新建浏览器环境
-                </Button>
-              ) : section === 'proxies' ? (
-                <Button
-                  variant="primary"
-                  onClick={() => setEdit({ kind: 'proxies' })}
-                  disabled={loading || busy}
-                >
-                  <Plus size={16} />
-                  添加代理
-                </Button>
-              ) : null}
-            </div>
-          </header>
+        <div className="environment-content ui-page" data-section={section}>
+          <PageHeading
+            title={current.title}
+            actions={
+              <>
+                {section === 'accounts' ? (
+                  <Button
+                    variant="primary"
+                    disabled={loading || busy}
+                    onClick={() => setAccountEdit({})}
+                  >
+                    <Plus size={16} />
+                    添加账号
+                  </Button>
+                ) : section === 'claude-app' ? (
+                  <Button
+                    variant="primary"
+                    disabled={loading || busy}
+                    onClick={() => setEdit({ kind: 'app_profiles' })}
+                  >
+                    <Plus size={16} />
+                    新建 App 环境
+                  </Button>
+                ) : section === 'browser' ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => setEdit({ kind: 'profiles' })}
+                    disabled={loading || busy}
+                  >
+                    <Plus size={16} />
+                    新建浏览器环境
+                  </Button>
+                ) : section === 'proxies' ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => setEdit({ kind: 'proxies' })}
+                    disabled={loading || busy}
+                  >
+                    <Plus size={16} />
+                    添加代理
+                  </Button>
+                ) : null}
+              </>
+            }
+          />
           {error && (
-            <div className="environment-error-bar" role="alert">
-              <span>{error}</span>
-              <Button onClick={() => void reload()}>重新读取</Button>
-            </div>
+            <Notice
+              tone="error"
+              action={<Button onClick={() => void reload()}>重新读取</Button>}
+            >
+              {error}
+            </Notice>
           )}
           {section === 'accounts' && (
             <BrowserAccounts
@@ -252,6 +234,7 @@ export function AccountWorkspace({
             <AppAccounts
               data={data}
               busy={busy}
+              loading={loading}
               onLogin={(account) => setLoginAccountId(account.id)}
               onEdit={(item) => setEdit({ kind: 'app_profiles', item })}
               onDelete={(id) => void remove('app_profiles', id)}

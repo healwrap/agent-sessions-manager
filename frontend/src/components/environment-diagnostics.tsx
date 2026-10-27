@@ -6,8 +6,7 @@ import { BrowserDiagnostics } from './browser-diagnostics';
 import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 import { DiagnosticRows } from './diagnostics-results';
 import { NetworkDiagnostics } from './network-diagnostics';
-import { Button } from './primitives';
-import { TrajectoryLoading } from './trajectory-loading';
+import { Button, BusyState, ChoiceGroup, Notice, SectionHeading } from './ui';
 
 export type DiagnosticTarget = 'network' | 'browser' | 'app';
 
@@ -37,23 +36,20 @@ function AppDiagnostics({ active }: { active: boolean }) {
   }, [active]);
   return (
     <section aria-label="Claude App 环境检测">
-      <div className="diagnostic-target-toolbar">
-        <div>
-          <strong>本机 Claude App</strong>
-          <p>读取实际安装信息、App 进程与配置继承情况。</p>
-        </div>
-        <Button variant="primary" onClick={() => void run()} disabled={running}>
-          {running ? '正在检测…' : rows.length ? '重新检测' : '开始检测'}
-        </Button>
-      </div>
-      {error && (
-        <p className="diagnostic-error" role="alert">
-          {error}
-        </p>
-      )}
-      {running && (
-        <TrajectoryLoading label="正在读取 Claude App 安装与进程配置…" />
-      )}
+      <SectionHeading
+        title="本机 Claude App"
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => void run()}
+            disabled={running}
+          >
+            {running ? '正在检测' : rows.length ? '重新检测' : '开始检测'}
+          </Button>
+        }
+      />
+      {error && <Notice tone="error">{error}</Notice>}
+      {running && <BusyState label="正在读取 App 安装与进程配置" />}
       {rows.length > 0 && (
         <DiagnosticCard
           title="Claude App 检测结果"
@@ -79,23 +75,22 @@ export function EnvironmentDiagnostics({
 }) {
   return (
     <>
-      <nav className="main-tabs diagnostic-target-tabs" aria-label="检测对象">
-        {[
-          { id: 'network', title: '网络', icon: Network },
-          { id: 'browser', title: '浏览器', icon: Fingerprint },
-          { id: 'app', title: 'Claude App', icon: Monitor },
-        ].map(({ id, title, icon: TargetIcon }) => (
-          <button
-            key={id}
-            className={target === id ? 'active' : ''}
-            aria-pressed={target === id}
-            onClick={() => onTarget(id as DiagnosticTarget)}
-          >
-            <TargetIcon size={15} />
-            {title}
-          </button>
-        ))}
-      </nav>
+      <ChoiceGroup
+        className="diagnostic-target-tabs"
+        variant="tabs"
+        label="检测对象"
+        value={target}
+        onChange={onTarget}
+        items={[
+          { value: 'network', label: '网络', icon: <Network size={17} /> },
+          {
+            value: 'browser',
+            label: '浏览器',
+            icon: <Fingerprint size={17} />,
+          },
+          { value: 'app', label: 'Claude App', icon: <Monitor size={17} /> },
+        ]}
+      />
       <div hidden={target !== 'network'} inert={target !== 'network'}>
         <NetworkDiagnostics
           active={active && target === 'network'}

@@ -4,6 +4,7 @@ import type {
   ReactNode,
   Ref,
 } from 'react';
+import { useEffect, useRef } from 'react';
 import { Dialog, IconButton } from './primitives';
 
 export function TextInput({
@@ -44,14 +45,22 @@ export function EditorDialog({
   footer: ReactNode;
   children: ReactNode;
 }) {
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    form.current
+      ?.querySelector<HTMLElement>(
+        'input:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)',
+      )
+      ?.focus();
+  }, []);
   return (
     <Dialog
       open
       title={title}
-      className="editor-dialog"
+      className="editor-dialog ui-editor"
       onClose={() => !busy && onClose()}
     >
-      <form onSubmit={onSubmit}>
+      <form ref={form} onSubmit={onSubmit}>
         <header className="editor-dialog-heading">
           <div>
             <h2>{title}</h2>

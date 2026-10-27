@@ -8,10 +8,16 @@ import { GateResults } from './browser-launch-report';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 import { DiagnosticRows } from './diagnostics-results';
-import { Button } from './primitives';
+import {
+  Button,
+  BusyState,
+  EmptyState,
+  Field,
+  Notice,
+  SectionHeading,
+} from './ui';
 import { Select } from './select';
 import { TextInput } from './form-controls';
-import { SettingsRow } from './settings/row';
 import '../styles/browser-check.css';
 
 export function BrowserDiagnostics({ active }: { active: boolean }) {
@@ -91,33 +97,33 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
     : [];
   return (
     <section aria-label="独立浏览器环境检测">
-      <div className="diagnostic-target-toolbar">
-        <div>
-          <strong>检测登录 Claude 的独立浏览器</strong>
-        </div>
-        <Button
-          variant="primary"
-          onClick={() => void create()}
-          disabled={
-            busy ||
-            loading ||
-            (ticket?.state === 'waiting' && !error) ||
-            (managed && !browserAvailable(data, profile))
-          }
-        >
-          {managed ? <PanelsTopLeft size={15} /> : <Link2 size={15} />}
-          {busy
-            ? '正在准备…'
-            : managed
-              ? ticket
-                ? '重新检测'
-                : '打开环境并检测'
-              : ticket
-                ? '重新生成检测链接'
-                : '生成检测链接'}
-        </Button>
-      </div>
-      <SettingsRow label="目标浏览器环境">
+      <SectionHeading
+        title="独立浏览器检测"
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => void create()}
+            disabled={
+              busy ||
+              loading ||
+              (ticket?.state === 'waiting' && !error) ||
+              (managed && !browserAvailable(data, profile))
+            }
+          >
+            {managed ? <PanelsTopLeft size={15} /> : <Link2 size={15} />}
+            {busy
+              ? '正在准备…'
+              : managed
+                ? ticket
+                  ? '重新检测'
+                  : '打开环境并检测'
+                : ticket
+                  ? '重新生成检测链接'
+                  : '生成检测链接'}
+          </Button>
+        }
+      />
+      <Field label="目标浏览器环境">
         <Select
           label="目标浏览器环境"
           value={selected}
@@ -140,16 +146,16 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
               .map((app) => ({ value: 'app:' + app.id, label: app.name })),
           ]}
         />
-      </SettingsRow>
+      </Field>
       {managed && !loading && !browserAvailable(data, profile) && (
         <p className="diagnostic-note">
           请先安装此环境所选的浏览器或独立内核。
         </p>
       )}
       {(error || environmentError || ticket?.error) && (
-        <p role="alert" className="diagnostic-error">
+        <Notice tone="error">
           {error || environmentError || ticket?.error}
-        </p>
+        </Notice>
       )}
       {ticket?.launch?.checks && (
         <DiagnosticCard title="启动检查结果">
@@ -179,10 +185,9 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
         </>
       )}
       {ticket?.state === 'waiting' && (
-        <p role="status" className="browser-probe-wait">
-          <Fingerprint size={17} />
-          {managed ? '正在检测浏览器环境…' : '等待独立浏览器打开检测页并回传…'}
-        </p>
+        <BusyState
+          label={managed ? '正在检测浏览器环境' : '等待浏览器回传检测结果'}
+        />
       )}
       {ticket?.state === 'complete' && ticket.report && (
         <>
@@ -215,10 +220,10 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
         </>
       )}
       {!ticket && (
-        <div className="diagnostic-empty">
-          <Fingerprint size={25} />
-          <strong>暂无浏览器检测结果</strong>
-        </div>
+        <EmptyState
+          icon={<Fingerprint size={28} />}
+          title="暂无浏览器检测结果"
+        />
       )}
     </section>
   );

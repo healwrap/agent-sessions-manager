@@ -13,6 +13,7 @@ import { countryFlag, countryLabel, nodeLabel } from '../lib/diagnostic-labels';
 import { AgentIcon } from './agent-icon';
 import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 import { DnsResolvers } from './dns-resolvers';
+import { SectionHeading } from './ui';
 
 export function DiagnosticSection({
   title,
@@ -27,10 +28,7 @@ export function DiagnosticSection({
 }) {
   return (
     <section className="diagnostic-section">
-      <header className="diagnostic-section-heading">
-        <h3>{title}</h3>
-        {actions}
-      </header>
+      <SectionHeading title={title} actions={actions} />
       {note && <p className="diagnostic-note">{note}</p>}
       {children}
     </section>
@@ -71,10 +69,9 @@ export function DiagnosticRows({
             ) : (
               <div className="diagnostic-value">{item.value}</div>
             )}
-            {item.detail &&
-              ['warn', 'fail', 'unknown'].includes(item.state) && (
-                <p>{item.detail}</p>
-              )}
+            {item.detail && ['warn', 'fail'].includes(item.state) && (
+              <p>{item.detail}</p>
+            )}
           </div>
         </div>
       ))}

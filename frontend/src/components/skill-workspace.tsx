@@ -1,30 +1,28 @@
 import { useState } from 'react';
-import {
-  BookOpen,
-  Check,
-  Layers3,
-  Link2,
-  Package,
-  Plus,
-  Puzzle,
-  RotateCcw,
-} from 'lucide-react';
+import { BookOpen, Layers3, Plus, Puzzle, RotateCcw } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import { useSessionStore } from '../hooks/use-session-store';
 import type { SkillAction } from '../lib/skill-management';
 import { AgentIcon } from './agent-icon';
-import { StatusBadge } from './form-controls';
+import {
+  Button,
+  BusyState,
+  EmptyState,
+  FactsGrid,
+  IconButton,
+  Notice,
+  PageHeading,
+  ResourceCard,
+  StatusBadge,
+} from './ui';
 import { Markdown } from './markdown';
-import { Button, Dialog, IconButton } from './primitives';
+import { Dialog } from './primitives';
 import { useSkillManagement } from '../hooks/use-skill-management';
 import { SkillHistory } from './skill-history';
 import { SkillInstallDialog } from './skill-install-dialog';
 import { SkillInstallations } from './skill-installations';
-import {
-  WorkspaceLayout,
-  WorkspaceSidebar,
-  WorkspaceSwitch,
-} from './workspace-layout';
+import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
+import { WorkspacePicker } from './workspace-picker';
 
 export function SkillWorkspace({
   onNavigate,
@@ -73,19 +71,7 @@ export function SkillWorkspace({
           </>
         }
         actions={
-          <>
-            {closed && (
-              <>
-                <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-                  会话管理
-                </WorkspaceSwitch>
-                <WorkspaceSwitch onClick={() => onNavigate('accounts')}>
-                  账号与环境管理
-                </WorkspaceSwitch>
-              </>
-            )}
-            <StatusBadge>本机管理</StatusBadge>
-          </>
+          closed && <WorkspacePicker value="skills" onChange={onNavigate} />
         }
         sidebar={
           <WorkspaceSidebar
@@ -95,16 +81,7 @@ export function SkillWorkspace({
             width={width}
             onResize={setWidth}
             onCollapse={() => setClosed(true)}
-            footer={
-              <>
-                <WorkspaceSwitch onClick={() => onNavigate('sessions')}>
-                  进入会话管理
-                </WorkspaceSwitch>
-                <WorkspaceSwitch onClick={() => onNavigate('accounts')}>
-                  账号与环境管理
-                </WorkspaceSwitch>
-              </>
-            }
+            footer={<WorkspacePicker value="skills" onChange={onNavigate} />}
           >
             <nav className="environment-navigation" aria-label="Skill 导航">
               <button
@@ -135,143 +112,121 @@ export function SkillWorkspace({
                 </button>
               ))}
             </nav>
-            <div className="skill-sidebar-tip">
-              <Link2 size={15} />
-              <p>一个 Skill，分别接入不同 Agent。</p>
-            </div>
           </WorkspaceSidebar>
         }
       >
-        <div className="environment-content skill-content">
-          <div className="skill-source-line">
-            <span>
-              来源：{data?.source.source || '正在读取'} · 版本{' '}
-              {data?.source.version || '—'}
-            </span>
-            <span>
-              {data &&
-                `检测于 ${new Date(data.checked_at).toLocaleTimeString()}`}
-            </span>
-          </div>
-          {error && (
-            <div className="environment-error-bar" role="alert">
-              <span>{error}</span>
+        <div className="environment-content skill-content ui-page">
+          <PageHeading
+            title="Skill 管理"
+            actions={
               <Button disabled={busy || loading} onClick={() => void reload()}>
-                重新读取
+                <RotateCcw size={16} className={loading ? 'ui-spin' : ''} />
+                {loading ? '正在检测' : '重新检测'}
               </Button>
-            </div>
+            }
+          />
+          {error && (
+            <Notice
+              tone="error"
+              action={
+                <Button
+                  disabled={busy || loading}
+                  onClick={() => void reload()}
+                >
+                  重试
+                </Button>
+              }
+            >
+              {error}
+            </Notice>
           )}
-          <header className="environment-page-heading skill-page-heading">
-            <div>
-              <div className="skill-eyebrow">SKILL LIBRARY</div>
-              <h1>Skill 安装管理</h1>
-              <p>
-                统一查看 Agent Sessions skill 在各个 Agent 中的安装与更新情况。
-              </p>
-            </div>
-            <Button disabled={busy || loading} onClick={() => void reload()}>
-              <RotateCcw size={14} />
-              {loading ? '正在检测…' : '重新检测'}
-            </Button>
-          </header>
-          <section
-            className="environment-panel skill-overview"
-            aria-label="Agent Sessions skill"
-          >
-            <div className="skill-overview-main">
-              <div className="skill-cover">
-                <Layers3 size={31} strokeWidth={1.6} />
-              </div>
-              <div className="skill-overview-copy">
-                <div className="skill-overview-title">
-                  <h2>Agent Sessions</h2>
-                  <StatusBadge>本应用提供</StatusBadge>
-                </div>
-                <code>agent-sessions</code>
-                <p>
-                  跨 Agent 检索历史会话、读取执行证据，通过引用恢复长期上下文。
-                </p>
-                <div className="skill-capabilities">
-                  <span>
-                    <Check size={12} />
-                    会话检索
-                  </span>
-                  <span>
-                    <Check size={12} />
-                    轨迹读取
-                  </span>
-                  <span>
-                    <Check size={12} />
-                    上下文恢复
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="skill-overview-side">
-              <div className="skill-coverage">
-                <strong>
-                  {ready}
-                  <small> / {targets.length}</small>
-                </strong>
-                <span>安装文件就绪</span>
-              </div>
-              <div className="skill-coverage-bar" aria-hidden="true">
-                {targets.map((target) => (
-                  <i key={target.id} data-state={target.state} />
-                ))}
-              </div>
-              <Button
-                variant="primary"
-                disabled={busy || loading || !data}
-                onClick={() =>
-                  setOperation({
-                    action: 'install',
-                    ids: targets
-                      .filter(
-                        (target) => target.state === 'missing' && target.path,
-                      )
-                      .map((target) => target.id),
-                  })
+          {loading && !data ? (
+            <BusyState label="正在读取 Skill 安装情况" />
+          ) : (
+            data && (
+              <ResourceCard
+                className="skill-overview"
+                title="Agent Sessions"
+                subtitle="agent-sessions"
+                icon={<Layers3 size={24} />}
+                badge={<StatusBadge>本应用提供</StatusBadge>}
+                actions={
+                  <>
+                    <Button
+                      onClick={() => setDocumentOpen(true)}
+                      disabled={!data}
+                    >
+                      <BookOpen size={16} />
+                      查看文档
+                    </Button>
+                    <Button
+                      variant="primary"
+                      disabled={busy || loading || !data}
+                      onClick={() =>
+                        setOperation({
+                          action: 'install',
+                          ids: targets
+                            .filter(
+                              (target) =>
+                                target.state === 'missing' && target.path,
+                            )
+                            .map((target) => target.id),
+                        })
+                      }
+                    >
+                      <Plus size={16} />
+                      安装到 Agent
+                    </Button>
+                  </>
                 }
               >
-                <Plus size={15} />
-                安装到 Agent
-              </Button>
-              <Button
-                variant="text"
-                size="small"
-                disabled={!data}
-                onClick={() => setDocumentOpen(true)}
-              >
-                <BookOpen size={13} />
-                查看 Skill 文档
-              </Button>
-            </div>
-          </section>
-          <div className="skill-section-line">
-            <span>
-              <Package size={14} />
-              当前用户的安装
-            </span>
-            <button
-              onClick={() =>
-                setFilter(filter === 'attention' ? 'all' : 'attention')
-              }
-              aria-pressed={filter === 'attention'}
-            >
-              {attention} 项需要处理 <span>→</span>
-            </button>
-          </div>
+                <FactsGrid
+                  columns={3}
+                  items={[
+                    {
+                      label: '安装就绪',
+                      value: `${ready} / ${targets.length}`,
+                    },
+                    {
+                      label: '需要处理',
+                      value: (
+                        <button
+                          className="ui-inline-action"
+                          onClick={() =>
+                            setFilter(
+                              filter === 'attention' ? 'all' : 'attention',
+                            )
+                          }
+                        >
+                          {attention} 项
+                        </button>
+                      ),
+                    },
+                    { label: '应用版本', value: data?.source.version || '—' },
+                  ]}
+                />
+              </ResourceCard>
+            )
+          )}
           {notice && (
-            <div className="skill-notice" role="status">
-              <Check size={14} />
-              <span>{notice}</span>
-              <IconButton
-                icon="close"
-                label="关闭操作提示"
-                onClick={() => setNotice('')}
-              />
-            </div>
+            <Notice
+              tone="success"
+              action={
+                <IconButton
+                  icon="close"
+                  label="关闭操作提示"
+                  onClick={() => setNotice('')}
+                />
+              }
+            >
+              {notice}
+            </Notice>
+          )}
+          {!loading && data && !targets.length && (
+            <EmptyState
+              icon={<Puzzle size={28} />}
+              title="暂无 Agent 安装目标"
+            />
           )}
           {current && (
             <SkillInstallations

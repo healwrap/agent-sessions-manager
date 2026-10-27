@@ -15,7 +15,9 @@ import { Select } from './select';
 import { SearchField } from './search-field';
 import { SessionFilters } from './session-filters';
 import { AgentIcon } from './agent-icon';
-import { WorkspaceSidebar, WorkspaceSwitch } from './workspace-layout';
+import { WorkspaceSidebar } from './workspace-layout';
+import { WorkspacePicker } from './workspace-picker';
+import { ChoiceGroup } from './ui';
 export function Sidebar({
   state,
   onManage,
@@ -56,13 +58,14 @@ export function Sidebar({
       }}
       footer={
         <>
-          {onAccounts && (
-            <WorkspaceSwitch onClick={onAccounts}>
-              账号与环境管理
-            </WorkspaceSwitch>
-          )}
-          {onSkills && (
-            <WorkspaceSwitch onClick={onSkills}>Skill 管理</WorkspaceSwitch>
+          {(onAccounts || onSkills) && (
+            <WorkspacePicker
+              value="sessions"
+              onChange={(page) => {
+                if (page === 'accounts') onAccounts?.();
+                if (page === 'skills') onSkills?.();
+              }}
+            />
           )}
           <button
             className="panel-row"
@@ -137,34 +140,18 @@ export function Sidebar({
             focusNonce={state.searchFocus}
             onDismiss={toggleSearch}
           />
-          <div
+          <ChoiceGroup
             className="session-search-modes"
-            role="group"
-            aria-label="搜索匹配方式"
-          >
-            {(['words', 'literal'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                aria-pressed={state.searchMode === mode}
-                onClick={() =>
-                  void sessionStore.filter(state.provider, search, mode)
-                }
-                title={
-                  mode === 'words'
-                    ? '按空格拆词，所有词都需要匹配；顺序不限'
-                    : '逐字匹配完整连续文本，保留中间空格'
-                }
-              >
-                {mode === 'words' ? '拆词匹配' : '逐字匹配'}
-              </button>
-            ))}
-            <span>
-              {state.searchMode === 'words'
-                ? '空格分词 · 全部命中'
-                : '连续文本'}
-            </span>
-          </div>
+            label="搜索匹配方式"
+            value={state.searchMode}
+            onChange={(mode) =>
+              void sessionStore.filter(state.provider, search, mode)
+            }
+            items={[
+              { value: 'words', label: '拆词匹配' },
+              { value: 'literal', label: '逐字匹配' },
+            ]}
+          />
         </div>
       </Collapse>
       <nav

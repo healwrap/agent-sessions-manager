@@ -1,6 +1,7 @@
 import type { Settings } from '../../lib/types';
 import { Appearance } from './appearance';
 import { SettingsRow } from './row';
+import { Select, TextInput } from '../ui';
 export function GeneralSettings({
   draft,
   onChange,
@@ -19,7 +20,7 @@ export function GeneralSettings({
         htmlFor="settings-font"
         description="仅影响会话内容的字号"
       >
-        <input
+        <TextInput
           id="settings-font"
           type="number"
           min={12}
@@ -31,54 +32,37 @@ export function GeneralSettings({
         />
         <span>px</span>
       </SettingsRow>
-      <SettingsRow
-        label="工作步骤展示"
-        htmlFor="settings-detail"
-        description="选择希望看到多少工具调用细节"
-      >
-        <select
+      <SettingsRow label="工作步骤展示" htmlFor="settings-detail">
+        <Select
           id="settings-detail"
+          label="工作步骤展示"
           value={draft.chatDetail}
-          onChange={(event) =>
-            onChange({
-              ...draft,
-              chatDetail: event.target.value as Settings['chatDetail'],
-            })
+          onChange={(value) =>
+            onChange({ ...draft, chatDetail: value as Settings['chatDetail'] })
           }
-        >
-          <option value="compact">简洁</option>
-          <option value="standard">标准</option>
-          <option value="detailed">详细</option>
-          <option value="verbose">全部</option>
-        </select>
+          options={[
+            { value: 'compact', label: '简洁' },
+            { value: 'standard', label: '标准' },
+            { value: 'detailed', label: '详细' },
+            { value: 'verbose', label: '全部' },
+          ]}
+        />
       </SettingsRow>
-      <SettingsRow
-        label="闲置同步间隔"
-        htmlFor="settings-sync"
-        description="工作中的会话会加快同步，更新已保存的消息和工具结果"
-      >
-        <select
+      <SettingsRow label="闲置同步间隔" htmlFor="settings-sync">
+        <Select
           id="settings-sync"
-          value={draft.syncSeconds}
-          onChange={(event) =>
-            onChange({
-              ...draft,
-              syncSeconds: Number(event.target.value),
-            })
+          label="闲置同步间隔"
+          value={String(draft.syncSeconds)}
+          onChange={(value) =>
+            onChange({ ...draft, syncSeconds: Number(value) })
           }
-        >
-          {[3, 5, 10, 30, 60].map((seconds) => (
-            <option key={seconds} value={seconds}>
-              每 {seconds} 秒
-            </option>
-          ))}
-        </select>
+          options={[3, 5, 10, 30, 60].map((seconds) => ({
+            value: String(seconds),
+            label: `每 ${seconds} 秒`,
+          }))}
+        />
       </SettingsRow>
-      <SettingsRow
-        label="界面过渡动画"
-        htmlFor="settings-motion"
-        description="展开、收起时使用短过渡，遵循系统减少动态效果设置"
-      >
+      <SettingsRow label="界面过渡动画" htmlFor="settings-motion">
         <input
           id="settings-motion"
           className="settings-switch"

@@ -45,44 +45,8 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
-.account-client-tabs {
-  display: flex;
-  gap: 24px;
+.account-client-switch {
   padding: 0 24px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
-}
-.account-client-tabs button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  min-height: 46px;
-  gap: 8px;
-  padding: 0 0 12px;
-  border: 0;
-  color: var(--dsw-alias-label-secondary);
-  background: transparent;
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 150ms ease;
-}
-.account-client-tabs button::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  inset-inline: 0;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--account-accent);
-  transform: scaleX(0);
-  transition: transform 180ms ease;
-}
-.account-client-tabs button[aria-pressed='true'] {
-  color: var(--account-accent);
-}
-.account-client-tabs button[aria-pressed='true']::after {
-  transform: scaleX(1);
 }
 .account-live-dot {
   width: 6px;
@@ -164,29 +128,6 @@
     var(--dsw-alias-bg-layer-2)
   );
 }
-.account-environment-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px 28px;
-  margin: 0;
-}
-.account-environment-facts > div {
-  min-width: 0;
-}
-.account-environment-facts dt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-}
-.account-environment-facts dd {
-  margin: 0;
-  font-size: 15px;
-  line-height: 23px;
-  overflow-wrap: anywhere;
-}
 .account-exit-ip {
   font-variant-numeric: tabular-nums;
 }
@@ -247,7 +188,7 @@
   }
 }
 @container (min-width: 681px) and (max-width: 850px) {
-  .account-environment-facts {
+  .account-detail .ui-facts {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
@@ -261,14 +202,14 @@
   .account-launch-bar {
     padding: 20px;
   }
-  .account-client-tabs {
+  .account-client-switch {
     padding-inline: 20px;
     gap: 20px;
   }
   .account-environment-summary {
     margin-inline: 20px;
   }
-  .account-environment-facts {
+  .account-detail .ui-facts {
     grid-template-columns: minmax(0, 1fr);
   }
   .account-launch-actions {

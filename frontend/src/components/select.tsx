@@ -22,12 +22,14 @@ export function Select({
   options,
   onChange,
   label,
+  id: triggerId,
   disabled = false,
 }: {
   value: string;
   options: readonly SelectOption[];
   onChange: (value: string) => void;
   label: string;
+  id?: string;
   disabled?: boolean;
 }) {
   const id = useId();
@@ -156,6 +158,7 @@ export function Select({
   return (
     <div className="custom-select">
       <button
+        id={triggerId}
         ref={trigger}
         type="button"
         className="select-trigger"

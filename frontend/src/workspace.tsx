@@ -68,7 +68,7 @@ export function Workspace() {
           hidden={page !== 'skills'}
           inert={page !== 'skills'}
         >
-          <SkillWorkspace onNavigate={navigate} />
+          <SkillWorkspace onNavigate={navigate} active={page === 'skills'} />
         </div>
       )}
       {accountsOpened && (

@@ -1,40 +1,44 @@
-# Skill 管理界面
+# Skill 安装管理
 
-## 本轮交付
+## 已接入的功能
 
-应用中的可点击 UI 原型，使用示例安装状态。没有新增安装后端，也没有修改真实 Agent Skill 目录。入口与会话、账号环境并列；侧栏底部和收起后的顶栏均可切换。开发地址为 `/?workspace=skills`。
+管理本应用提供的 `agent-sessions` Skill。页面通过 `/api/skills` 读取真实目录、符号链接、安装清单、文件摘要与操作记录，没有示例安装状态。
 
-第一版围绕项目自带的 `agent-sessions`，展示 Codex、Claude Code、Cursor、Antigravity 与 DeepSeek Harness 的安装关系。读取会话的能力与目标 Agent 能否加载 Skill 分开表达；支持读取一个 Agent 的历史，不代表它支持相同的 Skill 安装协议。
+- 支持跟随应用的链接安装、完整独立副本、更新、失效链接修复、路径配置、卸载和恢复原入口。
+- 各项执行前生成真实操作计划，列出安装路径、需要保留的备份，以及共享目录涉及的其他入口。
+- 操作后重新读取安装文件；批量操作逐项返回结果，同一物理入口只执行一次。
+- 更新或卸载已有入口时，将原目录或链接保存在应用数据目录的 `skills/backups/`，不删除链接指向的源文件。操作记录可恢复最近的原入口；若入口已被其他操作改变，会要求先重新检查。
+- 本地自定义内容按安装清单检测，更新前可查看变化文件。外部安装没有版本清单时显示「外部安装」，不猜测旧版本。
+- 文件可读取与 Agent 已加载分别表达。安装完成后，在对应 Agent 的新会话中验证加载。
 
-## 页面与交互
+## 安装目标与来源
 
-- 概览：Skill 名称、能力、提供方、就绪数量、批量安装和原始 Skill 文档。
-- 安装列表：Agent 图标、客户端类型、文件安装状态、用户级范围、链接或独立副本、对应操作。支持名称搜索和状态筛选。
-- 详情：当前安装入口、方式、提供方、版本关系和加载验证状态。点击列表或侧栏 Agent 同步更新详情。
-- 批量安装：选择目标；未配置入口的 Agent 先配置路径。提供跟随应用与独立副本两种方式。
-- 更新：从对应 Agent 发起，保留当前安装方式作为默认选择。
-- 链接修复：区别于未安装，保留原入口用于修复。
-- 卸载：只移除选中 Agent 的安装入口，保留源文件、其他 Agent 安装及历史会话。
-- 操作记录：当前预览期间的结果，切换工作区后保留；刷新或重置预览恢复初始示例。
+| 入口 | 用户级位置与行为 |
+| --- | --- |
+| Codex | 保留已有 `$CODEX_HOME/skills/agent-sessions` 或 `~/.codex/skills/agent-sessions` 入口；新用户使用官方共享目录。 |
+| Claude Code | `$CLAUDE_CONFIG_DIR/skills/agent-sessions`，未配置时为 `~/.claude/skills/agent-sessions`。只用于本机 Code 会话，不冒充 Claude Cowork 或云端账号 Skill。 |
+| Cursor | 专用入口为 `~/.cursor/skills/agent-sessions`。没有专用入口但共享 Skill 存在时显示「共享可用」。 |
+| Antigravity IDE | `~/.gemini/config/skills/agent-sessions`，与 CLI 分开管理。 |
+| Antigravity CLI | `~/.gemini/antigravity-cli/skills/agent-sessions`。 |
+| DeepSeek Harness | 根据当前客户端配置填写实际 Skill 入口；未确认路径时显示「待配置」，不假定 `.dsh/skills` 一定生效。 |
+| 共享 Skill | `~/.agents/skills/agent-sessions`。通过父目录的真实映射识别共用入口；操作计划显示受影响的消费者。 |
 
-| 文件状态 | 界面主操作 | 加载状态 |
-| --- | --- | --- |
-| 已安装且内容一致 | 管理、重新安装、卸载 | 新会话验证后才能确认加载 |
-| 独立副本落后于应用提供版本 | 更新 | 不因更新请求已发送而直接宣称可用 |
-| 未安装 | 安装 | 尚未验证 |
-| 符号链接目标失效 | 修复链接 | 不可读取 |
-| 客户端入口尚未确认 | 配置入口 | 尚未验证 |
+目录依据：[OpenAI 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)、[Claude Code](https://code.claude.com/docs/en/skills)、[Cursor](https://cursor.com/docs/skills)、[Antigravity](https://antigravity.google/docs/skills)。Codex 的既有开发入口同时参考当前安装环境与 Skill Installer 约定。
 
-## 后续接入边界
+用户自定义入口保存在应用自己的 `skills/settings.json` 中，只允许指向名为 `agent-sessions` 的完整入口，不改 Agent 的其他设置或历史会话。
 
-真实接入时，安装来源放在应用管理的稳定数据目录，安装版不依赖开发仓库的位置。内置 Skill 应随应用携带完整可运行内容与版本清单；现有本地开发链接识别为自己的来源，不能直接标成应用托管。
+## 稳定来源与打包
 
-每个 Agent 由独立适配器提供用户级 Skill 入口及客户端支持情况。已知目录只是文件入口证据，实际加载仍需在目标 Agent 新会话中验证。未核对的客户端采用手动配置入口，不能根据会话来源名推断安装路径。
+`SkillPayload` 将完整的 `SKILL.md`、说明、引用资料、后端读取代码与标准库启动脚本复制到应用管理的不可变版本目录。`skills/current` 指向当前版本，跟随应用的安装入口链接到它；独立副本保留自己的版本。
 
-检测使用目录项本身的存在性、链接目标、`SKILL.md` 可读性及内容清单比较，区分失效链接与未安装。独立副本出现自定义修改时，展示实际差异与备份后更新选项。多 Agent 共用同一物理目录时展示共享关系，按实际目录合并操作结果。
+桌面构建先生成 `build/skill-payload`，将它与 Python sidecar 一起打包。安装后的两个脚本调用 sidecar，Codex 上下文入口通过 `--skill-context` 分派；无需从开发仓库导入 Python 包。源码调试使用当前解释器和版本目录内的完整代码。
 
-建议接入三个职责：只读安装清单、操作计划、执行与读回。界面在执行后使用读回结果更新状态，逐个展示批量操作的成功或失败。Agent 已加载与文件已安装保留为两个字段。
+API：`GET /api/skills`、`POST /api/skills/plan`、`POST /api/skills/apply`、`POST /api/skills/restore`。计划有十分钟有效期，并绑定源版本、目录映射与入口指纹；执行前变化会要求重新生成计划。
 
-## 组件复用
+开发预览可用 `AGENT_SESSIONS_API_URL` 指定后端。调试服务器的 `--skill-state-home` 允许将 Skill 数据与临时浏览器验收状态分开；默认与应用数据目录一致。
 
-沿用 `WorkspaceLayout`、`WorkspaceSidebar`、`WorkspaceSwitch`、`AgentIcon`、`Button`、`StatusBadge`、`SearchField`、`Select`、`EditorDialog`、`Markdown`，颜色、暗色主题与尺寸使用现有设计变量。新增样式按主页面、安装列表和弹窗分别组织。
+## 本轮验收
+
+已在隔离目录实际执行链接与副本安装、修改检测、备份更新、卸载恢复、失效链接修复、共享入口合并、过期计划拒绝和批量部分失败。也已通过应用页面在本机 Claude Code 的真实 Skill 目录完成一次安装，读回应用托管来源，并从仓库外运行两个已安装的 CLI 脚本。
+
+使用现有工作区布局、Agent 图标、按钮、状态标签、搜索、选择器、弹窗与 Markdown 组件。

@@ -2,28 +2,22 @@ import { useState } from 'react';
 import {
   BookOpen,
   Check,
-  Clock3,
   Layers3,
   Link2,
   Package,
   Plus,
   Puzzle,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
-import skillDocument from '../../../SKILL.md?raw';
 import type { WorkspacePage } from '../workspace';
 import { useSessionStore } from '../hooks/use-session-store';
-import {
-  skillActions,
-  skillTargets,
-  type SkillAction,
-  type SkillTarget,
-} from '../lib/skill-preview';
+import type { SkillAction } from '../lib/skill-management';
 import { AgentIcon } from './agent-icon';
 import { StatusBadge } from './form-controls';
 import { Markdown } from './markdown';
 import { Button, Dialog, IconButton } from './primitives';
+import { useSkillManagement } from '../hooks/use-skill-management';
+import { SkillHistory } from './skill-history';
 import { SkillInstallDialog } from './skill-install-dialog';
 import { SkillInstallations } from './skill-installations';
 import {
@@ -34,79 +28,36 @@ import {
 
 export function SkillWorkspace({
   onNavigate,
+  active = true,
 }: {
   onNavigate: (page: WorkspacePage) => void;
+  active?: boolean;
 }) {
   const { settings } = useSessionStore();
+  const { data, loading, busy, error, notice, reload, setNotice, mutate } =
+    useSkillManagement(active);
+  const targets = data?.targets || [];
   const [closed, setClosed] = useState(false);
   const [width, setWidth] = useState<number>();
-  const [targets, setTargets] = useState<SkillTarget[]>(skillTargets);
   const [selected, setSelected] = useState('codex');
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [documentOpen, setDocumentOpen] = useState(false);
-  const [notice, setNotice] = useState('');
   const [operation, setOperation] = useState<{
     action: SkillAction;
     ids: string[];
   }>();
-  const [records, setRecords] = useState<string[]>([]);
-  const current = targets.find((target) => target.id === selected)!;
-  const ready = targets.filter((target) => target.state === 'ready').length;
-  const attention = targets.filter((target) =>
-    ['outdated', 'broken'].includes(target.state),
+  const current =
+    targets.find((target) => target.id === selected) || targets[0];
+  const ready = targets.filter((target) =>
+    ['ready', 'shared', 'external'].includes(target.state),
   ).length;
-  function complete(
-    action: SkillAction,
-    ids: string[],
-    method: 'link' | 'copy',
-    path: string,
-  ) {
-    setTargets((value) =>
-      value.map((target) =>
-        !ids.includes(target.id)
-          ? target
-          : {
-              ...target,
-              state:
-                action === 'remove'
-                  ? 'missing'
-                  : action === 'configure'
-                    ? target.state === 'unconfigured'
-                      ? 'missing'
-                      : target.state
-                    : 'ready',
-              method:
-                action === 'remove' || action === 'configure'
-                  ? target.method
-                  : method,
-              path: action === 'configure' ? path.trim() : target.path,
-              note:
-                action === 'remove'
-                  ? '已移除这个 Agent 的安装入口，源文件保留'
-                  : action === 'configure'
-                    ? '安装入口已配置，可以继续安装'
-                    : '文件已就绪，Agent 加载情况待新会话验证',
-            },
-      ),
-    );
-    const names = targets
-      .filter((target) => ids.includes(target.id))
-      .map((target) => target.name)
-      .join('、');
-    const message = `预览已${action === 'configure' ? '配置' : skillActions[action]}：${names}`;
-    setNotice(message);
-    setRecords((value) => [message, ...value].slice(0, 6));
-    setSelected(ids[0]);
+  const attention = targets.filter((target) =>
+    ['outdated', 'broken', 'modified', 'error'].includes(target.state),
+  ).length;
+  async function complete(token: string) {
+    await mutate('/api/skills/apply', { token });
     setOperation(undefined);
-  }
-  function reset() {
-    setTargets(skillTargets);
-    setFilter('all');
-    setQuery('');
-    setSelected('codex');
-    setRecords([]);
-    setNotice('已恢复初始示例状态');
   }
   return (
     <>
@@ -133,7 +84,7 @@ export function SkillWorkspace({
                 </WorkspaceSwitch>
               </>
             )}
-            <StatusBadge>交互预览</StatusBadge>
+            <StatusBadge>本机管理</StatusBadge>
           </>
         }
         sidebar={
@@ -192,15 +143,24 @@ export function SkillWorkspace({
         }
       >
         <div className="environment-content skill-content">
-          <div className="skill-preview-banner">
+          <div className="skill-source-line">
             <span>
-              <Sparkles size={14} />
-              设计预览 · 安装状态为示例，操作不影响真实环境
+              来源：{data?.source.source || '正在读取'} · 版本{' '}
+              {data?.source.version || '—'}
             </span>
-            <button onClick={reset}>
-              重置预览 <RotateCcw size={12} />
-            </button>
+            <span>
+              {data &&
+                `检测于 ${new Date(data.checked_at).toLocaleTimeString()}`}
+            </span>
           </div>
+          {error && (
+            <div className="environment-error-bar" role="alert">
+              <span>{error}</span>
+              <Button disabled={busy || loading} onClick={() => void reload()}>
+                重新读取
+              </Button>
+            </div>
+          )}
           <header className="environment-page-heading skill-page-heading">
             <div>
               <div className="skill-eyebrow">SKILL LIBRARY</div>
@@ -209,13 +169,9 @@ export function SkillWorkspace({
                 统一查看 Agent Sessions skill 在各个 Agent 中的安装与更新情况。
               </p>
             </div>
-            <Button
-              onClick={() => {
-                setNotice('预览检测完成：已检查示例安装入口与版本状态');
-              }}
-            >
+            <Button disabled={busy || loading} onClick={() => void reload()}>
               <RotateCcw size={14} />
-              重新检测
+              {loading ? '正在检测…' : '重新检测'}
             </Button>
           </header>
           <section
@@ -266,6 +222,7 @@ export function SkillWorkspace({
               </div>
               <Button
                 variant="primary"
+                disabled={busy || loading || !data}
                 onClick={() =>
                   setOperation({
                     action: 'install',
@@ -283,6 +240,7 @@ export function SkillWorkspace({
               <Button
                 variant="text"
                 size="small"
+                disabled={!data}
                 onClick={() => setDocumentOpen(true)}
               >
                 <BookOpen size={13} />
@@ -315,27 +273,26 @@ export function SkillWorkspace({
               />
             </div>
           )}
-          <SkillInstallations
-            targets={targets}
-            selected={current}
-            query={query}
-            filter={filter}
-            onFilter={setFilter}
-            onQuery={setQuery}
-            onSelect={setSelected}
-            onAction={(action, ids) => setOperation({ action, ids })}
-          />
-          {records.length > 0 && (
-            <details className="skill-history">
-              <summary>
-                <Clock3 size={14} />
-                本次预览的操作记录 <span>{records.length}</span>
-              </summary>
-              {records.map((record, index) => (
-                <p key={index}>{record}</p>
-              ))}
-            </details>
+          {current && (
+            <SkillInstallations
+              busy={busy}
+              targets={targets}
+              selected={current}
+              query={query}
+              filter={filter}
+              onFilter={setFilter}
+              onQuery={setQuery}
+              onSelect={setSelected}
+              onAction={(action, ids) => setOperation({ action, ids })}
+            />
           )}
+          <SkillHistory
+            records={data?.records || []}
+            busy={busy}
+            onRestore={(id) =>
+              void mutate('/api/skills/restore', { id }).catch(() => {})
+            }
+          />
         </div>
       </WorkspaceLayout>
       {operation && (
@@ -363,7 +320,12 @@ export function SkillWorkspace({
           />
         </header>
         <div className="skill-document-body">
-          <Markdown text={skillDocument.replace(/^---[\s\S]*?---\s*/, '')} />
+          <Markdown
+            text={(data?.source.document || '').replace(
+              /^---[\s\S]*?---\s*/,
+              '',
+            )}
+          />
         </div>
       </Dialog>
     </>

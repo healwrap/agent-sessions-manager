@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FolderOpen, Link2, Package } from 'lucide-react';
+import { request } from '../lib/api';
 import { AgentIcon } from './agent-icon';
 import { EditorDialog, StatusBadge, TextInput } from './form-controls';
 import { Button } from './primitives';
@@ -9,7 +10,8 @@ import {
   skillStates,
   type SkillAction,
   type SkillTarget,
-} from '../lib/skill-preview';
+  type SkillPlan,
+} from '../lib/skill-management';
 
 export function SkillInstallDialog({
   action,
@@ -22,12 +24,7 @@ export function SkillInstallDialog({
   targets: SkillTarget[];
   initialIds: string[];
   onClose: () => void;
-  onComplete: (
-    action: SkillAction,
-    ids: string[],
-    method: 'link' | 'copy',
-    path: string,
-  ) => void;
+  onComplete: (token: string) => Promise<void>;
 }) {
   const [ids, setIds] = useState(initialIds);
   const [method, setMethod] = useState<'link' | 'copy'>(
@@ -36,32 +33,79 @@ export function SkillInstallDialog({
   const [path, setPath] = useState(
     targets.find((target) => target.id === initialIds[0])?.path || '',
   );
-  const selected = targets.filter((target) => ids.includes(target.id));
+  const [plan, setPlan] = useState<SkillPlan>();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [revision, setRevision] = useState(0);
   const configure = action === 'configure';
   const remove = action === 'remove';
+  const selected = targets.filter((target) => ids.includes(target.id));
   const title = configure
     ? '配置 Skill 安装入口'
     : `${skillActions[action]} Agent Sessions`;
+  useEffect(() => {
+    let current = true;
+    setPlan(undefined);
+    setError('');
+    if (!ids.length || (configure && !path.trim())) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const timer = setTimeout(() => {
+      void request<SkillPlan>(
+        '/api/skills/plan',
+        {},
+        { action, ids, method, ...(configure ? { path } : {}) },
+      )
+        .then((value) => current && setPlan(value))
+        .catch((reason) => current && setError(String(reason)))
+        .finally(() => current && setLoading(false));
+    }, 180);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [action, ids, method, path, configure, revision]);
+  async function submit() {
+    if (!plan) return;
+    setBusy(true);
+    setError('');
+    try {
+      await onComplete(plan.token);
+    } catch (reason) {
+      setError(String(reason));
+      setPlan(undefined);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <EditorDialog
       title={title}
-      description="交互预览 · 以下操作只改变示例状态，不写入真实安装目录。"
-      busy={false}
+      description="按下确认后执行真实操作；已有安装入口会保留备份。"
+      busy={busy}
       onClose={onClose}
       onSubmit={(event) => {
         event.preventDefault();
-        onComplete(action, ids, method, path);
+        void submit();
       }}
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
+          <Button onClick={onClose} disabled={busy}>
+            取消
+          </Button>
           <Button
             type="submit"
             variant="primary"
-            disabled={!ids.length || (configure && !path.trim())}
+            disabled={busy || loading || !plan}
           >
-            演示{skillActions[action]}
-            {!configure && `（${ids.length}）`}
+            {busy
+              ? `正在${skillActions[action]}…`
+              : loading
+                ? '正在检查…'
+                : `${skillActions[action]}${configure ? '' : `（${ids.length}）`}`}
           </Button>
         </>
       }
@@ -72,7 +116,7 @@ export function SkillInstallDialog({
             ? '目标 Agent'
             : remove
               ? '移除以下安装入口'
-              : '选择安装到哪些 Agent'}
+              : '选择安装目标'}
         </h3>
         {(configure || remove ? selected : targets).map((target) => (
           <label className="skill-dialog-target" key={target.id}>
@@ -80,7 +124,7 @@ export function SkillInstallDialog({
               <input
                 type="checkbox"
                 checked={ids.includes(target.id)}
-                disabled={!target.path}
+                disabled={!target.path || busy}
                 onChange={(event) =>
                   setIds((value) =>
                     event.target.checked
@@ -104,7 +148,8 @@ export function SkillInstallDialog({
       {configure ? (
         <label className="environment-field">
           <span>
-            <FolderOpen size={14} /> 安装入口路径
+            <FolderOpen size={14} />
+            安装入口路径
           </span>
           <TextInput
             autoFocus
@@ -112,14 +157,16 @@ export function SkillInstallDialog({
             onChange={(event) => setPath(event.target.value)}
             placeholder="填写该 Agent 的 agent-sessions 安装入口"
           />
-          <small>指向该 Agent 的 Skill 目录下的 agent-sessions 入口。</small>
+          <small>
+            填写该客户端实际使用的 Skill 目录下的 agent-sessions 完整路径。
+          </small>
         </label>
       ) : remove ? (
         <div className="skill-operation-note">
           <Package size={18} />
           <p>
-            卸载选中 Agent 的安装入口。保留 Skill 源文件、其他 Agent
-            的安装和全部历史会话。
+            将安装入口移入应用备份。保留 Skill
+            源文件与历史会话，可从操作记录恢复原入口。
           </p>
         </div>
       ) : (
@@ -130,6 +177,7 @@ export function SkillInstallDialog({
               label="Skill 安装方式"
               value={method}
               onChange={(value) => setMethod(value as 'link' | 'copy')}
+              disabled={busy}
               options={[
                 { value: 'link', label: '跟随应用（推荐）' },
                 { value: 'copy', label: '独立副本' },
@@ -140,17 +188,55 @@ export function SkillInstallDialog({
             {method === 'link' ? <Link2 size={18} /> : <Package size={18} />}
             <p>
               {method === 'link'
-                ? '链接到应用管理的 Skill。以后更新应用时，安装入口保持同步。'
-                : '复制一份到 Agent 的 Skill 目录。可以独立修改，后续更新由你选择。'}
+                ? '链接到应用管理的稳定目录。应用提供新版本后，此入口跟随更新。'
+                : '复制完整的 Skill、说明与运行入口。保留独立内容，后续手动更新。'}
             </p>
           </div>
-          <div className="skill-dialog-summary">
-            <span>安装范围</span>
-            <strong>当前用户</strong>
-            <span>安装后</span>
-            <strong>在 Agent 中新建会话验证加载</strong>
-          </div>
         </>
+      )}
+      {plan && (
+        <div className="skill-plan">
+          <h3>本次操作计划</h3>
+          {plan.items.map((item) => (
+            <div key={item.id}>
+              <strong>{item.name}</strong>
+              <code>{item.path}</code>
+              {item.backup && <small>原入口会先备份</small>}
+              {item.affects.length > 0 && (
+                <p>同一目录还供以下入口使用：{item.affects.join('、')}</p>
+              )}
+              {item.modified_files.length > 0 && (
+                <details>
+                  <summary>
+                    查看检测到的文件变化（{item.modified_files.length}）
+                  </summary>
+                  {item.modified_files.map((name) => (
+                    <code key={name}>{name}</code>
+                  ))}
+                </details>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {error && (
+        <div className="environment-error-bar" role="alert">
+          <span>{error}</span>
+          <Button
+            onClick={() => setRevision((value) => value + 1)}
+            disabled={busy}
+          >
+            重新检查
+          </Button>
+        </div>
+      )}
+      {!configure && !remove && (
+        <div className="skill-dialog-summary">
+          <span>安装范围</span>
+          <strong>当前用户</strong>
+          <span>安装后</span>
+          <strong>在 Agent 的新会话中验证加载</strong>
+        </div>
       )}
     </EditorDialog>
   );

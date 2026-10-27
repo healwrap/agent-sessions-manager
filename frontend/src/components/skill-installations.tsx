@@ -19,11 +19,12 @@ import {
   suggestedAction,
   type SkillAction,
   type SkillTarget,
-} from '../lib/skill-preview';
+} from '../lib/skill-management';
 
 export function SkillInstallations({
   targets,
   selected,
+  busy,
   filter,
   query,
   onFilter,
@@ -33,6 +34,7 @@ export function SkillInstallations({
 }: {
   targets: SkillTarget[];
   selected: SkillTarget;
+  busy: boolean;
   filter: string;
   query: string;
   onFilter: (value: string) => void;
@@ -44,7 +46,7 @@ export function SkillInstallations({
     (target) =>
       (filter === 'all' ||
         (filter === 'attention'
-          ? ['outdated', 'broken'].includes(target.state)
+          ? ['outdated', 'broken', 'modified', 'error'].includes(target.state)
           : target.state === filter)) &&
       `${target.name} ${target.client}`
         .toLowerCase()
@@ -61,7 +63,7 @@ export function SkillInstallations({
             <h2>Agent 安装情况</h2>
             <p>分别管理安装入口，独立更新与卸载。</p>
           </div>
-          <span>{targets.length} 个 Agent</span>
+          <span>{targets.length} 个入口</span>
         </div>
         <div className="skill-table-tools">
           <SearchField
@@ -78,6 +80,7 @@ export function SkillInstallations({
             options={[
               { value: 'all', label: '全部状态' },
               { value: 'ready', label: '已安装' },
+              { value: 'shared', label: '共享可用' },
               { value: 'attention', label: '需要处理' },
               { value: 'missing', label: '未安装' },
               { value: 'unconfigured', label: '待配置' },
@@ -123,14 +126,19 @@ export function SkillInstallations({
                 <small>
                   {target.state === 'unconfigured'
                     ? '安装入口未设置'
-                    : target.method === 'copy'
-                      ? '独立副本 · 当前用户'
-                      : '链接安装 · 当前用户'}
+                    : target.state === 'shared'
+                      ? '共享目录提供'
+                      : !target.exists
+                        ? '专用入口尚不存在'
+                        : target.method === 'copy'
+                          ? '独立副本 · 当前用户'
+                          : '链接安装 · 当前用户'}
                 </small>
               </button>
               <div className="skill-target-actions">
                 <Button
                   size="small"
+                  disabled={busy}
                   variant={target.state === 'ready' ? 'text' : 'secondary'}
                   onClick={() =>
                     target.state === 'ready'
@@ -140,7 +148,9 @@ export function SkillInstallations({
                 >
                   {target.state === 'ready'
                     ? '管理'
-                    : skillActions[suggestedAction(target)]}
+                    : target.state === 'shared'
+                      ? '独立安装'
+                      : skillActions[suggestedAction(target)]}
                   {target.state === 'ready' && <ChevronRight size={13} />}
                 </Button>
               </div>
@@ -190,7 +200,8 @@ export function SkillInstallations({
             <dd>
               {selected.method === 'link' ? (
                 <>
-                  <Link2 size={13} /> 跟随应用
+                  <Link2 size={13} />
+                  {selected.managed ? '跟随应用' : '本地链接'}
                 </>
               ) : (
                 <>
@@ -201,7 +212,11 @@ export function SkillInstallations({
           </div>
           <div>
             <dt>提供方</dt>
-            <dd>Agent Sessions</dd>
+            <dd>{selected.source || '尚未安装'}</dd>
+          </div>
+          <div>
+            <dt>安装版本</dt>
+            <dd>{selected.version || '未登记'}</dd>
           </div>
         </dl>
         <div className="skill-path-block">
@@ -210,9 +225,22 @@ export function SkillInstallations({
             安装入口
           </span>
           <code>{selected.path || '尚未设置'}</code>
+          {selected.effective_path && (
+            <>
+              <span>当前共享入口</span>
+              <code>{selected.effective_path}</code>
+            </>
+          )}
+          {selected.resolved_path && selected.exists && (
+            <>
+              <span>实际目标</span>
+              <code>{selected.resolved_path}</code>
+            </>
+          )}
           <Button
             variant="text"
             size="small"
+            disabled={busy}
             onClick={() => onAction('configure', [selected.id])}
           >
             配置路径 <ChevronRight size={12} />
@@ -229,6 +257,7 @@ export function SkillInstallations({
         <div className="skill-detail-actions">
           <Button
             variant="primary"
+            disabled={busy}
             onClick={() =>
               onAction(
                 selected.state === 'ready'
@@ -245,6 +274,7 @@ export function SkillInstallations({
           {installedTarget(selected) && (
             <Button
               variant="text"
+              disabled={busy}
               onClick={() => onAction('remove', [selected.id])}
             >
               <Trash2 size={14} />

@@ -9,11 +9,14 @@ export default defineConfig({
     host: '127.0.0.1',
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8766',
+        target: process.env.AGENT_SESSIONS_API_URL || 'http://127.0.0.1:8766',
         changeOrigin: true,
         configure(proxy) {
           proxy.on('proxyReq', (request) => {
-            request.setHeader('origin', 'http://127.0.0.1:8766');
+            request.setHeader(
+              'origin',
+              process.env.AGENT_SESSIONS_API_URL || 'http://127.0.0.1:8766',
+            );
             request.removeHeader('sec-fetch-site');
           });
         },

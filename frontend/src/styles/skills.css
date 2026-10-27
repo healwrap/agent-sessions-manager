@@ -4,9 +4,9 @@
 .skill-content {
   padding-top: 20px;
 }
-.skill-preview-banner,
-.skill-preview-banner > span,
-.skill-preview-banner button,
+.skill-source-line,
+.skill-source-line > span,
+.skill-source-line button,
 .skill-section-line,
 .skill-section-line > span,
 .skill-section-line button {
@@ -14,13 +14,13 @@
   align-items: center;
   gap: 8px;
 }
-.skill-preview-banner {
+.skill-source-line {
   justify-content: space-between;
   margin-bottom: 32px;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
 }
-.skill-preview-banner button,
+.skill-source-line button,
 .skill-section-line button {
   padding: 0;
   border: 0;
@@ -144,7 +144,9 @@
   border-radius: 3px;
   background: var(--dsw-alias-bg-layer-3);
 }
-.skill-coverage-bar > i[data-state='ready'] {
+.skill-coverage-bar > i[data-state='ready'],
+.skill-coverage-bar > i[data-state='shared'],
+.skill-coverage-bar > i[data-state='external'] {
   background: var(--dsw-alias-state-success-primary);
 }
 .skill-section-line {
@@ -183,13 +185,17 @@
   border-radius: 50%;
   background: var(--dsw-alias-label-dimmed);
 }
-.skill-sidebar-dot[data-state='ready'] {
+.skill-sidebar-dot[data-state='ready'],
+.skill-sidebar-dot[data-state='shared'],
+.skill-sidebar-dot[data-state='external'] {
   background: var(--dsw-alias-state-success-primary);
 }
-.skill-sidebar-dot[data-state='outdated'] {
+.skill-sidebar-dot[data-state='outdated'],
+.skill-sidebar-dot[data-state='modified'] {
   background: var(--dsw-static-amber-600);
 }
-.skill-sidebar-dot[data-state='broken'] {
+.skill-sidebar-dot[data-state='broken'],
+.skill-sidebar-dot[data-state='error'] {
   background: var(--dsw-alias-state-error-primary);
 }
 .skill-sidebar-tip {

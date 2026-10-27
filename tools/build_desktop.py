@@ -48,6 +48,7 @@ def main():
         print('Bundles:', ROOT/'desktop/target/release/bundle')
         return
     app = ROOT/'desktop/target/release/bundle/macos/Agent Sessions.app'
+    run('codesign', '--force', '--deep', '--sign', '-', app)
     version = json.loads((ROOT/'desktop/tauri.conf.json').read_text(encoding='utf-8'))['version']
     output = ROOT/'desktop/target/release/bundle/dmg'/f'Agent Sessions_{version}_{triple.split("-")[0]}.dmg'
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -13,13 +13,6 @@
 .network-diagnostics-content {
   padding: 4px 24px 24px;
 }
-.app-diagnostics {
-  padding: 16px 0;
-}
-.app-diagnostics > .ui-actions {
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
 .diagnostic-form {
   display: grid;
   grid-template-columns: minmax(180px, 0.9fr) minmax(200px, 1.3fr) auto;

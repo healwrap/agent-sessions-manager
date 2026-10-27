@@ -59,10 +59,6 @@ class Handler(BaseHTTPRequestHandler):
                           'sources': self.server.store.sources()['items']}
             elif parsed.path == '/api/claude-diagnostics/history':
                 result = {'history': self.server.claude_diagnostics.history()}
-            elif parsed.path == '/api/environments/app-check':
-                from agent_sessions.diagnostics.local import inspect_app
-                config = self.server.app_settings.read()
-                result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
             elif parsed.path.startswith('/api/browser-checks/'):
                 result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path.startswith('/api/app-login/'):

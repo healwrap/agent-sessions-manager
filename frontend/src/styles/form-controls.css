@@ -1,0 +1,132 @@
+/* Form controls share the DSH Input, selector and settings-dialog tokens. */
+.form-input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-primary);
+  font: 13px/20px var(--dsw-font-family);
+}
+.form-input::placeholder {
+  color: var(--dsw-alias-label-dimmed);
+}
+.form-input:focus-visible {
+  border-color: var(--dsw-alias-state-business-primary);
+  outline: 2px solid
+    color-mix(in srgb, var(--dsw-alias-state-business-primary) 18%, transparent);
+  outline-offset: 1px;
+}
+.form-input:disabled {
+  opacity: 0.5;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.status-badge[data-tone='success'] {
+  color: var(--dsw-alias-state-success-primary);
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-success-primary) 9%,
+    transparent
+  );
+}
+.status-badge[data-tone='warning'] {
+  color: var(--dsw-static-amber-600);
+  background: color-mix(in srgb, var(--dsw-static-amber-600) 9%, transparent);
+}
+.status-badge[data-tone='error'] {
+  color: var(--dsw-alias-state-error-primary);
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-error-primary) 9%,
+    transparent
+  );
+}
+.editor-dialog {
+  width: min(640px, calc(100vw - 40px));
+  max-width: 640px;
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--dsw-radius-panel);
+  background: var(--dsw-alias-bg-layer-2);
+  box-shadow: var(--dsw-elevation-prominent, 0 20px 80px #0002);
+}
+.editor-dialog::backdrop {
+  background: var(--dsw-alias-bg-mask-1);
+  backdrop-filter: var(--dsw-mask-blur, none);
+}
+.editor-dialog form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+.editor-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 24px 20px;
+}
+.editor-dialog-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 550;
+  line-height: 26px;
+}
+.editor-dialog-heading p {
+  margin: 8px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 20px;
+}
+.editor-dialog-fields {
+  display: grid;
+  gap: 20px;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0 24px 24px;
+  overflow-y: auto;
+  border: 0;
+}
+.editor-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: none;
+  padding: 16px 24px 20px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+.editor-dialog .environment-field .select-trigger {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-primary);
+}
+.select-menu.dsh-menu {
+  max-width: calc(100vw - 24px);
+}
+.action-button[data-size='small'] {
+  height: 28px;
+  padding: 0 10px;
+  gap: 5px;
+  font-size: 12px;
+  border-radius: var(--dsw-radius-sm);
+}

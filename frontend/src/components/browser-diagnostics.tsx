@@ -10,6 +10,7 @@ import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 import { DiagnosticRows } from './diagnostics-results';
 import { Button } from './primitives';
 import { Select } from './select';
+import { TextInput } from './form-controls';
 import { SettingsRow } from './settings/row';
 import '../styles/browser-check.css';
 
@@ -170,7 +171,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
       {ticket?.url && (
         <>
           <div className="browser-probe-link">
-            <input
+            <TextInput
               className="settings-text-input"
               aria-label="独立浏览器检测链接"
               readOnly

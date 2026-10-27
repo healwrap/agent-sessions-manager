@@ -7,7 +7,8 @@ import type {
   EnvironmentCollection,
   EnvironmentItem,
 } from '../lib/environment-settings';
-import { Button, Dialog, IconButton } from './primitives';
+import { Button } from './primitives';
+import { EditorDialog, TextInput } from './form-controls';
 import { BrowserProfileFields } from './browser-profile-fields';
 
 export type EnvironmentEdit =
@@ -93,93 +94,76 @@ export function EnvironmentEditor({
     }
   };
   return (
-    <Dialog
-      open
+    <EditorDialog
       title={title}
-      className="environment-editor"
-      onClose={() => !saving && onClose()}
-    >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
-        }}
-      >
-        <header>
-          <div>
-            <h2>{title}</h2>
-            <p>
-              {profile
-                ? '每个环境独立设置，保存后可继续编辑。'
-                : '添加可供环境引用的专用代理。'}
-            </p>
-          </div>
-          <IconButton
-            icon="close"
-            label="关闭配置编辑"
-            onClick={onClose}
-            disabled={saving}
-          />
-        </header>
-        <fieldset disabled={saving}>
-          <label className="environment-field">
-            名称
-            <input
-              autoFocus
-              ref={nameInput}
-              required
-              maxLength={120}
-              value={value.name}
-              onChange={(event) => field('name', event.target.value)}
-              placeholder={
-                profile ? '例如：Claude 日常使用' : '例如：美国固定出口'
-              }
-            />
-          </label>
-          {profile ? (
-            <BrowserProfileFields
-              value={browser}
-              proxies={proxies}
-              gates={gates}
-              onChange={(patch) =>
-                setValue((current) => ({ ...current, ...patch }))
-              }
-            />
-          ) : (
-            <label className="environment-field">
-              代理地址
-              <input
-                required
-                value={proxy.url}
-                onChange={(event) => field('url', event.target.value)}
-                placeholder="http://127.0.0.1:7897"
-                spellCheck={false}
-              />
-              <small>支持 HTTP、HTTPS、SOCKS5 与 SOCKS5h，需包含端口。</small>
-            </label>
-          )}
-          <p className="environment-form-note">
-            {profile
-              ? native
-                ? '为官方 App 单独保存登录数据、代理与内嵌 Code 配置。'
-                : '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
-              : '保存为代理配置；实际路由由使用它的浏览器或 App 决定。'}
-          </p>
-          {error && (
-            <p className="environment-error" role="alert">
-              {error}
-            </p>
-          )}
-        </fieldset>
-        <footer>
+      description={
+        profile
+          ? '每个环境独立设置，保存后可继续编辑。'
+          : '添加可供环境引用的专用代理。'
+      }
+      busy={saving}
+      onClose={onClose}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
+      footer={
+        <>
           <Button onClick={onClose} disabled={saving}>
             取消
           </Button>
           <Button type="submit" variant="primary" disabled={saving}>
             {saving ? '保存中…' : '保存配置'}
           </Button>
-        </footer>
-      </form>
-    </Dialog>
+        </>
+      }
+    >
+      <label className="environment-field">
+        名称
+        <TextInput
+          autoFocus
+          ref={nameInput}
+          required
+          maxLength={120}
+          value={value.name}
+          onChange={(event) => field('name', event.target.value)}
+          placeholder={profile ? '例如：Claude 日常使用' : '例如：美国固定出口'}
+        />
+      </label>
+      {profile ? (
+        <BrowserProfileFields
+          value={browser}
+          proxies={proxies}
+          gates={gates}
+          onChange={(patch) =>
+            setValue((current) => ({ ...current, ...patch }))
+          }
+        />
+      ) : (
+        <label className="environment-field">
+          代理地址
+          <TextInput
+            required
+            value={proxy.url}
+            onChange={(event) => field('url', event.target.value)}
+            placeholder="http://127.0.0.1:7897"
+            spellCheck={false}
+          />
+          <small>支持 HTTP、HTTPS、SOCKS5 与 SOCKS5h，需包含端口。</small>
+        </label>
+      )}
+      <p className="environment-form-note">
+        {profile
+          ? native
+            ? '为官方 App 单独保存登录数据、代理与内嵌 Code 配置。'
+            : '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
+          : '保存为代理配置；实际路由由使用它的浏览器或 App 决定。'}
+      </p>
+      {error && (
+        <p className="environment-error" role="alert">
+          {error}
+        </p>
+      )}
+    </EditorDialog>
   );
 }

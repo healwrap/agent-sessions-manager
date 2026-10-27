@@ -1,6 +1,6 @@
 .environment-gate-editor {
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-md);
   padding: 16px;
 }
 .environment-gate-editor summary {
@@ -12,26 +12,23 @@
   font-size: 12px;
   margin: 12px 0;
 }
-.environment-gate-setting {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 128px;
-  gap: 18px;
-  align-items: center;
-  padding: 12px 0;
-  border-top: 1px solid var(--dsw-alias-border-l2);
+.environment-gate-editor .settings-row {
+  padding: 14px 0;
 }
-.environment-gate-setting strong,
-.environment-gate-setting small {
-  display: block;
+.environment-gate-editor .settings-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
-.environment-gate-setting strong {
+.environment-gate-editor .settings-row .custom-select {
+  width: 128px;
+  flex: none;
+}
+.environment-gate-editor .settings-row-label label {
   font-size: 13px;
 }
-.environment-gate-setting small {
-  margin-top: 5px;
-  color: var(--dsw-alias-label-tertiary);
+.environment-gate-editor .settings-row-label p {
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 18px;
 }
 .environment-region-preview {
   display: flex;
@@ -92,18 +89,18 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #bd8b46;
+  background: var(--dsw-static-amber-600);
   flex-shrink: 0;
   margin-top: 6px;
 }
 .environment-gate-result[data-state='pass'] .environment-gate-dot {
-  background: #4c987b;
+  background: var(--dsw-alias-state-success-primary);
 }
 .environment-gate-result[data-state='fail'] .environment-gate-dot {
-  background: #c46154;
+  background: var(--dsw-alias-state-error-primary);
 }
 .environment-gate-result[data-state='skip'] .environment-gate-dot {
-  background: #989da4;
+  background: var(--dsw-alias-label-tertiary);
 }
 @media (max-width: 680px) {
   .environment-account-row {
@@ -112,9 +109,6 @@
   .environment-account-row .environment-row-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-  .environment-gate-setting {
-    grid-template-columns: minmax(0, 1fr) 110px;
   }
 }
 
@@ -226,4 +220,16 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+.account-client-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.account-client-status .status-badge {
+  font-size: 10px;
+  padding: 1px 7px;
 }

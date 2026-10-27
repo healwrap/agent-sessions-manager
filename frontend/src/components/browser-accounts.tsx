@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   ExternalLink,
   Monitor,
@@ -14,15 +13,15 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { browserAvailable, runLabels } from '../lib/environment-settings';
-import { Button } from './primitives';
+import { Button, IconButton } from './primitives';
+import { StatusBadge } from './form-controls';
 import { AgentIcon } from './agent-icon';
-import { AccountEditor, type AccountRoute } from './account-editor';
 import { BrowserLaunchReport } from './browser-launch-report';
 import { KernelControl } from './kernel-control';
 export function BrowserAccounts({
   data,
   busy,
-  onSave,
+  onEditAccount,
   onDelete,
   onRuntime,
   onEditProfile,
@@ -30,7 +29,7 @@ export function BrowserAccounts({
 }: {
   data: EnvironmentSettings;
   busy: boolean;
-  onSave: (account: BrowserAccount, route: AccountRoute) => Promise<void>;
+  onEditAccount: (account?: BrowserAccount) => void;
   onDelete: (id: string) => void;
   onEditProfile: (kind: 'profiles' | 'app_profiles', id: string) => void;
   onRuntime: (
@@ -40,7 +39,6 @@ export function BrowserAccounts({
   ) => void;
   onInstall: () => void;
 }) {
-  const [edit, setEdit] = useState<{ item?: BrowserAccount }>();
   const renderReport = (run: BrowserRun, target: string) => (
     <details
       className="account-launch-details"
@@ -67,10 +65,7 @@ export function BrowserAccounts({
       )}
       <div className="account-list-heading">
         <span>{data.accounts.length} 个账号</span>
-        <Button variant="primary" onClick={() => setEdit({})} disabled={busy}>
-          <Plus size={15} />
-          添加账号
-        </Button>
+        <span>选择账号，打开对应环境</span>
       </div>
       {!data.accounts.length && (
         <section className="environment-panel environment-empty">
@@ -79,7 +74,7 @@ export function BrowserAccounts({
             一次创建账号及所需的浏览器、App
             环境，然后分别打开登录。以后切换账号会使用各自保存的登录状态。
           </p>
-          <Button onClick={() => setEdit({})} disabled={busy}>
+          <Button onClick={() => onEditAccount()} disabled={busy}>
             <Plus size={15} />
             添加账号与环境
           </Button>
@@ -116,20 +111,18 @@ export function BrowserAccounts({
                   </span>
                 </div>
                 <div className="environment-row-actions">
-                  <button
+                  <IconButton
                     disabled={busy || live}
-                    aria-label={`编辑账号 ${account.name}`}
-                    onClick={() => setEdit({ item: account })}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
+                    label={`编辑账号 ${account.name}`}
+                    icon={<Pencil size={15} />}
+                    onClick={() => onEditAccount(account)}
+                  />
+                  <IconButton
                     disabled={busy || live}
-                    aria-label={`删除账号 ${account.name}`}
+                    label={`删除账号 ${account.name}`}
+                    icon={<Trash2 size={15} />}
                     onClick={() => onDelete(account.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  />
                 </div>
               </header>
               {(
@@ -159,19 +152,34 @@ export function BrowserAccounts({
                   <div>
                     <strong>{label}</strong>
                     <p>{profile?.name || '尚未绑定环境'}</p>
-                    <small>
-                      {profile
-                        ? (target === 'browser'
-                            ? data.browser.sessions?.[profile.id]
-                            : data.app_runtime.sessions[profile.id]
-                          )?.label || '首次使用请登录'
-                        : '编辑账号以创建或绑定环境'}
-                      {run ? ` · ${runLabels[run.status]}` : ''}
-                    </small>
+                    <div className="account-client-status">
+                      <StatusBadge
+                        tone={
+                          run?.alive
+                            ? 'success'
+                            : ['failed', 'blocked', 'interrupted'].includes(
+                                  run?.status || '',
+                                )
+                              ? 'error'
+                              : 'neutral'
+                        }
+                      >
+                        {run ? runLabels[run.status] : '尚未启动'}
+                      </StatusBadge>
+                      <small>
+                        {profile
+                          ? (target === 'browser'
+                              ? data.browser.sessions?.[profile.id]
+                              : data.app_runtime.sessions[profile.id]
+                            )?.label || '首次使用请登录'
+                          : '编辑账号以创建或绑定环境'}
+                      </small>
+                    </div>
                   </div>
                   {profile && (
                     <div className="account-client-actions">
                       <Button
+                        size="small"
                         variant="text"
                         disabled={
                           busy || run?.alive || run?.status === 'checking'
@@ -186,6 +194,7 @@ export function BrowserAccounts({
                         环境设置
                       </Button>
                       <Button
+                        size="small"
                         disabled={
                           busy ||
                           run?.status === 'checking' ||
@@ -209,6 +218,8 @@ export function BrowserAccounts({
                       </Button>
                       {(run?.alive || run?.status === 'checking') && (
                         <Button
+                          variant="text"
+                          size="small"
                           disabled={busy}
                           onClick={() =>
                             onRuntime(
@@ -236,15 +247,6 @@ export function BrowserAccounts({
         首次打开后完成官方登录；本地登录状态自动保存。浏览器与 App
         的登录状态分别管理。
       </p>
-      {edit && (
-        <AccountEditor
-          account={edit.item}
-          data={data}
-          busy={busy}
-          onSave={onSave}
-          onClose={() => setEdit(undefined)}
-        />
-      )}
     </>
   );
 }

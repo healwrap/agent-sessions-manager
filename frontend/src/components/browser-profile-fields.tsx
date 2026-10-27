@@ -8,6 +8,8 @@ import type {
 import { request } from '../lib/api';
 import { Button } from './primitives';
 import { Select } from './select';
+import { TextInput } from './form-controls';
+import { SettingsRow } from './settings/row';
 
 export function BrowserProfileFields({
   value,
@@ -118,7 +120,7 @@ export function BrowserProfileFields({
                 ]}
                 onChange={(next) => onChange({ [`${field}_mode`]: next })}
               />
-              <input
+              <TextInput
                 aria-label={
                   mode === 'proxy' ? `${title}备用值` : `环境${title}`
                 }
@@ -145,7 +147,7 @@ export function BrowserProfileFields({
       </div>
       <label className="environment-field">
         指定出口 IP（可选）
-        <input
+        <TextInput
           value={value.expected_ip || ''}
           onChange={(event) => onChange({ expected_ip: event.target.value })}
           placeholder="留空时与启动预检出口比较"
@@ -159,7 +161,7 @@ export function BrowserProfileFields({
       {'engine' in value && (
         <label className="environment-field">
           预期 DNS 服务器（可选）
-          <input
+          <TextInput
             value={value.expected_dns || ''}
             onChange={(event) => onChange({ expected_dns: event.target.value })}
             placeholder="填写 IP，以英文逗号分隔；留空时只展示解析器观测"
@@ -172,7 +174,7 @@ export function BrowserProfileFields({
           <div className="environment-field">
             <label htmlFor="environment-fingerprint-seed">稳定指纹种子</label>
             <div className="environment-seed">
-              <input
+              <TextInput
                 id="environment-fingerprint-seed"
                 required
                 value={value.fingerprint_seed}
@@ -194,7 +196,7 @@ export function BrowserProfileFields({
           </div>
         </>
       )}
-      <details className="environment-gate-editor" open>
+      <details className="environment-gate-editor">
         <summary>启动门控</summary>
         <p>强制项失败或未验证会拦截；提醒项继续启动；关闭项跳过检查。</p>
         {gates
@@ -204,11 +206,11 @@ export function BrowserProfileFields({
               ['proxy', 'region', 'exit_ip'].includes(gate.id),
           )
           .map((gate) => (
-            <div className="environment-gate-setting" key={gate.id}>
-              <div>
-                <strong>{gate.title}</strong>
-                <small>{gate.description}</small>
-              </div>
+            <SettingsRow
+              key={gate.id}
+              label={gate.title}
+              description={gate.description}
+            >
               <Select
                 label={`${gate.title}门控`}
                 value={value.gates?.[gate.id] || gate.default_mode}
@@ -226,7 +228,7 @@ export function BrowserProfileFields({
                   })
                 }
               />
-            </div>
+            </SettingsRow>
           ))}
       </details>
     </>

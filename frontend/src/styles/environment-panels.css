@@ -1,7 +1,7 @@
 .environment-panel {
   overflow: hidden;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-bg-layer-2);
 }
 .environment-panel-heading {
@@ -44,7 +44,7 @@
   white-space: nowrap;
 }
 .environment-table td {
-  padding: 19px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--dsw-alias-border-l1);
   vertical-align: middle;
   overflow-wrap: anywhere;
@@ -76,22 +76,6 @@
   justify-content: flex-end;
   gap: 5px;
 }
-.environment-row-actions button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.environment-row-actions button:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
-}
 .environment-empty {
   display: flex;
   flex-direction: column;
@@ -110,7 +94,7 @@
   color: var(--dsw-alias-label-tertiary);
   background: var(--dsw-alias-bg-layer-1);
   border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 12px;
+  border-radius: var(--dsw-radius-lg);
 }
 .environment-empty h3 {
   margin: 0 0 8px;
@@ -150,7 +134,7 @@
   padding: 17px 20px;
   margin-bottom: 22px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 10px;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-bg-layer-2);
 }
 .environment-connection strong,
@@ -173,7 +157,7 @@
   width: 34px;
   height: 34px;
   border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 8px;
+  border-radius: var(--dsw-radius-sm);
   color: var(--dsw-alias-label-secondary);
 }
 .environment-small-icon .agent-icon {
@@ -250,4 +234,9 @@
   .environment-route-strip {
     padding: 16px;
   }
+}
+
+.environment-connection > .action-button,
+.environment-route-strip > .status-badge {
+  margin-left: auto;
 }

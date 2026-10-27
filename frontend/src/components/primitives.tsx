@@ -22,17 +22,21 @@ export function Icon({
 export function IconButton({
   icon,
   label,
+  className = '',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { icon: string; label: string }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  icon: string | ReactNode;
+  label: string;
+}) {
   return (
     <button
       type="button"
-      className="icon-button"
+      className={`icon-button ${className}`}
       title={label}
       aria-label={label}
       {...props}
     >
-      <Icon name={icon} />
+      {typeof icon === 'string' ? <Icon name={icon} /> : icon}
     </button>
   );
 }
@@ -42,16 +46,19 @@ export function Button({
   variant = 'secondary',
   className = '',
   type = 'button',
+  size = 'normal',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: string;
   variant?: 'primary' | 'secondary' | 'text';
+  size?: 'normal' | 'small';
 }) {
   return (
     <button
       type={type}
       className={'action-button ' + className}
       data-variant={variant}
+      data-size={size}
       {...props}
     >
       {icon && <Icon name={icon} />}

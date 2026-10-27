@@ -1,6 +1,7 @@
 import type { BrowserRun, GateResult } from '../lib/environment-settings';
 import { runLabels } from '../lib/environment-settings';
 import { DiagnosticRows } from './diagnostics-results';
+import { StatusBadge } from './form-controls';
 export function GateResults({ checks }: { checks: GateResult[] }) {
   return (
     <div className="environment-gate-results">
@@ -20,11 +21,21 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
               </>
             )}
           </div>
-          <span className="environment-tag">
+          <StatusBadge
+            tone={
+              check.policy === 'off'
+                ? 'neutral'
+                : check.state === 'pass'
+                  ? 'success'
+                  : check.policy === 'block'
+                    ? 'error'
+                    : 'warning'
+            }
+          >
             {check.policy === 'off'
               ? '已关闭'
               : `${check.policy === 'block' ? '强制' : '提醒'} · ${check.state === 'pass' ? '通过' : check.state === 'unknown' ? '未验证' : '失败'}`}
-          </span>
+          </StatusBadge>
         </div>
       ))}
     </div>
@@ -35,7 +46,9 @@ export function BrowserLaunchReport({ run }: { run: BrowserRun }) {
     <section className="environment-panel environment-launch-report">
       <header className="environment-panel-heading">
         <h2>{run.name} · 启动检查</h2>
-        <span className="environment-tag">{runLabels[run.status]}</span>
+        <StatusBadge tone={run.alive ? 'success' : 'neutral'}>
+          {runLabels[run.status]}
+        </StatusBadge>
       </header>
       <div className="environment-launch-summary">
         <strong>{run.stage}</strong>

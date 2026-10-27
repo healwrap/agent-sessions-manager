@@ -10,6 +10,7 @@ import { ResourceLink } from './resource-link';
 import { networkChecks } from '../lib/diagnostic-labels';
 import { Button, Icon } from './primitives';
 import { Select } from './select';
+import { TextInput } from './form-controls';
 import { SettingsRow } from './settings/row';
 import { TrajectoryLoading } from './trajectory-loading';
 import { DiagnosticReputation } from './diagnostic-reputation';
@@ -135,7 +136,7 @@ export function NetworkDiagnostics({
             htmlFor="diagnostic-proxy"
             description="支持 HTTP、HTTPS 和 SOCKS5h"
           >
-            <input
+            <TextInput
               id="diagnostic-proxy"
               className="settings-text-input"
               aria-label="检测代理地址"

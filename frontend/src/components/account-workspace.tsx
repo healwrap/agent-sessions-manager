@@ -9,10 +9,14 @@ import {
   Users,
 } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
-import type { EnvironmentSection } from '../lib/environment-settings';
+import type {
+  BrowserAccount,
+  EnvironmentSection,
+} from '../lib/environment-settings';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { useSessionStore } from '../hooks/use-session-store';
 import { BrowserAccounts } from './browser-accounts';
+import { AccountEditor } from './account-editor';
 import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
 import {
@@ -74,6 +78,7 @@ export function AccountWorkspace({
   const [sidebarWidth, setSidebarWidth] = useState<number>();
   const { settings } = useSessionStore();
   const [edit, setEdit] = useState<EnvironmentEdit | null>(null);
+  const [accountEdit, setAccountEdit] = useState<{ item?: BrowserAccount }>();
   const [diagnosticTarget, setDiagnosticTarget] =
     useState<DiagnosticTarget>('network');
   const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
@@ -104,7 +109,12 @@ export function AccountWorkspace({
         className="account-workspace"
         closed={sidebarClosed}
         animations={settings.animations}
-        title="账号与环境管理"
+        title={
+          <>
+            账号与环境 <span className="workspace-title-separator">/</span>{' '}
+            {current.title}
+          </>
+        }
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (
@@ -149,14 +159,20 @@ export function AccountWorkspace({
         <div className="environment-content">
           <header className="environment-page-heading">
             <div>
-              <span className="environment-breadcrumb">
-                账号与环境管理 / {current.title}
-              </span>
               <h1>{current.title}</h1>
               <p>{current.description}</p>
             </div>
             <div className="environment-page-actions">
-              {section === 'claude-app' ? (
+              {section === 'accounts' ? (
+                <Button
+                  variant="primary"
+                  disabled={loading || busy}
+                  onClick={() => setAccountEdit({})}
+                >
+                  <Plus size={16} />
+                  添加账号
+                </Button>
+              ) : section === 'claude-app' ? (
                 <Button
                   variant="primary"
                   disabled={loading || busy}
@@ -196,7 +212,7 @@ export function AccountWorkspace({
             <BrowserAccounts
               data={data}
               busy={busy}
-              onSave={provision}
+              onEditAccount={(item) => setAccountEdit({ item })}
               onDelete={(id) => void remove('accounts', id)}
               onRuntime={(action, body, target) =>
                 void runtime(action, body, target)
@@ -257,6 +273,15 @@ export function AccountWorkspace({
           </div>
         </div>
       </WorkspaceLayout>
+      {accountEdit && (
+        <AccountEditor
+          account={accountEdit.item}
+          data={data}
+          busy={busy}
+          onSave={provision}
+          onClose={() => setAccountEdit(undefined)}
+        />
+      )}
       {edit && (
         <EnvironmentEditor
           edit={edit}

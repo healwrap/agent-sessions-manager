@@ -1,59 +1,8 @@
-.environment-editor {
-  width: min(580px, calc(100vw - 40px));
-  max-height: calc(100vh - 48px);
-  padding: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 16px;
-  background: var(--dsw-alias-bg-layer-2);
-  color: inherit;
-  box-shadow: 0 24px 90px #0003;
-}
-.environment-editor::backdrop {
-  background: var(--dsw-alias-bg-mask-1);
-  backdrop-filter: blur(4px);
-}
-.environment-editor form > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 25px 26px 20px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
-}
-.environment-editor h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 550;
-}
-.environment-editor header p {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.environment-editor fieldset {
-  display: grid;
-  gap: 20px;
-  min-width: 0;
-  margin: 0;
-  padding: 24px 26px;
-  border: 0;
-}
 .environment-field {
   display: flex;
   flex-direction: column;
   gap: 9px;
   min-width: 0;
-  font-size: 12px;
-}
-.environment-field input {
-  width: 100%;
-  min-width: 0;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 7px;
-  background: var(--dsw-alias-bg-layer-1);
-  color: inherit;
   font-size: 12px;
 }
 .environment-field .custom-select,
@@ -85,19 +34,11 @@
 .environment-form-note {
   margin: 0;
   padding: 12px;
-  border-radius: 7px;
+  border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-tertiary);
   font-size: 11px;
   line-height: 1.8;
-}
-.environment-editor footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 16px 26px;
-  border-top: 1px solid var(--dsw-alias-border-l1);
 }
 .environment-error {
   margin: 0;

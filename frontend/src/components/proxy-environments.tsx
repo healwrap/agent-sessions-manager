@@ -3,7 +3,8 @@ import type {
   EnvironmentSettings,
   ProxyConfig,
 } from '../lib/environment-settings';
-import { Button } from './primitives';
+import { Button, IconButton } from './primitives';
+import { StatusBadge } from './form-controls';
 
 export function ProxyEnvironments({
   data,
@@ -30,7 +31,7 @@ export function ProxyEnvironments({
           <strong>按环境分配代理</strong>
           <p>配置可供浏览器环境引用；代理检测使用所选地址发起请求。</p>
         </div>
-        <span className="environment-tag">系统设置不变</span>
+        <StatusBadge>按环境生效</StatusBadge>
       </section>
       <section className="environment-panel" aria-label="代理配置列表">
         <header className="environment-panel-heading">
@@ -62,36 +63,37 @@ export function ProxyEnvironments({
                   </td>
                   <td className="environment-proxy-url">{item.url}</td>
                   <td>
-                    {
-                      data.profiles.filter(
+                    {data.profiles.filter(
+                      (profile) => profile.proxy_id === item.id,
+                    ).length +
+                      data.app_profiles.filter(
                         (profile) => profile.proxy_id === item.id,
-                      ).length
-                    }{' '}
+                      ).length}{' '}
                     个配置
                   </td>
                   <td>
                     <div className="environment-row-actions">
-                      <button
+                      <Button
+                        size="small"
+                        variant="text"
                         aria-label={`检测代理 ${item.name}`}
                         onClick={() => onInspect(item.url)}
                       >
                         <ScanLine size={16} />
                         <span>检测</span>
-                      </button>
-                      <button
-                        aria-label={`编辑代理 ${item.name}`}
+                      </Button>
+                      <IconButton
+                        label={`编辑代理 ${item.name}`}
+                        icon={<Pencil size={15} />}
                         onClick={() => onEdit(item)}
                         disabled={busy}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        aria-label={`删除代理配置 ${item.name}`}
+                      />
+                      <IconButton
+                        label={`删除代理配置 ${item.name}`}
+                        icon={<Trash2 size={15} />}
                         onClick={() => onDelete(item.id)}
                         disabled={busy}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      />
                     </div>
                   </td>
                 </tr>
@@ -114,7 +116,7 @@ export function ProxyEnvironments({
         )}
         <footer className="environment-panel-note">
           <Network size={14} />
-          引用数量代表保存的配置关系；实际应用代理需接入对应浏览器或 App。
+          浏览器和 App 各自使用绑定代理；引用数量包含两种环境。
         </footer>
       </section>
     </>

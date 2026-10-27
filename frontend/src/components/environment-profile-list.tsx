@@ -6,7 +6,8 @@ import type {
 } from '../lib/environment-settings';
 import { browserAvailable, runLabels } from '../lib/environment-settings';
 import { AgentIcon } from './agent-icon';
-import { Button } from './primitives';
+import { Button, IconButton } from './primitives';
+import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
 export function EnvironmentProfileList({
   data,
@@ -92,11 +93,16 @@ export function EnvironmentProfileList({
                   </td>
                   <td>
                     {runtime.sessions?.[profile.id]?.label || '首次使用请登录'}
-                    <small>{run ? runLabels[run.status] : '尚未启动'}</small>
+                    <small>
+                      <StatusBadge tone={run?.alive ? 'success' : 'neutral'}>
+                        {run ? runLabels[run.status] : '尚未启动'}
+                      </StatusBadge>
+                    </small>
                   </td>
                   <td>
                     <div className="environment-row-actions">
                       <Button
+                        size="small"
                         disabled={
                           busy ||
                           run?.status === 'checking' ||
@@ -111,30 +117,27 @@ export function EnvironmentProfileList({
                         打开
                       </Button>
                       {live && (
-                        <button
+                        <IconButton
                           disabled={busy}
-                          aria-label={`停止环境 ${profile.name}`}
+                          label={`停止环境 ${profile.name}`}
+                          icon={<Square size={14} />}
                           onClick={() =>
                             onRuntime('stop', { profile_id: profile.id })
                           }
-                        >
-                          <Square size={14} />
-                        </button>
+                        />
                       )}
-                      <button
+                      <IconButton
                         disabled={busy || live}
-                        aria-label={`编辑环境 ${profile.name}`}
+                        label={`编辑环境 ${profile.name}`}
+                        icon={<Pencil size={14} />}
                         onClick={() => onEdit(profile)}
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
+                      />
+                      <IconButton
                         disabled={busy || live}
-                        aria-label={`删除环境配置 ${profile.name}`}
+                        label={`删除环境配置 ${profile.name}`}
+                        icon={<Trash2 size={14} />}
                         onClick={() => onDelete(profile.id)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      />
                     </div>
                   </td>
                 </tr>

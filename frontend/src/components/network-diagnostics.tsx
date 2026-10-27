@@ -6,7 +6,6 @@ import {
   type ClaudeReport,
   type DiagnosticHistory,
 } from '../lib/claude-diagnostics';
-import { ResourceLink } from './resource-link';
 import { networkChecks } from '../lib/diagnostic-labels';
 import { Button, Icon } from './primitives';
 import { Select } from './select';
@@ -98,9 +97,6 @@ export function NetworkDiagnostics({
   );
   return (
     <section className="diagnostic-body" aria-label="网络环境检测">
-      <p className="diagnostic-scope">
-        检测对象：Agent Sessions 后台 · 系统路由或指定代理
-      </p>
       <form
         className="diagnostic-form"
         data-mode={mode}
@@ -109,16 +105,7 @@ export function NetworkDiagnostics({
           void run();
         }}
       >
-        <SettingsRow
-          label="检测链路"
-          description={
-            mode === 'direct'
-              ? '遵循系统 VPN / TUN 路由，忽略 HTTP / PAC 代理。'
-              : mode === 'lookup-proxy'
-                ? '出口与连通性走系统路由；仅 Net.Coffee / IPinfo 资料查询走代理。'
-                : '为本次后台检测指定独立代理。'
-          }
-        >
+        <SettingsRow label="检测链路">
           <Select
             label="检测链路"
             value={mode}
@@ -135,7 +122,6 @@ export function NetworkDiagnostics({
           <SettingsRow
             label={mode === 'lookup-proxy' ? 'IP 资料查询代理' : '代理地址'}
             htmlFor="diagnostic-proxy"
-            description="支持 HTTP、HTTPS 和 SOCKS5h"
           >
             <TextInput
               id="diagnostic-proxy"
@@ -167,9 +153,7 @@ export function NetworkDiagnostics({
           {error}
         </p>
       )}
-      {running && (
-        <TrajectoryLoading label="正在检查出口与网络连接；临时连接失败会自动重试一次。" />
-      )}
+      {running && <TrajectoryLoading label="正在检测网络…" />}
       {report ? (
         <>
           <div className="diagnostic-summary">
@@ -212,10 +196,7 @@ export function NetworkDiagnostics({
           </div>
         )
       )}
-      <DiagnosticSection
-        title="出口历史"
-        note="最近 30 次记录仅保存在本机；按检测链路比较出口变化。"
-      >
+      <DiagnosticSection title="出口历史">
         {history.length > 0 && (
           <Button
             variant="text"
@@ -228,13 +209,6 @@ export function NetworkDiagnostics({
         )}
         <DiagnosticHistoryList items={history} />
       </DiagnosticSection>
-      <p className="diagnostic-reference">
-        项目分类参考{' '}
-        <ResourceLink href="https://ip.net.coffee/claude/">
-          Net.Coffee Claude 检测
-        </ResourceLink>
-        ；本页独立发起检测。
-      </p>
     </section>
   );
 }

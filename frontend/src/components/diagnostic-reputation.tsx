@@ -1,13 +1,11 @@
 import { MapPin, ShieldCheck, ShieldHalf } from 'lucide-react';
 import type { ClaudeReport } from '../lib/claude-diagnostics';
-import { checkedTime, routeLabel } from '../lib/claude-diagnostics';
 import { countryLabel } from '../lib/diagnostic-labels';
 import {
   DiagnosticBadge,
   DiagnosticCard,
   DiagnosticField,
 } from './diagnostic-card';
-import { ResourceLink } from './resource-link';
 
 const networkTypes = {
   Residential: '住宅宽带',
@@ -51,7 +49,7 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
         title="IP 信任评分"
         icon={<ShieldHalf size={17} />}
         className="diagnostic-risk-card"
-        extra={<DiagnosticBadge state="info">第三方评估</DiagnosticBadge>}
+        extra={<DiagnosticBadge state="info">Net.Coffee</DiagnosticBadge>}
       >
         {value.state === 'ok' ? (
           <>
@@ -59,9 +57,6 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
               <strong>{risk ?? '—'}</strong>
               <span>/ 100</span>
             </div>
-            <p className="diagnostic-risk-caption">
-              Net.Coffee 信任分 · 越高越好
-            </p>
             {risk != null && (
               <div
                 className="diagnostic-risk-scale"
@@ -99,21 +94,6 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
             <p>{value.message}</p>
           </div>
         )}
-        <p className="diagnostic-card-footnote">
-          <ResourceLink href={value.source_url || 'https://ip.net.coffee/'}>
-            {value.provider}
-          </ResourceLink>{' '}
-          · {checkedTime(value.queried_at)}
-          {value.cached ? ' · 缓存' : ''}
-          <br />
-          {report.lookup_route && (
-            <>
-              资料查询：{routeLabel(report.lookup_route)}
-              <br />
-            </>
-          )}
-          来源评分用于评估 IP，不等同于 Claude 账号评分。
-        </p>
       </DiagnosticCard>
       <DiagnosticCard title="Claude 出口 IP 属性" icon={<MapPin size={17} />}>
         <dl className="diagnostic-fields">
@@ -154,11 +134,6 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
             {details.timezone || '未知'}
           </DiagnosticField>
         </dl>
-        <p className="diagnostic-card-footnote">
-          地区与网络分类 · Net.Coffee
-          <br />
-          地理库时区 · IPinfo
-        </p>
       </DiagnosticCard>
       <DiagnosticCard title="IP 安全标记" icon={<ShieldCheck size={17} />}>
         <dl className="diagnostic-fields">
@@ -185,17 +160,6 @@ export function DiagnosticReputation({ report }: { report: ClaudeReport }) {
             );
           })}
         </dl>
-        <p className="diagnostic-card-footnote">
-          {value.updated_at
-            ? `来源更新 · ${checkedTime(value.updated_at)}`
-            : '标记来源 · Net.Coffee'}
-          {value.last_seen && (
-            <>
-              <br />
-              最近标记 · {checkedTime(value.last_seen)}
-            </>
-          )}
-        </p>
       </DiagnosticCard>
     </div>
   );

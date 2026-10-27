@@ -62,9 +62,6 @@ function AppDiagnostics({ active }: { active: boolean }) {
           <DiagnosticRows items={rows} />
         </DiagnosticCard>
       )}
-      <p className="diagnostic-note">
-        App 实际网络出口、运行时语言与时区尚未采样，结果中分别标为未验证。
-      </p>
     </section>
   );
 }

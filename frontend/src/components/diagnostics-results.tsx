@@ -34,7 +34,7 @@ export function DiagnosticSection({
 
 export function DiagnosticRows({
   items,
-  showScope = true,
+  showScope = false,
 }: {
   items: DiagnosticItem[];
   showScope?: boolean;
@@ -61,7 +61,10 @@ export function DiagnosticRows({
               {showScope && <span>{item.scope}</span>}
             </div>
             <div className="diagnostic-value">{item.value}</div>
-            {item.detail && <p>{item.detail}</p>}
+            {item.detail &&
+              ['warn', 'fail', 'unknown'].includes(item.state) && (
+                <p>{item.detail}</p>
+              )}
           </div>
         </div>
       ))}
@@ -139,12 +142,7 @@ export function DiagnosticHistoryList({
 }: {
   items: DiagnosticHistory[];
 }) {
-  if (!items.length)
-    return (
-      <p className="diagnostic-note">
-        运行检测后，本机会保存最近 30 次出口记录。
-      </p>
-    );
+  if (!items.length) return <p className="diagnostic-note">暂无检测记录</p>;
   return (
     <div className="diagnostic-history">
       {items.map((item, index) => (

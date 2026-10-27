@@ -39,8 +39,8 @@
   border-color: var(--dsw-alias-border-l1);
 }
 .ui-resource-row .launch-check > .disclosure-trigger {
-  min-height: 40px;
-  padding: 10px 0;
+  min-height: 44px;
+  padding: 12px 0;
 }
 .ui-resource-row .ui-facts {
   gap: 20px;

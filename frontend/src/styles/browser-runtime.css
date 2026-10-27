@@ -122,49 +122,25 @@
 .environment-launch-report > .disclosure {
   border-top: 1px solid var(--dsw-alias-border-l1);
 }
-.environment-report-pages {
-  margin: 0;
-  padding: 0 20px 16px;
-  list-style: none;
-}
-.environment-report-pages li {
-  display: grid;
-  gap: 6px;
-  padding: 12px 0;
-}
-.environment-report-pages strong {
-  font-size: 14px;
-  font-weight: 500;
-}
-.environment-report-pages span {
-  font-size: 14px;
-  line-height: 22px;
-  overflow-wrap: anywhere;
-  color: var(--dsw-alias-label-secondary);
-}
-
 .launch-check {
-  border-top: 1px solid var(--dsw-alias-border-l1);
-}
-.launch-check .disclosure-content > .disclosure {
   border-top: 1px solid var(--dsw-alias-border-l1);
 }
 .launch-check > .disclosure-trigger > span {
   display: flex;
   flex: 1;
-  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
   gap: 12px;
   flex-wrap: wrap;
 }
 .launch-check time {
-  font-size: 13px;
+  margin-left: auto;
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   color: var(--dsw-alias-label-tertiary);
 }
 .environment-launch-error {
   margin: 0;
   padding: 16px 20px;
-}
-.launch-check .diagnostic-rows {
-  border: 0;
-  border-radius: 0;
 }

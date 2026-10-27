@@ -78,9 +78,6 @@
 .account-check-details .environment-gate-result .status-badge {
   font-size: 13px;
 }
-.account-detail .launch-check time {
-  font-size: 13px;
-}
 .account-detail :is(button, input):focus-visible {
   outline: 2px solid var(--dsw-alias-state-business-primary);
   outline-offset: 3px;

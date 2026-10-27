@@ -1,7 +1,9 @@
+/* DSH DisclosureRow: transparent header; hover changes only label color.
+ * Management sections retain their larger padding as a click target. */
 .disclosure-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 44px;
   padding: 12px 20px;
   width: 100%;
@@ -9,20 +11,23 @@
   background: transparent;
   text-align: left;
   font-family: inherit;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--dsw-alias-label-tertiary);
   font-size: 14px;
   line-height: 20px;
   cursor: pointer;
+  transition: color 100ms ease;
 }
 .disclosure-trigger > svg {
   flex: none;
+  width: 14px;
+  height: 14px;
   transition: transform 120ms ease;
 }
 .disclosure[data-open='true'] > .disclosure-trigger > svg {
   transform: rotate(90deg);
 }
 .disclosure-trigger:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
 }
 .disclosure-trigger:focus-visible {
   outline: none;
@@ -31,4 +36,9 @@
 }
 .disclosure-content {
   min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-trigger {
+    transition: none;
+  }
 }

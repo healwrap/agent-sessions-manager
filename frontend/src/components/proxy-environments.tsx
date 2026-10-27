@@ -28,7 +28,7 @@ export function ProxyEnvironments({
   busy: boolean;
   onEdit: (item?: ProxyConfig) => void;
   onDelete: (id: string) => void;
-  onInspect: (proxy: string) => void;
+  onInspect: (proxy: ProxyConfig) => void;
 }) {
   const [query, setQuery] = useState('');
   const visible = data.proxies.filter((item) =>
@@ -95,7 +95,7 @@ export function ProxyEnvironments({
                       <Button
                         variant="text"
                         aria-label={`检测代理 ${item.name}`}
-                        onClick={() => onInspect(item.url)}
+                        onClick={() => onInspect(item)}
                       >
                         <ScanLine size={16} />
                         检测

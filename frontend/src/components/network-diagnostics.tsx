@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
 import {
   checkedTime,
@@ -29,19 +29,14 @@ export function NetworkDiagnostics({
   active: boolean;
   initialProxy?: string;
 }) {
-  const [mode, setMode] = useState('direct');
-  const [proxy, setProxy] = useState('http://127.0.0.1:7897');
+  const [mode, setMode] = useState(initialProxy ? 'proxy' : 'direct');
+  const [proxy, setProxy] = useState(initialProxy || 'http://127.0.0.1:7897');
+  const started = useRef(false);
   const [report, setReport] = useState<ClaudeReport | null>(null);
   const [history, setHistory] = useState<DiagnosticHistory[]>([]);
   const [running, setRunning] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => {
-    if (active && initialProxy !== undefined) {
-      setMode('proxy');
-      setProxy(initialProxy);
-    }
-  }, [active, initialProxy]);
   useEffect(() => {
     if (!active) return;
     let current = true;
@@ -78,6 +73,11 @@ export function NetworkDiagnostics({
       setRunning(false);
     }
   };
+  useEffect(() => {
+    if (!active || started.current) return;
+    started.current = true;
+    void run();
+  }, [active]);
   const clearHistory = async () => {
     setClearing(true);
     setError('');

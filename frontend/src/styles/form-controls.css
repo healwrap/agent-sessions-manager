@@ -64,7 +64,8 @@
   background: var(--dsw-alias-bg-mask-1);
   backdrop-filter: var(--dsw-mask-blur, none);
 }
-.editor-dialog > form {
+.editor-dialog > form,
+.editor-dialog-frame {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 48px);

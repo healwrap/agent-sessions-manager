@@ -1,5 +1,10 @@
 export { Button, IconButton } from '../primitives';
-export { TextInput, StatusBadge, EditorDialog } from '../form-controls';
+export {
+  TextInput,
+  StatusBadge,
+  EditorDialog,
+  ContentDialog,
+} from '../form-controls';
 export { Select } from '../select';
 export { SearchField } from '../search-field';
 export { Disclosure } from '../disclosure';

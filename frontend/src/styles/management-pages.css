@@ -10,9 +10,6 @@
 .ui-collection-count {
   color: var(--dsw-alias-label-tertiary);
 }
-.diagnostic-target-tabs {
-  margin-bottom: 24px;
-}
 .diagnostic-form {
   margin-bottom: 20px;
 }

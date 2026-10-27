@@ -15,6 +15,7 @@ import {
   BusyState,
   ChoiceGroup,
   CollectionToolbar,
+  ContentDialog,
   Disclosure,
   EditorDialog,
   EmptyState,
@@ -39,6 +40,7 @@ export function ComponentCatalog() {
   const [query, setQuery] = useState('');
   const [state, setState] = useState('stopped');
   const [dialog, setDialog] = useState(false);
+  const [contentDialog, setContentDialog] = useState(false);
   const [name, setName] = useState('工作浏览器');
   const [proxy, setProxy] = useState('dedicated');
   const [notice, setNotice] = useState(false);
@@ -257,6 +259,9 @@ export function ComponentCatalog() {
                 />
               </Field>
               <Button onClick={() => setDialog(true)}>预览编辑弹窗</Button>
+              <Button onClick={() => setContentDialog(true)}>
+                预览内容弹窗
+              </Button>
             </div>
           </Panel>
           <Panel title="工作区导航">
@@ -275,6 +280,25 @@ export function ComponentCatalog() {
             />
           </Panel>
         </div>
+      )}
+      {contentDialog && (
+        <ContentDialog
+          title="检测结果 · 组件预览"
+          onClose={() => setContentDialog(false)}
+          footer={<Button onClick={() => setContentDialog(false)}>关闭</Button>}
+        >
+          <div className="editor-dialog-fields">
+            <FactsGrid
+              items={[
+                { label: '代理', value: '工作代理' },
+                {
+                  label: '连接状态',
+                  value: <StatusBadge tone="success">通过</StatusBadge>,
+                },
+              ]}
+            />
+          </div>
+        </ContentDialog>
       )}
       {dialog && (
         <EditorDialog

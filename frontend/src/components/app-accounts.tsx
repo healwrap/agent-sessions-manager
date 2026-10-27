@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import type {
   AppProfile,
@@ -7,6 +8,7 @@ import type {
 import { AgentIcon } from './agent-icon';
 import { Button, Notice, ResourceCard, StatusBadge } from './ui';
 import { EnvironmentProfileList } from './environment-profile-list';
+import { AppDiagnostics } from './app-diagnostics';
 export function AppAccounts({
   data,
   busy,
@@ -14,7 +16,6 @@ export function AppAccounts({
   onEdit,
   onDelete,
   onRuntime,
-  onInspect,
   onLogin,
 }: {
   data: EnvironmentSettings;
@@ -23,10 +24,10 @@ export function AppAccounts({
   onEdit: (profile: AppProfile) => void;
   onDelete: (id: string) => void;
   onRuntime: (action: 'open' | 'stop', body: { profile_id: string }) => void;
-  onInspect: () => void;
   onLogin: (account: BrowserAccount) => void;
 }) {
   const app = data.apps.find((item) => item.id === 'claude');
+  const [inspecting, setInspecting] = useState(false);
   return (
     <>
       {data.app_runtime.warnings?.map((message) => (
@@ -45,11 +46,15 @@ export function AppAccounts({
           </StatusBadge>
         }
         actions={
-          <Button onClick={onInspect}>
+          <Button
+            onClick={() => setInspecting((value) => !value)}
+            aria-expanded={inspecting}
+          >
             <ScanLine size={15} />
-            检查 App 环境
+            {inspecting ? '收起检查' : '检查安装与进程'}
           </Button>
         }
+        footer={inspecting && <AppDiagnostics />}
       />
       <EnvironmentProfileList
         data={data}

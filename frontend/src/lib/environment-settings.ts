@@ -119,7 +119,7 @@ export interface EnvironmentSettings {
   app_runtime: AppRuntimeState;
 }
 export type EnvironmentSection =
-  'accounts' | 'browser' | 'claude-app' | 'proxies' | 'diagnostics';
+  'accounts' | 'browser' | 'claude-app' | 'proxies';
 export type EnvironmentCollection =
   'profiles' | 'app_profiles' | 'proxies' | 'accounts';
 export type EnvironmentItem =

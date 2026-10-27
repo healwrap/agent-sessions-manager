@@ -4,13 +4,13 @@ import {
   Globe2,
   PanelsTopLeft,
   Plus,
-  ScanLine,
   Users,
 } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import type {
   BrowserAccount,
   EnvironmentSection,
+  ProxyConfig,
 } from '../lib/environment-settings';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { useSessionStore } from '../hooks/use-session-store';
@@ -19,13 +19,10 @@ import { AccountEditor } from './account-editor';
 import { AppLoginGuide } from './app-login-guide';
 import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
-import {
-  EnvironmentDiagnostics,
-  type DiagnosticTarget,
-} from './environment-diagnostics';
+import { NetworkDiagnostics } from './network-diagnostics';
 import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
 import { ProxyEnvironments } from './proxy-environments';
-import { Button, Notice, PageHeading } from './ui';
+import { Button, ContentDialog, Notice, PageHeading } from './ui';
 import { WorkspacePicker } from './workspace-picker';
 import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
 
@@ -55,12 +52,6 @@ const sections = [
     icon: Globe2,
     description: '集中保存专用代理，为环境选择对应的网络出口。',
   },
-  {
-    id: 'diagnostics',
-    title: '环境检测',
-    icon: ScanLine,
-    description: '分别检查网络链路、浏览器窗口与 Claude App 的实际环境。',
-  },
 ] as const;
 
 export function AccountWorkspace({
@@ -77,9 +68,7 @@ export function AccountWorkspace({
   const [edit, setEdit] = useState<EnvironmentEdit | null>(null);
   const [accountEdit, setAccountEdit] = useState<{ item?: BrowserAccount }>();
   const [loginAccountId, setLoginAccountId] = useState('');
-  const [diagnosticTarget, setDiagnosticTarget] =
-    useState<DiagnosticTarget>('network');
-  const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
+  const [diagnosticProxy, setDiagnosticProxy] = useState<ProxyConfig>();
   const {
     data,
     loading,
@@ -94,11 +83,6 @@ export function AccountWorkspace({
   } = useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
   const loginAccount = data.accounts.find((item) => item.id === loginAccountId);
-  const inspect = (proxy?: string) => {
-    setDiagnosticProxy(proxy);
-    setDiagnosticTarget('network');
-    setSection('diagnostics');
-  };
   return (
     <>
       <WorkspaceLayout
@@ -234,10 +218,6 @@ export function AccountWorkspace({
               onEdit={(item) => setEdit({ kind: 'app_profiles', item })}
               onDelete={(id) => void remove('app_profiles', id)}
               onRuntime={(action, body) => void runtime(action, body, 'app')}
-              onInspect={() => {
-                setDiagnosticTarget('app');
-                setSection('diagnostics');
-              }}
             />
           )}
           {section === 'proxies' && (
@@ -247,22 +227,25 @@ export function AccountWorkspace({
               loading={loading}
               onEdit={(item) => setEdit({ kind: 'proxies', item })}
               onDelete={(id) => void remove('proxies', id)}
-              onInspect={inspect}
+              onInspect={setDiagnosticProxy}
             />
           )}
-          <div
-            hidden={section !== 'diagnostics'}
-            inert={section !== 'diagnostics'}
-          >
-            <EnvironmentDiagnostics
-              target={diagnosticTarget}
-              onTarget={setDiagnosticTarget}
-              active={active && section === 'diagnostics'}
-              initialProxy={diagnosticProxy}
-            />
-          </div>
         </div>
       </WorkspaceLayout>
+      {diagnosticProxy && (
+        <ContentDialog
+          title={`网络检测 · ${diagnosticProxy.name}`}
+          className="network-diagnostics-dialog"
+          onClose={() => setDiagnosticProxy(undefined)}
+        >
+          <div className="network-diagnostics-content">
+            <NetworkDiagnostics
+              active={active}
+              initialProxy={diagnosticProxy.url}
+            />
+          </div>
+        </ContentDialog>
+      )}
       {accountEdit && (
         <AccountEditor
           account={accountEdit.item}

@@ -28,14 +28,72 @@ export function StatusBadge({
   );
 }
 
-export function EditorDialog({
+export function ContentDialog({
   title,
   description,
-  busy,
+  busy = false,
   onClose,
   onSubmit,
   footer,
   children,
+  className = '',
+}: {
+  title: string;
+  description?: string;
+  busy?: boolean;
+  onClose: () => void;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
+  footer?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  const body = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    body.current
+      ?.querySelector<HTMLElement>(
+        'input:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)',
+      )
+      ?.focus();
+  }, []);
+  const content = (
+    <>
+      <header className="editor-dialog-heading">
+        <div>
+          <h2>{title}</h2>
+          {description && <p>{description}</p>}
+        </div>
+        <IconButton
+          icon="close"
+          label={`关闭${title}`}
+          onClick={onClose}
+          disabled={busy}
+        />
+      </header>
+      <div ref={body} className="editor-dialog-body">
+        {children}
+      </div>
+      {footer && <footer className="editor-dialog-footer">{footer}</footer>}
+    </>
+  );
+  return (
+    <Dialog
+      open
+      title={title}
+      className={`editor-dialog ui-editor ${className}`}
+      onClose={() => !busy && onClose()}
+    >
+      {onSubmit ? (
+        <form onSubmit={onSubmit}>{content}</form>
+      ) : (
+        <div className="editor-dialog-frame">{content}</div>
+      )}
+    </Dialog>
+  );
+}
+
+export function EditorDialog({
+  children,
+  ...props
 }: {
   title: string;
   description?: string;
@@ -45,41 +103,11 @@ export function EditorDialog({
   footer: ReactNode;
   children: ReactNode;
 }) {
-  const form = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    form.current
-      ?.querySelector<HTMLElement>(
-        'input:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)',
-      )
-      ?.focus();
-  }, []);
   return (
-    <Dialog
-      open
-      title={title}
-      className="editor-dialog ui-editor"
-      onClose={() => !busy && onClose()}
-    >
-      <form ref={form} onSubmit={onSubmit}>
-        <header className="editor-dialog-heading">
-          <div>
-            <h2>{title}</h2>
-            {description && <p>{description}</p>}
-          </div>
-          <IconButton
-            icon="close"
-            label={`关闭${title}`}
-            onClick={onClose}
-            disabled={busy}
-          />
-        </header>
-        <div className="editor-dialog-body">
-          <fieldset className="editor-dialog-fields" disabled={busy}>
-            {children}
-          </fieldset>
-        </div>
-        <footer className="editor-dialog-footer">{footer}</footer>
-      </form>
-    </Dialog>
+    <ContentDialog {...props}>
+      <fieldset className="editor-dialog-fields" disabled={props.busy}>
+        {children}
+      </fieldset>
+    </ContentDialog>
   );
 }

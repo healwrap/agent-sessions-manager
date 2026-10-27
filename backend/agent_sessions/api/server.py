@@ -63,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = {'checks': inspect_app(Path(config['paths']['claude:local']))}
             elif parsed.path.startswith('/api/browser-checks/'):
                 result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
+            elif parsed.path.startswith('/api/app-login/'):
+                result = self.server.app_login.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path == '/api/app-runtime':
                 result = self.server.app_runtime.state()
             elif parsed.path == '/api/browser-runtime':
@@ -128,8 +130,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')
+        app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -143,8 +146,13 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('检测参数应使用 JSON，大小不能超过 4 KB')
             if browser_probe and (length > 65536 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('浏览器采样应使用 JSON，大小不能超过 64 KB')
+            if app_login and (length > 20000 or self.headers.get_content_type() != 'application/json'):
+                raise ValueError('登录链接应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if runtime:
+            if app_login:
+                result = self.server.app_login.open(value) if self.path.endswith('/open') else self.server.app_login.cancel(value)
+                self.respond(200, result)
+            elif runtime:
                 from agent_sessions.browser.api import command
                 if self.path.startswith('/api/app-runtime/'):
                     if self.path.endswith('/start'): result = self.server.app_runtime.launch(value)
@@ -255,6 +263,8 @@ def main():
     server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}')
     from agent_sessions.desktop_client.runtime import AppRuntime
     server.app_runtime = AppRuntime(args.state_home, server.environments)
+    from agent_sessions.desktop_client.login import AppLogin
+    server.app_login = AppLogin(server.environments, server.app_runtime, server.browser_runtime)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

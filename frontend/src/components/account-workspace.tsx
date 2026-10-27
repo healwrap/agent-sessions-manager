@@ -16,6 +16,7 @@ import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { useSessionStore } from '../hooks/use-session-store';
 import { BrowserAccounts } from './browser-accounts';
 import { AccountEditor } from './account-editor';
+import { AppLoginGuide } from './app-login-guide';
 import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
 import {
@@ -78,6 +79,7 @@ export function AccountWorkspace({
   const { settings } = useSessionStore();
   const [edit, setEdit] = useState<EnvironmentEdit | null>(null);
   const [accountEdit, setAccountEdit] = useState<{ item?: BrowserAccount }>();
+  const [loginAccountId, setLoginAccountId] = useState('');
   const [diagnosticTarget, setDiagnosticTarget] =
     useState<DiagnosticTarget>('network');
   const [diagnosticProxy, setDiagnosticProxy] = useState<string>();
@@ -94,6 +96,7 @@ export function AccountWorkspace({
     installKernel,
   } = useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
+  const loginAccount = data.accounts.find((item) => item.id === loginAccountId);
   const inspect = (proxy?: string) => {
     setDiagnosticProxy(proxy);
     setDiagnosticTarget('network');
@@ -218,6 +221,7 @@ export function AccountWorkspace({
             <BrowserAccounts
               data={data}
               busy={busy}
+              onLogin={(account) => setLoginAccountId(account.id)}
               onEditAccount={(item) => setAccountEdit({ item })}
               onDelete={(id) => void remove('accounts', id)}
               onRuntime={(action, body, target) =>
@@ -247,6 +251,7 @@ export function AccountWorkspace({
             <AppAccounts
               data={data}
               busy={busy}
+              onLogin={(account) => setLoginAccountId(account.id)}
               onEdit={(item) => setEdit({ kind: 'app_profiles', item })}
               onDelete={(id) => void remove('app_profiles', id)}
               onRuntime={(action, body) => void runtime(action, body, 'app')}
@@ -286,6 +291,14 @@ export function AccountWorkspace({
           busy={busy}
           onSave={provision}
           onClose={() => setAccountEdit(undefined)}
+        />
+      )}
+      {loginAccount && (
+        <AppLoginGuide
+          key={loginAccount.id}
+          account={loginAccount}
+          data={data}
+          onClose={() => setLoginAccountId('')}
         />
       )}
       {edit && (

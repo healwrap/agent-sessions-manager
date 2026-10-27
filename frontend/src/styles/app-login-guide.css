@@ -1,0 +1,72 @@
+.app-login-context {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-3);
+  font-size: 15px;
+  line-height: 24px;
+}
+.app-login-context span {
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+.app-login-steps {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  counter-reset: login-step;
+  list-style: none;
+}
+.app-login-steps > li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  counter-increment: login-step;
+}
+.app-login-steps > li::before {
+  content: counter(login-step);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--dsw-alias-bg-layer-3);
+  font-size: 14px;
+  line-height: 24px;
+}
+.app-login-steps h3 {
+  margin: 2px 0 8px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 550;
+}
+.app-login-steps p {
+  margin: 8px 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 15px;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+.app-login-field {
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 24px;
+}
+.app-login-link {
+  height: 96px;
+  padding: 10px 12px;
+  resize: vertical;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+.app-login-progress {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 24px;
+}

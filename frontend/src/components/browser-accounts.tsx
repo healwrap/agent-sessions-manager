@@ -26,6 +26,7 @@ export function BrowserAccounts({
   onRuntime,
   onEditProfile,
   onInstall,
+  onLogin,
 }: {
   data: EnvironmentSettings;
   busy: boolean;
@@ -38,6 +39,7 @@ export function BrowserAccounts({
     target: 'browser' | 'app',
   ) => void;
   onInstall: (action: 'check' | 'install') => void;
+  onLogin: (account: BrowserAccount) => void;
 }) {
   const renderReport = (run: BrowserRun, target: string) => (
     <BrowserLaunchReport
@@ -166,6 +168,14 @@ export function BrowserAccounts({
                   </div>
                   {profile && (
                     <div className="account-client-actions">
+                      {target === 'app' && (
+                        <Button
+                          disabled={busy || run?.status === 'checking'}
+                          onClick={() => onLogin(account)}
+                        >
+                          登录引导
+                        </Button>
+                      )}
                       <Button
                         variant="text"
                         disabled={
@@ -187,13 +197,20 @@ export function BrowserAccounts({
                           (target === 'browser' &&
                             !browserAvailable(data, browser))
                         }
-                        onClick={() =>
-                          onRuntime(
-                            'open',
-                            { account_id: account.id },
-                            target as 'browser' | 'app',
+                        onClick={() => {
+                          if (
+                            target === 'app' &&
+                            data.app_runtime.sessions[profile.id]?.state !==
+                              'saved'
                           )
-                        }
+                            onLogin(account);
+                          else
+                            onRuntime(
+                              'open',
+                              { account_id: account.id },
+                              target as 'browser' | 'app',
+                            );
+                        }}
                       >
                         <ExternalLink size={14} />
                         {run?.status === 'checking'

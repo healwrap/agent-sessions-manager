@@ -1,6 +1,7 @@
 import { ScanLine } from 'lucide-react';
 import type {
   AppProfile,
+  BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { AgentIcon } from './agent-icon';
@@ -13,6 +14,7 @@ export function AppAccounts({
   onDelete,
   onRuntime,
   onInspect,
+  onLogin,
 }: {
   data: EnvironmentSettings;
   busy: boolean;
@@ -20,6 +22,7 @@ export function AppAccounts({
   onDelete: (id: string) => void;
   onRuntime: (action: 'open' | 'stop', body: { profile_id: string }) => void;
   onInspect: () => void;
+  onLogin: (account: BrowserAccount) => void;
 }) {
   const app = data.apps.find((item) => item.id === 'claude');
   return (
@@ -49,6 +52,7 @@ export function AppAccounts({
         onEdit={onEdit}
         onDelete={onDelete}
         onRuntime={onRuntime}
+        onLogin={onLogin}
       />
     </>
   );

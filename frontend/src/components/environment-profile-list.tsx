@@ -1,6 +1,7 @@
 import { ExternalLink, Pencil, Square, Trash2 } from 'lucide-react';
 import type {
   AppProfile,
+  BrowserAccount,
   BrowserProfile,
   EnvironmentSettings,
 } from '../lib/environment-settings';
@@ -17,6 +18,7 @@ export function EnvironmentProfileList({
   onEdit,
   onDelete,
   onRuntime,
+  onLogin,
 }: {
   data: EnvironmentSettings;
   target: 'browser' | 'app';
@@ -24,6 +26,7 @@ export function EnvironmentProfileList({
   onEdit: (profile: BrowserProfile | AppProfile) => void;
   onDelete: (id: string) => void;
   onRuntime: (action: 'open' | 'stop', body: { profile_id: string }) => void;
+  onLogin?: (account: BrowserAccount) => void;
 }) {
   const profiles = target === 'browser' ? data.profiles : data.app_profiles;
   const runtime = target === 'browser' ? data.browser : data.app_runtime;
@@ -71,6 +74,14 @@ export function EnvironmentProfileList({
                 {run ? runLabels[run.status] : '尚未启动'}
               </StatusBadge>
               <div className="environment-row-actions">
+                {target === 'app' && account && onLogin && (
+                  <Button
+                    disabled={busy || run?.status === 'checking'}
+                    onClick={() => onLogin(account)}
+                  >
+                    登录引导
+                  </Button>
+                )}
                 <Button
                   disabled={
                     busy ||
@@ -78,7 +89,16 @@ export function EnvironmentProfileList({
                     (target === 'browser' &&
                       !browserAvailable(data, profile as BrowserProfile))
                   }
-                  onClick={() => onRuntime('open', { profile_id: profile.id })}
+                  onClick={() => {
+                    if (
+                      target === 'app' &&
+                      account &&
+                      onLogin &&
+                      session?.state !== 'saved'
+                    )
+                      onLogin(account);
+                    else onRuntime('open', { profile_id: profile.id });
+                  }}
                 >
                   <ExternalLink size={15} />
                   打开

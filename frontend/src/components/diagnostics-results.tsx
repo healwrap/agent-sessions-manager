@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import {
   checkLabels,
   checkedTime,
-  routeLabel,
   type ClaudeReport,
   type DiagnosticHistory,
   type DiagnosticItem,
@@ -17,15 +16,20 @@ import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 export function DiagnosticSection({
   title,
   note,
+  actions,
   children,
 }: {
   title: string;
   note?: string;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="diagnostic-section">
-      <h3>{title}</h3>
+      <header className="diagnostic-section-heading">
+        <h3>{title}</h3>
+        {actions}
+      </header>
       {note && <p className="diagnostic-note">{note}</p>}
       {children}
     </section>
@@ -145,16 +149,48 @@ export function DiagnosticHistoryList({
   if (!items.length) return <p className="diagnostic-note">暂无检测记录</p>;
   return (
     <div className="diagnostic-history">
-      {items.map((item, index) => (
-        <div key={item.checked_at + index}>
-          <time>{checkedTime(item.checked_at)}</time>
-          <strong>{item.claude_ip || 'Claude 出口未取得'}</strong>
-          <span>{routeLabel(item.route)}</span>
-          <small>
-            {[countryLabel(item.country), item.org].filter(Boolean).join(' · ')}
-          </small>
-        </div>
-      ))}
+      <table aria-label="出口检测历史">
+        <thead>
+          <tr>
+            <th scope="col">检测时间</th>
+            <th scope="col">出口 IP</th>
+            <th scope="col">检测链路</th>
+            <th scope="col">地区与运营商</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr key={item.checked_at + index}>
+              <td>
+                <time dateTime={item.checked_at}>
+                  {checkedTime(item.checked_at)}
+                </time>
+              </td>
+              <td>
+                <span className="diagnostic-mono">
+                  {item.claude_ip || '未取得'}
+                </span>
+              </td>
+              <td>
+                <span>{item.route.label}</span>
+                {item.route.endpoint && (
+                  <span className="diagnostic-history-secondary diagnostic-mono">
+                    {item.route.endpoint}
+                  </span>
+                )}
+              </td>
+              <td>
+                <span>{countryLabel(item.country)}</span>
+                {item.org && (
+                  <span className="diagnostic-history-secondary">
+                    {item.org}
+                  </span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

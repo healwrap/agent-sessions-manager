@@ -198,17 +198,21 @@ export function NetworkDiagnostics({
           </div>
         )
       )}
-      <DiagnosticSection title="出口历史">
-        {history.length > 0 && (
-          <Button
-            variant="text"
-            className="diagnostic-clear"
-            onClick={() => void clearHistory()}
-            disabled={running || clearing}
-          >
-            {clearing ? '清除中…' : '清除历史'}
-          </Button>
-        )}
+      <DiagnosticSection
+        title="出口历史"
+        actions={
+          history.length > 0 && (
+            <Button
+              variant="text"
+              className="diagnostic-clear"
+              onClick={() => void clearHistory()}
+              disabled={running || clearing}
+            >
+              {clearing ? '清除中…' : '清除历史'}
+            </Button>
+          )
+        }
+      >
         <DiagnosticHistoryList items={history} />
       </DiagnosticSection>
     </section>

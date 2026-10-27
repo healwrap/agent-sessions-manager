@@ -3,9 +3,16 @@
   margin-top: 24px;
 }
 .diagnostic-section h3 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 14px;
   font-weight: 550;
+}
+.diagnostic-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 .diagnostic-egress {
   display: grid;

@@ -145,39 +145,78 @@
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-clear {
-  position: absolute;
-  top: -3px;
-  right: 0;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 13px;
-  border: 0;
-  padding: 4px;
-}
-.diagnostic-history {
-  max-height: 230px;
-  overflow-y: auto;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 10px;
-}
-.diagnostic-history > div {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px 16px;
-  padding: 12px 14px;
-  font-size: 13px;
-  background: var(--dsw-alias-bg-layer-1);
-}
-.diagnostic-history > div + div {
-  border-top: 1px solid var(--dsw-alias-border-l2);
-}
-.diagnostic-history time,
-.diagnostic-history small {
   color: var(--dsw-alias-label-tertiary);
   font-size: 14px;
 }
-.diagnostic-history strong {
+.diagnostic-history {
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+}
+.diagnostic-history table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.diagnostic-history th,
+.diagnostic-history td {
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.diagnostic-history th {
   font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-3);
+}
+.diagnostic-history th:first-child {
+  width: 20%;
+}
+.diagnostic-history th:nth-child(2) {
+  width: 26%;
+}
+.diagnostic-history th:nth-child(3) {
+  width: 26%;
+}
+.diagnostic-history tbody tr {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+.diagnostic-history td > span {
+  display: block;
+}
+.diagnostic-history-secondary {
+  margin-top: 4px;
+  color: var(--dsw-alias-label-secondary);
+}
+@media (max-width: 1000px) {
+  .diagnostic-history thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .diagnostic-history table,
+  .diagnostic-history tbody {
+    display: block;
+  }
+  .diagnostic-history tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 12px 16px;
+    gap: 12px 20px;
+  }
+  .diagnostic-history tbody tr:first-child {
+    border-top: 0;
+  }
+  .diagnostic-history td {
+    padding: 0;
+  }
 }
 .diagnostic-reference {
   margin: 20px 0 0;

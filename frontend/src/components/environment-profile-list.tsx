@@ -4,7 +4,7 @@ import type {
   BrowserProfile,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { runLabels } from '../lib/environment-settings';
+import { browserAvailable, runLabels } from '../lib/environment-settings';
 import { AgentIcon } from './agent-icon';
 import { Button } from './primitives';
 import { BrowserLaunchReport } from './browser-launch-report';
@@ -101,7 +101,7 @@ export function EnvironmentProfileList({
                           busy ||
                           run?.status === 'checking' ||
                           (target === 'browser' &&
-                            !data.browser.kernel.available)
+                            !browserAvailable(data, profile as BrowserProfile))
                         }
                         onClick={() =>
                           onRuntime('open', { profile_id: profile.id })
@@ -159,7 +159,7 @@ export function EnvironmentProfileList({
           <details
             className="account-launch-details"
             key={run.profile_id}
-            open={run.status === 'failed' || run.status === 'blocked'}
+            open={['failed', 'blocked', 'interrupted'].includes(run.status)}
           >
             <summary>
               {run.name} · {runLabels[run.status]} · 启动检查

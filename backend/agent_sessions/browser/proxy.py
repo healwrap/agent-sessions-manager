@@ -59,7 +59,9 @@ class RelayHandler(BaseHTTPRequestHandler):
     def tunnel(self, host, port, initial=b''):
         upstream = None
         try:
-            if not self.server.released and host.lower() not in {'api.ipify.org', 'www.cloudflare.com'}:
+            dns_probe = any(host.lower().endswith('.'+domain) for domain in
+                            ('dns4.browserleaks.org', 'dns6.browserleaks.org', 'dns4.browserleaks.net', 'dns6.browserleaks.net'))
+            if not self.server.released and host.lower() not in {'api.ipify.org', 'www.cloudflare.com'} and not dns_probe:
                 self.send_error(403, 'Account launch checks have not passed'); return
             upstream = connect_upstream(self.server.proxy_url, host, port)
             with self.server.connections_lock:

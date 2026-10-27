@@ -4,6 +4,8 @@ import {
 } from './claude-diagnostics';
 import type { GateResult } from './environment-settings';
 import { countryLabel, nodeLabel } from './diagnostic-labels';
+import { browserDns } from './browser-dns';
+import { browserStorage } from './browser-storage';
 
 export interface BrowserCheckTicket {
   token: string;
@@ -19,6 +21,7 @@ export interface BrowserCheckTicket {
     exit?: boolean;
     fingerprint?: boolean;
     webrtc?: boolean;
+    dns?: boolean;
   };
   url?: string;
   name: string;
@@ -138,7 +141,7 @@ export async function inspectTargetBrowser(
     detail: '启动门控按配置跳过此探针。',
     scope: '独立浏览器检测页',
   });
-  const [checks, claude, cloudflare] = await Promise.all([
+  const [checks, claude, cloudflare, dns] = await Promise.all([
     inspectDiagnosticWindow(options),
     options.managed
       ? options.exit === false
@@ -148,6 +151,7 @@ export async function inspectTargetBrowser(
     options.managed
       ? skipped('browser-cloudflare-ip', '浏览器 Cloudflare 域名出口')
       : browserExit(false),
+    browserDns(options.dns !== false),
   ]);
-  return [claude, cloudflare, ...checks];
+  return [claude, cloudflare, ...checks, dns, browserStorage()];
 }

@@ -11,6 +11,7 @@ from agent_sessions.browser.gates import blocked
 from agent_sessions.browser.preflight import inspect
 from agent_sessions.browser.proxy import ProxyRelay
 from agent_sessions.browser.session_state import session_state
+from agent_sessions.browser.process_state import ProcessState
 from .conflicts import warnings
 from .focus import focus_process
 
@@ -27,6 +28,11 @@ class AppRuntime:
         self.environments = environments
         self.lock = threading.RLock()
         self.runs, self.processes, self.relays = {}, {}, {}
+        self.registry = ProcessState(self.directory)
+        settings = self.environments.read()
+        app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
+        executable = str(Path(app['path'])/'Contents/MacOS/Claude') if app else ''
+        self.runs, self.processes = self.registry.restore(settings['app_profiles'], self.profile_directory, lambda profile: executable)
 
     def profile_directory(self, key):
         return self.directory/'profiles'/(hashlib.sha256(key.encode()).hexdigest()[:32]+'-3p')
@@ -34,7 +40,7 @@ class AppRuntime:
     def state(self):
         with self.lock:
             for key, process in self.processes.items():
-                if process.poll() is not None and self.runs[key]['status'] == 'running':
+                if process.poll() is not None and self.runs[key]['status'] in ('running', 'interrupted'):
                     abnormal = process.returncode != 0 and not self.runs[key].get('cancelled')
                     self.runs[key].update(status='failed' if abnormal else 'stopped', stage='App 意外退出' if abnormal else 'App 已退出',
                                           error=f'App 返回码 {process.returncode}；请检查环境启动日志及系统中其他启动守卫' if abnormal else '')
@@ -43,6 +49,7 @@ class AppRuntime:
             settings = self.environments.read()
             for key, relay in self.relays.items():
                 with relay.connections_lock: self.runs[key]['proxy_hosts'] = sorted(relay.observed_hosts)
+            self.registry.save(self.runs)
             return {'warnings': warnings(), 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()],
                     'sessions': {profile['id']: session_state(self.profile_directory(profile['id'])) for profile in settings['app_profiles']}}
 
@@ -53,9 +60,11 @@ class AppRuntime:
         key = account.get('app_profile_id') if account else value.get('profile_id')
         with self.lock:
             process = self.processes.get(key)
+            if self.runs.get(key, {}).get('status') == 'checking': return self.state()
             if process and process.poll() is None and self.runs[key]['status'] == 'running':
                 if not focus_process(process.pid): raise ValueError('App 仍在运行，请从程序坞打开它的窗口')
                 return self.state()
+            if process and process.poll() is None: self.stop(key)
         return self.launch(value)
 
     def launch(self, value):

@@ -74,14 +74,7 @@ export function BrowserProfileFields({
                   value: 'fingerprint-chromium',
                   label: 'Fingerprint Chromium',
                 },
-                ...(value.engine === 'chrome'
-                  ? [
-                      {
-                        value: 'chrome',
-                        label: 'Google Chrome（请切换内核后启动）',
-                      },
-                    ]
-                  : []),
+                { value: 'chrome', label: 'Google Chrome（独立 Profile）' },
               ]}
               onChange={(engine) =>
                 onChange({ engine: engine as BrowserProfile['engine'] })
@@ -158,7 +151,22 @@ export function BrowserProfileFields({
           placeholder="留空时与启动预检出口比较"
         />
       </label>
-      {'fingerprint_seed' in value && (
+      {'engine' in value && value.engine === 'chrome' && (
+        <p className="environment-panel-note">
+          使用本机 Chrome 的原生设备指纹；数据目录、代理、语言与时区独立管理。
+        </p>
+      )}
+      {'engine' in value && (
+        <label className="environment-field">
+          预期 DNS 服务器（可选）
+          <input
+            value={value.expected_dns || ''}
+            onChange={(event) => onChange({ expected_dns: event.target.value })}
+            placeholder="填写 IP，以英文逗号分隔；留空时只展示解析器观测"
+          />
+        </label>
+      )}
+      {'fingerprint_seed' in value && value.engine !== 'chrome' && (
         <>
           {' '}
           <div className="environment-field">

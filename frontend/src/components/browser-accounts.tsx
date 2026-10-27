@@ -13,7 +13,7 @@ import type {
   BrowserRun,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { runLabels } from '../lib/environment-settings';
+import { browserAvailable, runLabels } from '../lib/environment-settings';
 import { Button } from './primitives';
 import { AgentIcon } from './agent-icon';
 import { AccountEditor, type AccountRoute } from './account-editor';
@@ -45,7 +45,9 @@ export function BrowserAccounts({
     <details
       className="account-launch-details"
       key={target + run.profile_id}
-      open={['checking', 'blocked', 'failed'].includes(run.status)}
+      open={['checking', 'blocked', 'failed', 'interrupted'].includes(
+        run.status,
+      )}
     >
       <summary>
         {target} · {runLabels[run.status]} · 查看启动检查
@@ -188,7 +190,7 @@ export function BrowserAccounts({
                           busy ||
                           run?.status === 'checking' ||
                           (target === 'browser' &&
-                            !data.browser.kernel.available)
+                            !browserAvailable(data, browser))
                         }
                         onClick={() =>
                           onRuntime(

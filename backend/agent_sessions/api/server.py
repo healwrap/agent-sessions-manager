@@ -29,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        extra_connect = ' https://claude.ai https://www.cloudflare.com https://api.ipify.org' if urlparse(self.path).path == '/browser-check.html' else ''
+        extra_connect = ' https://claude.ai https://www.cloudflare.com https://api.ipify.org https://*.dns4.browserleaks.org https://*.dns6.browserleaks.org https://*.dns4.browserleaks.net https://*.dns6.browserleaks.net' if urlparse(self.path).path == '/browser-check.html' else ''
         self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'{extra_connect}; frame-ancestors 'none'; base-uri 'none'")
         self.end_headers()
         self.wfile.write(body)
@@ -48,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
             get = lambda name, default='': q.get(name, [default])[0]
             integer = lambda name, default, low, high: max(low, min(high, int(get(name, str(default)))))
             if parsed.path == '/api/health':
-                result = {'ready': True, 'application': 'Agent Sessions', 'manager_protocol': 2,
+                result = {'ready': True, 'application': 'Agent Sessions', 'manager_protocol': 3,
                           'shared_state': self.server.app_settings.path.parent.resolve() == state_root().resolve()}
             elif parsed.path == '/api/preferences':
                 result = self.server.settings.read() if hasattr(self.server, 'settings') else {'saved': False, 'value': {}}

@@ -3,6 +3,8 @@ import { Fingerprint, Link2, PanelsTopLeft } from 'lucide-react';
 import { copyText, request } from '../lib/api';
 import type { BrowserCheckTicket } from '../lib/browser-check';
 import { checkedTime } from '../lib/claude-diagnostics';
+import { browserAvailable } from '../lib/environment-settings';
+import { GateResults } from './browser-launch-report';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { DiagnosticBadge, DiagnosticCard } from './diagnostic-card';
 import { DiagnosticRows } from './diagnostics-results';
@@ -26,7 +28,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
     target ||
     (data.profiles[0] ? 'profile:' + data.profiles[0].id : 'external');
   const profile = data.profiles.find((row) => 'profile:' + row.id === selected);
-  const managed = !!profile && profile.engine !== 'chrome';
+  const managed = !!profile;
   const create = async () => {
     setBusy(true);
     setError('');
@@ -104,7 +106,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
             busy ||
             loading ||
             (ticket?.state === 'waiting' && !error) ||
-            (managed && !data.browser.kernel.available)
+            (managed && !browserAvailable(data, profile))
           }
         >
           {managed ? <PanelsTopLeft size={15} /> : <Link2 size={15} />}
@@ -150,15 +152,20 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
           ]}
         />
       </SettingsRow>
-      {managed && !loading && !data.browser.kernel.available && (
+      {managed && !loading && !browserAvailable(data, profile) && (
         <p className="diagnostic-note">
-          请先在「浏览器环境」安装独立浏览器内核。
+          请先安装此环境所选的浏览器或独立内核。
         </p>
       )}
       {(error || environmentError || ticket?.error) && (
         <p role="alert" className="diagnostic-error">
           {error || environmentError || ticket?.error}
         </p>
+      )}
+      {ticket?.launch?.checks && (
+        <DiagnosticCard title="启动检查结果">
+          <GateResults checks={ticket.launch.checks} />
+        </DiagnosticCard>
       )}
       {ticket?.url && (
         <>
@@ -229,8 +236,8 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
           <Fingerprint size={25} />
           <strong>从目标独立浏览器取得真实结果</strong>
           <p>
-            检测 HTTP 出口、语言、时区、浏览器标识、Canvas / WebGL 和 WebRTC
-            地址。此管理窗口不参与采样。
+            检测 HTTP 出口、语言、时区、浏览器标识、Canvas / WebGL、DNS 和
+            WebRTC 地址。此管理窗口不参与采样。
           </p>
         </div>
       )}

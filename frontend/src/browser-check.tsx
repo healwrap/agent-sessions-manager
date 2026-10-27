@@ -26,6 +26,7 @@ function BrowserProbePage() {
         throw new Error('请从 Agent Sessions 的浏览器检测页生成专用链接。');
       const path = '/api/browser-checks/' + encodeURIComponent(token);
       const pending = await request<BrowserCheckTicket>(path);
+      document.title = pending.name + ' · 环境检测';
       if (current) setTicket(pending);
       if (pending.state === 'failed') throw new Error(pending.error);
       let result = pending;

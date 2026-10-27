@@ -46,3 +46,11 @@ def discover(directory):
 
 def seed_number(value):
     return int.from_bytes(hashlib.sha256(value.encode()).digest()[:4], 'big') or 1
+
+
+def for_profile(profile, directory, apps):
+    if profile['engine'] != 'chrome': return discover(directory)
+    app = next((row for row in apps if row['id'] == 'chrome'), None)
+    path = Path(app['path'])/'Contents/MacOS/Google Chrome' if app else None
+    return {'available': bool(path and path.is_file()), 'name': 'Google Chrome', 'path': str(path or ''),
+            'source': '本机安装', 'version': ''}

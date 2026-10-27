@@ -66,7 +66,7 @@ class EnvironmentSettings:
         required = {'proxies': {'name', 'url'}, 'accounts': {'name', 'provider', 'profile_id'},
                     'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'},
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
-        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
+        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
         fields = set(item)-{'gates'}
@@ -104,6 +104,12 @@ class EnvironmentSettings:
             if item.get('expected_ip'):
                 try: ipaddress.ip_address(item['expected_ip'])
                 except ValueError: raise ValueError('指定出口 IP 格式无效') from None
+            if item.get('expected_dns'):
+                try:
+                    addresses = [str(ipaddress.ip_address(value.strip())) for value in item['expected_dns'].split(',')]
+                    if len(addresses) > 16: raise ValueError()
+                    item = {**item, 'expected_dns': ','.join(addresses)}
+                except ValueError: raise ValueError('预期 DNS 应填写最多 16 个 IP，以英文逗号分隔') from None
             gates = item.get('gates', {})
             if not isinstance(gates, dict) or set(gates)-set(DEFAULTS) or any(mode not in ('block', 'warn', 'off') for mode in gates.values()):
                 raise ValueError('启动门控策略无效')

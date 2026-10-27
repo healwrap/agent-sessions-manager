@@ -10,7 +10,11 @@ export const request: Request = async <T>(
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
-    path === '/api/claude-diagnostics/run' ? 60_000 : 30_000,
+    ['/api/claude-diagnostics/run', '/api/browser-runtime/region'].includes(
+      path,
+    )
+      ? 60_000
+      : 30_000,
   );
   try {
     const response = await fetch(

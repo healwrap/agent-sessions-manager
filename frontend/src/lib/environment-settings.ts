@@ -23,6 +23,7 @@ export interface ProfileRoute {
   locale_mode?: 'manual' | 'proxy';
   timezone_mode?: 'manual' | 'proxy';
   expected_ip?: string;
+  expected_dns?: string;
   gates?: Record<string, GateMode>;
 }
 export interface BrowserProfile extends ProfileRoute {
@@ -42,7 +43,8 @@ export interface BrowserRun {
   profile_id: string;
   account_id: string;
   name: string;
-  status: 'checking' | 'running' | 'blocked' | 'failed' | 'stopped';
+  status:
+    'checking' | 'running' | 'blocked' | 'failed' | 'stopped' | 'interrupted';
   alive: boolean;
   stage: string;
   checked_at: string;
@@ -55,6 +57,10 @@ export interface BrowserRun {
   };
   browser_checks: DiagnosticItem[];
   error: string;
+  engine?: string;
+  pid?: number;
+  data_directory?: string;
+  pages?: { title: string; url: string }[];
 }
 export interface LocalSession {
   state: 'saved' | 'empty' | 'unavailable';
@@ -108,10 +114,19 @@ export type EnvironmentCollection =
   'profiles' | 'app_profiles' | 'proxies' | 'accounts';
 export type EnvironmentItem =
   BrowserProfile | AppProfile | ProxyConfig | BrowserAccount;
+export function browserAvailable(
+  data: EnvironmentSettings,
+  profile?: BrowserProfile,
+) {
+  return profile?.engine === 'chrome'
+    ? data.apps.some((app) => app.id === 'chrome')
+    : data.browser.kernel.available;
+}
 export const runLabels: Record<BrowserRun['status'], string> = {
   checking: '启动检查中',
   running: '运行中',
   blocked: '已拦截',
   failed: '启动失败',
   stopped: '已停止',
+  interrupted: '待恢复',
 };

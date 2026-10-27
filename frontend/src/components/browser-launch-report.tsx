@@ -1,5 +1,6 @@
 import type { BrowserRun, GateResult } from '../lib/environment-settings';
 import { runLabels } from '../lib/environment-settings';
+import { DiagnosticRows } from './diagnostics-results';
 export function GateResults({ checks }: { checks: GateResult[] }) {
   return (
     <div className="environment-gate-results">
@@ -53,8 +54,34 @@ export function BrowserLaunchReport({ run }: { run: BrowserRun }) {
             {run.error}
           </p>
         )}
+        {(run.engine || run.pid) && (
+          <p>
+            {run.engine} · 进程 {run.pid || '未启动'}
+          </p>
+        )}
+        {run.data_directory && (
+          <small>独立数据目录：{run.data_directory}</small>
+        )}
       </div>
       <GateResults checks={run.checks} />
+      {!!run.pages?.length && (
+        <details>
+          <summary>当前浏览器标签页（{run.pages.length}）</summary>
+          {run.pages.map((page, index) => (
+            <p key={index}>
+              <strong>{page.title}</strong>
+              <br />
+              <small>{page.url}</small>
+            </p>
+          ))}
+        </details>
+      )}
+      {run.browser_checks.length > 0 && (
+        <details>
+          <summary>目标浏览器实际采样</summary>
+          <DiagnosticRows items={run.browser_checks} />
+        </details>
+      )}
       <footer className="environment-panel-note">
         检查时间：{new Date(run.checked_at).toLocaleString()}
       </footer>

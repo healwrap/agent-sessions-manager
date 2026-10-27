@@ -60,7 +60,7 @@ class BrowserDiagnostics:
                 raise ValueError('浏览器采样结果格式无效')
             checks = value['checks']
             allowed = {'window-timezone', 'window-language', 'window-ua', 'window-screen',
-                       'canvas', 'webgl', 'webrtc', 'browser-http-ip', 'browser-cloudflare-ip'}
+                       'canvas', 'webgl', 'webrtc', 'dns', 'profile-storage', 'browser-http-ip', 'browser-cloudflare-ip'}
             ids = set()
             for item in checks:
                 if (not isinstance(item, dict) or set(item) != {'id', 'title', 'state', 'value', 'detail', 'scope'}
@@ -88,3 +88,13 @@ class BrowserDiagnostics:
         with self.lock:
             row = self.tickets.get(token)
             if row and not row['report']: row['error'] = error
+
+    def attach_run(self, token, run, error):
+        with self.lock:
+            self.read(token)
+            row = self.tickets[token]
+            row['error'] = error
+            row['expected'] = {key: run['resolved'][key] for key in ('locale', 'timezone') if key in run['resolved']}
+            row['launch'] = {'state': 'blocked' if run['status'] == 'blocked' else 'failed', 'checks': run['checks'], 'error': error}
+            if run.get('browser_checks'):
+                row['report'] = {'checked_at': run['checked_at'], 'checks': run['browser_checks']}

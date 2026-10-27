@@ -13,7 +13,7 @@ NOTES = {'proxy': '通过所选代理访问出口探针，失败时保持原代�
          'language': '目标浏览器实际语言与环境设置比较',
          'fingerprint': '相同指纹种子与上次 Canvas 基线比较',
          'webrtc': '公网 ICE 候选与浏览器 HTTP 出口比较，未取得候选时为未验证',
-         'dns': '权威 DNS 探针尚未接入；强制模式将拦截未验证结果'}
+         'dns': '在目标浏览器访问 BrowserLeaks 随机域名；与预期 DNS 服务器列表比较，未配置预期值时只展示观测'}
 
 
 def definitions():
@@ -55,6 +55,11 @@ def browser_checks(profile, resolved, rows, baseline):
             address = ipaddress.ip_address(candidate.split(' · ')[-1])
             if address.is_global: public.append(str(address))
         except ValueError: pass
+    dns = []
+    for address in values.get('dns', {}).get('value', '').split('、'):
+        try: dns.append(str(ipaddress.ip_address(address)))
+        except ValueError: pass
+    expected_dns = profile.get('expected_dns', '').split(',') if profile.get('expected_dns') else []
     return [
         check(profile, 'exit_ip', 'unknown' if not ip else 'pass' if not expected_ip or ip == expected_ip else 'fail',
               ip or '未取得浏览器出口', f'期望出口：{expected_ip or "任意可验证出口"}；实际值来自目标浏览器'),
@@ -66,5 +71,8 @@ def browser_checks(profile, resolved, rows, baseline):
               canvas if fingerprint else '未取得 Canvas 指纹', '首次采样建立基线' if not old else '与相同种子的上次基线比较'),
         check(profile, 'webrtc', 'unknown' if not public or not ip else 'pass' if set(public) == {ip} else 'fail',
               '、'.join(public) or '未取得公网候选，尚未验证', '公网 ICE 地址与此浏览器 HTTP 出口比较'),
-        check(profile, 'dns', 'unknown', '尚未接入权威 DNS 探针', '强制模式会在未验证时拦截'),
+        check(profile, 'dns', 'unknown' if not dns or not expected_dns else 'pass' if set(dns) <= set(expected_dns) else 'fail',
+              '、'.join(dns) if dns else '未取得目标浏览器的 DNS 解析器',
+              ('预期 DNS：'+ '、'.join(expected_dns) if expected_dns else '尚未配置预期 DNS 列表，仅展示实际解析器；强制模式仍拦截未验证结果')+
+              '；'+values.get('dns', {}).get('detail', '')),
     ], {'seed': seed, 'canvas': canvas} if fingerprint and (not old or old['canvas'] == canvas) else None

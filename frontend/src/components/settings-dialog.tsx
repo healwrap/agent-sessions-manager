@@ -75,6 +75,7 @@ export function SettingsDialog({ open }: { open: boolean }) {
               <Button
                 id="settings-defaults"
                 type="button"
+                variant="ghost"
                 disabled={!data}
                 onClick={() => {
                   if (!data || !draft) return;

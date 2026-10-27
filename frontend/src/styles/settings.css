@@ -200,9 +200,6 @@
 }
 .settings-actions #settings-defaults {
   margin-right: auto;
-  padding-left: 0;
-  background: transparent;
-  color: var(--dsw-alias-label-tertiary);
 }
 .settings-save-status {
   color: var(--dsw-alias-label-tertiary);

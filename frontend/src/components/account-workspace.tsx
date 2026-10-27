@@ -1,4 +1,3 @@
-import { request } from '../lib/api';
 import { useState } from 'react';
 import {
   ArrowLeftRight,
@@ -92,11 +91,8 @@ export function AccountWorkspace({
     provision,
     remove,
     runtime,
+    installKernel,
   } = useEnvironmentSettings(active);
-  const installKernel = async () => {
-    await request('/api/browser-kernel/install', {}, {});
-    await reload();
-  };
   const current = sections.find((item) => item.id === section)!;
   const inspect = (proxy?: string) => {
     setDiagnosticProxy(proxy);
@@ -223,7 +219,7 @@ export function AccountWorkspace({
                 ).find((profile) => profile.id === id);
                 if (item) setEdit({ kind, item } as EnvironmentEdit);
               }}
-              onInstall={() => void installKernel()}
+              onInstall={(action) => void installKernel(action)}
             />
           )}
           {section === 'browser' && (
@@ -232,7 +228,7 @@ export function AccountWorkspace({
               busy={busy}
               loading={loading}
               onRuntime={(action, body) => void runtime(action, body)}
-              onInstall={() => void installKernel()}
+              onInstall={(action) => void installKernel(action)}
               onEdit={(item) => setEdit({ kind: 'profiles', item })}
               onDelete={(id) => void remove('profiles', id)}
             />

@@ -37,7 +37,7 @@ export function BrowserAccounts({
     body: { profile_id?: string; account_id?: string },
     target: 'browser' | 'app',
   ) => void;
-  onInstall: () => void;
+  onInstall: (action: 'check' | 'install') => void;
 }) {
   const renderReport = (run: BrowserRun, target: string) => (
     <details

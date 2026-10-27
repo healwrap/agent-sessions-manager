@@ -79,7 +79,14 @@ export interface BrowserRuntimeState {
     path: string;
     source: string;
     installation?: {
-      state: 'idle' | 'installing' | 'ready' | 'failed';
+      state:
+        | 'idle'
+        | 'checking'
+        | 'installing'
+        | 'ready'
+        | 'update_available'
+        | 'failed';
+      version?: string;
       progress: number;
       message: string;
       error: string;

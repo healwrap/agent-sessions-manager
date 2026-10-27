@@ -8,8 +8,11 @@ def command(server, path, value):
         from .diagnostics import start
         return start(server.browser_runtime, value)
     if path.endswith('/install'):
-        if value: raise ValueError('内核安装参数无效')
-        return server.browser_runtime.installer.start()
+        if set(value)-{'action'} or value.get('action', 'install') not in ('check', 'install'): raise ValueError('内核操作参数无效')
+        check_only = value.get('action') == 'check'
+        if not check_only and any(run['alive'] or run['status'] == 'checking' for run in server.browser_runtime.state()['runs']):
+            raise ValueError('请先停止浏览器环境，再安装或更新内核')
+        return server.browser_runtime.installer.start(check_only=check_only)
     if path.endswith('/open'): return server.browser_runtime.open(value)
     if path.endswith('/start'): return server.browser_runtime.launch(value)
     if path.endswith('/stop'):

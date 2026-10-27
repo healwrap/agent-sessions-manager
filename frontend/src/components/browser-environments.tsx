@@ -18,7 +18,7 @@ export function BrowserEnvironments({
   onEdit: (profile?: BrowserProfile) => void;
   onDelete: (id: string) => void;
   onRuntime: (action: 'open' | 'stop', body: { profile_id: string }) => void;
-  onInstall: () => void;
+  onInstall: (action: 'check' | 'install') => void;
 }) {
   return (
     <>

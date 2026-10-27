@@ -140,6 +140,25 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       finish();
     }
   };
+  const installKernel = async (action: 'check' | 'install') => {
+    begin();
+    try {
+      const installation = await request<
+        BrowserRuntimeState['kernel']['installation']
+      >('/api/browser-kernel/install', {}, { action });
+      setData((value) => ({
+        ...value,
+        browser: {
+          ...value.browser,
+          kernel: { ...value.browser.kernel, installation },
+        },
+      }));
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      finish();
+    }
+  };
   return {
     data,
     loading,
@@ -150,5 +169,6 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     provision,
     remove,
     runtime,
+    installKernel,
   };
 }

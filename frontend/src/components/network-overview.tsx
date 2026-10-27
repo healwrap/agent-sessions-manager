@@ -44,27 +44,37 @@ export function NetworkOverview({ report }: { report: ClaudeReport }) {
             <span title={ipv6?.detail}>{ipv6?.value || '未取得'}</span>
           </DiagnosticField>
         </dl>
-        <p className="diagnostic-card-footnote">
-          后台通过所选链路采样；API 401 表示未认证请求已到达。
-        </p>
       </DiagnosticCard>
       <DiagnosticCard
-        title="DNS 解析检查"
+        title="DNS 公网出口"
         icon={<Network size={17} />}
-        extra={<DiagnosticBadge>本机配置</DiagnosticBadge>}
+        extra={
+          <DiagnosticBadge
+            state={report.dns?.state === 'observed' ? 'info' : 'unknown'}
+          >
+            {report.dns?.state === 'observed' ? '已采样' : '未取得'}
+          </DiagnosticBadge>
+        }
       >
         <dl className="diagnostic-fields">
-          <DiagnosticField label="公网泄漏状态">
-            <DiagnosticBadge>尚未验证</DiagnosticBadge>
-          </DiagnosticField>
           <DiagnosticField label="本机解析器">
             <span className="diagnostic-mono">{dns?.value || '未取得'}</span>
           </DiagnosticField>
-          <DiagnosticField label="公网 DNS 出口">尚未采样</DiagnosticField>
+          <DiagnosticField label="公网解析器">
+            {report.dns?.servers.length
+              ? report.dns.servers.map((server) => (
+                  <span className="diagnostic-mono" key={server.ip}>
+                    {server.ip}
+                  </span>
+                ))
+              : '未取得'}
+          </DiagnosticField>
+          {!!report.dns?.errors.length && (
+            <DiagnosticField label="探针结果">
+              {report.dns.errors.join('；')}
+            </DiagnosticField>
+          )}
         </dl>
-        <p className="diagnostic-card-footnote">
-          {report.checks.find((item) => item.id === 'dns-leak')?.detail}
-        </p>
       </DiagnosticCard>
     </div>
   );

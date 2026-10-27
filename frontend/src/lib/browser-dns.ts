@@ -12,7 +12,7 @@ export async function browserDns(enabled = true): Promise<DiagnosticItem> {
       ...base,
       state: 'unknown',
       value: '本次未执行',
-      detail: '启动门控按配置跳过 DNS 探针。',
+      detail: '',
     };
   const servers = new Map<string, string[]>();
   const errors: string[] = [];
@@ -57,8 +57,7 @@ export async function browserDns(enabled = true): Promise<DiagnosticItem> {
             ([ip, info]) =>
               `${ip} · ${countryLabel(info[0])} · ${info.slice(1).join(' · ')}`,
           )
-          .join('；') +
-        '。来自此浏览器访问随机 IPv4 / IPv6 域名后的 BrowserLeaks 权威观测；DNS 解析器地址通常与网页出口不同，需与预期 DNS 列表比较。'
-      : `BrowserLeaks 权威探针未完成：${[...new Set(errors)].join('；')}。`,
+          .join('；')
+      : [...new Set(errors)].join('；') || 'DNS 探针未返回解析器',
   };
 }

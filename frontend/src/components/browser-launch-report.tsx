@@ -36,7 +36,7 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
           >
             {check.policy === 'off'
               ? '已关闭'
-              : `${check.policy === 'block' ? '强制' : '提醒'} · ${check.state === 'pass' ? '通过' : check.state === 'unknown' ? '未验证' : '失败'}`}
+              : `${check.policy === 'block' ? '强制' : '提醒'} · ${check.label || (check.state === 'pass' ? '通过' : check.state === 'unknown' ? '无法判定' : '失败')}`}
           </StatusBadge>
         </div>
       ))}

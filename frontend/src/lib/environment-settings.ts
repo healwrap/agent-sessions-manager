@@ -13,6 +13,7 @@ export interface GateResult {
   state: 'pass' | 'fail' | 'unknown' | 'skip';
   value: string;
   detail: string;
+  label?: string;
 }
 export interface ProfileRoute {
   id: string;

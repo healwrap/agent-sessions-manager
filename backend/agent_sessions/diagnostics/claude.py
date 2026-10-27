@@ -10,6 +10,7 @@ import threading
 from .local import inspect_network, item
 from .reputation import IpReputation
 from .transport import fetch, ip_details, route_config, trace
+from .dns import sample_dns
 
 TARGETS = {
     'claude-trace': ('Claude 域名出口', 'https://claude.ai/cdn-cgi/trace'),
@@ -95,14 +96,16 @@ class ClaudeDiagnostics:
                                      if 'lookup_proxy' in value else (route, proxy))
         if not self.running.acquire(blocking=False): raise ValueError('已有检测正在运行，请稍后重试')
         try:
-            with ThreadPoolExecutor(max_workers=6) as pool:
+            with ThreadPoolExecutor(max_workers=7) as pool:
                 tasks = {key: (pool.submit(ipv6_probe, proxy) if key == 'ipv6' else
                                pool.submit(fetch, url, proxy, head=key == 'claude-web'))
                          for key, (_, url) in TARGETS.items()}
                 local = pool.submit(inspect_network)
+                dns_task = pool.submit(sample_dns, proxy)
                 results = {key: task.result() for key, task in tasks.items()}
                 checks = [network_item(key, result) for key, result in results.items()]
                 local_checks = local.result()
+                dns = dns_task.result()
             exits = {name: trace(results[name+'-trace']) for name in ('claude', 'cloudflare')}
             for name, exit in exits.items():
                 if not exit.get('ip'):
@@ -115,8 +118,9 @@ class ClaudeDiagnostics:
                 reputation = self.reputation.lookup(ip, lookup_proxy)
                 details = metadata.result() if metadata else {}
             checks.extend([
-                item('dns-leak', 'DNS 公网出口', 'unknown', '尚未验证',
-                     '本次没有通过权威 DNS 探针验证目标环境的解析出口；本机 DNS 配置见下方。', '目标环境'),
+                item('dns-leak', 'DNS 公网出口', 'info' if dns['servers'] else 'unknown',
+                     '、'.join(row['ip'] for row in dns['servers']) or '未取得公网 DNS',
+                     '；'.join(dns['errors']), '后台检测链路'),
             ])
             old = self.history()
             previous = next((row for row in old if row.get('route') == route and row.get('claude_ip')), None)
@@ -127,7 +131,7 @@ class ClaudeDiagnostics:
                                    f"上次检测：{previous['checked_at']}", '本机检测历史'))
             report = {'checked_at': datetime.now(timezone.utc).isoformat(), 'route': route,
                       'lookup_route': lookup_route, 'exits': exits, 'ip_details': details, 'ip_reputation': reputation,
-                      'checks': checks, 'local_checks': local_checks}
+                      'checks': checks, 'local_checks': local_checks, 'dns': dns}
             entry = {'checked_at': report['checked_at'], 'route': route, 'claude_ip': ip,
                      'cloudflare_ip': exits['cloudflare'].get('ip', ''),
                      'country': exits['claude'].get('country', ''), 'org': details.get('org', '')}

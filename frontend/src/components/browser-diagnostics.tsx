@@ -94,11 +94,6 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
       <div className="diagnostic-target-toolbar">
         <div>
           <strong>检测登录 Claude 的独立浏览器</strong>
-          <p>
-            {managed
-              ? '直接在这个环境的独立浏览器中打开检测页；已运行的环境会沿用当前窗口与登录状态。'
-              : '生成链接后，在目标浏览器环境的新标签页打开；由那个浏览器采样并回传结果。'}
-          </p>
         </div>
         <Button
           variant="primary"
@@ -122,14 +117,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
                 : '生成检测链接'}
         </Button>
       </div>
-      <SettingsRow
-        label="目标浏览器环境"
-        description={
-          managed
-            ? '自动应用此环境保存的代理、独立数据目录、语言、时区和指纹配置。'
-            : '选择你正在使用的外部独立浏览器，复制检测链接后打开。'
-        }
-      >
+      <SettingsRow label="目标浏览器环境">
         <Select
           label="目标浏览器环境"
           value={selected}
@@ -188,18 +176,12 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
               {copied ? '已复制' : '复制链接'}
             </Button>
           </div>
-          <p className="diagnostic-note">
-            把这条链接粘贴到「{ticket.name}」的地址栏打开。链接 15
-            分钟内有效，一次采样；结果仅回传本机。
-          </p>
         </>
       )}
       {ticket?.state === 'waiting' && (
         <p role="status" className="browser-probe-wait">
           <Fingerprint size={17} />
-          {managed
-            ? '正在打开目标环境并等待实测结果；首次启动请留意系统钥匙串提示。启动门控通过后自动采样。'
-            : '等待独立浏览器打开检测页并回传…'}
+          {managed ? '正在检测浏览器环境…' : '等待独立浏览器打开检测页并回传…'}
         </p>
       )}
       {ticket?.state === 'complete' && ticket.report && (
@@ -235,11 +217,7 @@ export function BrowserDiagnostics({ active }: { active: boolean }) {
       {!ticket && (
         <div className="diagnostic-empty">
           <Fingerprint size={25} />
-          <strong>从目标独立浏览器取得真实结果</strong>
-          <p>
-            检测 HTTP 出口、语言、时区、浏览器标识、Canvas / WebGL、DNS 和
-            WebRTC 地址。此管理窗口不参与采样。
-          </p>
+          <strong>暂无浏览器检测结果</strong>
         </div>
       )}
     </section>

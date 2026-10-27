@@ -1,3 +1,5 @@
+import { webrtcCandidates } from './browser-webrtc';
+
 export type CheckState = 'pass' | 'warn' | 'fail' | 'unknown' | 'info';
 export interface DiagnosticItem {
   id: string;
@@ -53,6 +55,11 @@ export interface IpReputation {
   updated_at?: string | null;
 }
 export interface ClaudeReport {
+  dns?: {
+    state: 'observed' | 'unknown';
+    servers: { ip: string; country: string; info: string[] }[];
+    errors: string[];
+  };
   checked_at: string;
   route: DiagnosticRoute;
   exits: { claude: EgressSample; cloudflare: EgressSample };
@@ -69,7 +76,7 @@ export const checkLabels: Record<CheckState, string> = {
   pass: '通过',
   warn: '需关注',
   fail: '失败',
-  unknown: '未验证',
+  unknown: '无法判定',
   info: '信息',
 };
 export const routeLabel = (route: DiagnosticRoute) =>
@@ -151,68 +158,8 @@ function webglRenderer(): DiagnosticItem {
   }
 }
 
-async function webrtcCandidates(): Promise<DiagnosticItem> {
-  if (typeof RTCPeerConnection === 'undefined')
-    return deviceItem(
-      'webrtc',
-      'WebRTC 候选地址',
-      '此浏览器不支持 WebRTC',
-      '',
-      'unknown',
-    );
-  const candidates = new Set<string>();
-  let connection: RTCPeerConnection | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    connection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-    });
-    const peer = connection;
-    const completed = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, 6000);
-      peer.onicecandidate = (event) => {
-        if (!event.candidate) {
-          resolve();
-          return;
-        }
-        const candidate = event.candidate;
-        const address = candidate.address || candidate.candidate.split(' ')[4];
-        if (address) candidates.add(`${candidate.type || '候选'} · ${address}`);
-      };
-    });
-    peer.createDataChannel('diagnostics');
-    await Promise.race([
-      (async () => {
-        await peer.setLocalDescription(await peer.createOffer());
-        await completed;
-      })(),
-      completed,
-    ]);
-    return deviceItem(
-      'webrtc',
-      'WebRTC 候选地址',
-      candidates.size ? [...candidates].join('；') : '未取得候选地址',
-      candidates.size
-        ? '此浏览器的实际 ICE 候选；host 为本地或 mDNS 地址，srflx 为 STUN 测得的 UDP 出口。'
-        : 'STUN 无回包或未产生候选；不能据此认定没有泄漏。',
-      candidates.size ? 'info' : 'unknown',
-    );
-  } catch {
-    return deviceItem(
-      'webrtc',
-      'WebRTC 候选地址',
-      '未完成采样',
-      '此浏览器或网络未完成 ICE 收集。',
-      'unknown',
-    );
-  } finally {
-    clearTimeout(timer);
-    connection?.close();
-  }
-}
-
 export async function inspectDiagnosticWindow(
-  options: { fingerprint?: boolean; webrtc?: boolean } = {},
+  options: { fingerprint?: boolean; webrtc?: boolean; managed?: boolean } = {},
 ): Promise<DiagnosticItem[]> {
   const [canvas, webrtc] = await Promise.all([
     options.fingerprint === false
@@ -224,7 +171,7 @@ export async function inspectDiagnosticWindow(
       ? Promise.resolve(
           deviceItem('webrtc', 'WebRTC 候选地址', '已关闭采样', '', 'unknown'),
         )
-      : webrtcCandidates(),
+      : webrtcCandidates(options.managed),
   ]);
   return [
     deviceItem(

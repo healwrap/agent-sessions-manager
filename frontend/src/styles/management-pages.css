@@ -10,21 +10,6 @@
 .ui-collection-count {
   color: var(--dsw-alias-label-tertiary);
 }
-.proxy-binding-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-.proxy-binding-list > span {
-  padding: 3px 8px;
-  border-radius: var(--dsw-radius-sm);
-  background: var(--dsw-alias-bg-module-platform);
-  color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
-  overflow-wrap: anywhere;
-}
 .diagnostic-target-tabs {
   margin-bottom: 24px;
 }

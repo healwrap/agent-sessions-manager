@@ -13,7 +13,6 @@ import {
   IconButton,
   RemoveButton,
   ResourceRow,
-  StatusBadge,
 } from './ui';
 
 export function ProxyEnvironments({
@@ -91,7 +90,6 @@ export function ProxyEnvironments({
                   key={item.id}
                   title={item.name}
                   icon={<Globe2 size={22} />}
-                  badge={<StatusBadge>{bindings.length} 个环境</StatusBadge>}
                   actions={
                     <>
                       <Button
@@ -123,16 +121,6 @@ export function ProxyEnvironments({
                   }
                 >
                   <p className="ui-resource-address">{item.url}</p>
-                  {!!bindings.length && (
-                    <div
-                      className="proxy-binding-list"
-                      aria-label="使用此代理的环境"
-                    >
-                      {bindings.map((profile) => (
-                        <span key={profile.id}>{profile.name}</span>
-                      ))}
-                    </div>
-                  )}
                 </ResourceRow>
               );
             })}

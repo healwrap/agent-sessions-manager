@@ -96,11 +96,6 @@ export function EnvironmentEditor({
   return (
     <EditorDialog
       title={title}
-      description={
-        profile
-          ? '每个环境独立设置，保存后可继续编辑。'
-          : '添加可供环境引用的专用代理。'
-      }
       busy={saving}
       onClose={onClose}
       onSubmit={(event) => {
@@ -149,16 +144,8 @@ export function EnvironmentEditor({
             placeholder="http://127.0.0.1:7897"
             spellCheck={false}
           />
-          <small>支持 HTTP、HTTPS、SOCKS5 与 SOCKS5h，需包含端口。</small>
         </label>
       )}
-      <p className="environment-form-note">
-        {profile
-          ? native
-            ? '为官方 App 单独保存登录数据、代理与内嵌 Code 配置。'
-            : '启动时应用独立代理、语言、时区与指纹，通过门控后进入账号网站。'
-          : '保存为代理配置；实际路由由使用它的浏览器或 App 决定。'}
-      </p>
       {error && (
         <p className="environment-error" role="alert">
           {error}

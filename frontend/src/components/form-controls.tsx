@@ -37,7 +37,7 @@ export function EditorDialog({
   children,
 }: {
   title: string;
-  description: string;
+  description?: string;
   busy: boolean;
   onClose: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
@@ -55,7 +55,7 @@ export function EditorDialog({
         <header className="editor-dialog-heading">
           <div>
             <h2>{title}</h2>
-            <p>{description}</p>
+            {description && <p>{description}</p>}
           </div>
           <IconButton
             icon="close"

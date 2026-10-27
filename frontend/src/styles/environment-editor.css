@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 9px;
   min-width: 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 .environment-field .custom-select,
 .environment-field .select-trigger {
@@ -11,7 +11,7 @@
 }
 .environment-field small {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .environment-form-grid {
@@ -25,24 +25,15 @@
 }
 .environment-seed input {
   font-family: var(--ds-font-family-code);
-  font-size: 10px;
+  font-size: 13px;
 }
 .environment-seed .action-button {
   flex: none;
-  font-size: 11px;
-}
-.environment-form-note {
-  margin: 0;
-  padding: 12px;
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 1.8;
+  font-size: 14px;
 }
 .environment-error {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.8;
 }
 @media (max-width: 600px) {

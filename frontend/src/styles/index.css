@@ -20,6 +20,8 @@
 @import './subagents.css' layer(components);
 @import './dialogs.css' layer(components);
 @import './form-controls.css' layer(components);
+@import './disclosure.css' layer(components);
+@import './environment-profiles.css' layer(components);
 @import './markdown.css' layer(components);
 @import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);

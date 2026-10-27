@@ -9,6 +9,7 @@ import { AgentIcon } from './agent-icon';
 import { Button, IconButton } from './primitives';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
+
 export function EnvironmentProfileList({
   data,
   target,
@@ -27,152 +28,116 @@ export function EnvironmentProfileList({
   const profiles = target === 'browser' ? data.profiles : data.app_profiles;
   const runtime = target === 'browser' ? data.browser : data.app_runtime;
   return (
-    <section className="environment-panel">
-      <header className="environment-panel-heading">
-        <h2>
-          独立环境 <span>{profiles.length}</span>
-        </h2>
-        <span className="environment-muted">
-          {target === 'browser'
-            ? '独立浏览器登录数据'
-            : '官方 App 登录数据与 Code 配置'}
-        </span>
-      </header>
-      <div className="environment-table-wrap">
-        <table className="environment-table">
-          <thead>
-            <tr>
-              <th>环境 / 绑定账号</th>
-              <th>网络出口</th>
-              <th>语言 / 时区</th>
-              <th>登录与运行状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {profiles.map((profile) => {
-              const run = runtime.runs.find(
-                (row) => row.profile_id === profile.id,
-              );
-              const live = run?.alive || run?.status === 'checking';
-              const account = data.accounts.find(
-                (row) =>
-                  (target === 'browser'
-                    ? row.profile_id
-                    : row.app_profile_id) === profile.id,
-              );
-              return (
-                <tr key={profile.id}>
-                  <td>
-                    <span className="environment-name">
-                      <AgentIcon
-                        source={
-                          target === 'browser'
-                            ? (profile as BrowserProfile).provider
-                            : 'claude'
-                        }
-                      />
-                      <strong>{profile.name}</strong>
-                    </span>
-                    <small>{account?.name || '尚未绑定账号'}</small>
-                  </td>
-                  <td>
-                    {data.proxies.find((proxy) => proxy.id === profile.proxy_id)
-                      ?.name || '系统路由'}
-                    <small>{run?.resolved.ip || '启动时检测出口'}</small>
-                  </td>
-                  <td>
-                    {profile.locale_mode === 'proxy'
-                      ? '语言跟随出口'
-                      : profile.locale}
-                    <small>
-                      {profile.timezone_mode === 'proxy'
-                        ? '时区跟随出口'
-                        : profile.timezone}
-                    </small>
-                  </td>
-                  <td>
-                    {runtime.sessions?.[profile.id]?.label || '首次使用请登录'}
-                    <small>
-                      <StatusBadge tone={run?.alive ? 'success' : 'neutral'}>
-                        {run ? runLabels[run.status] : '尚未启动'}
-                      </StatusBadge>
-                    </small>
-                  </td>
-                  <td>
-                    <div className="environment-row-actions">
-                      <Button
-                        size="small"
-                        disabled={
-                          busy ||
-                          run?.status === 'checking' ||
-                          (target === 'browser' &&
-                            !browserAvailable(data, profile as BrowserProfile))
-                        }
-                        onClick={() =>
-                          onRuntime('open', { profile_id: profile.id })
-                        }
-                      >
-                        <ExternalLink size={13} />
-                        打开
-                      </Button>
-                      {live && (
-                        <IconButton
-                          disabled={busy}
-                          label={`停止环境 ${profile.name}`}
-                          icon={<Square size={14} />}
-                          onClick={() =>
-                            onRuntime('stop', { profile_id: profile.id })
-                          }
-                        />
-                      )}
-                      <IconButton
-                        disabled={busy || live}
-                        label={`编辑环境 ${profile.name}`}
-                        icon={<Pencil size={14} />}
-                        onClick={() => onEdit(profile)}
-                      />
-                      <IconButton
-                        disabled={busy || live}
-                        label={`删除环境配置 ${profile.name}`}
-                        icon={<Trash2 size={14} />}
-                        onClick={() => onDelete(profile.id)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <section
+      className="environment-profile-list"
+      aria-label={target === 'browser' ? '浏览器环境列表' : 'App 环境列表'}
+    >
       {!profiles.length && (
-        <div className="environment-empty">
+        <div className="environment-panel environment-empty">
           <h3>还没有{target === 'browser' ? '浏览器' : 'App'}环境</h3>
-          <p>
-            在账号管理添加账号时，可以自动创建独立环境，也可以在这里提前配置。
-          </p>
         </div>
       )}
-      {runtime.runs
-        .filter((run) =>
-          profiles.some((profile) => profile.id === run.profile_id),
-        )
-        .map((run) => (
-          <details
-            className="account-launch-details"
-            key={run.profile_id}
-            open={['failed', 'blocked', 'interrupted'].includes(run.status)}
+      {profiles.map((profile) => {
+        const run = runtime.runs.find((row) => row.profile_id === profile.id);
+        const live = run?.alive || run?.status === 'checking';
+        const account = data.accounts.find(
+          (row) =>
+            (target === 'browser' ? row.profile_id : row.app_profile_id) ===
+            profile.id,
+        );
+        const session = runtime.sessions?.[profile.id];
+        const failed =
+          !!run && ['failed', 'blocked', 'interrupted'].includes(run.status);
+        return (
+          <article
+            className="environment-panel environment-profile"
+            key={profile.id}
           >
-            <summary>
-              {run.name} · {runLabels[run.status]} · 启动检查
-            </summary>
-            <BrowserLaunchReport run={run} />
-          </details>
-        ))}
-      <footer className="environment-panel-note">
-        关闭或切换环境后保留登录状态；删除配置会保留环境中的浏览数据。
-      </footer>
+            <header className="environment-profile-heading">
+              <AgentIcon
+                source={
+                  target === 'browser'
+                    ? (profile as BrowserProfile).provider
+                    : 'claude'
+                }
+              />
+              <div className="environment-profile-name">
+                <h2>{profile.name}</h2>
+                <span>{account?.name || '未绑定账号'}</span>
+              </div>
+              <StatusBadge
+                tone={failed ? 'error' : run?.alive ? 'success' : 'neutral'}
+              >
+                {run ? runLabels[run.status] : '尚未启动'}
+              </StatusBadge>
+              <div className="environment-row-actions">
+                <Button
+                  disabled={
+                    busy ||
+                    run?.status === 'checking' ||
+                    (target === 'browser' &&
+                      !browserAvailable(data, profile as BrowserProfile))
+                  }
+                  onClick={() => onRuntime('open', { profile_id: profile.id })}
+                >
+                  <ExternalLink size={15} />
+                  打开
+                </Button>
+                {live && (
+                  <IconButton
+                    disabled={busy}
+                    label={`停止环境 ${profile.name}`}
+                    icon={<Square size={16} />}
+                    onClick={() =>
+                      onRuntime('stop', { profile_id: profile.id })
+                    }
+                  />
+                )}
+                <IconButton
+                  disabled={busy || live}
+                  label={`编辑环境 ${profile.name}`}
+                  icon={<Pencil size={16} />}
+                  onClick={() => onEdit(profile)}
+                />
+                <IconButton
+                  disabled={busy || live}
+                  label={`删除环境配置 ${profile.name}`}
+                  icon={<Trash2 size={16} />}
+                  onClick={() => onDelete(profile.id)}
+                />
+              </div>
+            </header>
+            <dl className="environment-profile-meta">
+              <div>
+                <dt>网络出口</dt>
+                <dd>
+                  {data.proxies.find((proxy) => proxy.id === profile.proxy_id)
+                    ?.name || '系统路由'}
+                  {run?.resolved.ip && <code>{run.resolved.ip}</code>}
+                </dd>
+              </div>
+              <div>
+                <dt>语言与时区</dt>
+                <dd>
+                  {profile.locale_mode === 'proxy'
+                    ? '语言跟随出口'
+                    : profile.locale}
+                  <span>
+                    {profile.timezone_mode === 'proxy'
+                      ? '时区跟随出口'
+                      : profile.timezone}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>登录状态</dt>
+                <dd>{session?.label || '首次使用请登录'}</dd>
+              </div>
+            </dl>
+            {run && <BrowserLaunchReport run={run} />}
+          </article>
+        );
+      })}
     </section>
   );
 }

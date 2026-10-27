@@ -8,7 +8,7 @@
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-specific-selector);
   color: var(--dsw-alias-label-primary);
-  font: 13px/20px var(--dsw-font-family);
+  font: 14px/22px var(--dsw-font-family);
 }
 .form-input::placeholder {
   color: var(--dsw-alias-label-dimmed);
@@ -32,7 +32,7 @@
   border-radius: var(--dsw-radius-sm);
   background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 18px;
   white-space: nowrap;
 }
@@ -129,4 +129,12 @@
   gap: 5px;
   font-size: 12px;
   border-radius: var(--dsw-radius-sm);
+}
+
+.account-workspace .action-button,
+.editor-dialog .action-button {
+  font-size: 14px;
+}
+.editor-dialog .environment-field .select-trigger {
+  font-size: 14px;
 }

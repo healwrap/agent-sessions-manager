@@ -32,7 +32,13 @@ export function DiagnosticSection({
   );
 }
 
-export function DiagnosticRows({ items }: { items: DiagnosticItem[] }) {
+export function DiagnosticRows({
+  items,
+  showScope = true,
+}: {
+  items: DiagnosticItem[];
+  showScope?: boolean;
+}) {
   return (
     <div className="diagnostic-rows">
       {items.map((item) => (
@@ -52,7 +58,7 @@ export function DiagnosticRows({ items }: { items: DiagnosticItem[] }) {
           <div className="diagnostic-row-content">
             <div className="diagnostic-row-heading">
               <strong>{item.title}</strong>
-              <span>{item.scope}</span>
+              {showScope && <span>{item.scope}</span>}
             </div>
             <div className="diagnostic-value">{item.value}</div>
             {item.detail && <p>{item.detail}</p>}

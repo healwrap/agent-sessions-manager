@@ -10,6 +10,7 @@ import { Button } from './primitives';
 import { Select } from './select';
 import { TextInput } from './form-controls';
 import { SettingsRow } from './settings/row';
+import { Disclosure } from './disclosure';
 
 export function BrowserProfileFields({
   value,
@@ -76,7 +77,7 @@ export function BrowserProfileFields({
                   value: 'fingerprint-chromium',
                   label: 'Fingerprint Chromium',
                 },
-                { value: 'chrome', label: 'Google Chrome（独立 Profile）' },
+                { value: 'chrome', label: 'Google Chrome（原生指纹）' },
               ]}
               onChange={(engine) =>
                 onChange({ engine: engine as BrowserProfile['engine'] })
@@ -99,10 +100,6 @@ export function BrowserProfileFields({
             onChange({ proxy_id });
           }}
         />
-        <small>
-          可先在「代理设置」添加 HTTP / HTTPS / SOCKS5
-          代理，支持用户名与密码认证。
-        </small>
       </div>
       <div className="environment-form-grid">
         {(['locale', 'timezone'] as const).map((field) => {
@@ -120,6 +117,7 @@ export function BrowserProfileFields({
                 ]}
                 onChange={(next) => onChange({ [`${field}_mode`]: next })}
               />
+              {mode === 'proxy' && <span>备用值</span>}
               <TextInput
                 aria-label={
                   mode === 'proxy' ? `${title}备用值` : `环境${title}`
@@ -128,13 +126,6 @@ export function BrowserProfileFields({
                 value={value[field]}
                 onChange={(event) => onChange({ [field]: event.target.value })}
               />
-              <small>
-                {mode === 'proxy'
-                  ? '定位失败时的备用值；是否放行由出口定位门控决定。'
-                  : field === 'locale'
-                    ? '独立语言代码，例如 en-US。'
-                    : '独立 IANA 时区。'}
-              </small>
             </div>
           );
         })}
@@ -143,7 +134,7 @@ export function BrowserProfileFields({
         <Button disabled={reading} onClick={() => void inspect()}>
           {reading ? '正在查询出口…' : '预览出口语言与时区'}
         </Button>
-        <small>{region || '语言按出口地区推荐；启动时重新读取。'}</small>
+        {region && <span>{region}</span>}
       </div>
       <label className="environment-field">
         指定出口 IP（可选）
@@ -153,11 +144,6 @@ export function BrowserProfileFields({
           placeholder="留空时与启动预检出口比较"
         />
       </label>
-      {'engine' in value && value.engine === 'chrome' && (
-        <p className="environment-panel-note">
-          使用本机 Chrome 的原生设备指纹；数据目录、代理、语言与时区独立管理。
-        </p>
-      )}
       {'engine' in value && (
         <label className="environment-field">
           预期 DNS 服务器（可选）
@@ -190,15 +176,10 @@ export function BrowserProfileFields({
                 重新生成
               </Button>
             </div>
-            <small>
-              每次启动使用相同种子；登录状态保存在此环境的独立目录。
-            </small>
           </div>
         </>
       )}
-      <details className="environment-gate-editor">
-        <summary>启动门控</summary>
-        <p>强制项失败或未验证会拦截；提醒项继续启动；关闭项跳过检查。</p>
+      <Disclosure className="environment-gate-editor" title="启动门控">
         {gates
           .filter(
             (gate) =>
@@ -230,7 +211,7 @@ export function BrowserProfileFields({
               />
             </SettingsRow>
           ))}
-      </details>
+      </Disclosure>
     </>
   );
 }

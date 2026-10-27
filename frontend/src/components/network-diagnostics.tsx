@@ -11,6 +11,7 @@ import { networkChecks } from '../lib/diagnostic-labels';
 import { Button, Icon } from './primitives';
 import { Select } from './select';
 import { TextInput } from './form-controls';
+import { Disclosure } from './disclosure';
 import { SettingsRow } from './settings/row';
 import { TrajectoryLoading } from './trajectory-loading';
 import { DiagnosticReputation } from './diagnostic-reputation';
@@ -192,13 +193,12 @@ export function NetworkDiagnostics({
             <DiagnosticReputation report={report} />
             <NetworkOverview report={report} />
           </div>
-          <details className="diagnostic-detail-disclosure">
-            <summary>
-              连接与出口明细
-              <Icon name="down" />
-            </summary>
+          <Disclosure
+            className="diagnostic-detail-disclosure"
+            title="连接与出口明细"
+          >
             <DiagnosticRows items={networkChecks(report)} />
-          </details>
+          </Disclosure>
         </>
       ) : (
         !running && (

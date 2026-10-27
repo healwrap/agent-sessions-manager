@@ -33,7 +33,7 @@
   gap: 8px;
   margin: 0;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 .diagnostic-card-heading h3 > svg {
@@ -50,7 +50,7 @@
   border-radius: 7px;
   color: var(--dsw-alias-label-secondary);
   background: var(--dsw-alias-bg-module-platform);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 550;
   line-height: 1.4;
   white-space: nowrap;
@@ -89,7 +89,7 @@
   gap: 12px;
   min-height: 38px;
   padding: 9px 0;
-  font-size: 11px;
+  font-size: 13px;
 }
 .diagnostic-field + .diagnostic-field {
   border-top: 1px solid var(--dsw-alias-border-l2);
@@ -114,18 +114,18 @@
 .diagnostic-field small {
   width: 100%;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 400;
 }
 .diagnostic-mono {
   font-family: var(--ds-font-family-code);
-  font-size: 10px;
+  font-size: 14px;
 }
 .diagnostic-card-footnote {
   margin: auto 0 0;
   padding-top: 16px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
@@ -162,7 +162,7 @@
   margin: 10px 0 0;
   text-align: center;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: 14px;
 }
 .diagnostic-risk-scale {
   margin: 30px 3px 20px;
@@ -196,7 +196,7 @@
   gap: 4px;
   margin-top: 9px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 9px;
+  font-size: 14px;
 }
 .diagnostic-score-meta {
   display: flex;
@@ -205,33 +205,15 @@
   flex-wrap: wrap;
   gap: 8px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 14px;
 }
 .diagnostic-risk-empty {
   padding: 32px 0;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 .diagnostic-detail-disclosure {
   margin-top: 18px;
-}
-.diagnostic-detail-disclosure summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 12px;
-  background: var(--dsw-alias-bg-layer-1);
-  font-size: 12px;
-  cursor: pointer;
-  list-style: none;
-}
-.diagnostic-detail-disclosure summary::-webkit-details-marker {
-  display: none;
-}
-.diagnostic-detail-disclosure[open] summary .dsh-icon {
-  transform: rotate(180deg);
 }
 .diagnostic-detail-disclosure .diagnostic-rows {
   margin-top: 10px;

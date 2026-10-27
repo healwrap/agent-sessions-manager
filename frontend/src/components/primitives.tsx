@@ -70,17 +70,19 @@ export function Collapse({
   open,
   children,
   className = '',
+  animateHeight,
 }: {
   open: boolean;
   children: ReactNode;
   className?: string;
+  animateHeight?: boolean;
 }) {
   const content = useRef<HTMLDivElement>(null);
   const [heightMotion, setHeightMotion] = useState(true);
   useLayoutEffect(() => {
     if (open && content.current)
-      setHeightMotion(content.current.scrollHeight <= 360);
-  }, [open]);
+      setHeightMotion(animateHeight ?? content.current.scrollHeight <= 360);
+  }, [open, animateHeight]);
   return (
     <div
       className={'content-collapse grid ' + className}

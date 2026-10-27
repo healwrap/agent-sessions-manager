@@ -61,7 +61,7 @@
   flex-wrap: wrap;
   gap: 6px 14px;
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
   color: var(--dsw-alias-label-secondary);
 }
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 7px;
   margin: 10px 2px 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-rows {
@@ -98,7 +98,7 @@
   flex: none;
   min-width: 64px;
   padding-top: 2px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-state .dsh-icon {
@@ -126,22 +126,22 @@
   gap: 4px 12px;
 }
 .diagnostic-row-heading strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 .diagnostic-row-heading span {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-value {
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .diagnostic-row p {
   margin: 3px 0 0;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
 }

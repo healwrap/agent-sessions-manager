@@ -45,7 +45,6 @@ export function AccountEditor({
   return (
     <EditorDialog
       title={account ? '编辑账号' : '添加账号'}
-      description="绑定独立浏览器和官方 App 环境，分别保存登录状态。"
       busy={busy}
       onClose={onClose}
       onSubmit={(event) => {
@@ -154,9 +153,6 @@ export function AccountEditor({
               setValue({ ...value, app_profile_id })
             }
           />
-          <small>
-            官方 App 切换时退出上一个隔离环境，再载入所选账号的数据。
-          </small>
         </div>
       )}
       {creating && (
@@ -185,10 +181,6 @@ export function AccountEditor({
               spellCheck={false}
             />
           )}
-          <small>
-            新环境按出口定位语言与时区，备用值为 en-US /
-            America/Los_Angeles。可在环境配置中改为手动设置，并逐项调整启动门控。
-          </small>
         </div>
       )}
       {error && (

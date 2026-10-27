@@ -1,7 +1,7 @@
 import type { BrowserRun, GateResult } from '../lib/environment-settings';
-import { runLabels } from '../lib/environment-settings';
 import { DiagnosticRows } from './diagnostics-results';
 import { StatusBadge } from './form-controls';
+import { Disclosure } from './disclosure';
 export function GateResults({ checks }: { checks: GateResult[] }) {
   return (
     <div className="environment-gate-results">
@@ -17,7 +17,9 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
             {check.policy !== 'off' && (
               <>
                 <p>{check.value}</p>
-                {check.detail && <small>{check.detail}</small>}
+                {check.state !== 'pass' && check.detail && (
+                  <p>{check.detail}</p>
+                )}
               </>
             )}
           </div>
@@ -41,63 +43,52 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
     </div>
   );
 }
-export function BrowserLaunchReport({ run }: { run: BrowserRun }) {
+export function BrowserLaunchReport({
+  run,
+  title = '启动检查',
+}: {
+  run: BrowserRun;
+  title?: string;
+}) {
   return (
-    <section className="environment-panel environment-launch-report">
-      <header className="environment-panel-heading">
-        <h2>{run.name} · 启动检查</h2>
-        <StatusBadge tone={run.alive ? 'success' : 'neutral'}>
-          {runLabels[run.status]}
-        </StatusBadge>
-      </header>
-      <div className="environment-launch-summary">
-        <strong>{run.stage}</strong>
-        <p>
-          {[
-            run.resolved.ip,
-            run.resolved.country,
-            run.resolved.locale,
-            run.resolved.timezone,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
+    <Disclosure
+      className="launch-check"
+      open={['checking', 'blocked', 'failed', 'interrupted'].includes(
+        run.status,
+      )}
+      title={
+        <>
+          <span>{title}</span>
+          <time>{new Date(run.checked_at).toLocaleString()}</time>
+        </>
+      }
+    >
+      {run.status === 'checking' && (
+        <p className="environment-launch-error">{run.stage}</p>
+      )}
+      {run.error && (
+        <p className="environment-error environment-launch-error" role="alert">
+          {run.error}
         </p>
-        {run.error && (
-          <p className="environment-error" role="alert">
-            {run.error}
-          </p>
-        )}
-        {(run.engine || run.pid) && (
-          <p>
-            {run.engine} · 进程 {run.pid || '未启动'}
-          </p>
-        )}
-        {run.data_directory && (
-          <small>独立数据目录：{run.data_directory}</small>
-        )}
-      </div>
+      )}
       <GateResults checks={run.checks} />
       {!!run.pages?.length && (
-        <details>
-          <summary>当前浏览器标签页（{run.pages.length}）</summary>
-          {run.pages.map((page, index) => (
-            <p key={index}>
-              <strong>{page.title}</strong>
-              <br />
-              <small>{page.url}</small>
-            </p>
-          ))}
-        </details>
+        <Disclosure title={`浏览器标签页（${run.pages.length}）`}>
+          <ul className="environment-report-pages">
+            {run.pages.map((page, index) => (
+              <li key={index}>
+                <strong>{page.title}</strong>
+                <span>{page.url}</span>
+              </li>
+            ))}
+          </ul>
+        </Disclosure>
       )}
       {run.browser_checks.length > 0 && (
-        <details>
-          <summary>目标浏览器实际采样</summary>
-          <DiagnosticRows items={run.browser_checks} />
-        </details>
+        <Disclosure title="浏览器采样结果">
+          <DiagnosticRows items={run.browser_checks} showScope={false} />
+        </Disclosure>
       )}
-      <footer className="environment-panel-note">
-        检查时间：{new Date(run.checked_at).toLocaleString()}
-      </footer>
-    </section>
+    </Disclosure>
   );
 }

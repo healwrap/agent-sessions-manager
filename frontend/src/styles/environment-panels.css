@@ -4,72 +4,6 @@
   border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-bg-layer-2);
 }
-.environment-panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-}
-.environment-panel-heading h2 {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-}
-.environment-panel-heading h2 > span {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  font-weight: 400;
-}
-.environment-table-wrap {
-  overflow-x: auto;
-}
-.environment-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
-  font-size: 12px;
-}
-.environment-table th {
-  padding: 11px 20px;
-  border-block: 1px solid var(--dsw-alias-border-l1);
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-tertiary);
-  text-align: left;
-  font-size: 11px;
-  font-weight: 400;
-  white-space: nowrap;
-}
-.environment-table td {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
-  vertical-align: middle;
-  overflow-wrap: anywhere;
-}
-.environment-table tr:last-child td {
-  border-bottom: 0;
-}
-.environment-table small {
-  display: block;
-  margin-top: 7px;
-  color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-}
-.environment-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-}
-.environment-name strong {
-  font-weight: 550;
-}
-.environment-name .agent-icon {
-  width: 18px;
-  height: 18px;
-}
 .environment-row-actions {
   display: flex;
   align-items: center;
@@ -105,7 +39,7 @@
   max-width: 380px;
   margin: 0 0 21px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.8;
 }
 .environment-empty-compact {
@@ -119,7 +53,7 @@
   padding: 12px 20px;
   border-top: 1px solid var(--dsw-alias-border-l1);
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.7;
 }
 .environment-panel-note svg {
@@ -139,14 +73,14 @@
 }
 .environment-connection strong,
 .environment-route-strip strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 550;
 }
 .environment-connection p,
 .environment-route-strip p {
   margin: 5px 0 0;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
   overflow-wrap: anywhere;
 }
@@ -177,13 +111,13 @@
   gap: 7px;
 }
 .environment-app-action > span {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--dsw-alias-label-tertiary);
   max-width: 260px;
   overflow-wrap: anywhere;
 }
 .environment-app-action .action-button {
-  font-size: 11px;
+  font-size: 13px;
 }
 .environment-native-app > .environment-app-action {
   margin-left: auto;
@@ -203,17 +137,17 @@
   color: var(--dsw-alias-label-secondary);
 }
 .environment-capabilities strong {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 .environment-capabilities span {
   grid-column: 2;
-  font-size: 10px;
+  font-size: 13px;
   color: var(--dsw-alias-label-tertiary);
 }
 .environment-proxy-url {
   font-family: var(--ds-font-family-code);
-  font-size: 11px;
+  font-size: 13px;
 }
 @media (max-width: 760px) {
   .environment-capabilities {

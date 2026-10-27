@@ -50,10 +50,6 @@ export function AppAccounts({
         onDelete={onDelete}
         onRuntime={onRuntime}
       />
-      <p className="environment-footnote">
-        一次使用一个 App 环境，切换时保存并退出当前环境。App
-        授权登录使用系统授权窗口；与独立浏览器的登录状态分别保存。
-      </p>
     </>
   );
 }

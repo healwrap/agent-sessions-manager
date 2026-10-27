@@ -4,7 +4,7 @@
 .diagnostic-scope {
   margin: 0 0 16px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: 14px;
 }
 .diagnostic-target-tabs {
   padding-left: 0;
@@ -31,7 +31,7 @@
 .diagnostic-target-toolbar p {
   margin: 7px 0 0;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: 14px;
 }
 .diagnostic-form {
   display: grid;
@@ -58,12 +58,12 @@
   flex: initial;
 }
 .diagnostic-form .settings-row-label label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 550;
 }
 .diagnostic-form .settings-row-label p {
   margin: 2px 0 0;
-  font-size: 11px;
+  font-size: 13px;
 }
 .diagnostic-form .custom-select {
   flex: none;
@@ -85,7 +85,7 @@
 }
 .diagnostic-note,
 .diagnostic-reference {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--dsw-alias-label-tertiary);
 }
@@ -107,7 +107,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 16px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-summary > div:first-child {
@@ -141,7 +141,7 @@
 }
 .diagnostic-empty p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--dsw-alias-label-tertiary);
 }
 .diagnostic-clear {
@@ -150,7 +150,7 @@
   right: 0;
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
+  font-size: 13px;
   border: 0;
   padding: 4px;
 }
@@ -165,7 +165,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 5px 16px;
   padding: 12px 14px;
-  font-size: 11px;
+  font-size: 13px;
   background: var(--dsw-alias-bg-layer-1);
 }
 .diagnostic-history > div + div {
@@ -174,7 +174,7 @@
 .diagnostic-history time,
 .diagnostic-history small {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
+  font-size: 14px;
 }
 .diagnostic-history strong {
   font-weight: 500;

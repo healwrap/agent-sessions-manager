@@ -40,18 +40,11 @@ export function BrowserAccounts({
   onInstall: (action: 'check' | 'install') => void;
 }) {
   const renderReport = (run: BrowserRun, target: string) => (
-    <details
-      className="account-launch-details"
+    <BrowserLaunchReport
       key={target + run.profile_id}
-      open={['checking', 'blocked', 'failed', 'interrupted'].includes(
-        run.status,
-      )}
-    >
-      <summary>
-        {target} · {runLabels[run.status]} · 查看启动检查
-      </summary>
-      <BrowserLaunchReport run={run} />
-    </details>
+      run={run}
+      title={`${target}启动检查`}
+    />
   );
   return (
     <>
@@ -65,15 +58,10 @@ export function BrowserAccounts({
       )}
       <div className="account-list-heading">
         <span>{data.accounts.length} 个账号</span>
-        <span>选择账号，打开对应环境</span>
       </div>
       {!data.accounts.length && (
         <section className="environment-panel environment-empty">
           <h3>添加第一个账号</h3>
-          <p>
-            一次创建账号及所需的浏览器、App
-            环境，然后分别打开登录。以后切换账号会使用各自保存的登录状态。
-          </p>
           <Button onClick={() => onEditAccount()} disabled={busy}>
             <Plus size={15} />
             添加账号与环境
@@ -179,7 +167,6 @@ export function BrowserAccounts({
                   {profile && (
                     <div className="account-client-actions">
                       <Button
-                        size="small"
                         variant="text"
                         disabled={
                           busy || run?.alive || run?.status === 'checking'
@@ -194,7 +181,6 @@ export function BrowserAccounts({
                         环境设置
                       </Button>
                       <Button
-                        size="small"
                         disabled={
                           busy ||
                           run?.status === 'checking' ||
@@ -219,7 +205,6 @@ export function BrowserAccounts({
                       {(run?.alive || run?.status === 'checking') && (
                         <Button
                           variant="text"
-                          size="small"
                           disabled={busy}
                           onClick={() =>
                             onRuntime(
@@ -243,10 +228,6 @@ export function BrowserAccounts({
           );
         })}
       </div>
-      <p className="environment-footnote">
-        首次打开后完成官方登录；本地登录状态自动保存。浏览器与 App
-        的登录状态分别管理。
-      </p>
     </>
   );
 }

@@ -56,6 +56,10 @@ class RelayHandler(BaseHTTPRequestHandler):
 
     def log_message(self, *_args): pass
 
+    def send_error(self, *args, **kwargs):
+        try: super().send_error(*args, **kwargs)
+        except (BrokenPipeError, ConnectionResetError): self.close_connection = True
+
     def tunnel(self, host, port, initial=b''):
         upstream = None
         try:

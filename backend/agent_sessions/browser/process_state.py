@@ -6,6 +6,7 @@ import signal
 import subprocess
 import threading
 import time
+from .gates import blocked
 
 
 class OwnedProcess:
@@ -58,8 +59,10 @@ class ProcessState:
                            error='管理器曾意外中断；点击打开会先关闭这个环境的旧进程，再恢复专用代理与账号页面')
             elif run['status'] == 'checking':
                 run.update(status='interrupted', stage='上次启动已中断', error='管理器在启动检查完成前退出，请重新打开环境')
-            elif run['status'] in ('running', 'interrupted') or (run['status'] == 'blocked' and run.get('pid')):
+            elif run['status'] in ('running', 'interrupted'):
                 run.update(status='stopped', stage='上次运行已结束', error='')
+            if not alive and run['status'] in ('stopped', 'blocked') and blocked(run.get('checks', [])):
+                run.update(status='blocked', stage='上次启动检查未通过，环境已拦截')
             runs[key] = run
         return runs, processes
 

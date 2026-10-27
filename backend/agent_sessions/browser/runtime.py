@@ -43,9 +43,10 @@ class BrowserRuntime:
         with self.lock:
             for key, process in self.processes.items():
                 if process.poll() is not None and self.runs[key]['status'] in ('running', 'blocked', 'interrupted'):
-                    abnormal = process.returncode != 0 and not self.runs[key].get('cancelled')
-                    self.runs[key].update(status='failed' if abnormal else 'stopped', stage='浏览器意外退出' if abnormal else '浏览器已关闭',
-                                          error=f'浏览器退出码 {process.returncode}' if abnormal else '')
+                    if self.runs[key]['status'] != 'blocked':
+                        abnormal = process.returncode != 0 and not self.runs[key].get('cancelled')
+                        self.runs[key].update(status='failed' if abnormal else 'stopped', stage='浏览器意外退出' if abnormal else '浏览器已关闭',
+                                              error=f'浏览器退出码 {process.returncode}' if abnormal else '')
                     control = self.controls.pop(key, None)
                     if control: control.close()
                     relay = self.relays.pop(key, None)
@@ -195,9 +196,16 @@ class BrowserRuntime:
                         temporary.write_text(json.dumps(next_baseline))
                         temporary.replace(baseline_file)
                 self.diagnostics.set_launch(ticket['token'], result)
-                self.update(key, status='running' if allowed else 'blocked',
-                            stage='已允许启动' if allowed else '强制启动检查未通过', checks=checks,
+                self.update(key, status='running' if allowed else 'checking',
+                            stage='已允许启动' if allowed else '启动检查未通过，正在关闭检测窗口', checks=checks,
                             browser_checks=report['checks'], checked_at=report['checked_at'])
+            if not allowed:
+                self._close_window(key)
+                with self.lock:
+                    if run.get('cancelled'): return
+                    failures = [row['title'] for row in checks if row['policy'] == 'block' and row['state'] not in ('pass', 'skip')]
+                    self.update(key, status='blocked', stage='启动已拦截，检测窗口已关闭',
+                                error='启动已拦截：'+'、'.join(failures)+'未通过', pages=[])
         except Exception as error:
             if run.get('cancelled'): return
             self.update(key, status='failed', stage='启动未完成', error=str(error))
@@ -224,26 +232,34 @@ class BrowserRuntime:
         temporary.write_text(json.dumps(value))
         temporary.replace(path)
 
-    def stop(self, key):
+    def _close_window(self, key):
         forced = False
+        with self.lock:
+            process = self.processes.get(key)
+            control = self.controls.pop(key, None)
+            relay = self.relays.pop(key, None)
+        if relay: relay.close()
+        try:
+            if process and process.poll() is None:
+                if control: control.quit()
+                else: process.terminate()
+                try: process.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    forced = True
+                    process.kill()
+                    process.wait(timeout=5)
+        finally:
+            if control: control.close()
+        return forced
+
+    def stop(self, key):
         with self.lock:
             if key not in self.runs: raise ValueError('环境尚未启动')
             self.runs[key]['cancelled'] = True
-            process = self.processes.get(key)
-            control = self.controls.get(key)
-        if process and process.poll() is None:
-            if control: control.quit()
-            else: process.terminate()
-            try: process.wait(timeout=8)
-            except subprocess.TimeoutExpired:
-                forced = True
-                process.kill()
-                process.wait(timeout=5)
-        relay = self.relays.pop(key, None)
-        if relay: relay.close()
-        control = self.controls.pop(key, None)
-        if control: control.close()
-        self.update(key, status='stopped', stage='浏览器未响应退出，已结束此环境进程' if forced else '已停止')
+            rejected = blocked(self.runs[key].get('checks', []))
+        forced = self._close_window(key)
+        self.update(key, status='blocked' if rejected else 'stopped',
+                    stage='启动已拦截，检测窗口已关闭' if rejected else '浏览器未响应退出，已结束此环境进程' if forced else '已停止')
         return self.state()
 
     def ensure_mutable(self, value):

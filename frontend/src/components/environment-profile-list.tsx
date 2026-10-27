@@ -226,7 +226,9 @@ export function EnvironmentProfileList({
                           ? '正在检查'
                           : run?.alive
                             ? '切回窗口'
-                            : '打开环境'}
+                            : run?.status === 'blocked'
+                              ? '重新检查'
+                              : '打开环境'}
                       </Button>
                       <IconButton
                         disabled={busy || live}

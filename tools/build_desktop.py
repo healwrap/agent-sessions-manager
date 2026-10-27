@@ -27,10 +27,12 @@ def main():
     npm = shutil.which('npm.cmd' if windows else 'npm') or 'npm'
     if not cli.exists(): run(npm, 'ci')
     run(npm, 'run', 'build:ui')
+    run(python, ROOT/'tools/build_skill_bundle.py', ROOT/'build/skill-payload')
     run(python, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
         '--name', 'agent-sessions-server', '--paths', ROOT/'backend',
         '--add-data', str(ROOT/'frontend/dist')+':frontend/dist',
         '--add-data', str(ROOT/'backend/agent_sessions/browser/locales.json')+':agent_sessions/browser',
+        '--add-data', str(ROOT/'build/skill-payload')+':skill-payload',
         ROOT/'scripts/trajectory_server.py')
     triple = subprocess.check_output(['rustc', '--print', 'host-tuple'], text=True).strip()
     directory = ROOT/'desktop/binaries'

@@ -48,10 +48,12 @@ class Handler(BaseHTTPRequestHandler):
             get = lambda name, default='': q.get(name, [default])[0]
             integer = lambda name, default, low, high: max(low, min(high, int(get(name, str(default)))))
             if parsed.path == '/api/health':
-                result = {'ready': True, 'application': 'Agent Sessions', 'manager_protocol': 3,
+                result = {'ready': True, 'application': 'Agent Sessions', 'manager_protocol': 4,
                           'shared_state': self.server.app_settings.path.parent.resolve() == state_root().resolve()}
             elif parsed.path == '/api/preferences':
                 result = self.server.settings.read() if hasattr(self.server, 'settings') else {'saved': False, 'value': {}}
+            elif parsed.path == '/api/skills':
+                result = self.server.skill_manager.state()
             elif parsed.path == '/api/settings':
                 result = {'value': self.server.app_settings.read(), 'defaults': self.server.app_settings.defaults,
                           'sources': self.server.store.sources()['items']}
@@ -128,11 +130,12 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
+        skill = self.path in {'/api/skills/plan', '/api/skills/apply', '/api/skills/restore'}
         runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')
         app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not skill) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -149,7 +152,10 @@ class Handler(BaseHTTPRequestHandler):
             if app_login and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('登录链接应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if app_login:
+            if skill:
+                command = self.path.rsplit('/', 1)[-1]
+                self.respond(200, getattr(self.server.skill_manager, command)(value))
+            elif app_login:
                 result = self.server.app_login.open(value) if self.path.endswith('/open') else self.server.app_login.cancel(value)
                 self.respond(200, result)
             elif runtime:
@@ -219,6 +225,7 @@ def main():
     parser.add_argument('--codex-only', action='store_true')
     parser.add_argument('--desktop', action='store_true')
     parser.add_argument('--state-home', type=Path, default=state_root())
+    parser.add_argument('--skill-state-home', type=Path, help='开发调试时单独指定 Skill 管理数据目录')
     parser.add_argument('--read-session', default='')
     parser.add_argument('--read-action', choices=['status', 'outline', 'message', 'tools', 'evidence'], default='outline')
     parser.add_argument('--read-ref', default='')
@@ -253,6 +260,8 @@ def main():
     server.settings = preferences
     server.app_settings = app_settings
     server.store = store
+    from agent_sessions.skills.manager import SkillManager
+    server.skill_manager = SkillManager(args.skill_state_home or args.state_home)
     from agent_sessions.diagnostics.claude import ClaudeDiagnostics
     server.claude_diagnostics = ClaudeDiagnostics(args.state_home)
     from agent_sessions.environments import EnvironmentSettings

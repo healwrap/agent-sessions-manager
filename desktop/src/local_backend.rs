@@ -26,7 +26,7 @@ pub fn available() -> bool {
     response().is_some_and(|value| {
         value["ready"] == true
             && value["application"] == "Agent Sessions"
-            && value["manager_protocol"] == 3
+            && value["manager_protocol"] == 4
             && value["shared_state"] == true
     })
 }

@@ -5,6 +5,16 @@
   min-width: 0;
   font-size: 14px;
 }
+.environment-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 20px;
+}
+.environment-field-label > svg {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
 .environment-field .custom-select,
 .environment-field .select-trigger {
   width: 100%;

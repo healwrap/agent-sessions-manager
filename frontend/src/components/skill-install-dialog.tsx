@@ -84,7 +84,11 @@ export function SkillInstallDialog({
   return (
     <EditorDialog
       title={title}
-      description="按下确认后执行真实操作；已有安装入口会保留备份。"
+      description={
+        configure
+          ? '指定该 Agent 实际读取的 Skill 安装路径。'
+          : '确认后执行操作；已有安装入口会保留备份。'
+      }
       busy={busy}
       onClose={onClose}
       onSubmit={(event) => {
@@ -119,7 +123,11 @@ export function SkillInstallDialog({
               : '选择安装目标'}
         </h3>
         {(configure || remove ? selected : targets).map((target) => (
-          <label className="skill-dialog-target" key={target.id}>
+          <label
+            className="skill-dialog-target"
+            data-selectable={!configure && !remove}
+            key={target.id}
+          >
             {!configure && !remove && (
               <input
                 type="checkbox"
@@ -147,17 +155,19 @@ export function SkillInstallDialog({
       </div>
       {configure ? (
         <label className="environment-field">
-          <span>
-            <FolderOpen size={14} />
+          <span className="environment-field-label">
+            <FolderOpen size={14} aria-hidden="true" />
             安装入口路径
           </span>
           <TextInput
             autoFocus
             value={path}
             onChange={(event) => setPath(event.target.value)}
-            placeholder="填写该 Agent 的 agent-sessions 安装入口"
+            placeholder="以 agent-sessions 结尾的完整路径"
+            spellCheck={false}
+            aria-describedby="skill-entry-path-help"
           />
-          <small>
+          <small id="skill-entry-path-help">
             填写该客户端实际使用的 Skill 目录下的 agent-sessions 完整路径。
           </small>
         </label>

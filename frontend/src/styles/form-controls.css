@@ -11,7 +11,8 @@
   font: 14px/22px var(--dsw-font-family);
 }
 .form-input::placeholder {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--dsw-alias-label-tertiary);
+  opacity: 1;
 }
 .form-input:focus-visible {
   border-color: var(--dsw-alias-state-business-primary);

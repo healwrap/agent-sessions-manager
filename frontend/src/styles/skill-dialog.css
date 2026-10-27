@@ -6,12 +6,16 @@
 }
 .skill-dialog-target {
   display: flex;
+  box-sizing: border-box;
   align-items: center;
   gap: 12px;
   min-height: 70px;
   padding: 12px 0;
   border-bottom: 1px solid var(--dsw-alias-border-l1);
   cursor: pointer;
+}
+.skill-dialog-target[data-selectable='false'] {
+  cursor: default;
 }
 .skill-dialog-target > input {
   width: 15px;

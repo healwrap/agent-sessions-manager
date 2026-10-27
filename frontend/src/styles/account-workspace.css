@@ -5,6 +5,11 @@
   display: grid;
   gap: 4px;
 }
+.environment-navigation .agent-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--dsw-alias-label-secondary);
+}
 .environment-navigation small {
   margin-left: auto;
   color: var(--dsw-alias-label-tertiary);

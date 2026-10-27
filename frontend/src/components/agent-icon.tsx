@@ -14,10 +14,16 @@ const icons: Record<string, { image: string; monochrome?: boolean }> = {
   antigravity: { image: antigravity },
 };
 
-export function AgentIcon({ source }: { source: string }) {
+export function AgentIcon({
+  source,
+  monochrome = false,
+}: {
+  source: string;
+  monochrome?: boolean;
+}) {
   const icon = icons[source.split(':')[0]];
   if (!icon) return <Icon name="agents" className="agent-icon" />;
-  return icon.monochrome ? (
+  return monochrome || icon.monochrome ? (
     <span
       className="agent-icon agent-icon-mono"
       aria-hidden="true"

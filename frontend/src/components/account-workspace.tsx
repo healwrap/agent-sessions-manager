@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ArrowLeftRight,
-  Globe2,
-  PanelsTopLeft,
-  Plus,
-  Users,
-} from 'lucide-react';
+import { Globe2, PanelsTopLeft, Plus, Users } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import type {
   BrowserAccount,
@@ -15,6 +9,7 @@ import type {
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { useSessionStore } from '../hooks/use-session-store';
 import { BrowserAccounts } from './browser-accounts';
+import { AgentIcon } from './agent-icon';
 import { AccountEditor } from './account-editor';
 import { AppLoginGuide } from './app-login-guide';
 import { AppAccounts } from './app-accounts';
@@ -43,7 +38,7 @@ const sections = [
   {
     id: 'claude-app',
     title: 'Claude App 环境',
-    icon: ArrowLeftRight,
+    icon: 'claude',
     description: '为每个账号保存官方 App 登录状态、代理与独立 Code 配置。',
   },
   {
@@ -114,7 +109,11 @@ export function AccountWorkspace({
                   aria-current={section === id ? 'page' : undefined}
                   onClick={() => setSection(id)}
                 >
-                  <SectionIcon size={17} strokeWidth={1.7} />
+                  {typeof SectionIcon === 'string' ? (
+                    <AgentIcon source={SectionIcon} monochrome />
+                  ) : (
+                    <SectionIcon size={17} strokeWidth={1.7} />
+                  )}
                   <span>{title}</span>
                   {id === 'accounts' && <small>{data.accounts.length}</small>}
                   {id === 'browser' && <small>{data.profiles.length}</small>}

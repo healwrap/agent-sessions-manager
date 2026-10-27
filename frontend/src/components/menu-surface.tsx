@@ -21,7 +21,8 @@ export const MenuSurface = forwardRef<
   const [backingHost, setBackingHost] = useState<HTMLElement | null>(null);
   useImperativeHandle(ref, () => surface.current!, []);
   useLayoutEffect(() => {
-    setBackingHost(document.body);
+    // A dialog already supplies an opaque surface above native window vibrancy.
+    if (!surface.current?.closest('dialog')) setBackingHost(document.body);
   }, []);
   useLayoutEffect(() => {
     const popup = surface.current;

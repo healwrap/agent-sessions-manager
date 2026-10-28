@@ -73,6 +73,14 @@ fn show_about(app: tauri::AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn restart_backend(app: tauri::AppHandle) -> Result<(), String> {
+    // The one-file sidecar serves assets from its extraction directory for its
+    // entire lifetime. System temp cleanup can remove them while it is running.
+    let runtime_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("backend-runtime");
+    std::fs::create_dir_all(&runtime_dir).map_err(|e| e.to_string())?;
     stop(&app);
     app.state::<Backend>().failed.store(false, Ordering::SeqCst);
     if local_backend::available() {
@@ -88,6 +96,9 @@ fn restart_backend(app: tauri::AppHandle) -> Result<(), String> {
         .shell()
         .sidecar("agent-sessions-server")
         .map_err(|e| e.to_string())?
+        .env("TMPDIR", &runtime_dir)
+        .env("TMP", &runtime_dir)
+        .env("TEMP", &runtime_dir)
         .args(["--port", "8766", "--desktop"]);
     let (mut rx, child) = command.spawn().map_err(|e| e.to_string())?;
     *app.state::<Backend>().child.lock().unwrap() = Some(child);

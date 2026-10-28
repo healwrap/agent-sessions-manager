@@ -77,13 +77,18 @@ class RelayHandler(BaseHTTPRequestHandler):
                 self.end_headers()
             self.connection.settimeout(None)
             upstream.settimeout(None)
-            while not self.server.stopping:
-                readable, _, _ = select.select([self.connection, upstream], [], [], 1)
-                if isinstance(upstream, ssl.SSLSocket) and upstream.pending() and upstream not in readable:
+            readers = [self.connection, upstream]
+            while readers and not self.server.stopping:
+                readable, _, _ = select.select(readers, [], [], 1)
+                if upstream in readers and isinstance(upstream, ssl.SSLSocket) and upstream.pending() and upstream not in readable:
                     readable.append(upstream)
                 for source in readable:
                     chunk = source.recv(65536)
-                    if not chunk: return
+                    if not chunk:
+                        readers.remove(source)
+                        try: (upstream if source is self.connection else self.connection).shutdown(socket.SHUT_WR)
+                        except OSError: pass
+                        continue
                     (upstream if source is self.connection else self.connection).sendall(chunk)
         except Exception:
             if upstream is None:

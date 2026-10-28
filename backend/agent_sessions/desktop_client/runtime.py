@@ -183,7 +183,10 @@ class AppRuntime:
                 if not observer: return
                 rows = observer.sample()
                 direct = [row for row in rows if public(row['host'])] if proxied else []
-                if direct: raise ConnectionViolation('发现 App 进程树的公网直连：'+'、'.join(str(row['pid'])+' → '+row['host']+':'+str(row['port']) for row in direct))
+                if direct:
+                    run['network_observation'] = {'scope': 'process-tree', 'connections': rows, 'violations': direct,
+                                                  'checked_at': datetime.now(timezone.utc).isoformat()}
+                    raise ConnectionViolation('发现 App 进程树的公网直连：'+'、'.join(str(row['pid'])+' → '+row['host']+':'+str(row['port']) for row in direct))
                 with self.lock:
                     if self.runs.get(key) is not run or run.get('cancelled'): return
                     run['network_observation'] = {'scope': 'process-tree', 'connections': rows,

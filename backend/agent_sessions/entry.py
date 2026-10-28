@@ -3,6 +3,9 @@ import sys
 
 
 def main():
+    if sys.argv[1:2] == ['--proxy-tunnel']:
+        from agent_sessions.browser.stdio_proxy import main as tunnel
+        return tunnel(sys.argv[2:])
     if sys.argv[1:2] == ['--skill-context']:
         from agent_sessions.context.cli import main as context
         return context(sys.argv[2:])

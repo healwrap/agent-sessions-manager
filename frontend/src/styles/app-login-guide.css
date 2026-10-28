@@ -1,15 +1,10 @@
-.app-login-context {
+.app-login-guidance {
   display: grid;
   gap: 6px;
-  padding: 14px 16px;
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-layer-3);
-  font-size: 15px;
-  line-height: 24px;
 }
-.app-login-context span {
-  color: var(--dsw-alias-label-secondary);
-  overflow-wrap: anywhere;
+.app-login-guidance strong {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
 }
 .app-login-steps {
   display: grid;

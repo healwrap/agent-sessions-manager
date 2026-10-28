@@ -5,7 +5,7 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button, EditorDialog, StatusBadge, TextArea } from './ui';
+import { Button, EditorDialog, Notice, StatusBadge, TextArea } from './ui';
 import { BrowserLaunchReport } from './browser-launch-report';
 import '../styles/app-login-guide.css';
 
@@ -145,15 +145,23 @@ export function AppLoginGuide({
         </>
       }
     >
-      <div className="app-login-context">
-        <strong>{account.name}</strong>
-        <span>浏览器：{browser?.name || '尚未绑定'}</span>
-      </div>
+      <Notice>
+        <div className="app-login-guidance">
+          <strong>此账号的所有访问都请在受控环境中完成</strong>
+          <span>
+            邮件中的登录、验证和账号操作链接，请复制到此账号的专用浏览器打开。
+          </span>
+          <span>
+            Claude App 只从 Agent Sessions
+            通过绑定代理启动，请勿无代理直接启动。
+          </span>
+        </div>
+      </Notice>
       <ol className="app-login-steps">
         <li>
           <div>
             <h3>打开此账号的 Claude App</h3>
-            <p>{app?.name || '请先编辑账号，绑定 App 与浏览器环境。'}</p>
+            {(!app || !browser) && <p>请先编辑账号，绑定 App 与浏览器环境。</p>}
             <Button
               onClick={() => void openApp()}
               disabled={

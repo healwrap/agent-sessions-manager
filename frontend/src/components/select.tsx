@@ -169,6 +169,8 @@ export function Select({
         aria-controls={open && enabled ? id : undefined}
         aria-activedescendant={open && enabled ? `${id}-${active}` : undefined}
         disabled={!enabled}
+        // Keep WebKit's modal focus handling from dismissing before click toggles.
+        onMouseDown={(event) => event.preventDefault()}
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={keyDown}
       >

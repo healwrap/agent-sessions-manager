@@ -1,5 +1,6 @@
 {
   "name": "agent-sessions",
+  "description": "Local AI workspace for agent sessions and Claude/Codex accounts, with isolated environments and Agent Sessions Skill management.",
   "version": "0.1.0",
   "private": true,
   "scripts": {

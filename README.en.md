@@ -1,148 +1,158 @@
 <div align="center">
-  <img src="docs/media/logo.svg" width="104" alt="Agent Sessions icon">
+  <img src="docs/media/logo.png" width="104" alt="Agent Sessions icon">
   <h1>Agent Sessions</h1>
   <p><a href="README.md">简体中文</a> · <strong>English</strong></p>
-  <p><strong>All your agent sessions, in one place.</strong></p>
-  <p>Bring conversations and tool traces from different tools back to the same project.</p>
-  <p>Local-first · Read-only history · Context handoff</p>
+  <p><strong>Your agent sessions and accounts, in one workspace.</strong></p>
+  <p>A local AI workspace for reviewing agent work and organizing accounts with independent environments.</p>
+  <p>Session management · Account management · Skill installation management</p>
 </div>
 
-## Meet Agent Sessions in 30 seconds
+[![Account management with Claude/Codex accounts, independent browsers, and Claude App environments](docs/media/account-workspace.jpg)](docs/media/account-workspace.jpg)
 
-![Agent Sessions landscape promo cover](docs/media/promo-cover.png)
+> The current account management interface, shown with fictional accounts, environments, and proxy settings. Click the screenshot to view the original. The demo uses Chinese UI text.
 
-<details>
-<summary>▶ Expand to play the 30-second promo</summary>
+Agent Sessions centers on two workspaces: **session management** and **account management**. One brings local conversations and tool traces from different agents together; the other organizes Claude/Codex accounts and their independent runtime environments. A supporting Skill workspace installs and maintains the bundled `agent-sessions` Skill.
 
-https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1
-
-</details>
-
-30 seconds · 1920 × 1080 · With music · [Download MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
-
-> The video and screenshots show the current interface using fictional demo sessions. Full-resolution screenshots are 2560 × 1440; click any image to view it. The demo uses Chinese UI text.
-
-## Spend less time hunting for sessions
-
-You write code with Codex, investigate a bug with Claude Code, then polish the interface in Cursor. The project moves forward, but its conversations stay scattered across tools.
-
-Agent Sessions is a local session manager that brings those sources into one project list. Revisit conversations, inspect what an agent did, and reference relevant history in your next task.
-
-| What you need | How Agent Sessions helps |
+| Workspace | What it does |
 | --- | --- |
-| Find a past discussion | Browse by project and source; search titles, projects, and visible conversation text |
-| Read a long conversation | View Markdown, highlighted code, tables, available image previews, and expandable work steps |
-| Understand what an agent did | Switch between conversation and trajectory views to inspect tool arguments, results, and original records |
-| Follow ongoing work | Incrementally sync messages and tool records already written to local history by the source agent |
-| Continue with another agent | Copy a context reference for an entire session or from a specific message onward |
-| Organize your workspace | Keep pins, custom names, archives, and project assignments in separate app settings |
+| **Sessions** | Browse conversations by project, search history, inspect tool traces, and copy context references |
+| **Accounts** | Organize Claude/Codex accounts, bind independent browser or Claude App environments, configure dedicated proxies, and view runtime state |
+| Skills | Install `agent-sessions` into local agents and manage updates, links, backups, and restores |
 
-## See the conversation and the work behind it
+Choose a workspace on the start page or switch from the bottom of the sidebar. Settings are shared across workspaces.
 
-### Sessions organized by project
+## Sessions: revisit discussions and inspect the work
 
-Browse multiple sources in one sidebar while keeping each session's source visible. Code blocks, tables, and collapsible work steps make past conversations easier to read.
+A project may use Codex, Claude Code, and Cursor together. Browse their histories in one project list while keeping the original source files.
 
-[![Dark conversation view with project groups, Markdown tables, and code blocks](docs/media/conversation-dark.png)](docs/media/conversation-dark.png)
+- **Projects and search:** browse by project and source; search titles, projects, and visible conversation text.
+- **Conversations and traces:** read Markdown, code, tables, and available images. Switch to the timeline to inspect tool arguments, results, and original records.
+- **Incremental sync:** follow messages and tool records already written to local history. Long content loads in pages.
+- **Organization and handoff:** pin, rename, archive, adjust project assignments, and copy a context reference for a whole session or from a specific message onward.
 
-### Follow every step
-
-The trajectory view places messages and tool records on one timeline. Select a record to inspect its arguments and results, or jump to the corresponding point from a conversation message.
-
-[![Trajectory view with a timeline, tool records, and execution details](docs/media/trajectory-dark.png)](docs/media/trajectory-dark.png)
-
-### Read the way you prefer
-
-Choose a light, dark, or system theme, adjust the text size, and control how work steps appear. Settings save automatically.
-
-| Light conversation view | General settings |
-| :---: | :---: |
-| [![Light conversation view](docs/media/conversation-light.png)](docs/media/conversation-light.png) | [![General settings with automatic saving](docs/media/settings-dark.png)](docs/media/settings-dark.png) |
-
-## Hand off context without starting over
-
-1. Choose **Copy context reference** in a session menu to reference the entire session, or use the button beside a message to reference that message and everything after it.
-2. Paste the reference into your next agent task and explain what you want to continue.
-3. The receiving agent reads the relevant outline, original messages, and tool evidence as needed, then continues the task.
-
-References use local read-only commands. The receiving agent must be able to access the history files on the same computer. A reference provides historical context; it does not transfer a running agent's state or carry over authorization from earlier tasks. See [Context reading and recovery](references/context-recovery.md) for details (in Chinese).
-
-## Accounts, environments, and components
-
-The start page opens session management, account environments, or Skill management. All workspaces share a global settings entry.
-
-- Bind each account to separate browser and Claude App profiles, with persistent login state and launch checks. See [Account environments](references/account-environments.md).
-- Add an HTTP / SOCKS endpoint or import a subscription / Clash configuration. A managed Mihomo process provides dedicated proxy ports without changing the system proxy. See [Dedicated proxies](references/dedicated-proxies.md).
-- Install, update, and remove Fingerprint Chromium, Mihomo, and official Claude App components separately from account data. See [Platform and component management](references/runtime-components.md).
-- Manage local Skill installations, updates, links, and restore backups. See [Skill management](references/skill-management-ui.md).
-
-Connection sampling detects violations and stops managed environments; it is not an operating-system network block.
-
-## Supported sources
+### Supported session sources
 
 | Source | Current integration |
 | --- | --- |
-| Codex | Local Desktop / CLI sessions, visible conversations, tool records, and available attachments |
-| Claude Code | Shared Desktop and CLI session content, shown together and read from the current conversation branch |
-| Cursor | Local desktop Agent / Composer session databases |
-| Antigravity Desktop | Local session summaries, saved conversation content, and available execution records |
-| Antigravity CLI | A local session source separate from the desktop app |
-| DeepSeek Harness | Local JSONL and Zstandard-compressed logs, work steps, and tool records |
+| Codex Desktop / CLI | Local sessions, visible conversations, tool records, and available attachments; labels for non-interactive exec tasks and subagents |
+| Claude Code | Shared Desktop/CLI session content, shown together and read from the current branch |
+| Cursor | Local desktop Agent/Composer session databases |
+| Antigravity Desktop | Local summaries, saved conversation content, and available execution records |
+| Antigravity CLI | A local source separate from the desktop app |
+| DeepSeek Harness | Local JSONL/Zstandard-compressed logs, work steps, and tool records |
 
-Common source directories are discovered automatically and can be changed in Settings. Each agent saves different data, so the available views depend on its local records. Sessions with only summaries or missing conversation content show an explicit empty state. See [Desktop app and source details](references/desktop-app.md) for formats, attachment support, and reading boundaries (in Chinese).
+Available views depend on what each agent actually saves. Common source directories are discovered automatically and can be changed in Settings. See [Desktop app and source details](references/desktop-app.md) for formats and reading boundaries.
 
-## Your history stays on your computer
+Pass a context reference to a later agent task so it can read the relevant outline, original messages, and tool evidence. The receiving agent needs access to files on the same computer. References provide historical context; they do not transfer running state or carry over authorization. See [Context reading and recovery](references/context-recovery.md).
 
-- History files are read-only. Original fields are preserved, and source sessions are never rewritten.
-- Custom names, archives, project organization, and preferences are stored separately.
-- The interface and backend run locally. The service listens only on the loopback interface; reading history does not require uploading conversations.
-- Long conversations load in pages, and tool results are read on demand. Live sync covers content already saved to local records.
+<details>
+<summary>View a conversation example</summary>
+
+[![Conversation example with project groups, Markdown, and code blocks](docs/media/conversation-dark.png)](docs/media/conversation-dark.png)
+
+</details>
+
+## Accounts: keep each account tied to its environment
+
+Configure independent browsers for Claude/Codex accounts. Claude accounts can also bind an official **Claude App** environment. Switch the client in account details, inspect runtime and stored-credential state, and open the corresponding window.
+
+- **Separate accounts and environments:** bind browser and Claude App profiles, with independent data directories, language, time zone, and proxy settings.
+- **Open and switch:** open, focus, or stop an environment from its account. Running environments retain their own login state and configuration.
+- **Dedicated proxies:** add HTTP/SOCKS endpoints or import subscriptions and Clash configurations. The app manages a separate Mihomo process without changing the system proxy.
+- **On-demand checks:** inspect proxy, egress, and environment results. Browser and App checks remain distinct, with configured preflight rules applied at launch.
+- **Components:** install, update, and remove Fingerprint Chromium, Mihomo, and official Claude App from Settings. Components download on demand; environment configuration is stored separately from program files.
+
+Accounts use the respective service's official login flow. For platform support, isolation boundaries, login behavior, and validation status, see:
+
+- [Accounts and independent environments](references/account-environments.md)
+- [Dedicated proxies](references/dedicated-proxies.md)
+- [Platforms and components](references/runtime-components.md)
+- [Local Skill and plugin inheritance in Claude App](references/claude-plugin-inheritance.md)
+
+## Skills: maintain local installation entries
+
+The current installation target is the bundled **`agent-sessions` Skill**, which lets agents read local history through references. Deploy it to supported local Codex, Claude Code, Cursor, Antigravity, and other entries, using linked installs or independent copies. Manage updates, broken-link repairs, removal, and backup restores.
+
+Operations show actual paths and a change plan before execution, then re-read the installed files. Shared entries identify affected consumers. Files being available and an agent having loaded them are tracked separately; confirm loading in a new agent session. See [Skill installation management](references/skill-management-ui.md).
+
+## Local data and runtime boundaries
+
+- Source histories are read-only. Names, archives, project organization, and reading preferences are stored separately.
+- Account configuration, environment settings, and independent data directories stay local. Reading history does not require uploading conversations; login, component downloads, and on-demand network checks connect to the relevant services.
+- The interface and backend run locally, with the service bound to loopback only.
+- Runtime connection sampling can detect anomalies and stop environments. It is not an operating-system network block; coverage depends on validation for each platform.
 
 ## Get started
 
-### Run locally
+### Build the desktop app
 
-Requires **Node.js 22.12+** and **Python 3.10+**.
+Requires **Node.js 22.12+, Python 3.10+, Rust/Cargo**, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for the target system.
 
 ```bash
 git clone --branch main https://github.com/healwrap/agent-sessions-manager.git
 cd agent-sessions-manager
 npm ci
+npm run desktop:build
+```
+
+The package includes the interface and Python backend; the built app needs no separately started service. macOS outputs:
+
+- `desktop/target/release/bundle/macos/Agent Sessions.app`
+- `desktop/target/release/bundle/dmg/Agent Sessions_0.1.0_aarch64.dmg` (Apple Silicon)
+
+The macOS build has been run locally. Windows/Linux need building and validation on their own systems. Distribution signing and notarization are not configured. See [Desktop build details](references/desktop-app.md#构建).
+
+<details>
+<summary>Run as a local web app</summary>
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+npm ci
 npm run build:ui
 python scripts/trajectory_server.py --port 8766
 ```
 
-Open [http://127.0.0.1:8766](http://127.0.0.1:8766). In Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`.
+Open [http://127.0.0.1:8766](http://127.0.0.1:8766). In Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`. Native window controls and opening local links with default applications require the desktop app.
 
-### Build the desktop app
+</details>
 
-Install the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your target system, along with Rust/Cargo, Node.js, and Python. Then run from the repository root:
+### Update the source
+
+Preserve local work, then update `main` and rebuild:
 
 ```bash
+git switch main
+git pull --ff-only origin main
 npm ci
 npm run desktop:build
 ```
 
-The desktop package includes its backend, so the built app does not need a separately launched Python service or browser. The macOS app has been built and run locally. Windows and Linux builds require validation on their respective systems. Distribution signing is not configured yet. See [Desktop build details](references/desktop-app.md#构建) for build outputs and usage notes (in Chinese).
+## Session feature video
 
-### Let an agent read history on demand
+The existing 30-second promo shows an earlier version's conversation browsing, tool traces, and context handoff. See the current interface and sections above for account and Skill management.
 
-The repository also includes the [Agent Sessions Skill](SKILL.md) and a context-reading CLI. The reading entry points do not require a frontend build. See [Context reading and recovery](references/context-recovery.md) for the Codex-specific workflow (in Chinese).
+<details>
+<summary>▶ Expand to play the session feature demo</summary>
+
+https://github.com/user-attachments/assets/c2cfc3a9-45bc-493d-b858-1181e6496db1
+
+30 seconds · 1920 × 1080 · With music · [Download MP4](https://github.com/healwrap/agent-sessions-manager/raw/refs/heads/main/docs/media/agent-sessions-landscape.mp4)
+
+</details>
 
 ## Development and contributions
 
-The frontend uses React, TypeScript, Vite, and Tailwind CSS; the backend uses Python; the desktop shell uses Tauri. New sources integrate through a shared plugin interface.
+React, TypeScript, Vite, and Tailwind CSS frontend; Python backend; Tauri desktop shell. Sources use a shared plugin interface, and management pages reuse common UI components.
 
-- [Project structure, development commands, and validation](references/development.md) (Chinese)
-- [Source plugin interface](references/source-plugins.md) (Chinese)
-- [Conversation and trajectory display conventions](references/trajectory-ui.md) (Chinese)
-- [Report an issue or suggest an improvement](https://github.com/healwrap/agent-sessions-manager/issues)
+- [Project structure, commands, and validation](references/development.md)
+- [Source plugin interface](references/source-plugins.md)
+- [Conversation and trajectory conventions](references/trajectory-ui.md)
+- [Issues and suggestions](https://github.com/healwrap/agent-sessions-manager/issues)
 
-Use demo records or remove personal conversations and credentials before sharing an issue or screenshot.
+Use demo data or remove personal conversations and credentials before sharing issues or screenshots. Detailed reference documents are currently in Chinese.
 
-## Acknowledgments
+## Credits
 
-Parts of the interface and trajectory styling draw on DeepSeek Harness. Its MIT license is preserved in [harness-license.txt](frontend/public/harness-license.txt). Other dependency and icon licenses remain with the source. See [Demo media notes](docs/media/README.md) for assets, fonts, and production details (in Chinese).
+Parts of the interface and trajectory styles reference DeepSeek Harness, with its MIT license preserved in [harness-license.txt](frontend/public/harness-license.txt). Other dependency and third-party icon licenses and sources are retained with the code. See [Media notes](docs/media/README.md) for the app icon and promotional assets.

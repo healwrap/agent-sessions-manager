@@ -102,6 +102,26 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
   };
   const save = (collection: EnvironmentCollection, item: EnvironmentItem) =>
     change({ collection, action: 'save', item });
+  const proxyCommand = async (
+    action: 'install' | 'save' | 'start' | 'stop' | 'adopt',
+    body: unknown = {},
+  ) => {
+    begin();
+    try {
+      const latest = await request<EnvironmentSettings>(
+        '/api/proxy-services/' + action,
+        {},
+        body,
+      );
+      setData(latest);
+      return latest;
+    } catch (reason) {
+      setError(String(reason));
+      throw reason;
+    } finally {
+      finish();
+    }
+  };
   const provision = (
     item: import('../lib/environment-settings').BrowserAccount,
     route: { proxy_id: string; proxy_url?: string },
@@ -170,5 +190,6 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
     remove,
     runtime,
     installKernel,
+    proxyCommand,
   };
 }

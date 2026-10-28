@@ -24,7 +24,8 @@ def app_processes():
 
 
 class AppRuntime:
-    def __init__(self, directory, environments):
+    def __init__(self, directory, environments, proxy_manager=None):
+        self.proxy_manager = proxy_manager
         self.directory = Path(directory)/'claude-app'
         self.environments = environments
         self.lock = threading.RLock()
@@ -95,6 +96,7 @@ class AppRuntime:
     def _launch(self, profile, proxy, app, run):
         key = profile['id']
         try:
+            if self.proxy_manager: self.proxy_manager.ensure(proxy)
             resolved, checks = inspect(profile, proxy, browser=False)
             with self.lock:
                 if run.get('cancelled'): return

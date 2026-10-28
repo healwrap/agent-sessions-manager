@@ -104,6 +104,30 @@ export interface ProxyConfig {
   id: string;
   name: string;
   url: string;
+  kind?: 'external' | 'managed';
+}
+export interface ManagedProxy {
+  id: string;
+  alive: boolean;
+  pid?: number;
+  status: 'running' | 'stopped' | 'failed';
+  error: string;
+  node?: { name: string; type: string };
+  direct_domains: string[];
+}
+export interface ProxyRuntimeState {
+  core: {
+    available: boolean;
+    version: string;
+    installation: {
+      state: string;
+      progress: number;
+      error: string;
+      message: string;
+    };
+  };
+  entries: ManagedProxy[];
+  adoptable: string[];
 }
 export interface LocalApp {
   id: string;
@@ -119,6 +143,7 @@ export interface EnvironmentSettings {
   gate_definitions: GateDefinition[];
   browser: BrowserRuntimeState;
   app_runtime: AppRuntimeState;
+  proxy_runtime?: ProxyRuntimeState;
 }
 export type EnvironmentSection =
   'accounts' | 'browser' | 'claude-app' | 'proxies';

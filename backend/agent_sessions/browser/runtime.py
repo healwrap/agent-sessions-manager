@@ -23,7 +23,8 @@ def account_url(provider):
 
 
 class BrowserRuntime:
-    def __init__(self, directory, environments, diagnostics, origin):
+    def __init__(self, directory, environments, diagnostics, origin, proxy_manager=None):
+        self.proxy_manager = proxy_manager
         self.directory = Path(directory)/'browser'
         self.installer = KernelInstaller(self.directory/'kernel')
         self.environments, self.diagnostics, self.origin = environments, diagnostics, origin
@@ -115,6 +116,7 @@ class BrowserRuntime:
     def _launch(self, profile, proxy, account, found, run):
         key, ticket = profile['id'], None
         try:
+            if self.proxy_manager: self.proxy_manager.ensure(proxy)
             modes = policy(profile)
             url = proxy['url'] if proxy else ''
             resolved, checks = inspect(profile, proxy)

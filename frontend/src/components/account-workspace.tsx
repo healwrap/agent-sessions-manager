@@ -18,6 +18,7 @@ import { BrowserEnvironments } from './browser-environments';
 import { NetworkDiagnostics } from './network-diagnostics';
 import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
 import { ProxyEnvironments } from './proxy-environments';
+import { ProxyEditor } from './proxy-editor';
 import { Button, ContentDialog, Notice, PageHeading } from './ui';
 import { WorkspacePicker } from './workspace-picker';
 import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
@@ -77,6 +78,7 @@ export function AccountWorkspace({
     remove,
     runtime,
     installKernel,
+    proxyCommand,
   } = useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
   const loginAccount = data.accounts.find((item) => item.id === loginAccountId);
@@ -232,7 +234,23 @@ export function AccountWorkspace({
               loading={loading}
               onEdit={(item) => setEdit({ kind: 'proxies', item })}
               onDelete={(id) => void remove('proxies', id)}
-              onInspect={setDiagnosticProxy}
+              onCommand={(action, id) =>
+                void proxyCommand(action, id ? { id } : {}).catch(() => {})
+              }
+              onInspect={(item) => {
+                if (item.kind === 'managed')
+                  void proxyCommand('start', { id: item.id })
+                    .then((latest) => {
+                      if (
+                        latest.proxy_runtime?.entries.find(
+                          (row) => row.id === item.id,
+                        )?.alive
+                      )
+                        setDiagnosticProxy(item);
+                    })
+                    .catch(() => {});
+                else setDiagnosticProxy(item);
+              }}
             />
           )}
         </div>
@@ -268,7 +286,16 @@ export function AccountWorkspace({
           onClose={() => setLoginAccountId('')}
         />
       )}
-      {edit && (
+      {edit?.kind === 'proxies' && (
+        <ProxyEditor
+          item={edit.item}
+          data={data}
+          onSaveExternal={(item) => save('proxies', item)}
+          onCommand={proxyCommand}
+          onClose={() => setEdit(null)}
+        />
+      )}
+      {edit && edit.kind !== 'proxies' && (
         <EnvironmentEditor
           edit={edit}
           proxies={data.proxies}

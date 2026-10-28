@@ -70,7 +70,10 @@ class Handler(BaseHTTPRequestHandler):
             elif parsed.path == '/api/browser-runtime':
                 result = self.server.browser_runtime.state()
             elif parsed.path == '/api/environments':
-                result = {**self.server.environments.read(), 'browser': self.server.browser_runtime.state(), 'app_runtime': self.server.app_runtime.state()}
+                from agent_sessions.proxy_service.api import environment_state
+                result = environment_state(self.server)
+            elif parsed.path == '/api/proxy-services':
+                result = self.server.proxy_manager.state()
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)
@@ -133,8 +136,9 @@ class Handler(BaseHTTPRequestHandler):
         browser_probe = self.path.startswith('/api/browser-checks/')
         app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
+        proxy_service = self.path in {'/api/proxy-services/install', '/api/proxy-services/parse', '/api/proxy-services/save', '/api/proxy-services/start', '/api/proxy-services/stop', '/api/proxy-services/adopt'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -153,7 +157,11 @@ class Handler(BaseHTTPRequestHandler):
             if browser_session and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('会话导入应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if skill:
+            if proxy_service:
+                if self.headers.get_content_type() != 'application/json': raise ValueError('代理参数应使用 JSON')
+                from agent_sessions.proxy_service.api import command
+                self.respond(200, command(self.server, self.path, value))
+            elif skill:
                 command = self.path.rsplit('/', 1)[-1]
                 self.respond(200, getattr(self.server.skill_manager, command)(value))
             elif app_login:
@@ -187,8 +195,8 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == '/api/environments':
                 self.server.browser_runtime.ensure_mutable(value)
                 self.server.app_runtime.ensure_mutable(value)
-                result = self.server.environments.change(value)
-                self.respond(200, {**result, 'browser': self.server.browser_runtime.state(), 'app_runtime': self.server.app_runtime.state()})
+                from agent_sessions.proxy_service.api import change_environment
+                self.respond(200, change_environment(self.server, value))
             elif self.path == '/api/settings':
                 config = self.server.app_settings.validate(value)
                 previous = self.server.app_settings.read()
@@ -270,12 +278,15 @@ def main():
     server.claude_diagnostics = ClaudeDiagnostics(args.state_home)
     from agent_sessions.environments import EnvironmentSettings
     server.environments = EnvironmentSettings(args.state_home)
+    from agent_sessions.proxy_service.manager import ProxyManager
+    server.proxy_manager = ProxyManager(args.state_home, server.environments)
+    server.proxy_manager.restore()
     from agent_sessions.diagnostics.browser import BrowserDiagnostics
     server.browser_diagnostics = BrowserDiagnostics(server.environments)
     from agent_sessions.browser.runtime import BrowserRuntime
-    server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}')
+    server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}', server.proxy_manager)
     from agent_sessions.desktop_client.runtime import AppRuntime
-    server.app_runtime = AppRuntime(args.state_home, server.environments)
+    server.app_runtime = AppRuntime(args.state_home, server.environments, server.proxy_manager)
     from agent_sessions.desktop_client.login import AppLogin
     server.app_login = AppLogin(server.environments, server.app_runtime, server.browser_runtime)
     from agent_sessions.browser.session_import import SessionImport
@@ -294,6 +305,7 @@ def main():
     finally:
         server.app_runtime.close()
         server.browser_runtime.close()
+        server.proxy_manager.close()
         server.server_close()
         index = getattr(server.store, 'search_index', None)
         if index: index.close()

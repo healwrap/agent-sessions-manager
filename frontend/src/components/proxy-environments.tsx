@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Globe2, Pencil, Plus, ScanLine } from 'lucide-react';
+import { Globe2, Pencil, Play, Plus, ScanLine, Square } from 'lucide-react';
 import type {
   EnvironmentSettings,
   ProxyConfig,
@@ -13,7 +13,10 @@ import {
   IconButton,
   RemoveButton,
   ResourceRow,
+  Notice,
+  StatusBadge,
 } from './ui';
+import { ProxyCoreControl } from './proxy-core-control';
 
 export function ProxyEnvironments({
   data,
@@ -22,6 +25,7 @@ export function ProxyEnvironments({
   onEdit,
   onDelete,
   onInspect,
+  onCommand,
 }: {
   data: EnvironmentSettings;
   loading: boolean;
@@ -29,6 +33,10 @@ export function ProxyEnvironments({
   onEdit: (item?: ProxyConfig) => void;
   onDelete: (id: string) => void;
   onInspect: (proxy: ProxyConfig) => void;
+  onCommand: (
+    action: 'install' | 'start' | 'stop' | 'adopt',
+    id?: string,
+  ) => void;
 }) {
   const [query, setQuery] = useState('');
   const visible = data.proxies.filter((item) =>
@@ -38,6 +46,11 @@ export function ProxyEnvironments({
   );
   return (
     <section aria-label="代理配置列表">
+      <ProxyCoreControl
+        state={data.proxy_runtime}
+        busy={busy}
+        onInstall={() => onCommand('install')}
+      />
       <CollectionPanel
         toolbar={
           <CollectionToolbar
@@ -78,6 +91,9 @@ export function ProxyEnvironments({
             role="list"
           >
             {visible.map((item) => {
+              const service = data.proxy_runtime?.entries.find(
+                (row) => row.id === item.id,
+              );
               const bindings = [...data.profiles, ...data.app_profiles].filter(
                 (profile) => profile.proxy_id === item.id,
               );
@@ -96,8 +112,59 @@ export function ProxyEnvironments({
                   icon={<Globe2 size={22} />}
                   actions={
                     <>
+                      {service && (
+                        <StatusBadge
+                          tone={
+                            service.alive
+                              ? 'success'
+                              : service.status === 'failed'
+                                ? 'error'
+                                : 'neutral'
+                          }
+                        >
+                          {service.alive
+                            ? '运行中'
+                            : service.status === 'failed'
+                              ? '启动失败'
+                              : '已停止'}
+                        </StatusBadge>
+                      )}
+                      {service && (
+                        <Button
+                          variant="text"
+                          disabled={busy || (service.alive && running)}
+                          title={
+                            service.alive && running
+                              ? '先关闭使用此代理的环境，再停止代理'
+                              : undefined
+                          }
+                          onClick={() =>
+                            onCommand(service.alive ? 'stop' : 'start', item.id)
+                          }
+                        >
+                          {service.alive ? (
+                            <Square size={16} />
+                          ) : (
+                            <Play size={16} />
+                          )}
+                          {service.alive ? '停止' : '启动'}
+                        </Button>
+                      )}
+                      {data.proxy_runtime?.adoptable.includes(item.id) && (
+                        <Button
+                          disabled={
+                            busy ||
+                            running ||
+                            !data.proxy_runtime.core.available
+                          }
+                          onClick={() => onCommand('adopt', item.id)}
+                        >
+                          交给应用管理
+                        </Button>
+                      )}
                       <Button
                         variant="text"
+                        disabled={busy}
                         aria-label={`检测代理 ${item.name}`}
                         onClick={() => onInspect(item)}
                       >
@@ -123,7 +190,11 @@ export function ProxyEnvironments({
                       />
                     </>
                   }
-                />
+                >
+                  {service?.error && (
+                    <Notice tone="error">{service.error}</Notice>
+                  )}
+                </ResourceRow>
               );
             })}
           </div>

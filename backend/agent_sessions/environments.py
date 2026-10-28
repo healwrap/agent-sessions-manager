@@ -68,6 +68,7 @@ class EnvironmentSettings:
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
         optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
         if collection == 'app_profiles': optional |= {'inherit_skills'}
+        if collection == 'proxies': optional |= {'kind'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
         fields = set(item)-{'gates', 'inherit_skills'}
@@ -79,6 +80,7 @@ class EnvironmentSettings:
         key = item.get('id') or str(uuid4())
         if not isinstance(key, str) or len(key) > 100: raise ValueError('配置标识无效')
         if collection == 'proxies':
+            if item.get('kind', 'external') not in ('external', 'managed'): raise ValueError('代理类型无效')
             validate_proxy(item['url'])
         elif collection == 'accounts':
             if item['provider'] not in ('claude', 'codex'): raise ValueError('请选择账号类型')

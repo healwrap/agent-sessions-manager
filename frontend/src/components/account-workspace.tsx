@@ -261,12 +261,10 @@ export function AccountWorkspace({
           className="network-diagnostics-dialog"
           onClose={() => setDiagnosticProxy(undefined)}
         >
-          <div className="network-diagnostics-content">
-            <NetworkDiagnostics
-              active={active}
-              initialProxy={diagnosticProxy.url}
-            />
-          </div>
+          <NetworkDiagnostics
+            active={active}
+            initialProxy={diagnosticProxy.url}
+          />
         </ContentDialog>
       )}
       {accountEdit && (

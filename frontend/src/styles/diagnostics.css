@@ -10,9 +10,6 @@
   width: min(1100px, calc(100vw - 40px));
   max-width: 1100px;
 }
-.network-diagnostics-content {
-  padding: 4px 24px 24px;
-}
 .diagnostic-form {
   display: grid;
   grid-template-columns: minmax(180px, 0.9fr) minmax(200px, 1.3fr) auto;

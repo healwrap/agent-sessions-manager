@@ -70,7 +70,7 @@ export function ContentDialog({
       ?.querySelector<HTMLElement>(
         'input:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)',
       )
-      ?.focus();
+      ?.focus({ preventScroll: true });
   }, []);
   const content = (
     <>

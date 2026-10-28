@@ -66,6 +66,9 @@
   overflow-wrap: anywhere;
 }
 .proxy-source-url {
+  display: block;
+  min-width: 0;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 @media (max-width: 600px) {

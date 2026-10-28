@@ -309,17 +309,20 @@ export function ComponentCatalog() {
           onClose={() => setContentDialog(false)}
           footer={<Button onClick={() => setContentDialog(false)}>关闭</Button>}
         >
-          <div className="editor-dialog-fields">
-            <FactsGrid
-              items={[
-                { label: '代理', value: '工作代理' },
-                {
-                  label: '连接状态',
-                  value: <StatusBadge tone="success">通过</StatusBadge>,
-                },
-              ]}
-            />
-          </div>
+          <FactsGrid
+            items={[
+              { label: '代理', value: '工作代理' },
+              {
+                label: '连接状态',
+                value: <StatusBadge tone="success">通过</StatusBadge>,
+              },
+            ]}
+          />
+          <Field label="订阅链接">
+            <code className="proxy-source-url">
+              https://example.com/subscription/agent-sessions?profile=work&amp;region=tokyo&amp;format=clash&amp;subscription=example-long-subscription-link
+            </code>
+          </Field>
         </ContentDialog>
       )}
       {dialog && (

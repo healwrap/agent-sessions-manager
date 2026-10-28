@@ -130,6 +130,10 @@
   border-bottom: 0.5px solid var(--dsw-alias-border-l2);
   padding: 20px 0;
 }
+.settings-row:last-child,
+.settings-source:last-child {
+  border-bottom: 0;
+}
 .settings-sources-group {
   margin-top: 28px;
 }

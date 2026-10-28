@@ -42,6 +42,10 @@ export function AccountEditor({
   const [error, setError] = useState('');
   const creating =
     value.profile_id === '__new__' || value.app_profile_id === '__new__';
+  const available = (collection: 'profiles' | 'app_profiles', id: string) => {
+    const owner = data.profile_owners?.[collection]?.[id];
+    return !owner || owner.account_id === value.id;
+  };
   return (
     <EditorDialog
       title={account ? '编辑账号' : '添加账号'}
@@ -111,6 +115,7 @@ export function AccountEditor({
               .filter(
                 (profile) =>
                   profile.provider === value.provider &&
+                  available('profiles', profile.id) &&
                   !data.accounts.some(
                     (other) =>
                       other.id !== value.id && other.profile_id === profile.id,
@@ -135,6 +140,7 @@ export function AccountEditor({
               ...data.app_profiles
                 .filter(
                   (profile) =>
+                    available('app_profiles', profile.id) &&
                     !data.accounts.some(
                       (other) =>
                         other.id !== value.id &&
@@ -179,6 +185,9 @@ export function AccountEditor({
           )}
         </Field>
       )}
+      <Notice>
+        每个环境只属于一个账号。旧环境解绑后仍保留原登录数据，新账号会创建独立环境。
+      </Notice>
       {error && (
         <p role="alert" className="environment-error">
           {error}

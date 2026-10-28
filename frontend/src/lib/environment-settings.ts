@@ -145,6 +145,10 @@ export interface LocalApp {
   path: string;
 }
 export interface EnvironmentSettings {
+  profile_owners?: Record<
+    'profiles' | 'app_profiles',
+    Record<string, { account_id: string; account_name: string }>
+  >;
   profiles: BrowserProfile[];
   app_profiles: AppProfile[];
   proxies: ProxyConfig[];

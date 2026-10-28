@@ -10,6 +10,7 @@ from .browser.gates import definitions, DEFAULTS
 from .browser.proxy import validate_proxy
 from .account_profiles import COLLECTIONS, provision, put
 from .applications import installed_apps
+from .profile_ownership import owners, remember, validate_binding
 
 
 class EnvironmentSettings:
@@ -22,7 +23,9 @@ class EnvironmentSettings:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
                     'app_profiles': [{**row, 'inherit_skills': row.get('inherit_skills', True)} for row in value.get('app_profiles', [])],
-                    'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])], 'apps': installed_apps(self.path.parent), 'gate_definitions': definitions()}
+                    'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])],
+                    'profile_owners': owners(value, self.path.parent),
+                    'apps': installed_apps(self.path.parent), 'gate_definitions': definitions()}
 
     def change(self, value):
         if not isinstance(value, dict): raise ValueError('环境配置格式无效')
@@ -45,9 +48,10 @@ class EnvironmentSettings:
             else:
                 item = self.validate(collection, value.get('item'), current)
                 put(current, collection, item)
+            remember(current)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix('.tmp')
-            temporary.write_text(json.dumps({key: current[key] for key in COLLECTIONS},
+            temporary.write_text(json.dumps({key: current[key] for key in (*COLLECTIONS, 'profile_owners')},
                                              ensure_ascii=False, indent=2), encoding='utf-8')
             temporary.chmod(0o600)
             temporary.replace(self.path)
@@ -80,6 +84,7 @@ class EnvironmentSettings:
                 if not item.get(field): continue
                 profile = next((row for row in current[target] if row['id'] == item[field]), None)
                 if not profile: raise ValueError('绑定的环境不存在')
+                validate_binding(current, target, item[field], key)
                 if target == 'profiles' and profile['provider'] != item['provider']: raise ValueError('账号与环境的 Agent 类型应一致')
                 if target == 'app_profiles' and item['provider'] != 'claude': raise ValueError('官方 App 环境适用于 Claude 账号')
                 if any(row.get(field) == item[field] and row['id'] != key for row in current['accounts']):

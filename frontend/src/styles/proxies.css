@@ -1,0 +1,59 @@
+/* Proxy workspace composition; controls and surfaces use the shared UI. */
+.proxy-create {
+  min-width: 0;
+  padding: 20px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+.proxy-inline-config {
+  min-width: 0;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+.proxy-inline-config .proxy-summary {
+  margin-bottom: 24px;
+}
+.proxy-node-summary {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.proxy-config-expanded {
+  transform: rotate(180deg);
+}
+.proxy-editor,
+.proxy-editor-fields {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+.proxy-editor-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.proxy-editor .proxy-config-source {
+  min-height: 160px;
+  max-height: 360px;
+}
+.proxy-editor .proxy-subscription-source {
+  min-height: 72px;
+}
+.proxy-runtime-config {
+  height: 280px;
+  font-family: var(--ds-font-family-code);
+  white-space: pre;
+  overflow: auto;
+}
+.proxy-editor-actions {
+  justify-content: flex-end;
+}
+.proxy-editor .disclosure-trigger {
+  min-height: 36px;
+}
+@container (max-width: 480px) {
+  .proxy-create {
+    padding: 16px;
+  }
+}

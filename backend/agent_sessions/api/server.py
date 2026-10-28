@@ -76,6 +76,9 @@ class Handler(BaseHTTPRequestHandler):
                 result = environment_state(self.server)
             elif parsed.path == '/api/proxy-services':
                 result = self.server.proxy_manager.state()
+            elif parsed.path == '/api/proxy-services/config':
+                from agent_sessions.proxy_service.details import configuration_details
+                result = configuration_details(self.server.proxy_manager, get('id'))
             elif parsed.path in ('/api/context-reference', '/api/handoff'):
                 from agent_sessions.context.handoff import prompt
                 result = prompt(self.server.store, get('id'), get('ref'), self.server.app_settings.path.parent)

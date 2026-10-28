@@ -18,7 +18,6 @@ import { BrowserEnvironments } from './browser-environments';
 import { NetworkDiagnostics } from './network-diagnostics';
 import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
 import { ProxyEnvironments } from './proxy-environments';
-import { ProxyEditor } from './proxy-editor';
 import { Button, ContentDialog, Notice, PageHeading } from './ui';
 import { WorkspacePicker } from './workspace-picker';
 import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
@@ -232,11 +231,12 @@ export function AccountWorkspace({
               data={data}
               busy={busy}
               loading={loading}
-              onEdit={(item) => setEdit({ kind: 'proxies', item })}
+              creating={edit?.kind === 'proxies'}
+              onCreate={() => setEdit({ kind: 'proxies' })}
+              onCloseCreate={() => setEdit(null)}
+              onSaveExternal={(item) => save('proxies', item)}
               onDelete={(id) => void remove('proxies', id)}
-              onCommand={(action, id) =>
-                void proxyCommand(action, id ? { id } : {}).catch(() => {})
-              }
+              onCommand={proxyCommand}
               onInspect={(item) => {
                 if (item.kind === 'managed')
                   void proxyCommand('start', { id: item.id })
@@ -282,15 +282,6 @@ export function AccountWorkspace({
           account={loginAccount}
           data={data}
           onClose={() => setLoginAccountId('')}
-        />
-      )}
-      {edit?.kind === 'proxies' && (
-        <ProxyEditor
-          item={edit.item}
-          data={data}
-          onSaveExternal={(item) => save('proxies', item)}
-          onCommand={proxyCommand}
-          onClose={() => setEdit(null)}
         />
       )}
       {edit && edit.kind !== 'proxies' && (

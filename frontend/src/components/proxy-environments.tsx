@@ -1,38 +1,34 @@
 import { useState } from 'react';
-import {
-  Eye,
-  Globe2,
-  Pencil,
-  Play,
-  Plus,
-  RefreshCw,
-  ScanLine,
-  Square,
-} from 'lucide-react';
+import { Globe2, Plus } from 'lucide-react';
 import type {
   EnvironmentSettings,
   ProxyConfig,
 } from '../lib/environment-settings';
+import type { ProxyCommand } from '../lib/proxy-config';
 import {
   Button,
   BusyState,
   CollectionToolbar,
   CollectionPanel,
   EmptyState,
-  IconButton,
-  RemoveButton,
-  ResourceRow,
   Notice,
+  ResourceRow,
+  SectionHeading,
   StatusBadge,
 } from './ui';
 import { ProxyCoreControl } from './proxy-core-control';
 import { ProxyDetails } from './proxy-details';
+import { ProxyEditor } from './proxy-editor';
+import { ProxyActions } from './proxy-actions';
 
 export function ProxyEnvironments({
   data,
   loading,
   busy,
-  onEdit,
+  creating,
+  onCreate,
+  onCloseCreate,
+  onSaveExternal,
   onDelete,
   onInspect,
   onCommand,
@@ -40,27 +36,37 @@ export function ProxyEnvironments({
   data: EnvironmentSettings;
   loading: boolean;
   busy: boolean;
-  onEdit: (item?: ProxyConfig) => void;
+  creating: boolean;
+  onCreate: () => void;
+  onCloseCreate: () => void;
+  onSaveExternal: (item: ProxyConfig) => Promise<void>;
   onDelete: (id: string) => void;
   onInspect: (proxy: ProxyConfig) => void;
-  onCommand: (
-    action: 'install' | 'start' | 'stop' | 'adopt' | 'refresh',
-    id?: string,
-  ) => void;
+  onCommand: ProxyCommand;
 }) {
   const [query, setQuery] = useState('');
-  const [view, setView] = useState<ProxyConfig>();
+  const [selected, setSelected] = useState('');
+  const [revision, setRevision] = useState(0);
   const visible = data.proxies.filter((item) =>
     `${item.name} ${item.url}`
       .toLowerCase()
       .includes(query.trim().toLowerCase()),
   );
+  const reset = () => {
+    onCloseCreate();
+    setRevision((value) => value + 1);
+  };
+  const saved = (id: string) => {
+    setSelected(id);
+    setQuery('');
+    reset();
+  };
   return (
     <section aria-label="代理配置列表">
       <ProxyCoreControl
         state={data.proxy_runtime}
         busy={busy}
-        onInstall={() => onCommand('install')}
+        onInstall={() => void onCommand('install').catch(() => {})}
       />
       <CollectionPanel
         toolbar={
@@ -75,9 +81,23 @@ export function ProxyEnvironments({
           </CollectionToolbar>
         }
       >
+        {creating && (
+          <section className="proxy-create" aria-label="添加代理">
+            <SectionHeading title="添加代理" />
+            <ProxyEditor
+              key={`new-${revision}`}
+              data={data}
+              busy={busy}
+              onSaveExternal={onSaveExternal}
+              onCommand={onCommand}
+              onClose={reset}
+              onSaved={saved}
+            />
+          </section>
+        )}
         {loading && !data.proxies.length ? (
           <BusyState label="正在读取代理" />
-        ) : !visible.length ? (
+        ) : !visible.length && !creating ? (
           <EmptyState
             icon={<Globe2 size={28} />}
             title={data.proxies.length ? '没有匹配的代理' : '还没有专用代理'}
@@ -85,11 +105,7 @@ export function ProxyEnvironments({
               data.proxies.length ? (
                 <Button onClick={() => setQuery('')}>清除搜索</Button>
               ) : (
-                <Button
-                  variant="primary"
-                  onClick={() => onEdit()}
-                  disabled={busy}
-                >
+                <Button variant="primary" onClick={onCreate} disabled={busy}>
                   <Plus size={16} />
                   添加代理
                 </Button>
@@ -115,6 +131,8 @@ export function ProxyEnvironments({
                     (run.alive || run.status === 'checking'),
                 ),
               );
+              const expanded =
+                !creating && (selected === item.id || selected === item.url);
               return (
                 <ResourceRow
                   key={item.id}
@@ -140,92 +158,32 @@ export function ProxyEnvironments({
                               : '已停止'}
                         </StatusBadge>
                       )}
-                      {service && (
-                        <Button
-                          variant="text"
-                          disabled={busy || (service.alive && running)}
-                          title={
-                            service.alive && running
-                              ? '先关闭使用此代理的环境，再停止代理'
-                              : undefined
-                          }
-                          onClick={() =>
-                            onCommand(service.alive ? 'stop' : 'start', item.id)
-                          }
-                        >
-                          {service.alive ? (
-                            <Square size={16} />
-                          ) : (
-                            <Play size={16} />
-                          )}
-                          {service.alive ? '停止' : '启动'}
-                        </Button>
-                      )}
-                      {data.proxy_runtime?.adoptable.includes(item.id) && (
-                        <Button
-                          disabled={
-                            busy ||
-                            running ||
-                            !data.proxy_runtime.core.available
-                          }
-                          onClick={() => onCommand('adopt', item.id)}
-                        >
-                          交给应用管理
-                        </Button>
-                      )}
-                      <Button
-                        variant="text"
-                        disabled={busy}
-                        aria-label={`检测代理 ${item.name}`}
-                        onClick={() => onInspect(item)}
-                      >
-                        <ScanLine size={16} />
-                        检测
-                      </Button>
-                      <IconButton
-                        label={`查看代理 ${item.name}`}
-                        icon={<Eye size={17} />}
-                        onClick={() => setView(item)}
-                      />
-                      {service?.subscription && (
-                        <IconButton
-                          label={`更新订阅 ${item.name}`}
-                          icon={
-                            <RefreshCw
-                              size={17}
-                              className={
-                                service.subscription.status === 'updating'
-                                  ? 'ui-spin'
-                                  : ''
-                              }
-                            />
-                          }
-                          disabled={
-                            busy || service.subscription.status === 'updating'
-                          }
-                          onClick={() => onCommand('refresh', item.id)}
-                        />
-                      )}
-                      <IconButton
-                        label={`编辑代理 ${item.name}`}
-                        icon={<Pencil size={17} />}
-                        disabled={busy || running}
-                        title={
-                          running
-                            ? '先停止使用此代理的环境，再编辑'
-                            : `编辑代理 ${item.name}`
+                      <ProxyActions
+                        item={item}
+                        service={service}
+                        busy={busy}
+                        running={running}
+                        adoptable={
+                          !!data.proxy_runtime?.adoptable.includes(item.id)
                         }
-                        onClick={() => onEdit(item)}
-                      />
-                      <RemoveButton
-                        label={`移除代理配置 ${item.name}`}
-                        disabled={busy || running}
-                        message="移除此代理配置？绑定此代理的环境需要重新选择出口。"
-                        onRemove={() => onDelete(item.id)}
+                        coreAvailable={!!data.proxy_runtime?.core.available}
+                        expanded={expanded}
+                        onConfigure={() => {
+                          onCloseCreate();
+                          setSelected(expanded ? '' : item.id);
+                        }}
+                        onCommand={onCommand}
+                        onInspect={onInspect}
+                        onDelete={onDelete}
                       />
                     </>
                   }
                 >
+                  {service?.node && !expanded && (
+                    <p className="proxy-node-summary">
+                      {service.node.name} · {service.node.type}
+                    </p>
+                  )}
                   {service?.error && (
                     <Notice tone="error">{service.error}</Notice>
                   )}
@@ -235,21 +193,38 @@ export function ProxyEnvironments({
                   {service?.subscription?.error && (
                     <Notice tone="warning">{service.subscription.error}</Notice>
                   )}
+                  {expanded && (
+                    <section
+                      className="proxy-inline-config"
+                      id={`proxy-config-${item.id}`}
+                      aria-label={`${item.name} 配置`}
+                    >
+                      <ProxyDetails item={item} service={service} />
+                      {running && (
+                        <Notice>
+                          此代理正在被环境使用，停止相关浏览器或 App
+                          后即可修改配置。
+                        </Notice>
+                      )}
+                      <ProxyEditor
+                        key={`${item.id}-${item.kind}-${revision}`}
+                        item={item}
+                        data={data}
+                        busy={busy}
+                        locked={running}
+                        onSaveExternal={onSaveExternal}
+                        onCommand={onCommand}
+                        onClose={reset}
+                        onSaved={saved}
+                      />
+                    </section>
+                  )}
                 </ResourceRow>
               );
             })}
           </div>
         )}
       </CollectionPanel>
-      {view && (
-        <ProxyDetails
-          item={view}
-          service={data.proxy_runtime?.entries.find(
-            (row) => row.id === view.id,
-          )}
-          onClose={() => setView(undefined)}
-        />
-      )}
     </section>
   );
 }

@@ -13,6 +13,7 @@
 @import './skill-dialog.css' layer(components);
 @import './environment-panels.css' layer(components);
 @import './environment-editor.css' layer(components);
+@import './proxies.css' layer(components);
 @import './select.css' layer(components);
 @import './agent-icon.css' layer(components);
 @import './dsh/menu.css' layer(components);

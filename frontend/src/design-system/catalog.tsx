@@ -32,6 +32,7 @@ import {
 } from '../components/ui';
 import './catalog.css';
 import { LayoutPreview } from './layout-preview';
+import { InputPreview } from './input-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
@@ -112,6 +113,7 @@ export function ComponentCatalog() {
         </div>
       ) : (
         <div className="catalog-grid">
+          <InputPreview />
           <Panel title="按钮与状态">
             <div className="ui-actions">
               <Button variant="primary" onClick={() => setDialog(true)}>

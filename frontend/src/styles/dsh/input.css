@@ -1,0 +1,31 @@
+/* Shared DSH input appearance for TextInput, TextArea and SearchField. */
+.text-control {
+  color: var(--dsw-alias-label-primary);
+  font: 14px/22px var(--dsw-font-family);
+}
+.text-control::placeholder {
+  color: var(--dsw-alias-label-secondary);
+  opacity: 1;
+}
+.text-control:focus-visible {
+  border-color: var(--dsw-alias-state-business-primary);
+  outline: none;
+}
+.text-control:disabled {
+  opacity: 0.5;
+}
+.form-input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.form-textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 8px;
+  resize: vertical;
+}

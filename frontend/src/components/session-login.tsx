@@ -4,7 +4,7 @@ import type {
   BrowserAccount,
   BrowserProfile,
 } from '../lib/environment-settings';
-import { Button, EditorDialog, Field, Notice, TextInput } from './ui';
+import { Button, EditorDialog, Field, Notice, TextArea, TextInput } from './ui';
 
 interface SessionJob {
   id: string;
@@ -132,9 +132,9 @@ export function SessionLogin({
             />
           </Field>
           <Field label="sessionKey" htmlFor="session-login-key">
-            <textarea
+            <TextArea
               id="session-login-key"
-              className="form-input app-login-link"
+              className="app-login-link"
               value={secret}
               onChange={(event) => setSecret(event.target.value)}
               disabled={pending}

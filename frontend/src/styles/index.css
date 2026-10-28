@@ -4,6 +4,7 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import './theme.css' layer(components);
+@import './dsh/input.css' layer(components);
 @import './shell.css' layer(components);
 @import './workspace.css' layer(components);
 @import './account-workspace.css' layer(components);

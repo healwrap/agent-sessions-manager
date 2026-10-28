@@ -3,6 +3,7 @@ import type {
   InputHTMLAttributes,
   ReactNode,
   Ref,
+  TextareaHTMLAttributes,
 } from 'react';
 import { useEffect, useRef } from 'react';
 import { Dialog, IconButton } from './primitives';
@@ -11,7 +12,23 @@ export function TextInput({
   className = '',
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
-  return <input className={`form-input ${className}`} {...props} />;
+  return (
+    <input className={`text-control form-input ${className}`} {...props} />
+  );
+}
+
+export function TextArea({
+  className = '',
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  ref?: Ref<HTMLTextAreaElement>;
+}) {
+  return (
+    <textarea
+      className={`text-control form-input form-textarea ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function StatusBadge({

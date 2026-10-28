@@ -31,14 +31,6 @@
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
-  color: var(--dsw-alias-label-primary);
-  font: 14px/22px var(--dsw-font-family);
-}
-.search-field-input:focus-visible {
-  outline: none;
-}
-.search-field-input::placeholder {
-  color: var(--dsw-alias-label-dimmed);
 }
 .search-field-input::-webkit-search-decoration,
 .search-field-input::-webkit-search-cancel-button,

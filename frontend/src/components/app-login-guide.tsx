@@ -5,8 +5,7 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button } from './primitives';
-import { EditorDialog, StatusBadge } from './form-controls';
+import { Button, EditorDialog, StatusBadge, TextArea } from './ui';
 import { BrowserLaunchReport } from './browser-launch-report';
 import '../styles/app-login-guide.css';
 
@@ -185,8 +184,8 @@ export function AppLoginGuide({
             <h3>在绑定的浏览器里完成登录</h3>
             <label className="app-login-field">
               完整登录链接
-              <textarea
-                className="form-input app-login-link"
+              <TextArea
+                className="app-login-link"
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
                 placeholder="粘贴刚复制的 https:// 登录链接"

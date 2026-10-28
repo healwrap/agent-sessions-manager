@@ -6,33 +6,33 @@
 
 对应本机 `deepseek-harness` 源码版本 `717ed6700ae3128f90fe05cbfd22fe6f9483eb18`。DSH 为 MIT 许可，声明保留在 `public/harness-license.txt`。
 
-| 组件 / 规则                  | DSH 原始来源（相对 DSH 仓库）                                                                                                                                              | 本项目适配                                                                |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Button                       | `packages/client/ui-primitives/src/Button.module.css`                                                                                                                      | `styles/dsh/controls.css`                                                 |
-| Disclosure 折叠标题          | `packages/client/ui-primitives/src/DisclosureRow.module.css`                                                                                                               | `styles/disclosure.css`，透明标题，悬停只改变文字颜色；管理区增加点击留白 |
-| Input / SearchField          | `packages/client/ui-primitives/src/Input.module.css`                                                                                                                       | `styles/form-controls.css`、`styles/search-field.css`                     |
-| ChoiceGroup 分段选择         | `packages/client/ui-primitives/src/SegmentedControl.module.css`                                                                                                            | `styles/dsh/choices.css`，保留滑动指示器                                  |
-| ChoiceGroup 下划线导航       | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                                  |
-| Select / 菜单                | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                                       |
-| 状态标签几何                 | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名                       |
-| ContentDialog / EditorDialog | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，共用标题、关闭、滚动体与底部操作区            |
-| 设置面板                     | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                                     |
-| Panel / ResourceCard 材质    | `docs/ui-radius.zh.md` 的设置卡片规范                                                                                                                                      | `styles/ui-foundations.css`                                               |
-| 主题补充                     | `packages/client/ui-theme/src/styles/{design-platform,base,gradient-shadow-text}.css`                                                                                      | `styles/dsh/controls-theme.css`，只补充实际使用的原始别名                 |
+| 组件 / 规则                    | DSH 原始来源（相对 DSH 仓库）                                                                                                                                              | 本项目适配                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Button                         | `packages/client/ui-primitives/src/Button.module.css`                                                                                                                      | `styles/dsh/controls.css`                                                                       |
+| Disclosure 折叠标题            | `packages/client/ui-primitives/src/DisclosureRow.module.css`                                                                                                               | `styles/disclosure.css`，透明标题，悬停只改变文字颜色；管理区增加点击留白                       |
+| Input / TextArea / SearchField | `packages/client/ui-primitives/src/Input.module.css`                                                                                                                       | `styles/dsh/input.css` 统一文字、占位提示、焦点与禁用态；`styles/search-field.css` 负责搜索容器 |
+| ChoiceGroup 分段选择           | `packages/client/ui-primitives/src/SegmentedControl.module.css`                                                                                                            | `styles/dsh/choices.css`，保留滑动指示器                                                        |
+| ChoiceGroup 下划线导航         | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                                                        |
+| Select / 菜单                  | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                                                             |
+| 状态标签几何                   | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名                                             |
+| ContentDialog / EditorDialog   | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，共用标题、关闭、滚动体与底部操作区                                  |
+| 设置面板                       | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                                                           |
+| Panel / ResourceCard 材质      | `docs/ui-radius.zh.md` 的设置卡片规范                                                                                                                                      | `styles/ui-foundations.css`                                                                     |
+| 主题补充                       | `packages/client/ui-theme/src/styles/{design-platform,base,gradient-shadow-text}.css`                                                                                      | `styles/dsh/controls-theme.css`，只补充实际使用的原始别名                                       |
 
 修改视觉前先对照 DSH 原组件和 `docs/web-styling.zh.md`、`docs/ui-radius.zh.md`。主按钮为中性黑白色；业务蓝用于链接与焦点等既有语义，不替换主按钮色。
 
 ## 公共组件
 
-| 类别     | 组件                                                                                                     | 职责                                     |
-| -------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| 基础控件 | Button、IconButton、TextInput、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                      |
-| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                               | 标题、信息分组、图标与事实展示           |
-| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                            | 互斥选择、搜索与筛选                     |
-| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                              | 空列表、加载、操作反馈与移除确认         |
-| 资源展示 | ResourceCard、ResourceRow                                                                                | 组合身份、状态、操作、内容及折叠区       |
-| 表单     | Field                                                                                                    | 标签与控件关联                           |
-| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                       | 页面外壳、导航、工作区切换与全局设置入口 |
+| 类别     | 组件                                                                                                               | 职责                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| 基础控件 | Button、IconButton、TextInput、TextArea、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                      |
+| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                                         | 标题、信息分组、图标与事实展示           |
+| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                                      | 互斥选择、搜索与筛选                     |
+| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                                        | 空列表、加载、操作反馈与移除确认         |
+| 资源展示 | ResourceCard、ResourceRow                                                                                          | 组合身份、状态、操作、内容及折叠区       |
+| 表单     | Field                                                                                                              | 标签与控件关联                           |
+| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                                 | 页面外壳、导航、工作区切换与全局设置入口 |
 
 页面组合是 Agent Sessions 的业务组件，并非声称 DSH 存在同名组件。它们只组合布局与数据，复用 DSH 控件、设置卡片材质和文字层级。
 
@@ -41,6 +41,7 @@
 - 页面使用 `ui-page` 与 PageHeading；按信息分组选择 Panel / ResourceCard，不为装饰而重复套卡片。
 - Button 标准 H36 / R12，紧凑 H28 / R8；`primary`、`outline`、`ghost`、`toolbar` 对应 DSH 原变体。兼容原 API：`secondary` 为描边按钮，`text` 为 ghost。
 - Input H32 / R12、选择器 H36 / R12；控件正文 14px / 22px。不在业务页面覆盖按钮填充、圆角与字号。
+- 单行文字使用 TextInput，多行文字使用 TextArea，搜索使用 SearchField，均从 `components/ui` 导入。三者通过 `text-control` 共用 `styles/dsh/input.css`；占位提示使用 label-secondary 并固定 opacity: 1，禁用态单独处理。业务页面不另写占位提示色；原生 checkbox、range、file 等非文字控件按各自规则保留。
 - Panel / ResourceCard 使用 DSH 设置卡片：R20、0.5px 描边、layer-2 底色，无额外投影。高层级弹窗保留 DSH elevation 与遮罩。
 - ChoiceGroup 分段指示器按 DSH 算法滑动，支持方向键、Home、End，并尊重关闭动画与减少动态效果。
 - LeadingIcon 只容纳图标，不额外添加彩色底框。FactsGrid 展示真实字段，长 IP、路径和时区可换行。

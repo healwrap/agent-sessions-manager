@@ -38,7 +38,7 @@ export function SearchField({
       <Icon name="search" className="search-field-icon" />
       <input
         ref={input}
-        className="search-field-input"
+        className="text-control search-field-input"
         type="search"
         aria-label={label}
         placeholder={placeholder}

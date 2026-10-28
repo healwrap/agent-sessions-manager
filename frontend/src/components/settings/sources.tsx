@@ -1,5 +1,6 @@
 import type { Settings, SettingsResponse } from '../../lib/types';
 import { AgentIcon } from '../agent-icon';
+import { TextInput } from '../ui';
 
 export function SourceSettings({
   draft,
@@ -19,7 +20,7 @@ export function SourceSettings({
         const main = paths[0];
         const changed = draft.paths[main.key] !== data.value.paths[main.key];
         const input = (key: string) => (
-          <input
+          <TextInput
             id={'path-' + key}
             type="text"
             value={draft.paths[key] || ''}

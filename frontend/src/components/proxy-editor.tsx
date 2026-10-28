@@ -12,6 +12,7 @@ import {
   Field,
   Notice,
   Select,
+  TextArea,
   TextInput,
 } from './ui';
 import { ProxyCoreControl } from './proxy-core-control';
@@ -163,9 +164,9 @@ export function ProxyEditor({
       {mode === 'managed' && changing && (
         <>
           <Field label="订阅链接或 Clash 配置" htmlFor="proxy-source">
-            <textarea
+            <TextArea
               id="proxy-source"
-              className="form-input proxy-config-source"
+              className="proxy-config-source"
               value={source}
               autoComplete="off"
               autoCapitalize="off"
@@ -270,9 +271,9 @@ export function ProxyEditor({
         </Field>
       ) : (
         <Field label="直连域名" htmlFor="proxy-direct-domains">
-          <textarea
+          <TextArea
             id="proxy-direct-domains"
-            className="form-input proxy-direct-domains"
+            className="proxy-direct-domains"
             value={domains}
             spellCheck={false}
             placeholder="每行一个域名，例如 company.com"

@@ -1,26 +1,4 @@
-/* Form controls share the DSH Input, selector and settings-dialog tokens. */
-.form-input {
-  width: 100%;
-  min-width: 0;
-  height: 32px;
-  padding: 0 8px;
-  border: 0.5px solid var(--dsw-alias-border-l4);
-  border-radius: var(--dsw-radius-md);
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-primary);
-  font: 14px/22px var(--dsw-font-family);
-}
-.form-input::placeholder {
-  color: var(--dsw-alias-label-dimmed);
-  opacity: 1;
-}
-.form-input:focus-visible {
-  border-color: var(--dsw-alias-state-business-primary);
-  outline: none;
-}
-.form-input:disabled {
-  opacity: 0.5;
-}
+/* Status and dialog controls share the DSH selector/settings tokens. */
 .status-badge {
   display: inline-flex;
   align-items: center;

@@ -2,6 +2,7 @@ export { Button, IconButton } from '../primitives';
 export { SettingsButton } from './settings-button';
 export {
   TextInput,
+  TextArea,
   StatusBadge,
   EditorDialog,
   ContentDialog,

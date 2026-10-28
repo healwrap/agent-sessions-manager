@@ -150,9 +150,17 @@ export function ComponentSettings({ active }: { active: boolean }) {
                   检查更新
                 </Button>
                 <Button
-                  variant={item.managed ? 'secondary' : 'primary'}
+                  variant={item.available ? 'secondary' : 'primary'}
                   disabled={busy || working || !item.supported}
                   onClick={() => void command(item, 'install')}
+                  title={
+                    item.id === 'claude' &&
+                    item.available &&
+                    !item.managed &&
+                    data.platform === 'macOS'
+                      ? '将官方 Claude 另存为应用管理的独立副本'
+                      : undefined
+                  }
                 >
                   <Download size={16} />
                   {working
@@ -164,7 +172,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
                       : item.available
                         ? data.platform === 'Windows' && item.id === 'claude'
                           ? '接管并更新'
-                          : '安装受管版本'
+                          : '安装独立副本'
                         : '安装'}
                 </Button>
                 {item.removable && (

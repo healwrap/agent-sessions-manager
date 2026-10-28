@@ -9,16 +9,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from .browser.gates import definitions, DEFAULTS
 from .browser.proxy import validate_proxy
 from .account_profiles import COLLECTIONS, provision, put
-
-
-def installed_apps():
-    if sys.platform != 'darwin': return []
-    roots = [Path('/Applications'), Path.home()/'Applications', Path.home()/'Desktop']
-    names = [('claude', 'Claude.app'), ('chrome', 'Google Chrome.app')]
-    return [{'id': key, 'name': name[:-4], 'path': str(path)}
-            for key, name in names
-            for path in [next((root/name for root in roots if (root/name).is_dir()), None)]
-            if path is not None]
+from .applications import installed_apps
 
 
 class EnvironmentSettings:
@@ -31,7 +22,7 @@ class EnvironmentSettings:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
                     'app_profiles': [{**row, 'inherit_skills': row.get('inherit_skills', True)} for row in value.get('app_profiles', [])],
-                    'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])], 'apps': installed_apps(), 'gate_definitions': definitions()}
+                    'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])], 'apps': installed_apps(self.path.parent), 'gate_definitions': definitions()}
 
     def change(self, value):
         if not isinstance(value, dict): raise ValueError('环境配置格式无效')

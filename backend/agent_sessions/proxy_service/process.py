@@ -6,6 +6,8 @@ import signal
 import socket
 import subprocess
 import time
+import sys
+from agent_sessions.platform_process import owns, stop_pid, background_options
 
 
 def private_json(path, value):
@@ -44,8 +46,7 @@ class ProxyProcess:
     def alive(self):
         if self.process: return self.process.poll() is None
         if type(self.pid) is not int or self.pid <= 1: return False
-        result = subprocess.run(['ps', '-p', str(self.pid), '-o', 'command='], capture_output=True, text=True)
-        return result.returncode == 0 and result.stdout.strip() == ' '.join(self.command)
+        return owns(self.pid, self.executable, self.command[1:])
 
     def start(self, port):
         if self.alive():
@@ -56,8 +57,9 @@ class ProxyProcess:
         # Limit retained logs between launches; live output stays in the entry directory.
         if log.exists() and log.stat().st_size > 2_000_000: log.replace(log.with_suffix('.previous.log'))
         with open(log, 'ab', opener=lambda name, flags: os.open(name, flags, 0o600)) as output:
+            options = background_options() if sys.platform == 'win32' else {'start_new_session': True}
             self.process = subprocess.Popen(self.command, stdin=subprocess.DEVNULL, stdout=output,
-                                            stderr=subprocess.STDOUT, start_new_session=True)
+                                            stderr=subprocess.STDOUT, **options)
         self.pid = self.process.pid
         private_json(self.directory/'process.json', {'pid': self.pid})
         for _ in range(50):
@@ -69,11 +71,11 @@ class ProxyProcess:
 
     def stop(self):
         if self.alive():
-            os.kill(self.pid, signal.SIGTERM)
+            stop_pid(self.pid)
             for _ in range(30):
                 if not self.alive(): break
                 time.sleep(.1)
-            if self.alive(): os.kill(self.pid, signal.SIGKILL)
+            if self.alive(): stop_pid(self.pid, force=True)
         if self.process:
             self.process.wait(timeout=3)
         self.pid, self.process = None, None

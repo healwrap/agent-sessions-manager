@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import time
+import sys
 import urllib.error
 import urllib.request
 from urllib.parse import unquote, urlsplit
@@ -24,12 +25,13 @@ def read_url(url, accept='application/octet-stream'):
     return data
 
 
-def valid(release, asset):
+def valid(release, asset, platform=None):
+    suffix = '_windows_x64.zip' if (platform or sys.platform) == 'win32' else '_macos.dmg'
     return (bool(VERSION.fullmatch(release.get('tag_name', ''))) and
             release.get('html_url') == WEB+'/releases/tag/'+release['tag_name'] and
             bool(DIGEST.fullmatch(asset.get('digest') or '')) and
             asset.get('browser_download_url', '').startswith(WEB+'/releases/download/'+release['tag_name']+'/') and
-            asset.get('name', '').endswith('_macos.dmg'))
+            asset.get('name', '').endswith(suffix))
 
 
 class ReleaseAssets(HTMLParser):
@@ -42,7 +44,7 @@ class ReleaseAssets(HTMLParser):
         if tag == 'a':
             href = attrs.get('href', '')
             name = unquote(urlsplit(href).path.rsplit('/', 1)[-1])
-            if href.startswith('/'+REPOSITORY+'/releases/download/') and name.endswith('_macos.dmg'):
+            if href.startswith('/'+REPOSITORY+'/releases/download/') and name.endswith(('_macos.dmg', '_windows_x64.zip')):
                 self.links[name] = 'https://github.com'+href
         if tag == 'clipboard-copy':
             label, digest = attrs.get('aria-label', ''), attrs.get('value', '')
@@ -65,10 +67,10 @@ def public_release():
         for name, download in parser.links.items():
             asset = {'name': name, 'digest': parser.digests.get(name, ''), 'browser_download_url': download}
             if valid(release, asset): return release, asset
-    raise ValueError('上游发布页没有提供带 SHA256 的 macOS 内核')
+    raise ValueError('上游发布页没有提供带 SHA256 的适用内核')
 
 
-def latest_macos(directory):
+def latest_platform(directory):
     cache = Path(directory)/'release-cache.json'
     try:
         value = json.loads(cache.read_text())
@@ -79,7 +81,7 @@ def latest_macos(directory):
         releases = json.loads(read_url(API, 'application/vnd.github+json'))
         selected = next(((release, asset) for release in releases if not release['prerelease'] and not release['draft']
                          for asset in release['assets'] if valid(release, asset)), None)
-        if not selected: raise ValueError('上游暂未提供带校验值的 macOS 内核')
+        if not selected: raise ValueError('上游暂未提供带校验值的适用内核')
     except (urllib.error.URLError, TimeoutError, OSError) as api_error:
         try: selected = public_release()
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, ElementTree.ParseError) as page_error:
@@ -89,3 +91,6 @@ def latest_macos(directory):
     temporary.write_text(json.dumps({'checked_at': time.time(), 'release': selected[0], 'asset': selected[1]}))
     temporary.replace(cache)
     return selected[0], selected[1], False
+
+
+latest_macos = latest_platform

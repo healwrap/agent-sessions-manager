@@ -7,12 +7,13 @@ import os
 from pathlib import Path
 import plistlib
 import sys
+from agent_sessions.applications import app_executable
 
 
 @lru_cache(maxsize=12)
 def fingerprint_capable(path, modified):
     executable = Path(path)
-    framework = executable.parents[1]/'Frameworks/Chromium Framework.framework/Chromium Framework'
+    framework = executable.parent/'chrome.dll' if executable.suffix.lower() == '.exe' else executable.parents[1]/'Frameworks/Chromium Framework.framework/Chromium Framework'
     binary = framework if framework.is_file() else executable
     try:
         with binary.open('rb') as handle, mmap.mmap(handle.fileno(), 0, access=mmap.ACCESS_READ) as data:
@@ -39,6 +40,8 @@ def discover(directory):
             with (path.parents[1]/'Info.plist').open('rb') as handle:
                 version = str(plistlib.load(handle).get('CFBundleShortVersionString', ''))
         except (OSError, ValueError): pass
+        if not version and manifest.exists():
+            version = json.loads(manifest.read_text()).get('version', '')
         return {'available': True, 'name': 'Fingerprint Chromium', 'version': version,
                 'path': str(path), 'source': source}
     return {'available': False, 'name': 'Fingerprint Chromium', 'version': '', 'path': '', 'source': ''}
@@ -51,6 +54,6 @@ def seed_number(value):
 def for_profile(profile, directory, apps):
     if profile['engine'] != 'chrome': return discover(directory)
     app = next((row for row in apps if row['id'] == 'chrome'), None)
-    path = Path(app['path'])/'Contents/MacOS/Google Chrome' if app else None
+    path = Path(app_executable(app)) if app else None
     return {'available': bool(path and path.is_file()), 'name': 'Google Chrome', 'path': str(path or ''),
-            'source': '本机安装', 'version': ''}
+            'source': 'Agent Sessions 管理' if app and app.get('managed') else '本机安装', 'version': app.get('version', '') if app else ''}

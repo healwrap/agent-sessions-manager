@@ -15,12 +15,12 @@ from agent_sessions.browser.process_state import ProcessState
 from .conflicts import warnings
 from .focus import focus_process, quit_process
 from .skills import sync_skills
+from agent_sessions.platform_process import claude_processes
+from agent_sessions.applications import app_executable
 
 
 def app_processes():
-    rows = subprocess.run(['ps', '-axo', 'pid=,comm='], capture_output=True, text=True, timeout=5).stdout.splitlines()
-    return [int(row.strip().split(None, 1)[0]) for row in rows
-            if row.strip().endswith('/Claude.app/Contents/MacOS/Claude')]
+    return claude_processes()
 
 
 class AppRuntime:
@@ -33,7 +33,7 @@ class AppRuntime:
         self.registry = ProcessState(self.directory)
         settings = self.environments.read()
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
-        executable = str(Path(app['path'])/'Contents/MacOS/Claude') if app else ''
+        executable = app_executable(app) if app else ''
         self.runs, self.processes = self.registry.restore(settings['app_profiles'], self.profile_directory, lambda profile: executable)
 
     def profile_directory(self, key):
@@ -77,12 +77,14 @@ class AppRuntime:
         key = account.get('app_profile_id') if account else value.get('profile_id')
         profile = next((row for row in settings['app_profiles'] if row['id'] == key), None)
         if not profile: raise ValueError('请为账号绑定 Claude App 环境')
+        if getattr(self, 'component_guard', None): self.component_guard('claude')
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
         if not app: raise ValueError('请先安装官方 Claude App')
         proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not proxy: raise ValueError('绑定的代理不存在')
         with self.lock:
             if any(row['status'] == 'checking' for row in self.runs.values()): raise ValueError('正在切换 App 环境，请稍候')
+            if getattr(self, 'component_guard', None): self.component_guard('claude')
             process = self.processes.get(key)
             if process and process.poll() is None: raise ValueError('此 App 环境已打开')
             self.processes.pop(key, None)
@@ -116,7 +118,7 @@ class AppRuntime:
                 preferences = json.loads(settings_file.read_text()) if settings_file.exists() else {}
                 requested_locale = resolved['locale']
                 ui_locale = {'zh-CN': 'zh-Hans', 'zh-TW': 'zh-Hant', 'zh-HK': 'zh-Hant'}.get(requested_locale, requested_locale)
-                resources = Path(app['path'])/'Contents/Resources'
+                resources = Path(app['path'])/'Contents/Resources' if Path(app['path']).suffix.lower() == '.app' else Path(app_executable(app)).parent/'resources'
                 if not (resources/(ui_locale+'.json')).is_file(): ui_locale = ui_locale.split('-')[0]
                 preferences['locale'] = ui_locale
                 temporary = settings_file.with_suffix('.tmp')
@@ -125,9 +127,9 @@ class AppRuntime:
                 relay = ProxyRelay(proxy['url'] if proxy else '')
                 relay.released = True
                 self.relays[key] = relay
-                env = {name: value for name, value in os.environ.items() if name in ('HOME', 'PATH', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'SYSTEMROOT', 'WINDIR')}
+                env = {name: value for name, value in os.environ.items() if name in ('HOME', 'PATH', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'SYSTEMROOT', 'WINDIR', 'APPDATA', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP', 'TMP', 'COMSPEC', 'PATHEXT')}
                 env.update(CLAUDE_CONFIG_DIR=str(config), TZ=resolved['timezone'])
-                args = [str(Path(app['path'])/'Contents/MacOS/Claude'), '--user-data-dir='+str(directory),
+                args = [app_executable(app), '--user-data-dir='+str(directory),
                         '--proxy-server=http://127.0.0.1:'+str(relay.server_port),
                         '--lang='+resolved['locale'], '--accept-lang='+resolved['locale'], '--disable-quic',
                         '--force-webrtc-ip-handling-policy=disable_non_proxied_udp']
@@ -163,7 +165,10 @@ class AppRuntime:
             if process and process.poll() is None:
                 if not quit_process(process.pid): process.terminate()
                 try: process.wait(timeout=20)
-                except subprocess.TimeoutExpired: raise ValueError('App 尚未退出，请关闭它的窗口后重试') from None
+                except subprocess.TimeoutExpired:
+                    if os.sys.platform != 'win32': raise ValueError('App 尚未退出，请关闭它的窗口后重试') from None
+                    process.terminate()
+                    process.wait(timeout=5)
             relay = self.relays.pop(key, None)
             if relay: relay.close()
             self.runs[key].update(status='stopped', stage='App 已停止，登录状态保留')

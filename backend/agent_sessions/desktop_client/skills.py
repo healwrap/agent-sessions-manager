@@ -1,6 +1,7 @@
 """Link authored local skills into an account's otherwise private Code config."""
 import json
 import os
+import sys
 from pathlib import Path
 
 
@@ -9,7 +10,7 @@ def sync_skills(config, enabled=True, home=None):
     source = (Path(home) if home is not None else Path.home())/'.claude/skills'
     destination = config/'skills'
     manifest = config/'.agent-sessions-skills.json'
-    if destination.is_symlink():
+    if destination.is_symlink() or os.path.isjunction(destination):
         raise ValueError('此环境的 skills 目录指向其他目录，请先恢复为独立目录')
     previous = json.loads(manifest.read_text()) if manifest.exists() else {}
     if (not isinstance(previous, dict) or any(not isinstance(name, str) or Path(name).name != name
@@ -22,8 +23,10 @@ def sync_skills(config, enabled=True, home=None):
     managed = {}
     for name, target in previous.items():
         path = destination/name
-        if path.is_symlink() and os.readlink(path) == target:
+        linked = path.is_symlink() or os.path.isjunction(path)
+        if linked and path.resolve() == Path(target).resolve():
             if available.get(name) == target: managed[name] = target
+            elif os.path.isjunction(path): path.rmdir()
             else: path.unlink()
     inherited, overrides = [], []
     if available:
@@ -31,9 +34,12 @@ def sync_skills(config, enabled=True, home=None):
         for name, target in available.items():
             path = destination/name
             if not os.path.lexists(path):
-                path.symlink_to(target, target_is_directory=True)
+                if sys.platform == 'win32':
+                    import _winapi
+                    _winapi.CreateJunction(target, str(path))
+                else: path.symlink_to(target, target_is_directory=True)
                 managed[name] = target
-            if path.is_symlink() and os.readlink(path) == target: inherited.append(name)
+            if (path.is_symlink() or os.path.isjunction(path)) and path.resolve() == Path(target).resolve(): inherited.append(name)
             else: overrides.append(name)
     if available or previous or manifest.exists():
         config.mkdir(parents=True, exist_ok=True)

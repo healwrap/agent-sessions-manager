@@ -18,6 +18,16 @@ def command(*args):
 
 def inspect_network():
     rows = []
+    if sys.platform == 'win32':
+        from agent_sessions.platform_process import powershell
+        import json
+        try:
+            value = json.loads(powershell("$p=Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'; $d=Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses.Count -gt 0}; @{enabled=[bool]$p.ProxyEnable;pac=$p.AutoConfigURL;dns=@($d.ServerAddresses | Sort-Object -Unique);timezone=(Get-TimeZone).Id} | ConvertTo-Json -Compress"))
+            return [item('system-proxy', '系统代理', 'info', '已开启' if value['enabled'] or value.get('pac') else '未开启', ''),
+                    item('dns-config', '本机 DNS 解析器', 'info', '、'.join(value.get('dns', [])), ''),
+                    item('system-timezone', '电脑时区', 'info', value.get('timezone', ''), '')]
+        except (ValueError, OSError, subprocess.TimeoutExpired):
+            return [item('system-network', '系统代理与 DNS', 'unknown', 'Windows 未返回网络配置', '')]
     if sys.platform != 'darwin':
         return [item('system-network', '系统代理与 DNS', 'unknown', '当前平台暂未读取',
                      '网络检测仍可使用系统路由或指定代理。')]

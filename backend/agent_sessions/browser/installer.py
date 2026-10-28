@@ -9,6 +9,7 @@ import threading
 import urllib.request
 from uuid import uuid4
 from .releases import latest_macos
+from agent_sessions.components.artifacts import extract_zip
 
 
 class KernelInstaller:
@@ -24,10 +25,13 @@ class KernelInstaller:
         with self.lock: self.result.update(value)
 
     def start(self, check_only=False):
-        if sys.platform != 'darwin': raise ValueError('当前内置安装器支持 macOS，可自行指定独立内核路径')
+        if sys.platform not in ('darwin', 'win32'): raise ValueError('内置安装器支持 macOS 和 Windows')
+        if sys.platform == 'darwin':
+            import platform
+            if platform.machine() not in ('arm64', 'aarch64'): raise ValueError('上游指纹内核仅提供 Apple Silicon 版本，Intel Mac 请安装受管 Chrome')
         with self.lock:
             if self.result['state'] in ('checking', 'installing'): return self.state()
-            self.result = {'state': 'checking' if check_only else 'installing', 'progress': 0, 'message': '正在查询 macOS 内核版本', 'error': ''}
+            self.result = {'state': 'checking' if check_only else 'installing', 'progress': 0, 'message': '正在查询浏览器内核版本', 'error': ''}
         threading.Thread(target=self._install, args=(check_only,), daemon=True).start()
         return self.state()
 
@@ -36,6 +40,9 @@ class KernelInstaller:
         mount = staging/'mount'
         mounted = False
         try:
+            if sys.platform == 'win32':
+                self._windows(check_only, staging)
+                return
             release, asset, cached = latest_macos(self.directory)
             version, url = release['tag_name'], asset['browser_download_url']
             self.update(version=version)
@@ -92,6 +99,32 @@ class KernelInstaller:
             if mounted:
                 subprocess.run(['hdiutil', 'detach', str(mount)], capture_output=True, timeout=30)
             if not mount.is_mount(): shutil.rmtree(staging, ignore_errors=True)
+
+    def _windows(self, check_only, staging):
+        from .kernel import discover, fingerprint_capable
+        from agent_sessions.components.artifacts import download
+        release, asset, _ = latest_macos(self.directory)
+        version = release['tag_name']
+        current = discover(self.directory)
+        self.update(version=version)
+        if check_only:
+            same = current['available'] and tuple(map(int, current['version'].split('.'))) >= tuple(map(int, version.split('.')))
+            self.update(state='ready' if same else 'update_available', progress=100, message='检查完成')
+            return
+        staging.mkdir(parents=True, mode=0o700)
+        archive = staging/'browser.zip'
+        digest = download(asset['browser_download_url'], archive, self.update, asset['digest'], asset.get('size', 0))
+        extract_zip(archive, staging/'unpacked')
+        executable = next((staging/'unpacked').rglob('chrome.exe'), None)
+        if not executable or not fingerprint_capable(str(executable), executable.stat().st_mtime_ns):
+            raise ValueError('下载的 Windows 内核没有提供指纹能力')
+        destination = self.directory/'versions'/version
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.exists(): shutil.rmtree(destination)
+        shutil.move(str(staging/'unpacked'), destination)
+        executable = next(destination.rglob('chrome.exe'))
+        self._manifest(version, executable, release['html_url'], digest)
+        self.update(state='ready', progress=100, message='Windows 浏览器内核已安装')
 
     def _manifest(self, version, executable, source, digest):
         manifest = self.directory/'current.json'

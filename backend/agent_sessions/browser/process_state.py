@@ -7,6 +7,7 @@ import subprocess
 import threading
 import time
 from .gates import blocked
+from agent_sessions.platform_process import command_line, executable, same_path, stop_pid
 
 
 class OwnedProcess:
@@ -16,19 +17,17 @@ class OwnedProcess:
 
     def poll(self):
         if self.returncode is not None: return self.returncode
-        result = subprocess.run(['ps', '-p', str(self.pid), '-o', 'args='], capture_output=True, text=True, timeout=3)
-        command = result.stdout.strip()
+        command = command_line(self.pid)
         marker = '--user-data-dir='+self.directory
-        owned = bool(self.executable and command.startswith(self.executable+' ') and
-                     (marker+' ' in command or command.endswith(marker)))
+        owned = bool(command and same_path(executable(self.pid) or command[0], self.executable) and marker in command)
         if not owned: self.returncode = 0
         return self.returncode
 
     def terminate(self):
-        if self.poll() is None: os.kill(self.pid, signal.SIGTERM)
+        if self.poll() is None: stop_pid(self.pid)
 
     def kill(self):
-        if self.poll() is None: os.kill(self.pid, signal.SIGKILL)
+        if self.poll() is None: stop_pid(self.pid, force=True)
 
     def wait(self, timeout):
         deadline = time.monotonic()+timeout

@@ -145,8 +145,6 @@ class AppRuntime:
                         '--proxy-server=http://127.0.0.1:'+str(relay.server_port),
                         '--lang='+resolved['locale'], '--accept-lang='+resolved['locale'], '--disable-quic',
                         '--force-webrtc-ip-handling-policy=disable_non_proxied_udp']
-                if proxy:
-                    args += ['--dns-prefetch-disable', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1']
                 with (directory/'app-launch.log').open('ab') as log:
                     process = subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
                 self.processes[key] = process

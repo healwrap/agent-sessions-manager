@@ -28,7 +28,7 @@ class KernelInstaller:
         if sys.platform not in ('darwin', 'win32'): raise ValueError('内置安装器支持 macOS 和 Windows')
         if sys.platform == 'darwin':
             import platform
-            if platform.machine() not in ('arm64', 'aarch64'): raise ValueError('上游指纹内核仅提供 Apple Silicon 版本，Intel Mac 请安装受管 Chrome')
+            if platform.machine() not in ('arm64', 'aarch64'): raise ValueError('上游指纹内核暂时仅提供 Apple Silicon 版本')
         with self.lock:
             if self.result['state'] in ('checking', 'installing'): return self.state()
             self.result = {'state': 'checking' if check_only else 'installing', 'progress': 0, 'message': '正在查询浏览器内核版本', 'error': ''}

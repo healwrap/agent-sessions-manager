@@ -2,20 +2,21 @@
 from pathlib import Path
 import platform
 import sys
-from agent_sessions.applications import installed_apps, managed_app
+from agent_sessions.applications import installed_apps
 from agent_sessions.browser import kernel
 from agent_sessions.platform_process import claude_processes
 from .artifacts import remove_owned
 from .desktop_installer import DesktopInstaller
+from .native_uninstall import removable
 
-NAMES = {'fingerprint': 'Fingerprint Chromium', 'chrome': 'Google Chrome', 'mihomo': 'Mihomo', 'claude': 'Claude App'}
+NAMES = {'fingerprint': 'Fingerprint Chromium', 'mihomo': 'Mihomo', 'claude': 'Claude App'}
 
 
 class ComponentManager:
     def __init__(self, directory, browser, app, proxies):
         self.directory = Path(directory)
         self.browser, self.app, self.proxies = browser, app, proxies
-        self.desktop = {key: DesktopInstaller(directory, key) for key in ('chrome', 'claude')}
+        self.desktop = {'claude': DesktopInstaller(directory)}
 
     def installer(self, key):
         return self.browser.installer if key == 'fingerprint' else self.proxies.core if key == 'mihomo' else self.desktop[key]
@@ -44,6 +45,7 @@ class ComponentManager:
                 owned = bool(app and app.get('managed'))
             supported = sys.platform in ('darwin', 'win32') and not (key == 'fingerprint' and sys.platform == 'darwin' and platform.machine() not in ('arm64', 'aarch64'))
             rows.append({'id': key, 'name': name, **found, 'managed': owned, 'supported': supported,
+                         'removable': owned or key == 'claude' and bool(app) and removable(app),
                          'source': '应用管理' if owned else '本机安装' if found['available'] else '尚未安装',
                          'installation': self.operation(key)})
         return {'platform': 'Windows' if sys.platform == 'win32' else 'macOS' if sys.platform == 'darwin' else sys.platform,
@@ -51,10 +53,10 @@ class ComponentManager:
 
     def _mutable(self, key):
         self.ready(key)
-        if key in ('chrome', 'fingerprint'):
+        if key == 'fingerprint':
             profiles = self.browser.environments.read()['profiles']
             for profile in profiles:
-                if (profile['engine'] == 'chrome') != (key == 'chrome'): continue
+                if profile['engine'] == 'chrome': continue
                 run = self.browser.runs.get(profile['id'], {})
                 process = self.browser.processes.get(profile['id'])
                 if run.get('status') == 'checking' or process and process.poll() is None:
@@ -73,18 +75,20 @@ class ComponentManager:
         with runtime.lock: return self._command(value)
 
     def _command(self, value):
-        if not isinstance(value, dict) or set(value) != {'id', 'action'}: raise ValueError('组件操作参数无效')
+        fields = {'id', 'action', 'path'} if value.get('action') == 'remove' else {'id', 'action'}
+        if set(value) != fields: raise ValueError('组件操作参数无效')
         key, action = value['id'], value['action']
         if key not in NAMES or action not in ('check', 'install', 'remove'): raise ValueError('组件操作无效')
         if action != 'check': self._mutable(key)
         if action == 'remove':
             row = next(item for item in self.state()['items'] if item['id'] == key)
-            if not row['managed']: raise ValueError('只能卸载由本应用管理的组件')
-            if key in self.desktop: self.desktop[key].start(action)
+            if not row['removable']: raise ValueError('此安装无法从应用内卸载，请使用系统卸载入口')
+            if value['path'] != row['path']: raise ValueError('组件安装位置已变化，请重新确认卸载')
+            if key in self.desktop: self.desktop[key].start(action, path=row['path'])
             else:
                 root = self.browser.directory/'kernel' if key == 'fingerprint' else self.proxies.core.directory
                 remove_owned(root)
-                self.installer(key).update(state='idle', progress=0, error='', message='组件已卸载，环境数据保留')
+                self.installer(key).update(state='idle', progress=100, error='', message='组件已卸载，环境数据保留')
                 if key == 'mihomo': self.proxies.processes.clear()
         elif key == 'fingerprint': self.browser.installer.start(check_only=action == 'check')
         elif key == 'mihomo': self.proxies.core.install(check_only=action == 'check')

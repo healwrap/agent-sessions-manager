@@ -1,4 +1,4 @@
-"""Resolve current official Chrome for Testing and Claude release packages."""
+"""Resolve the current official Claude release package."""
 import json
 import platform
 import re
@@ -14,21 +14,9 @@ def read_json(url):
     return json.loads(data)
 
 
-def latest(key):
+def latest():
     arm = platform.machine().lower() in ('arm64', 'aarch64')
     if sys.platform not in ('darwin', 'win32'): raise ValueError('组件安装支持 Windows 和 macOS')
-    if key == 'chrome':
-        target = 'win64' if sys.platform == 'win32' else 'mac-arm64' if arm else 'mac-x64'
-        release = read_json('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json')['channels']['Stable']
-        if not re.fullmatch(r'\d+(?:\.\d+){3}', release['version']): raise ValueError('Chrome 官方版本号无效')
-        asset = next(row for row in release['downloads']['chrome'] if row['platform'] == target)
-        url = asset['url']
-        if not url.startswith('https://storage.googleapis.com/chrome-for-testing-public/'+release['version']+'/'):
-            raise ValueError('Chrome 官方下载地址无效')
-        if sys.platform == 'darwin':
-            return {'version': release['version'], 'url': 'https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg', 'format': 'dmg'}
-        return {'version': release['version'], 'url': url, 'format': 'zip'}
-    if key != 'claude': raise ValueError('组件不存在')
     if sys.platform == 'darwin':
         feed = read_json('https://downloads.claude.ai/releases/darwin/universal/RELEASES.json')
         version = feed['currentRelease']

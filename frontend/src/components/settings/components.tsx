@@ -19,10 +19,11 @@ import {
 } from '../ui';
 
 type Component = {
-  id: 'fingerprint' | 'chrome' | 'mihomo' | 'claude';
+  id: 'fingerprint' | 'mihomo' | 'claude';
   name: string;
   available: boolean;
   managed: boolean;
+  removable: boolean;
   supported: boolean;
   path: string;
   version: string;
@@ -38,7 +39,6 @@ type Component = {
 type State = { platform: string; architecture: string; items: Component[] };
 const icons = {
   fingerprint: PanelsTopLeft,
-  chrome: PanelsTopLeft,
   mihomo: Globe2,
   claude: Monitor,
 };
@@ -81,7 +81,15 @@ export function ComponentSettings({ active }: { active: boolean }) {
     setError('');
     try {
       setData(
-        await request<State>('/api/components', {}, { id: item.id, action }),
+        await request<State>(
+          '/api/components',
+          {},
+          {
+            id: item.id,
+            action,
+            ...(action === 'remove' ? { path: item.path } : {}),
+          },
+        ),
       );
       setRemoving(undefined);
     } catch (reason) {
@@ -159,7 +167,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
                           : '安装受管版本'
                         : '安装'}
                 </Button>
-                {item.managed && (
+                {item.removable && (
                   <Button
                     disabled={busy || working}
                     onClick={() => setRemoving(item)}
@@ -173,9 +181,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
           >
             {item.path && <code className="component-path">{item.path}</code>}
             {!item.supported && (
-              <Notice>
-                此架构没有适用的指纹浏览器发行包，可使用受管 Chrome
-              </Notice>
+              <Notice>此架构暂时没有适用的 Fingerprint Chromium 发行包</Notice>
             )}
             {working && (
               <div role="status">
@@ -184,6 +190,9 @@ export function ComponentSettings({ active }: { active: boolean }) {
               </div>
             )}
             {job.error && <Notice tone="error">{job.error}</Notice>}
+            {job.state === 'idle' && job.progress === 100 && (
+              <div role="status">{job.message}</div>
+            )}
           </ResourceCard>
         );
       })}
@@ -209,12 +218,18 @@ export function ComponentSettings({ active }: { active: boolean }) {
           }
         >
           <p>
-            卸载此受管组件，保留账号、环境配置与独立登录数据。使用此组件的环境需要重新安装后才能启动。
+            {removing.managed
+              ? '卸载以下受管组件。'
+              : data.platform === 'macOS'
+                ? '将以下本机应用移入废纸篓。'
+                : '使用 Windows 卸载以下本机应用。'}
+            保留本应用中的账号、环境配置与独立登录数据。
           </p>
+          <code className="component-path">{removing.path}</code>
           {data.platform === 'Windows' && removing.id === 'claude' && (
             <p>
-              Windows 会卸载官方 MSIX
-              包及其自身的本地应用数据。本应用保存的独立账号与环境数据仍会保留。
+              Windows 卸载器可能清除 Claude
+              自身的本地应用数据。本应用保存的独立账号与环境数据仍会保留。
             </p>
           )}
         </ContentDialog>

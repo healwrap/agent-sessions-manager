@@ -97,14 +97,14 @@ class BrowserRuntime:
         if not profile: raise ValueError('请选择已保存的浏览器环境')
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')
-        if getattr(self, 'component_guard', None): self.component_guard('chrome' if profile['engine'] == 'chrome' else 'fingerprint')
+        if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
         found = kernel.for_profile(profile, self.directory/'kernel', settings['apps'])
         if not found['available']: raise ValueError('未找到 '+found['name']+'，请先安装对应浏览器')
         with self.lock:
             process = self.processes.get(key)
             if (process and process.poll() is None) or self.runs.get(key, {}).get('status') == 'checking':
                 raise ValueError('此环境正在运行或检查，请先停止后再启动')
-            if getattr(self, 'component_guard', None): self.component_guard('chrome' if profile['engine'] == 'chrome' else 'fingerprint')
+            if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
             self.processes.pop(key, None)
             self.runs[key] = {'profile_id': key, 'account_id': account['id'] if account else '',
                               'name': profile['name'], 'status': 'checking', 'stage': '正在检查代理出口',

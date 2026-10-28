@@ -115,7 +115,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
             title={item.name}
             icon={
               item.id === 'claude' ? (
-                <AgentIcon source="claude" monochrome />
+                <AgentIcon source="claude" />
               ) : (
                 <img
                   className="agent-icon"

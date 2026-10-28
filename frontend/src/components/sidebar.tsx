@@ -87,7 +87,7 @@ export function Sidebar({
             ).map(({ id, label }) => ({
               value: id,
               label,
-              icon: <AgentIcon source={id} />,
+              icon: <AgentIcon source={id} monochrome />,
             })),
           ]}
         />

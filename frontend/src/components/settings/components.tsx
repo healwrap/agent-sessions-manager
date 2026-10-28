@@ -8,6 +8,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { request } from '../../lib/api';
+import { AgentIcon } from '../agent-icon';
 import {
   Button,
   BusyState,
@@ -111,7 +112,13 @@ export function ComponentSettings({ active }: { active: boolean }) {
           <ResourceCard
             key={item.id}
             title={item.name}
-            icon={<Symbol size={22} />}
+            icon={
+              item.id === 'claude' ? (
+                <AgentIcon source="claude" monochrome />
+              ) : (
+                <Symbol size={22} />
+              )
+            }
             subtitle={[item.version, item.source].filter(Boolean).join(' · ')}
             badge={
               <StatusBadge
@@ -204,6 +211,12 @@ export function ComponentSettings({ active }: { active: boolean }) {
           <p>
             卸载此受管组件，保留账号、环境配置与独立登录数据。使用此组件的环境需要重新安装后才能启动。
           </p>
+          {data.platform === 'Windows' && removing.id === 'claude' && (
+            <p>
+              Windows 会卸载官方 MSIX
+              包及其自身的本地应用数据。本应用保存的独立账号与环境数据仍会保留。
+            </p>
+          )}
         </ContentDialog>
       )}
     </div>

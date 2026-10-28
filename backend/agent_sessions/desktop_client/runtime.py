@@ -64,7 +64,7 @@ class AppRuntime:
             process = self.processes.get(key)
             if self.runs.get(key, {}).get('status') == 'checking': return self.state()
             if process and process.poll() is None and self.runs[key]['status'] == 'running':
-                if not focus_process(process.pid): raise ValueError('App 仍在运行，请从程序坞打开它的窗口')
+                if not focus_process(process.pid): raise ValueError('App 仍在运行，请切换到它的窗口')
                 return self.state()
             if process and process.poll() is None: self.stop(key)
         return self.launch(value)

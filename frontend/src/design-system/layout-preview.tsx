@@ -36,6 +36,7 @@ export function LayoutPreview() {
   const [client, setClient] = useState('browser');
   const [query, setQuery] = useState('');
   const [running, setRunning] = useState(false);
+  const [navigationWidth, setNavigationWidth] = useState<number>();
   const visible = examples.filter((item) => item.name.includes(query));
   const current = visible.find((item) => item.id === selected) || visible[0];
   return (
@@ -73,6 +74,8 @@ export function LayoutPreview() {
           />
         ) : layout === 'accounts' ? (
           <MasterDetail
+            navigationWidth={navigationWidth}
+            onNavigationResize={setNavigationWidth}
             navigation={
               <div
                 className="accounts-list"

@@ -21,6 +21,8 @@ import { StatusBadge } from './form-controls';
 import { AgentIcon } from './agent-icon';
 import { KernelControl } from './kernel-control';
 import { AccountDetails } from './account-details';
+import { useSessionStore } from '../hooks/use-session-store';
+import { sessionStore } from '../state/session-store';
 
 export function BrowserAccounts({
   data,
@@ -34,6 +36,7 @@ export function BrowserAccounts({
   loading: boolean;
   onInstall: (action: 'check' | 'install') => void;
 }) {
+  const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -154,6 +157,16 @@ export function BrowserAccounts({
           />
         ) : (
           <MasterDetail
+            navigationWidth={preferences.accountListWidth}
+            onNavigationResize={(width) => {
+              const { accountListWidth: _, ...preferences } =
+                sessionStore.state.preferences;
+              void sessionStore.savePreferences(
+                width === undefined
+                  ? preferences
+                  : { ...preferences, accountListWidth: width },
+              );
+            }}
             navigation={
               <div className="accounts-list" role="group" aria-label="账号列表">
                 {visible.map(({ account, status }) => (

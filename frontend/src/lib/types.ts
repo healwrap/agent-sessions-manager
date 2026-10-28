@@ -61,6 +61,7 @@ export interface Settings {
 export interface Preferences {
   sidebarWidth?: number;
   detailWidth?: number;
+  accountListWidth?: number;
   showSubagents?: boolean;
   pinned: string[];
   archived: string[];

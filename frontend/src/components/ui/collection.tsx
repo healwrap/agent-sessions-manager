@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { SearchField } from '../search-field';
 import { Panel } from './layout';
+import { usePaneResize } from '../../hooks/use-pane-resize';
 
 export function ChoiceGroup<T extends string>({
   label,
@@ -129,13 +130,38 @@ export function CollectionPanel({
 export function MasterDetail({
   navigation,
   children,
+  navigationWidth,
+  onNavigationResize,
 }: {
   navigation: ReactNode;
   children: ReactNode;
+  navigationWidth?: number;
+  onNavigationResize?: (width?: number) => void;
 }) {
+  const resize = usePaneResize({
+    edge: 'right',
+    width: navigationWidth,
+    min: 220,
+    max: (pane) =>
+      Math.max(220, Math.min(520, pane.parentElement!.clientWidth - 360)),
+    property: '--master-navigation-width',
+    target: (pane) => pane.parentElement!,
+    onCommit: (width) => onNavigationResize?.(width),
+  });
   return (
     <div className="ui-master-detail">
-      <div className="ui-master-navigation">{navigation}</div>
+      <div className="ui-master-navigation">
+        {navigation}
+        {onNavigationResize && (
+          <div
+            role="separator"
+            aria-label="调整列表宽度"
+            aria-orientation="vertical"
+            tabIndex={0}
+            {...resize}
+          />
+        )}
+      </div>
       <div className="ui-master-content">{children}</div>
     </div>
   );

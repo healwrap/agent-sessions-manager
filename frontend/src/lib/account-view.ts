@@ -20,6 +20,7 @@ export interface AccountActions {
   onEditAccount: (account?: BrowserAccount) => void;
   onDelete: (id: string) => void;
   onLogin: (account: BrowserAccount) => void;
+  onSessionLogin: (account: BrowserAccount) => void;
   onEditProfile: (kind: 'profiles' | 'app_profiles', id: string) => void;
   onRuntime: (
     action: 'open' | 'stop',

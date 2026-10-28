@@ -12,6 +12,7 @@ import { BrowserAccounts } from './browser-accounts';
 import { AgentIcon } from './agent-icon';
 import { AccountEditor } from './account-editor';
 import { AppLoginGuide } from './app-login-guide';
+import { SessionLogin } from './session-login';
 import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
 import { NetworkDiagnostics } from './network-diagnostics';
@@ -63,6 +64,7 @@ export function AccountWorkspace({
   const [edit, setEdit] = useState<EnvironmentEdit | null>(null);
   const [accountEdit, setAccountEdit] = useState<{ item?: BrowserAccount }>();
   const [loginAccountId, setLoginAccountId] = useState('');
+  const [sessionAccountId, setSessionAccountId] = useState('');
   const [diagnosticProxy, setDiagnosticProxy] = useState<ProxyConfig>();
   const {
     data,
@@ -78,6 +80,12 @@ export function AccountWorkspace({
   } = useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
   const loginAccount = data.accounts.find((item) => item.id === loginAccountId);
+  const sessionAccount = data.accounts.find(
+    (item) => item.id === sessionAccountId,
+  );
+  const sessionProfile = data.profiles.find(
+    (item) => item.id === sessionAccount?.profile_id,
+  );
   return (
     <>
       <WorkspaceLayout
@@ -180,6 +188,7 @@ export function AccountWorkspace({
               busy={busy}
               loading={loading}
               onLogin={(account) => setLoginAccountId(account.id)}
+              onSessionLogin={(account) => setSessionAccountId(account.id)}
               onEditAccount={(item) => setAccountEdit({ item })}
               onDelete={(id) => void remove('accounts', id)}
               onRuntime={(action, body, target) =>
@@ -266,6 +275,14 @@ export function AccountWorkspace({
           gates={data.gate_definitions}
           onSave={save}
           onClose={() => setEdit(null)}
+        />
+      )}
+      {sessionAccount && sessionProfile && (
+        <SessionLogin
+          key={sessionAccount.id}
+          account={sessionAccount}
+          profile={sessionProfile}
+          onClose={() => setSessionAccountId('')}
         />
       )}
     </>

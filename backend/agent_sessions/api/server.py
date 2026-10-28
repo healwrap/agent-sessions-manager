@@ -63,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.browser_diagnostics.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path.startswith('/api/app-login/'):
                 result = self.server.app_login.read(parsed.path.rsplit('/', 1)[-1])
+            elif parsed.path.startswith('/api/browser-session/'):
+                result = self.server.browser_session.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path == '/api/app-runtime':
                 result = self.server.app_runtime.state()
             elif parsed.path == '/api/browser-runtime':
@@ -130,8 +132,9 @@ class Handler(BaseHTTPRequestHandler):
         runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')
         app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
+        browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not skill) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -147,6 +150,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('浏览器采样应使用 JSON，大小不能超过 64 KB')
             if app_login and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('登录链接应使用 JSON，大小不能超过 20 KB')
+            if browser_session and (length > 20000 or self.headers.get_content_type() != 'application/json'):
+                raise ValueError('会话导入应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
             if skill:
                 command = self.path.rsplit('/', 1)[-1]
@@ -154,6 +159,9 @@ class Handler(BaseHTTPRequestHandler):
             elif app_login:
                 result = self.server.app_login.open(value) if self.path.endswith('/open') else self.server.app_login.cancel(value)
                 self.respond(200, result)
+            elif browser_session:
+                action = self.server.browser_session.start if self.path.endswith('/import') else self.server.browser_session.cancel
+                self.respond(200, action(value))
             elif runtime:
                 from agent_sessions.browser.api import command
                 if self.path.startswith('/api/app-runtime/'):
@@ -270,6 +278,8 @@ def main():
     server.app_runtime = AppRuntime(args.state_home, server.environments)
     from agent_sessions.desktop_client.login import AppLogin
     server.app_login = AppLogin(server.environments, server.app_runtime, server.browser_runtime)
+    from agent_sessions.browser.session_import import SessionImport
+    server.browser_session = SessionImport(server.environments, server.browser_runtime)
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

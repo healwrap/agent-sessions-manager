@@ -4,6 +4,7 @@ import {
   ExternalLink,
   LoaderCircle,
   LogIn,
+  KeyRound,
   Settings2,
   ShieldCheck,
   Square,
@@ -29,11 +30,12 @@ export function AccountClientPanel({
   busy,
   onRuntime,
   onLogin,
+  onSessionLogin,
   onEditProfile,
   onEditAccount,
 }: Pick<
   AccountActions,
-  'onRuntime' | 'onLogin' | 'onEditProfile' | 'onEditAccount'
+  'onRuntime' | 'onLogin' | 'onSessionLogin' | 'onEditProfile' | 'onEditAccount'
 > & {
   account: BrowserAccount;
   client: AccountClient;
@@ -82,6 +84,15 @@ export function AccountClientPanel({
           </span>
         </div>
         <div className="account-launch-actions">
+          {target === 'browser' && account.provider === 'claude' && profile && (
+            <Button
+              disabled={busy || checking || !client.available}
+              onClick={() => onSessionLogin(account)}
+            >
+              <KeyRound size={16} />
+              sessionKey 登录
+            </Button>
+          )}
           {(alive || checking) && profile && (
             <Button
               disabled={busy}

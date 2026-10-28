@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import {
   Field,
+  NumberField,
   Panel,
   SearchField,
+  Switch,
   TextArea,
   TextInput,
 } from '../components/ui';
@@ -11,6 +13,8 @@ export function InputPreview() {
   const [name, setName] = useState('');
   const [query, setQuery] = useState('');
   const [link, setLink] = useState('');
+  const [fontSize, setFontSize] = useState(14);
+  const [enabled, setEnabled] = useState(true);
   return (
     <Panel title="输入框与占位提示">
       <div className="ui-stack">
@@ -47,6 +51,24 @@ export function InputPreview() {
         </Field>
         <Field label="只读内容" htmlFor="catalog-input-readonly">
           <TextInput id="catalog-input-readonly" value="当前配置" readOnly />
+        </Field>
+        <Field label="数字步进" htmlFor="catalog-input-number">
+          <NumberField
+            id="catalog-input-number"
+            label="预览字号"
+            value={fontSize}
+            min={12}
+            max={20}
+            onChange={setFontSize}
+          />
+        </Field>
+        <Field label="开关" htmlFor="catalog-input-switch">
+          <Switch
+            id="catalog-input-switch"
+            label="启用示例"
+            checked={enabled}
+            onChange={setEnabled}
+          />
         </Field>
       </div>
     </Panel>

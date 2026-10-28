@@ -80,17 +80,20 @@ class Store(TrajectoryStore):
                 'project_label': Path(cwd).name if cwd else '未分配项目',
                 'project_path': cwd or '', 'project_source': 'directory'}
 
-    def relationship(self, key):
+    def session_attributes(self, key):
         source = self.files[key]
         if self.session_meta.get(key, (None,))[0] != source:
             self.session_meta[key] = (source, read_session_meta(source))
         origin = self.session_meta[key][1].get('source')
+        attributes = {'session_source': origin} if isinstance(origin, str) else {}
+        if origin == 'exec':
+            attributes['execution_mode'] = 'non_interactive'
         subagent = origin.get('subagent') if isinstance(origin, dict) else None
-        if not isinstance(subagent, dict): return {}
+        if not isinstance(subagent, dict): return attributes
         spawn = subagent.get('thread_spawn') or {}
-        if not isinstance(spawn, dict): return {}
+        if not isinstance(spawn, dict): return attributes
         parent = spawn.get('parent_thread_id')
-        return {'session_kind': 'subagent',
+        return {**attributes, 'session_kind': 'subagent',
                 'parent_id': parent if isinstance(parent, str) and UUID.fullmatch(parent) else None,
                 'agent_name': spawn.get('agent_nickname') or spawn.get('agent_path'),
                 'agent_role': spawn.get('agent_role')}
@@ -119,7 +122,7 @@ class Store(TrajectoryStore):
                 if query and query.casefold() not in (title+' '+project['project_label']).casefold():
                     continue
                 item = {'id': row['id'], 'title': title, 'updated_at': str(row.get('updated_at') or ''),
-                        **project, **self.relationship(row['id'])}
+                        **project, **self.session_attributes(row['id'])}
                 group = groups.setdefault(project['project_id'], {**project, 'count': 0})
                 group['count'] += 1
                 if not project_id or project_id == project['project_id']:

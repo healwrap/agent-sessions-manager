@@ -8,6 +8,8 @@ export {
   ContentDialog,
 } from '../form-controls';
 export { Select } from '../select';
+export { NumberField } from '../number-field';
+export { Switch } from '../switch';
 export { SearchField } from '../search-field';
 export { Disclosure } from '../disclosure';
 export {

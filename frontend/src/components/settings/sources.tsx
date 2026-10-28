@@ -1,6 +1,6 @@
 import type { Settings, SettingsResponse } from '../../lib/types';
 import { AgentIcon } from '../agent-icon';
-import { TextInput } from '../ui';
+import { Switch, TextInput } from '../ui';
 
 export function SourceSettings({
   draft,
@@ -39,19 +39,16 @@ export function SourceSettings({
                 <AgentIcon source={source.id} />
                 {source.label}
               </label>
-              <input
-                type="checkbox"
-                role="switch"
-                className="settings-switch"
-                aria-label={'启用 ' + source.label}
+              <Switch
+                label={'启用 ' + source.label}
                 checked={draft.enabled[source.id] !== false}
-                onChange={(event) =>
+                onChange={(enabled) =>
                   onChange({
                     ...draft,
                     enabled: {
                       ...draft.enabled,
                       ...Object.fromEntries(
-                        paths.map((path) => [path.key, event.target.checked]),
+                        paths.map((path) => [path.key, enabled]),
                       ),
                     },
                   })

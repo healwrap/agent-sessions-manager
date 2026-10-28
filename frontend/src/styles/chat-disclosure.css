@@ -7,7 +7,7 @@
   border: 0;
   padding: 0;
   background: none;
-  color: var(--dsw-alias-label-secondary);
+  color: var(--dsw-alias-label-tertiary);
   text-align: left;
   font: var(--dsh-content-font-size-secondary, 13px)/calc(
       24px + var(--dsh-content-font-delta, 0px)
@@ -15,10 +15,11 @@
     var(--dsw-font-family);
 }
 .chat-disclosure:hover {
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
 }
-.chat-disclosure > span:first-of-type {
+.chat-disclosure > span:not(.chat-line-preview) {
   flex: none;
+  white-space: nowrap;
 }
 .chat-disclosure-glyph {
   flex: none;
@@ -26,8 +27,31 @@
   height: 14px;
   margin-right: 8px;
 }
-.chat-disclosure[aria-expanded='true'] > .chat-disclosure-glyph {
-  opacity: 0.65;
+.chat-disclosure-leading {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: calc(16px + var(--dsh-content-font-delta, 0px));
+  height: calc(16px + var(--dsh-content-font-delta, 0px));
+  margin-right: 6px;
+}
+.chat-disclosure-leading svg {
+  grid-area: 1 / 1;
+  display: block;
+  width: calc(14px + var(--dsh-content-font-delta, 0px));
+  height: calc(14px + var(--dsh-content-font-delta, 0px));
+}
+.chat-disclosure-chevron {
+  visibility: hidden;
+}
+.chat-disclosure:is(:hover, :focus-visible, [aria-expanded='true'])
+  .chat-disclosure-idle {
+  visibility: hidden;
+}
+.chat-disclosure:is(:hover, :focus-visible, [aria-expanded='true'])
+  .chat-disclosure-chevron {
+  visibility: visible;
 }
 .chat-summary-dot {
   flex: none;
@@ -35,7 +59,7 @@
   height: 2px;
   margin: 0 8px;
   border-radius: 50%;
-  background: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-label-caption);
 }
 .chat-line-preview {
   min-width: 0;
@@ -52,9 +76,12 @@
   position: sticky;
   top: var(--chat-group-heading-height, 0px);
   z-index: 1;
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--dsw-alias-bg-base);
 }
 .chat-process-group > .chat-disclosure[aria-expanded='true'] {
   top: 0;
   z-index: 2;
+}
+.chat-process-group-body .chat-disclosure[aria-expanded='true'] {
+  top: 0;
 }

@@ -10,7 +10,9 @@ def argument_summary(raw):
         return ''
     if not isinstance(value, dict): return ''
     # Descriptions and paths are native argument values, never result guesses.
-    for key in ('description', 'file_path', 'path', 'AbsolutePath', 'command', 'cmd', 'CommandLine', 'query', 'pattern', 'url'):
+    for key in ('description', 'query', 'queries', 'pattern', 'url', 'file_path', 'path', 'AbsolutePath', 'command', 'cmd', 'CommandLine'):
         text = value.get(key)
+        if isinstance(text, list):
+            text = ' · '.join(item for item in text if isinstance(item, str))
         if isinstance(text, str) and text: return compact_line(text.split('\n')[0], 420)
     return ''

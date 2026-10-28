@@ -1,5 +1,5 @@
 import type { Settings, SettingsResponse } from '../../lib/types';
-import { SectionHeading, Select, TextInput } from '../ui';
+import { NumberField, SectionHeading, Select } from '../ui';
 import { SettingsRow } from './row';
 import { SourceSettings } from './sources';
 
@@ -15,15 +15,13 @@ export function SessionSettings({
   return (
     <section aria-label="会话管理设置">
       <SettingsRow label="会话字号" htmlFor="settings-font">
-        <TextInput
+        <NumberField
           id="settings-font"
-          type="number"
+          label="会话字号"
           min={12}
           max={20}
           value={draft.fontSize}
-          onChange={(event) =>
-            onChange({ ...draft, fontSize: Number(event.target.value) })
-          }
+          onChange={(fontSize) => onChange({ ...draft, fontSize })}
         />
         <span>px</span>
       </SettingsRow>
@@ -31,10 +29,9 @@ export function SessionSettings({
         <Select
           id="settings-detail"
           label="工作步骤展示"
+          variant="field"
           value={draft.chatDetail}
-          onChange={(value) =>
-            onChange({ ...draft, chatDetail: value as Settings['chatDetail'] })
-          }
+          onChange={(chatDetail) => onChange({ ...draft, chatDetail })}
           options={[
             { value: 'compact', label: '简洁' },
             { value: 'standard', label: '标准' },
@@ -47,14 +44,17 @@ export function SessionSettings({
         <Select
           id="settings-sync"
           label="闲置同步间隔"
+          variant="field"
           value={String(draft.syncSeconds)}
           onChange={(value) =>
             onChange({ ...draft, syncSeconds: Number(value) })
           }
-          options={[3, 5, 10, 30, 60].map((seconds) => ({
-            value: String(seconds),
-            label: `每 ${seconds} 秒`,
-          }))}
+          options={[...new Set([3, 5, 10, 30, 60, draft.syncSeconds])]
+            .sort((a, b) => a - b)
+            .map((seconds) => ({
+              value: String(seconds),
+              label: `每 ${seconds} 秒`,
+            }))}
         />
       </SettingsRow>
       <div className="settings-sources-group">

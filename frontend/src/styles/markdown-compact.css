@@ -56,7 +56,7 @@
 .markdown-body[data-markdown-variant='compact'] pre :is(code, span) {
   color: inherit !important;
 }
-.markdown-body[data-markdown-variant='compact'] .markdown-table-scroll {
+.markdown-body[data-markdown-variant='compact'] .markdown-table-block {
   width: 100%;
   max-width: 100%;
   margin: 4px 0;

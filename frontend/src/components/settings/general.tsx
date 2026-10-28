@@ -1,6 +1,7 @@
 import type { Settings } from '../../lib/types';
 import { Appearance } from './appearance';
 import { SettingsRow } from './row';
+import { Switch } from '../ui';
 export function GeneralSettings({
   draft,
   onChange,
@@ -15,15 +16,11 @@ export function GeneralSettings({
         onChange={(theme) => onChange({ ...draft, theme })}
       />
       <SettingsRow label="界面过渡动画" htmlFor="settings-motion">
-        <input
+        <Switch
           id="settings-motion"
-          className="settings-switch"
-          type="checkbox"
-          role="switch"
+          label="界面过渡动画"
           checked={draft.animations}
-          onChange={(event) =>
-            onChange({ ...draft, animations: event.target.checked })
-          }
+          onChange={(animations) => onChange({ ...draft, animations })}
         />
       </SettingsRow>
     </section>

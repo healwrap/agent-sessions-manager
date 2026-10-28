@@ -24,9 +24,9 @@
 @import './sidebar-projects.css' layer(components);
 @import './subagents.css' layer(components);
 @import './dialogs.css' layer(components);
-@import './form-controls.css' layer(components);
 @import './disclosure.css' layer(components);
 @import './markdown.css' layer(components);
+@import './markdown-table.css' layer(components);
 @import './markdown-compact.css' layer(components);
 @import './chat.css' layer(components);
 @import './chat-disclosure.css' layer(components);
@@ -42,6 +42,7 @@
 @import './dsh/json-actions.css' layer(components);
 @import './json-inspector.css' layer(components);
 @import './dsh/overview-sections.css' layer(components);
+@import './form-controls.css' layer(components);
 @import './settings.css' layer(components);
 @import './diagnostics.css' layer(components);
 @import './diagnostics-results.css' layer(components);

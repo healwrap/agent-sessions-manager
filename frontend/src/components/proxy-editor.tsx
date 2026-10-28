@@ -10,6 +10,7 @@ import {
   Button,
   BusyState,
   ChoiceGroup,
+  ContentDialog,
   Disclosure,
   Field,
   Notice,
@@ -17,6 +18,7 @@ import {
   TextArea,
   TextInput,
 } from './ui';
+import { ProxyDetails } from './proxy-details';
 
 type Imported = {
   token: string;
@@ -41,7 +43,7 @@ export function ProxyEditor({
   onSaveExternal: (item: ProxyConfig) => Promise<void>;
   onCommand: ProxyCommand;
   onClose: () => void;
-  onSaved: (id: string) => void;
+  onSaved: () => void;
 }) {
   const managed = data.proxy_runtime?.entries.find(
     (row) => row.id === item?.id,
@@ -153,9 +155,8 @@ export function ProxyEditor({
     operation(async () => {
       if (mode === 'external') {
         await onSaveExternal({ id: item?.id || '', name, url });
-        onSaved(item?.id || url);
       } else {
-        const latest = await onCommand('save', {
+        await onCommand('save', {
           ...(item ? { id: item.id } : {}),
           name,
           ...(imported ? { token: imported.token, index: Number(index) } : {}),
@@ -169,168 +170,187 @@ export function ProxyEditor({
             .map((row) => row.trim())
             .filter(Boolean),
         });
-        onSaved(
-          item?.id ||
-            latest.proxies.find(
-              (row) => !data.proxies.some((old) => old.id === row.id),
-            )!.id,
-        );
       }
+      onSaved();
     });
-  if (loading && !configuration)
-    return <BusyState label="正在读取已保存的代理配置" />;
-  if (item?.kind === 'managed' && !configuration)
-    return (
-      <Notice
-        tone="error"
-        action={
-          <Button onClick={() => setRetry((value) => value + 1)}>
-            重新读取
-          </Button>
-        }
-      >
-        {error || '未取得已保存的代理配置'}
-      </Notice>
-    );
   return (
-    <form
-      className="proxy-editor"
-      aria-label={item ? '编辑代理配置' : '添加代理配置'}
+    <ContentDialog
+      title={item ? '代理配置' : '添加代理'}
+      className="proxy-config-dialog"
+      busy={pending || busy}
+      onClose={onClose}
       onSubmit={(event) => {
         event.preventDefault();
         if (canSave) void save();
       }}
+      footer={
+        <>
+          <Button disabled={pending || busy} onClick={onClose}>
+            {locked || (item && !dirty) ? '关闭' : '取消'}
+          </Button>
+          <Button type="submit" variant="primary" disabled={!canSave}>
+            {pending
+              ? '处理中…'
+              : item
+                ? '保存配置'
+                : mode === 'managed'
+                  ? '创建并启动'
+                  : '添加代理'}
+          </Button>
+        </>
+      }
     >
-      <fieldset className="proxy-editor-fields" disabled={pending || busy}>
-        {!item && (
-          <ChoiceGroup
-            label="代理来源"
-            value={mode}
-            onChange={setMode}
-            items={[
-              { value: 'managed', label: '创建专用代理' },
-              { value: 'external', label: '已有代理地址' },
-            ]}
-          />
-        )}
-        <Field label="名称" htmlFor="proxy-name">
-          <TextInput
-            id="proxy-name"
-            required
-            maxLength={120}
-            value={name}
-            readOnly={locked}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </Field>
-        {mode === 'managed' && (
-          <>
-            <Field label="订阅链接或 Clash 配置" htmlFor="proxy-source">
-              <TextArea
-                id="proxy-source"
-                className={`proxy-config-source ${source.startsWith('http') && !source.includes('\n') ? 'proxy-subscription-source' : ''}`}
-                value={source}
-                readOnly={locked}
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                placeholder="粘贴订阅链接，或 YAML / JSON 配置"
-                onChange={(event) => {
-                  setSource(event.target.value);
-                  setImported(undefined);
-                }}
-              />
-            </Field>
-            <div className="proxy-import-actions">
-              <input
-                ref={file}
-                type="file"
-                accept=".yaml,.yml,.json,.txt"
-                hidden
-                onChange={(event) => {
-                  const selected = event.target.files?.[0];
-                  if (selected)
-                    void operation(async () => {
-                      if (selected.size > 1_000_000)
-                        throw new Error('配置文件不能超过 1 MB');
-                      setSource(await selected.text());
-                      setImported(undefined);
-                    });
-                  event.target.value = '';
-                }}
-              />
-              <Button disabled={locked} onClick={() => file.current?.click()}>
-                <Upload size={16} />
-                导入配置文件
-              </Button>
-              <Button
-                disabled={locked || !source.trim()}
-                onClick={() => void parse()}
-              >
-                读取节点
-              </Button>
-            </div>
-            {imported && (
-              <Field label="选择节点">
-                <Select
-                  value={index}
-                  label="代理节点"
-                  disabled={locked}
-                  onChange={(next) => {
-                    setIndex(next);
-                    if (!item) setName(imported.nodes[Number(next)].name);
-                  }}
-                  options={imported.nodes.map((row) => ({
-                    value: String(row.index),
-                    label: row.name + ' · ' + row.type,
-                  }))}
-                />
-              </Field>
-            )}
-            {(imported ? imported.subscription_url : subscriptionUrl) && (
-              <Field label="订阅自动更新">
-                <Select
-                  label="订阅自动更新"
-                  value={interval}
-                  onChange={setInterval}
-                  disabled={locked}
-                  options={[
-                    { value: '1', label: '每小时' },
-                    { value: '6', label: '每 6 小时' },
-                    { value: '24', label: '每天' },
-                    { value: '0', label: '关闭' },
-                  ]}
-                />
-              </Field>
-            )}
-            <Field label="直连域名" htmlFor="proxy-direct-domains">
-              <TextArea
-                id="proxy-direct-domains"
-                className="proxy-direct-domains"
-                value={domains}
-                readOnly={locked}
-                spellCheck={false}
-                placeholder="每行一个域名，例如 company.com"
-                onChange={(event) => setDomains(event.target.value)}
-              />
-            </Field>
-          </>
-        )}
-        {mode === 'external' && (
-          <Field label="代理地址" htmlFor="proxy-url">
+      {item && <ProxyDetails item={item} service={managed} />}
+      {locked && (
+        <Notice>
+          此代理正在被环境使用，停止相关浏览器或 App 后即可修改配置。
+        </Notice>
+      )}
+      {loading && !configuration ? (
+        <BusyState label="正在读取已保存的代理配置" />
+      ) : item?.kind === 'managed' && !configuration ? (
+        <Notice
+          tone="error"
+          action={
+            <Button onClick={() => setRetry((value) => value + 1)}>
+              重新读取
+            </Button>
+          }
+        >
+          {error || '未取得已保存的代理配置'}
+        </Notice>
+      ) : (
+        <fieldset className="proxy-editor-fields" disabled={pending || busy}>
+          {!item && (
+            <ChoiceGroup
+              label="代理来源"
+              value={mode}
+              onChange={setMode}
+              items={[
+                { value: 'managed', label: '创建专用代理' },
+                { value: 'external', label: '已有代理地址' },
+              ]}
+            />
+          )}
+          <Field label="名称" htmlFor="proxy-name">
             <TextInput
-              id="proxy-url"
-              value={url}
-              readOnly={locked}
+              id="proxy-name"
               required
-              autoComplete="off"
-              placeholder="http://127.0.0.1:7890 或 socks5://服务器:端口"
-              onChange={(event) => setUrl(event.target.value)}
+              maxLength={120}
+              value={name}
+              readOnly={locked}
+              onChange={(event) => setName(event.target.value)}
             />
           </Field>
-        )}
-        {error && <Notice tone="error">{error}</Notice>}
-      </fieldset>
+          {mode === 'managed' && (
+            <>
+              <Field label="订阅链接或 Clash 配置" htmlFor="proxy-source">
+                <TextArea
+                  id="proxy-source"
+                  className={`proxy-config-source ${source.startsWith('http') && !source.includes('\n') ? 'proxy-subscription-source' : ''}`}
+                  value={source}
+                  readOnly={locked}
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  placeholder="粘贴订阅链接，或 YAML / JSON 配置"
+                  onChange={(event) => {
+                    setSource(event.target.value);
+                    setImported(undefined);
+                  }}
+                />
+              </Field>
+              <div className="proxy-import-actions">
+                <input
+                  ref={file}
+                  type="file"
+                  accept=".yaml,.yml,.json,.txt"
+                  hidden
+                  onChange={(event) => {
+                    const selected = event.target.files?.[0];
+                    if (selected)
+                      void operation(async () => {
+                        if (selected.size > 1_000_000)
+                          throw new Error('配置文件不能超过 1 MB');
+                        setSource(await selected.text());
+                        setImported(undefined);
+                      });
+                    event.target.value = '';
+                  }}
+                />
+                <Button disabled={locked} onClick={() => file.current?.click()}>
+                  <Upload size={16} />
+                  导入配置文件
+                </Button>
+                <Button
+                  disabled={locked || !source.trim()}
+                  onClick={() => void parse()}
+                >
+                  读取节点
+                </Button>
+              </div>
+              {imported && (
+                <Field label="选择节点">
+                  <Select
+                    value={index}
+                    label="代理节点"
+                    disabled={locked}
+                    onChange={(next) => {
+                      setIndex(next);
+                      if (!item) setName(imported.nodes[Number(next)].name);
+                    }}
+                    options={imported.nodes.map((row) => ({
+                      value: String(row.index),
+                      label: row.name + ' · ' + row.type,
+                    }))}
+                  />
+                </Field>
+              )}
+              {(imported ? imported.subscription_url : subscriptionUrl) && (
+                <Field label="订阅自动更新">
+                  <Select
+                    label="订阅自动更新"
+                    value={interval}
+                    onChange={setInterval}
+                    disabled={locked}
+                    options={[
+                      { value: '1', label: '每小时' },
+                      { value: '6', label: '每 6 小时' },
+                      { value: '24', label: '每天' },
+                      { value: '0', label: '关闭' },
+                    ]}
+                  />
+                </Field>
+              )}
+              <Field label="直连域名" htmlFor="proxy-direct-domains">
+                <TextArea
+                  id="proxy-direct-domains"
+                  className="proxy-direct-domains"
+                  value={domains}
+                  readOnly={locked}
+                  spellCheck={false}
+                  placeholder="每行一个域名，例如 company.com"
+                  onChange={(event) => setDomains(event.target.value)}
+                />
+              </Field>
+            </>
+          )}
+          {mode === 'external' && (
+            <Field label="代理地址" htmlFor="proxy-url">
+              <TextInput
+                id="proxy-url"
+                value={url}
+                readOnly={locked}
+                required
+                autoComplete="off"
+                placeholder="http://127.0.0.1:7890 或 socks5://服务器:端口"
+                onChange={(event) => setUrl(event.target.value)}
+              />
+            </Field>
+          )}
+          {error && <Notice tone="error">{error}</Notice>}
+        </fieldset>
+      )}
       {configuration && (
         <Disclosure title="实际运行配置">
           <TextArea
@@ -342,22 +362,6 @@ export function ProxyEditor({
           />
         </Disclosure>
       )}
-      <div className="ui-actions proxy-editor-actions">
-        {(!item || dirty) && (
-          <Button disabled={pending || busy} onClick={onClose}>
-            {item ? '放弃修改' : '取消添加'}
-          </Button>
-        )}
-        <Button type="submit" variant="primary" disabled={!canSave}>
-          {pending
-            ? '处理中…'
-            : item
-              ? '保存配置'
-              : mode === 'managed'
-                ? '创建并启动'
-                : '添加代理'}
-        </Button>
-      </div>
-    </form>
+    </ContentDialog>
   );
 }

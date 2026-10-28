@@ -1,5 +1,4 @@
 import {
-  ChevronDown,
   Play,
   RefreshCw,
   ScanLine,
@@ -17,7 +16,6 @@ export function ProxyActions({
   running,
   adoptable,
   coreAvailable,
-  expanded,
   onConfigure,
   onCommand,
   onInspect,
@@ -29,7 +27,6 @@ export function ProxyActions({
   running: boolean;
   adoptable: boolean;
   coreAvailable: boolean;
-  expanded: boolean;
   onConfigure: () => void;
   onCommand: ProxyCommand;
   onInspect: (item: ProxyConfig) => void;
@@ -90,16 +87,11 @@ export function ProxyActions({
         variant="text"
         disabled={busy}
         aria-label={`配置代理 ${item.name}`}
-        aria-expanded={expanded}
-        aria-controls={expanded ? `proxy-config-${item.id}` : undefined}
+        aria-haspopup="dialog"
         onClick={onConfigure}
       >
         <SlidersHorizontal size={16} />
         配置
-        <ChevronDown
-          size={13}
-          className={expanded ? 'proxy-config-expanded' : ''}
-        />
       </Button>
       <RemoveButton
         label={`移除代理配置 ${item.name}`}

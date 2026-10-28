@@ -13,11 +13,9 @@ import {
   EmptyState,
   Notice,
   ResourceRow,
-  SectionHeading,
   StatusBadge,
 } from './ui';
 import { ProxyCoreControl } from './proxy-core-control';
-import { ProxyDetails } from './proxy-details';
 import { ProxyEditor } from './proxy-editor';
 import { ProxyActions } from './proxy-actions';
 
@@ -46,21 +44,30 @@ export function ProxyEnvironments({
 }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState('');
-  const [revision, setRevision] = useState(0);
   const visible = data.proxies.filter((item) =>
     `${item.name} ${item.url}`
       .toLowerCase()
       .includes(query.trim().toLowerCase()),
   );
-  const reset = () => {
+  const closeEditor = () => {
+    setSelected('');
     onCloseCreate();
-    setRevision((value) => value + 1);
   };
-  const saved = (id: string) => {
-    setSelected(id);
+  const saved = () => {
     setQuery('');
-    reset();
+    closeEditor();
   };
+  const editing = data.proxies.find((item) => item.id === selected);
+  const inUse = (id: string) =>
+    [...data.profiles, ...data.app_profiles].some(
+      (profile) =>
+        profile.proxy_id === id &&
+        [...data.browser.runs, ...data.app_runtime.runs].some(
+          (run) =>
+            run.profile_id === profile.id &&
+            (run.alive || run.status === 'checking'),
+        ),
+    );
   return (
     <section aria-label="代理配置列表">
       <ProxyCoreControl
@@ -81,20 +88,6 @@ export function ProxyEnvironments({
           </CollectionToolbar>
         }
       >
-        {creating && (
-          <section className="proxy-create" aria-label="添加代理">
-            <SectionHeading title="添加代理" />
-            <ProxyEditor
-              key={`new-${revision}`}
-              data={data}
-              busy={busy}
-              onSaveExternal={onSaveExternal}
-              onCommand={onCommand}
-              onClose={reset}
-              onSaved={saved}
-            />
-          </section>
-        )}
         {loading && !data.proxies.length ? (
           <BusyState label="正在读取代理" />
         ) : !visible.length && !creating ? (
@@ -121,18 +114,7 @@ export function ProxyEnvironments({
               const service = data.proxy_runtime?.entries.find(
                 (row) => row.id === item.id,
               );
-              const bindings = [...data.profiles, ...data.app_profiles].filter(
-                (profile) => profile.proxy_id === item.id,
-              );
-              const running = bindings.some((profile) =>
-                [...data.browser.runs, ...data.app_runtime.runs].some(
-                  (run) =>
-                    run.profile_id === profile.id &&
-                    (run.alive || run.status === 'checking'),
-                ),
-              );
-              const expanded =
-                !creating && (selected === item.id || selected === item.url);
+              const running = inUse(item.id);
               return (
                 <ResourceRow
                   key={item.id}
@@ -167,10 +149,9 @@ export function ProxyEnvironments({
                           !!data.proxy_runtime?.adoptable.includes(item.id)
                         }
                         coreAvailable={!!data.proxy_runtime?.core.available}
-                        expanded={expanded}
                         onConfigure={() => {
                           onCloseCreate();
-                          setSelected(expanded ? '' : item.id);
+                          setSelected(item.id);
                         }}
                         onCommand={onCommand}
                         onInspect={onInspect}
@@ -179,7 +160,7 @@ export function ProxyEnvironments({
                     </>
                   }
                 >
-                  {service?.node && !expanded && (
+                  {service?.node && (
                     <p className="proxy-node-summary">
                       {service.node.name} · {service.node.type}
                     </p>
@@ -193,38 +174,25 @@ export function ProxyEnvironments({
                   {service?.subscription?.error && (
                     <Notice tone="warning">{service.subscription.error}</Notice>
                   )}
-                  {expanded && (
-                    <section
-                      className="proxy-inline-config"
-                      id={`proxy-config-${item.id}`}
-                      aria-label={`${item.name} 配置`}
-                    >
-                      <ProxyDetails item={item} service={service} />
-                      {running && (
-                        <Notice>
-                          此代理正在被环境使用，停止相关浏览器或 App
-                          后即可修改配置。
-                        </Notice>
-                      )}
-                      <ProxyEditor
-                        key={`${item.id}-${item.kind}-${revision}`}
-                        item={item}
-                        data={data}
-                        busy={busy}
-                        locked={running}
-                        onSaveExternal={onSaveExternal}
-                        onCommand={onCommand}
-                        onClose={reset}
-                        onSaved={saved}
-                      />
-                    </section>
-                  )}
                 </ResourceRow>
               );
             })}
           </div>
         )}
       </CollectionPanel>
+      {(creating || editing) && (
+        <ProxyEditor
+          key={creating ? 'new' : editing?.id}
+          item={creating ? undefined : editing}
+          data={data}
+          busy={busy}
+          locked={!creating && !!editing && inUse(editing.id)}
+          onSaveExternal={onSaveExternal}
+          onCommand={onCommand}
+          onClose={closeEditor}
+          onSaved={saved}
+        />
+      )}
     </section>
   );
 }

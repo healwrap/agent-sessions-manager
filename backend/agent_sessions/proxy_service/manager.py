@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 import subprocess
-import shutil
 import threading
 import time
 from uuid import UUID, uuid4
@@ -126,7 +125,7 @@ class ProxyManager:
             self.environments.change({'collection': 'proxies', 'action': 'delete', 'id': key})
             if self.core.discover()['available']: self.process(key).stop()
             self.processes.pop(key, None)
-            shutil.rmtree(self.entry_directory(key))
+            (self.entry_directory(key)/'definition.json').unlink(missing_ok=True)
 
     def restore(self):
         for item in self.environments.read()['proxies']:

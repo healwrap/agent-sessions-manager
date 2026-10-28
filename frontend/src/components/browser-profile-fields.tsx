@@ -21,7 +21,7 @@ export function BrowserProfileFields({
   value: BrowserProfile | AppProfile;
   proxies: ProxyConfig[];
   gates: GateDefinition[];
-  onChange: (patch: Partial<BrowserProfile>) => void;
+  onChange: (patch: Partial<BrowserProfile & AppProfile>) => void;
 }) {
   const [region, setRegion] = useState('');
   const [reading, setReading] = useState(false);
@@ -98,6 +98,23 @@ export function BrowserProfileFields({
           }}
         />
       </Field>
+      {!('engine' in value) && (
+        <SettingsRow
+          label="继承本机 skills"
+          htmlFor="environment-inherit-skills"
+        >
+          <input
+            id="environment-inherit-skills"
+            className="settings-switch"
+            type="checkbox"
+            role="switch"
+            checked={value.inherit_skills !== false}
+            onChange={(event) =>
+              onChange({ inherit_skills: event.target.checked })
+            }
+          />
+        </SettingsRow>
+      )}
       <div className="environment-form-grid">
         {(['locale', 'timezone'] as const).map((field) => {
           const title = field === 'locale' ? '语言' : '时区';

@@ -48,6 +48,7 @@ export function EnvironmentEditor({
             locale_mode: 'proxy',
             timezone_mode: 'proxy',
             gates: {},
+            inherit_skills: true,
           }
         : profile
           ? {

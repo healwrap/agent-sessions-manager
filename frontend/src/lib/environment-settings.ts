@@ -34,7 +34,9 @@ export interface BrowserProfile extends ProfileRoute {
   engine: 'fingerprint-chromium' | 'ccbaga' | 'chrome';
   fingerprint_seed: string;
 }
-export interface AppProfile extends ProfileRoute {}
+export interface AppProfile extends ProfileRoute {
+  inherit_skills?: boolean;
+}
 export interface BrowserAccount {
   id: string;
   name: string;

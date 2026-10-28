@@ -14,6 +14,7 @@ from agent_sessions.browser.session_state import session_state
 from agent_sessions.browser.process_state import ProcessState
 from .conflicts import warnings
 from .focus import focus_process, quit_process
+from .skills import sync_skills
 
 
 def app_processes():
@@ -108,6 +109,7 @@ class AppRuntime:
                 directory.mkdir(parents=True, exist_ok=True, mode=0o700)
                 config = directory/'claude-code'
                 config.mkdir(parents=True, exist_ok=True, mode=0o700)
+                run['skill_inheritance'] = sync_skills(config, profile.get('inherit_skills', True))
                 settings_file = directory/'config.json'
                 preferences = json.loads(settings_file.read_text()) if settings_file.exists() else {}
                 requested_locale = resolved['locale']

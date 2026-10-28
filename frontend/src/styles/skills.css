@@ -1,6 +1,14 @@
 .skill-workspace .main-header {
   border-bottom: 0.5px solid var(--dsw-alias-border-l1);
 }
+.skill-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.skill-main > * {
+  flex-shrink: 0;
+}
 .skill-overview {
   margin-bottom: 24px;
 }

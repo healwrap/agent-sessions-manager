@@ -87,7 +87,12 @@ export function SkillInstallations({
             ]}
           />
         </CollectionToolbar>
-        <div className="skill-target-list" role="list" aria-label="Agent 列表">
+        <div
+          className="skill-target-list"
+          role="list"
+          aria-label="Agent 列表"
+          tabIndex={0}
+        >
           <div className="skill-target-columns" aria-hidden="true">
             <span>Agent</span>
             <span>安装状态</span>
@@ -172,68 +177,76 @@ export function SkillInstallations({
           <AgentIcon source={selected.id} />
           <h2>{selected.name}</h2>
         </div>
-        <StatusBadge tone={skillStates[selected.state].tone}>
-          {skillStates[selected.state].label}
-        </StatusBadge>
-        <p className="skill-detail-description">
-          {skillStates[selected.state].detail}
-        </p>
-        <FactsGrid
-          columns={1}
-          items={[
-            { label: '安装范围', value: '当前用户' },
-            {
-              label: '安装方式',
-              value:
-                selected.method === 'link'
-                  ? selected.managed
-                    ? '跟随应用'
-                    : '本地链接'
-                  : '独立副本',
-            },
-            { label: '提供方', value: selected.source || '尚未安装' },
-            { label: '安装版本', value: selected.version || '未登记' },
-          ]}
-        />
-        <div className="skill-path-block">
-          <span>
-            <FolderOpen size={14} />
-            安装入口
-          </span>
-          <code>{selected.path || '尚未设置'}</code>
-          {selected.effective_path && (
-            <>
-              <span>当前共享入口</span>
-              <code>{selected.effective_path}</code>
-            </>
-          )}
-          {selected.resolved_path && selected.exists && (
-            <>
-              <span>实际目标</span>
-              <code>{selected.resolved_path}</code>
-            </>
-          )}
-          <Button
-            variant="text"
-            size="small"
-            disabled={busy}
-            onClick={() => onAction('configure', [selected.id])}
-          >
-            配置路径 <ChevronRight size={12} />
-          </Button>
-        </div>
-        {['outdated', 'broken', 'modified', 'error', 'unconfigured'].includes(
-          selected.state,
-        ) && (
-          <div className="skill-detail-note">
-            {selected.state === 'ready' ? (
-              <Check size={15} />
-            ) : (
-              <CircleAlert size={15} />
+        <div
+          className="skill-detail-body"
+          key={selected.id}
+          role="region"
+          aria-label={`${selected.name} 安装信息`}
+          tabIndex={0}
+        >
+          <StatusBadge tone={skillStates[selected.state].tone}>
+            {skillStates[selected.state].label}
+          </StatusBadge>
+          <p className="skill-detail-description">
+            {skillStates[selected.state].detail}
+          </p>
+          <FactsGrid
+            columns={1}
+            items={[
+              { label: '安装范围', value: '当前用户' },
+              {
+                label: '安装方式',
+                value:
+                  selected.method === 'link'
+                    ? selected.managed
+                      ? '跟随应用'
+                      : '本地链接'
+                    : '独立副本',
+              },
+              { label: '提供方', value: selected.source || '尚未安装' },
+              { label: '安装版本', value: selected.version || '未登记' },
+            ]}
+          />
+          <div className="skill-path-block">
+            <span>
+              <FolderOpen size={14} />
+              安装入口
+            </span>
+            <code>{selected.path || '尚未设置'}</code>
+            {selected.effective_path && (
+              <>
+                <span>当前共享入口</span>
+                <code>{selected.effective_path}</code>
+              </>
             )}
-            <p>{selected.note}</p>
+            {selected.resolved_path && selected.exists && (
+              <>
+                <span>实际目标</span>
+                <code>{selected.resolved_path}</code>
+              </>
+            )}
+            <Button
+              variant="text"
+              size="small"
+              disabled={busy}
+              onClick={() => onAction('configure', [selected.id])}
+            >
+              配置路径 <ChevronRight size={12} />
+            </Button>
           </div>
-        )}
+          {['outdated', 'broken', 'modified', 'error', 'unconfigured'].includes(
+            selected.state,
+          ) && (
+            <div className="skill-detail-note">
+              {selected.state === 'ready' ? (
+                <Check size={15} />
+              ) : (
+                <CircleAlert size={15} />
+              )}
+              <p>{selected.note}</p>
+            </div>
+          )}
+        </div>
         <div className="skill-detail-actions">
           <Button
             variant="primary"

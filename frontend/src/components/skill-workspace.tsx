@@ -111,131 +111,136 @@ export function SkillWorkspace({
         }
       >
         <div className="environment-content skill-content ui-page">
-          <PageHeading
-            title="Skill 管理"
-            actions={
-              <Button disabled={busy || loading} onClick={() => void reload()}>
-                <RotateCcw size={16} className={loading ? 'ui-spin' : ''} />
-                {loading ? '正在检测' : '重新检测'}
-              </Button>
-            }
-          />
-          {error && (
-            <Notice
-              tone="error"
-              action={
+          <div className="skill-main">
+            <PageHeading
+              title="Skill 管理"
+              actions={
                 <Button
                   disabled={busy || loading}
                   onClick={() => void reload()}
                 >
-                  重试
+                  <RotateCcw size={16} className={loading ? 'ui-spin' : ''} />
+                  {loading ? '正在检测' : '重新检测'}
                 </Button>
               }
-            >
-              {error}
-            </Notice>
-          )}
-          {loading && !data ? (
-            <BusyState label="正在读取 Skill 安装情况" />
-          ) : (
-            data && (
-              <ResourceCard
-                className="skill-overview"
-                title="Agent Sessions"
-                subtitle="agent-sessions"
-                icon={<Layers3 size={24} />}
-                badge={<StatusBadge>本应用提供</StatusBadge>}
-                actions={
-                  <>
-                    <Button
-                      onClick={() => setDocumentOpen(true)}
-                      disabled={!data}
-                    >
-                      <BookOpen size={16} />
-                      查看文档
-                    </Button>
-                    <Button
-                      variant="primary"
-                      disabled={busy || loading || !data}
-                      onClick={() =>
-                        setOperation({
-                          action: 'install',
-                          ids: targets
-                            .filter(
-                              (target) =>
-                                target.state === 'missing' && target.path,
-                            )
-                            .map((target) => target.id),
-                        })
-                      }
-                    >
-                      <Plus size={16} />
-                      安装到 Agent
-                    </Button>
-                  </>
+            />
+            {error && (
+              <Notice
+                tone="error"
+                action={
+                  <Button
+                    disabled={busy || loading}
+                    onClick={() => void reload()}
+                  >
+                    重试
+                  </Button>
                 }
               >
-                <FactsGrid
-                  columns={3}
-                  items={[
-                    {
-                      label: '安装就绪',
-                      value: `${ready} / ${targets.length}`,
-                    },
-                    {
-                      label: '需要处理',
-                      value: (
-                        <button
-                          className="ui-inline-action"
-                          onClick={() =>
-                            setFilter(
-                              filter === 'attention' ? 'all' : 'attention',
-                            )
-                          }
-                        >
-                          {attention} 项
-                        </button>
-                      ),
-                    },
-                    { label: '应用版本', value: data?.source.version || '—' },
-                  ]}
-                />
-              </ResourceCard>
-            )
-          )}
-          {notice && (
-            <Notice
-              tone="success"
-              action={
-                <IconButton
-                  icon="close"
-                  label="关闭操作提示"
-                  onClick={() => setNotice('')}
-                />
-              }
-            >
-              {notice}
-            </Notice>
-          )}
-          {!loading && data && !targets.length && (
-            <EmptyState
-              icon={<Puzzle size={28} />}
-              title="暂无 Agent 安装目标"
-            />
-          )}
-          {current && (
-            <SkillInstallations
-              busy={busy}
-              targets={targets}
-              selected={current}
-              query={query}
-              filter={filter}
-              onFilter={setFilter}
-              onQuery={setQuery}
-              onSelect={setSelected}
-              onAction={(action, ids) => setOperation({ action, ids })}
-            />
-          )}
+                {error}
+              </Notice>
+            )}
+            {loading && !data ? (
+              <BusyState label="正在读取 Skill 安装情况" />
+            ) : (
+              data && (
+                <ResourceCard
+                  className="skill-overview"
+                  title="Agent Sessions"
+                  subtitle="agent-sessions"
+                  icon={<Layers3 size={24} />}
+                  badge={<StatusBadge>本应用提供</StatusBadge>}
+                  actions={
+                    <>
+                      <Button
+                        onClick={() => setDocumentOpen(true)}
+                        disabled={!data}
+                      >
+                        <BookOpen size={16} />
+                        查看文档
+                      </Button>
+                      <Button
+                        variant="primary"
+                        disabled={busy || loading || !data}
+                        onClick={() =>
+                          setOperation({
+                            action: 'install',
+                            ids: targets
+                              .filter(
+                                (target) =>
+                                  target.state === 'missing' && target.path,
+                              )
+                              .map((target) => target.id),
+                          })
+                        }
+                      >
+                        <Plus size={16} />
+                        安装到 Agent
+                      </Button>
+                    </>
+                  }
+                >
+                  <FactsGrid
+                    columns={3}
+                    items={[
+                      {
+                        label: '安装就绪',
+                        value: `${ready} / ${targets.length}`,
+                      },
+                      {
+                        label: '需要处理',
+                        value: (
+                          <button
+                            className="ui-inline-action"
+                            onClick={() =>
+                              setFilter(
+                                filter === 'attention' ? 'all' : 'attention',
+                              )
+                            }
+                          >
+                            {attention} 项
+                          </button>
+                        ),
+                      },
+                      { label: '应用版本', value: data?.source.version || '—' },
+                    ]}
+                  />
+                </ResourceCard>
+              )
+            )}
+            {notice && (
+              <Notice
+                tone="success"
+                action={
+                  <IconButton
+                    icon="close"
+                    label="关闭操作提示"
+                    onClick={() => setNotice('')}
+                  />
+                }
+              >
+                {notice}
+              </Notice>
+            )}
+            {!loading && data && !targets.length && (
+              <EmptyState
+                icon={<Puzzle size={28} />}
+                title="暂无 Agent 安装目标"
+              />
+            )}
+            {current && (
+              <SkillInstallations
+                busy={busy}
+                targets={targets}
+                selected={current}
+                query={query}
+                filter={filter}
+                onFilter={setFilter}
+                onQuery={setQuery}
+                onSelect={setSelected}
+                onAction={(action, ids) => setOperation({ action, ids })}
+              />
+            )}
+          </div>
           <SkillHistory
             records={data?.records || []}
             busy={busy}

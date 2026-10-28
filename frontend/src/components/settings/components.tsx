@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  Download,
-  Globe2,
-  Monitor,
-  PanelsTopLeft,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react';
+import { Download, RefreshCw, Trash2 } from 'lucide-react';
+import fingerprintIcon from '../../assets/components/fingerprint-chromium.png';
+import mihomoIcon from '../../assets/components/mihomo.webp';
 import { request } from '../../lib/api';
 import { AgentIcon } from '../agent-icon';
 import {
@@ -38,9 +33,8 @@ type Component = {
 };
 type State = { platform: string; architecture: string; items: Component[] };
 const icons = {
-  fingerprint: PanelsTopLeft,
-  mihomo: Globe2,
-  claude: Monitor,
+  fingerprint: fingerprintIcon,
+  mihomo: mihomoIcon,
 };
 
 export function ComponentSettings({ active }: { active: boolean }) {
@@ -110,7 +104,6 @@ export function ComponentSettings({ active }: { active: boolean }) {
     <div className="component-settings">
       {error && !removing && <Notice tone="error">{error}</Notice>}
       {data.items.map((item) => {
-        const Symbol = icons[item.id];
         const job = item.installation;
         const working = ['checking', 'installing', 'removing'].includes(
           job.state,
@@ -124,7 +117,12 @@ export function ComponentSettings({ active }: { active: boolean }) {
               item.id === 'claude' ? (
                 <AgentIcon source="claude" monochrome />
               ) : (
-                <Symbol size={22} />
+                <img
+                  className="agent-icon"
+                  src={icons[item.id]}
+                  alt=""
+                  aria-hidden="true"
+                />
               )
             }
             subtitle={[item.version, item.source].filter(Boolean).join(' · ')}

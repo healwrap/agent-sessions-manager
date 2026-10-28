@@ -30,6 +30,7 @@ def command(server, path, value):
     if action == 'parse': return manager.imports.parse(value)
     if action == 'install':
         if value != {}: raise ValueError('代理安装参数无效')
+        if any(row['alive'] for row in manager.state()['entries']): raise ValueError('请先停止专用代理，再安装或更新内核')
         manager.core.install()
     elif action == 'save':
         if isinstance(value, dict) and value.get('id'): mutable(server, value['id'])

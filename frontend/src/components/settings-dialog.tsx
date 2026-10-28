@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GeneralSettings } from './settings/general';
 import { SessionSettings } from './settings/sessions';
+import { ComponentSettings } from './settings/components';
 import { useSettingsAutosave } from '../hooks/use-settings-autosave';
 import { Dialog, Icon } from './primitives';
 import { Button, BusyState, IconButton, Notice, SectionHeading } from './ui';
@@ -32,6 +33,7 @@ export function SettingsDialog({ open }: { open: boolean }) {
             {[
               ['general', 'settings', '通用'],
               ['sessions', 'context', '会话管理'],
+              ['components', 'settings', '组件管理'],
             ].map(([key, icon, label]) => (
               <button
                 key={key}
@@ -54,7 +56,13 @@ export function SettingsDialog({ open }: { open: boolean }) {
             {draft && (
               <>
                 <SectionHeading
-                  title={section === 'general' ? '通用' : '会话管理'}
+                  title={
+                    section === 'general'
+                      ? '通用'
+                      : section === 'components'
+                        ? '组件管理'
+                        : '会话管理'
+                  }
                 />
                 <div hidden={section !== 'general'}>
                   <GeneralSettings draft={draft} onChange={change} />
@@ -66,10 +74,15 @@ export function SettingsDialog({ open }: { open: boolean }) {
                     onChange={change}
                   />
                 </div>
+                <div hidden={section !== 'components'}>
+                  <ComponentSettings
+                    active={open && section === 'components'}
+                  />
+                </div>
               </>
             )}
           </div>
-          <footer className="settings-footer">
+          <footer className="settings-footer" hidden={section === 'components'}>
             {error && <Notice tone="error">{error}</Notice>}
             <div className="settings-actions">
               <Button

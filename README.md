@@ -1,5 +1,7 @@
 # Agent Sessions Manager
 
+「设置 → 组件管理」支持按需安装、检查更新和卸载受管浏览器、Mihomo 与官方 Claude App，并区分本机原有安装。Windows / macOS 的实现、架构范围与验收状态见 [平台与组件管理](references/runtime-components.md)。
+
 用于管理本机 Codex、Claude Code、Cursor、Antigravity、Antigravity CLI、DeepSeek Harness 会话的桌面应用与 Skill。Claude Code 桌面端与 CLI 共用会话正文，在界面中合并展示。Cursor 读取桌面端本地 Agent / Composer 会话数据库。提供项目会话列表、对话、工具轨迹和按需恢复入口。历史文件保持只读，应用整理设置独立保存。
 
 开始页仅在启动时展示，选择进入「会话管理」「账号与环境管理」或「Skill 管理」。工作区通过侧栏底部按钮直接切换；侧栏收起时，切换按钮显示在顶栏。切换保留会话、筛选和检测结果，并暂停会话同步。会话目录在首次进入会话管理时加载，原有会话引用链接仍可直接进入。

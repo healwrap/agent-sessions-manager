@@ -54,6 +54,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.settings.read() if hasattr(self.server, 'settings') else {'saved': False, 'value': {}}
             elif parsed.path == '/api/skills':
                 result = self.server.skill_manager.state()
+            elif parsed.path == '/api/components':
+                result = self.server.component_manager.state()
             elif parsed.path == '/api/settings':
                 result = {'value': self.server.app_settings.read(), 'defaults': self.server.app_settings.defaults,
                           'sources': self.server.store.sources()['items']}
@@ -138,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
         proxy_service = self.path in {'/api/proxy-services/install', '/api/proxy-services/parse', '/api/proxy-services/save', '/api/proxy-services/start', '/api/proxy-services/stop', '/api/proxy-services/adopt', '/api/proxy-services/refresh'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service) or not hasattr(self.server, 'settings'):
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -157,7 +159,10 @@ class Handler(BaseHTTPRequestHandler):
             if browser_session and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('会话导入应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if proxy_service:
+            if self.path == '/api/components':
+                if length > 4096 or self.headers.get_content_type() != 'application/json': raise ValueError('组件参数应使用不超过 4 KB 的 JSON')
+                self.respond(200, self.server.component_manager.command(value))
+            elif proxy_service:
                 if self.headers.get_content_type() != 'application/json': raise ValueError('代理参数应使用 JSON')
                 from agent_sessions.proxy_service.api import command
                 self.respond(200, command(self.server, self.path, value))
@@ -291,6 +296,11 @@ def main():
     server.app_login = AppLogin(server.environments, server.app_runtime, server.browser_runtime)
     from agent_sessions.browser.session_import import SessionImport
     server.browser_session = SessionImport(server.environments, server.browser_runtime)
+    from agent_sessions.components.manager import ComponentManager
+    server.component_manager = ComponentManager(args.state_home, server.browser_runtime, server.app_runtime, server.proxy_manager)
+    server.browser_runtime.component_guard = server.component_manager.ready
+    server.app_runtime.component_guard = server.component_manager.ready
+    server.proxy_manager.component_guard = server.component_manager.ready
     from agent_sessions.proxy_service.api import can_update
     server.proxy_manager.updates.start(lambda key, ignored=None: can_update(server, key, ignored))
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)

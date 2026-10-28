@@ -71,6 +71,15 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+.component-settings {
+  display: grid;
+  gap: 16px;
+}
+.component-path {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-secondary);
+}
 @media (max-width: 600px) {
   .environment-form-grid {
     grid-template-columns: 1fr;

@@ -33,9 +33,11 @@ class ProxyManager:
         except FileNotFoundError: raise ValueError('专用代理配置不存在，请重新导入') from None
 
     def process(self, key):
-        if key in self.processes: return self.processes[key]
+        if getattr(self, 'component_guard', None): self.component_guard('mihomo')
         found = self.core.discover()
         if not found['available']: raise ValueError('请先安装代理内核')
+        previous = self.processes.get(key)
+        if previous and previous.executable != found['path'] and not previous.alive(): self.processes.pop(key)
         if key not in self.processes:
             self.processes[key] = ProxyProcess(self.entry_directory(key), found['path'])
         return self.processes[key]

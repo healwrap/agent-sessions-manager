@@ -36,6 +36,7 @@ export interface BrowserProfile extends ProfileRoute {
 }
 export interface AppProfile extends ProfileRoute {
   inherit_skills?: boolean;
+  inherit_plugins?: boolean;
 }
 export interface BrowserAccount {
   id: string;

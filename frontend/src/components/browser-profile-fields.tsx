@@ -98,23 +98,25 @@ export function BrowserProfileFields({
           }}
         />
       </Field>
-      {!('engine' in value) && (
-        <SettingsRow
-          label="继承本机 skills"
-          htmlFor="environment-inherit-skills"
-        >
-          <input
-            id="environment-inherit-skills"
-            className="settings-switch"
-            type="checkbox"
-            role="switch"
-            checked={value.inherit_skills !== false}
-            onChange={(event) =>
-              onChange({ inherit_skills: event.target.checked })
+      {!('engine' in value) &&
+        (['inherit_skills', 'inherit_plugins'] as const).map((field) => (
+          <SettingsRow
+            key={field}
+            label={
+              field === 'inherit_skills' ? '继承本机 skills' : '继承本机插件'
             }
-          />
-        </SettingsRow>
-      )}
+            htmlFor={`environment-${field}`}
+          >
+            <input
+              id={`environment-${field}`}
+              className="settings-switch"
+              type="checkbox"
+              role="switch"
+              checked={value[field] !== false}
+              onChange={(event) => onChange({ [field]: event.target.checked })}
+            />
+          </SettingsRow>
+        ))}
       <div className="environment-form-grid">
         {(['locale', 'timezone'] as const).map((field) => {
           const title = field === 'locale' ? '语言' : '时区';

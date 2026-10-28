@@ -22,7 +22,8 @@ class EnvironmentSettings:
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
             return {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
-                    'app_profiles': [{**row, 'inherit_skills': row.get('inherit_skills', True)} for row in value.get('app_profiles', [])],
+                    'app_profiles': [{**row, 'inherit_skills': row.get('inherit_skills', True),
+                                      'inherit_plugins': row.get('inherit_plugins', True)} for row in value.get('app_profiles', [])],
                     'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])],
                     'profile_owners': owners(value, self.path.parent),
                     'apps': installed_apps(self.path.parent), 'gate_definitions': definitions()}
@@ -62,13 +63,15 @@ class EnvironmentSettings:
                     'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'},
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
         optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
-        if collection == 'app_profiles': optional |= {'inherit_skills'}
+        if collection == 'app_profiles': optional |= {'inherit_skills', 'inherit_plugins'}
         if collection == 'proxies': optional |= {'kind'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
-        fields = set(item)-{'gates', 'inherit_skills'}
+        fields = set(item)-{'gates', 'inherit_skills', 'inherit_plugins'}
         if 'inherit_skills' in item and type(item['inherit_skills']) is not bool:
             raise ValueError('本机 skills 继承开关无效')
+        if 'inherit_plugins' in item and type(item['inherit_plugins']) is not bool:
+            raise ValueError('本机插件继承开关无效')
         if any(not isinstance(item[key], str) or len(item[key]) > 2048 or any(ord(c) < 32 for c in item[key]) for key in fields):
             raise ValueError('配置内容无效或过长')
         if not item['name'].strip(): raise ValueError('请填写名称')

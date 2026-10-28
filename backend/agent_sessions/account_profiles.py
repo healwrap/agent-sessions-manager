@@ -30,7 +30,7 @@ def provision(value, current, validate):
         profile = {**defaults, 'name': item.get('name', '')+(' · 浏览器' if field == 'profile_id' else ' · Claude App')}
         if field == 'profile_id':
             profile.update(provider=item.get('provider'), engine='fingerprint-chromium', fingerprint_seed=str(uuid4()))
-        else: profile['inherit_skills'] = True
+        else: profile.update(inherit_skills=True, inherit_plugins=True)
         profile = validate(collection, profile, current)
         put(current, collection, profile)
         item[field] = profile['id']

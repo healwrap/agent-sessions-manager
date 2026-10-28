@@ -1,4 +1,4 @@
-"""Read one registered proxy's saved node and effective runtime configuration."""
+"""Read the saved node configuration for one registered proxy."""
 import json
 
 
@@ -8,6 +8,4 @@ def configuration_details(manager, key):
         if not item or item.get('kind') != 'managed':
             raise ValueError('请选择应用管理的专用代理')
         entry = manager.definition(key)
-        path = manager.entry_directory(key)/'config.json'
-        return {'source': json.dumps({'proxies': [entry['node']]}, ensure_ascii=False, indent=2),
-                'configuration': path.read_text(encoding='utf-8')}
+        return {'source': json.dumps({'proxies': [entry['node']]}, ensure_ascii=False, indent=2)}

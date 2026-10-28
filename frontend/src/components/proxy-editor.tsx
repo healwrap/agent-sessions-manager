@@ -11,7 +11,6 @@ import {
   BusyState,
   ChoiceGroup,
   ContentDialog,
-  Disclosure,
   Field,
   Notice,
   Select,
@@ -23,6 +22,7 @@ import { ProxyDetails } from './proxy-details';
 type Imported = {
   token: string;
   subscription_url: string;
+  source: string;
   nodes: { index: number; name: string; type: string; server: string }[];
 };
 
@@ -53,9 +53,12 @@ export function ProxyEditor({
   );
   const [name, setName] = useState(item?.name || '');
   const [url, setUrl] = useState(item?.url || '');
-  const [source, setSource] = useState(managed?.subscription?.url || '');
+  const subscriptionUrl = managed?.subscription?.url || '';
+  const [link, setLink] = useState(subscriptionUrl);
+  const initialLink = useRef(link);
+  const [source, setSource] = useState('');
   const initialSource = useRef(source);
-  const [configuration, setConfiguration] = useState('');
+  const [loaded, setLoaded] = useState(item?.kind !== 'managed');
   const [loading, setLoading] = useState(item?.kind === 'managed');
   const [retry, setRetry] = useState(0);
   const [interval, setInterval] = useState(
@@ -70,7 +73,6 @@ export function ProxyEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const file = useRef<HTMLInputElement>(null);
-  const subscriptionUrl = managed?.subscription?.url || '';
 
   useEffect(() => {
     if (!item || item.kind !== 'managed') return;
@@ -83,10 +85,15 @@ export function ProxyEditor({
       .then((result) => {
         if (!active) return;
         const previous = initialSource.current;
-        const next = subscriptionUrl || result.source;
+        const next = result.source;
         setSource((current) => (current === previous ? next : current));
         initialSource.current = next;
-        setConfiguration(result.configuration);
+        const previousLink = initialLink.current;
+        setLink((current) =>
+          current === previousLink ? subscriptionUrl : current,
+        );
+        initialLink.current = subscriptionUrl;
+        setLoaded(true);
       })
       .catch((reason) => {
         if (active) setError(String(reason));
@@ -106,15 +113,17 @@ export function ProxyEditor({
   ]);
 
   const sourceChanged = source.trim() !== initialSource.current.trim();
+  const linkChanged = link.trim() !== initialLink.current.trim();
   const dirty =
     !item ||
     name !== item.name ||
     url !== item.url ||
     sourceChanged ||
+    linkChanged ||
     domains !== originalDomains ||
     interval !== String(managed?.subscription?.interval_hours ?? 6) ||
     !!imported;
-  const requiresImport = !item || sourceChanged;
+  const requiresImport = !item || sourceChanged || linkChanged;
   const canSave =
     !pending &&
     !busy &&
@@ -135,14 +144,18 @@ export function ProxyEditor({
       setPending(false);
     }
   };
-  const parse = () =>
+  const parse = (fromLink = false) =>
     operation(async () => {
+      if (!fromLink && /^https?:\/\//.test(source.trim()))
+        throw new Error('请将订阅链接填写到“订阅链接”字段');
       const result = await request<Imported>(
         '/api/proxy-services/parse',
         {},
-        { source },
+        fromLink ? { source: link } : { source, subscription_url: link },
       );
       setImported(result);
+      setSource(result.source);
+      setLink(result.subscription_url);
       if (result.subscription_url && interval === '0' && !managed?.subscription)
         setInterval('6');
       const selected = result.nodes.find(
@@ -160,11 +173,7 @@ export function ProxyEditor({
           ...(item ? { id: item.id } : {}),
           name,
           ...(imported ? { token: imported.token, index: Number(index) } : {}),
-          interval_hours: (
-            imported ? imported.subscription_url : subscriptionUrl
-          )
-            ? Number(interval)
-            : 0,
+          interval_hours: link.trim() ? Number(interval) : 0,
           direct_domains: domains
             .split(/[\n,，]/)
             .map((row) => row.trim())
@@ -206,9 +215,9 @@ export function ProxyEditor({
           此代理正在被环境使用，停止相关浏览器或 App 后即可修改配置。
         </Notice>
       )}
-      {loading && !configuration ? (
+      {loading && !loaded ? (
         <BusyState label="正在读取已保存的代理配置" />
-      ) : item?.kind === 'managed' && !configuration ? (
+      ) : item?.kind === 'managed' && !loaded ? (
         <Notice
           tone="error"
           action={
@@ -244,16 +253,40 @@ export function ProxyEditor({
           </Field>
           {mode === 'managed' && (
             <>
-              <Field label="订阅链接或 Clash 配置" htmlFor="proxy-source">
+              <Field label="订阅链接" htmlFor="proxy-subscription-url">
+                <div className="proxy-subscription-input">
+                  <TextInput
+                    id="proxy-subscription-url"
+                    type="url"
+                    value={link}
+                    readOnly={locked}
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    placeholder="可选，填写 HTTP / HTTPS 订阅地址"
+                    onChange={(event) => {
+                      setLink(event.target.value);
+                      setImported(undefined);
+                    }}
+                  />
+                  <Button
+                    disabled={locked || !link.trim()}
+                    onClick={() => void parse(true)}
+                  >
+                    读取订阅
+                  </Button>
+                </div>
+              </Field>
+              <Field label="订阅配置" htmlFor="proxy-source">
                 <TextArea
                   id="proxy-source"
-                  className={`proxy-config-source ${source.startsWith('http') && !source.includes('\n') ? 'proxy-subscription-source' : ''}`}
+                  className="proxy-config-source"
                   value={source}
                   readOnly={locked}
                   autoComplete="off"
                   autoCapitalize="off"
                   spellCheck={false}
-                  placeholder="粘贴订阅链接，或 YAML / JSON 配置"
+                  placeholder="粘贴或导入 Clash YAML / JSON 节点配置"
                   onChange={(event) => {
                     setSource(event.target.value);
                     setImported(undefined);
@@ -306,7 +339,7 @@ export function ProxyEditor({
                   />
                 </Field>
               )}
-              {(imported ? imported.subscription_url : subscriptionUrl) && (
+              {link.trim() && (
                 <Field label="订阅自动更新">
                   <Select
                     label="订阅自动更新"
@@ -350,17 +383,6 @@ export function ProxyEditor({
           )}
           {error && <Notice tone="error">{error}</Notice>}
         </fieldset>
-      )}
-      {configuration && (
-        <Disclosure title="实际运行配置">
-          <TextArea
-            className="proxy-runtime-config"
-            value={configuration}
-            readOnly
-            aria-label="实际运行配置"
-            spellCheck={false}
-          />
-        </Disclosure>
       )}
     </ContentDialog>
   );

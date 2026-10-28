@@ -17,16 +17,15 @@
 .proxy-config-dialog .proxy-config-source {
   min-height: 160px;
   max-height: 360px;
-}
-.proxy-config-dialog .proxy-subscription-source {
-  min-height: 72px;
-}
-.proxy-runtime-config {
-  height: 280px;
   font-family: var(--ds-font-family-code);
-  white-space: pre;
-  overflow: auto;
 }
-.proxy-config-dialog .disclosure-trigger {
-  min-height: 36px;
+.proxy-subscription-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.proxy-subscription-input .text-control {
+  flex: 1;
+  min-width: 0;
 }

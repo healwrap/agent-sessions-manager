@@ -7,7 +7,6 @@ export type ProxyCommand = (
 
 export interface ProxyConfiguration {
   source: string;
-  configuration: string;
 }
 
 export const proxyTime = (value?: number) =>

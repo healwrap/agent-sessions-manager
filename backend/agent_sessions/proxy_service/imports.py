@@ -51,14 +51,23 @@ class NodeImports:
         self.lock, self.sources = threading.RLock(), {}
 
     def parse(self, value):
-        if not isinstance(value, dict) or set(value) != {'source'}: raise ValueError('请选择订阅或配置来源')
+        if not isinstance(value, dict) or 'source' not in value or set(value)-{'source', 'subscription_url'}:
+            raise ValueError('请选择订阅或配置来源')
+        if 'subscription_url' in value and not isinstance(value['subscription_url'], str): raise ValueError('订阅链接格式无效')
+        source_url = subscription_url(value.get('subscription_url', value['source']))
+        if value.get('subscription_url') and not source_url: raise ValueError('订阅链接格式无效')
+        if source_url:
+            parsed = urlsplit(source_url)
+            if not parsed.hostname or parsed.username or parsed.password: raise ValueError('订阅链接格式无效')
         nodes = parse_nodes(value['source'])
         with self.lock:
             self.sources = {key: row for key, row in self.sources.items() if time.monotonic()-row['created'] < 900}
             if len(self.sources) >= 10: raise ValueError('待创建配置过多，请完成现有导入或稍后重试')
             key = str(uuid4())
-            self.sources[key] = {'created': time.monotonic(), 'nodes': nodes, 'url': subscription_url(value['source'])}
-        return {'token': key, 'subscription_url': subscription_url(value['source']), 'nodes': [{'index': index, 'name': row['name'], 'type': row['type'], 'server': row['server']}
+            self.sources[key] = {'created': time.monotonic(), 'nodes': nodes, 'url': source_url}
+        return {'token': key, 'subscription_url': source_url,
+                'source': json.dumps({'proxies': nodes}, ensure_ascii=False, indent=2),
+                'nodes': [{'index': index, 'name': row['name'], 'type': row['type'], 'server': row['server']}
                                       for index, row in enumerate(nodes)]}
 
     def select(self, token, index):

@@ -108,7 +108,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
     );
   return (
     <div className="component-settings">
-      {error && <Notice tone="error">{error}</Notice>}
+      {error && !removing && <Notice tone="error">{error}</Notice>}
       {data.items.map((item) => {
         const Symbol = icons[item.id];
         const job = item.installation;
@@ -170,7 +170,10 @@ export function ComponentSettings({ active }: { active: boolean }) {
                 {item.removable && (
                   <Button
                     disabled={busy || working}
-                    onClick={() => setRemoving(item)}
+                    onClick={() => {
+                      setError('');
+                      setRemoving(item);
+                    }}
                   >
                     <Trash2 size={16} />
                     卸载
@@ -232,6 +235,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
               自身的本地应用数据。本应用保存的独立账号与环境数据仍会保留。
             </p>
           )}
+          {error && <Notice tone="error">{error}</Notice>}
         </ContentDialog>
       )}
     </div>

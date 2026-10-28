@@ -65,6 +65,9 @@
   flex: 1;
   overflow-wrap: anywhere;
 }
+.proxy-source-url {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 600px) {
   .environment-form-grid {
     grid-template-columns: 1fr;

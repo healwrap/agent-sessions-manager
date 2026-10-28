@@ -96,7 +96,7 @@ class AppRuntime:
     def _launch(self, profile, proxy, app, run):
         key = profile['id']
         try:
-            if self.proxy_manager: self.proxy_manager.ensure(proxy)
+            if self.proxy_manager: self.proxy_manager.ensure(proxy, key)
             resolved, checks = inspect(profile, proxy, browser=False)
             with self.lock:
                 if run.get('cancelled'): return

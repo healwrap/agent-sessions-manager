@@ -18,6 +18,7 @@ import { ProxyCoreControl } from './proxy-core-control';
 
 type Imported = {
   token: string;
+  subscription_url: string;
   nodes: { index: number; name: string; type: string; server: string }[];
 };
 type Command = (
@@ -46,7 +47,10 @@ export function ProxyEditor({
   );
   const [name, setName] = useState(item?.name || '');
   const [url, setUrl] = useState(item?.url || '');
-  const [source, setSource] = useState('');
+  const [source, setSource] = useState(managed?.subscription?.url || '');
+  const [interval, setInterval] = useState(
+    String(managed?.subscription?.interval_hours ?? 6),
+  );
   const [imported, setImported] = useState<Imported>();
   const [index, setIndex] = useState('0');
   const [domains, setDomains] = useState(
@@ -77,6 +81,8 @@ export function ProxyEditor({
         { source },
       );
       setImported(result);
+      if (result.subscription_url && interval === '0' && !managed?.subscription)
+        setInterval('6');
       setIndex('0');
       if (!name) setName(result.nodes[0].name);
     });
@@ -89,6 +95,11 @@ export function ProxyEditor({
           ...(item ? { id: item.id } : {}),
           name,
           ...(imported ? { token: imported.token, index: Number(index) } : {}),
+          interval_hours: (
+            imported ? imported.subscription_url : managed?.subscription?.url
+          )
+            ? Number(interval)
+            : 0,
           direct_domains: domains
             .split(/[\n,，]/)
             .map((row) => row.trim())
@@ -230,6 +241,22 @@ export function ProxyEditor({
           onChange={(event) => setName(event.target.value)}
         />
       </Field>
+      {mode === 'managed' &&
+        (imported ? imported.subscription_url : managed?.subscription?.url) && (
+          <Field label="订阅自动更新">
+            <Select
+              label="订阅自动更新"
+              value={interval}
+              onChange={setInterval}
+              options={[
+                { value: '1', label: '每小时' },
+                { value: '6', label: '每 6 小时' },
+                { value: '24', label: '每天' },
+                { value: '0', label: '关闭' },
+              ]}
+            />
+          </Field>
+        )}
       {mode === 'external' ? (
         <Field label="代理地址" htmlFor="proxy-url">
           <TextInput

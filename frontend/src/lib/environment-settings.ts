@@ -106,6 +106,15 @@ export interface ProxyConfig {
   url: string;
   kind?: 'external' | 'managed';
 }
+export interface ProxySubscription {
+  url: string;
+  node_name: string;
+  interval_hours: number;
+  last_checked?: number;
+  last_updated?: number;
+  error?: string;
+  status: 'updating' | 'error' | 'pending' | 'current';
+}
 export interface ManagedProxy {
   id: string;
   alive: boolean;
@@ -114,6 +123,7 @@ export interface ManagedProxy {
   error: string;
   node?: { name: string; type: string };
   direct_domains: string[];
+  subscription?: ProxySubscription | null;
 }
 export interface ProxyRuntimeState {
   core: {

@@ -12,6 +12,18 @@ def mutable(server, key):
     server.app_runtime.ensure_mutable(value)
 
 
+def can_update(server, key, ignored=None):
+    settings = server.environments.read()
+    for collection, runtime in (('profiles', server.browser_runtime), ('app_profiles', server.app_runtime)):
+        with runtime.lock:
+            for profile in settings[collection]:
+                if profile['proxy_id'] != key: continue
+                process = runtime.processes.get(profile['id'])
+                if process and process.poll() is None: return False
+                if profile['id'] != ignored and runtime.runs.get(profile['id'], {}).get('status') == 'checking': return False
+    return True
+
+
 def command(server, path, value):
     manager = server.proxy_manager
     action = path.rsplit('/', 1)[-1]
@@ -22,11 +34,12 @@ def command(server, path, value):
     elif action == 'save':
         if isinstance(value, dict) and value.get('id'): mutable(server, value['id'])
         manager.save(value)
-    elif action in ('start', 'stop', 'adopt'):
+    elif action in ('start', 'stop', 'adopt', 'refresh'):
         if not isinstance(value, dict) or set(value) != {'id'}: raise ValueError('请选择代理')
         key = value['id']
-        if action != 'start': mutable(server, key)
-        if action == 'adopt':
+        if action not in ('start', 'refresh'): mutable(server, key)
+        if action == 'refresh': manager.updates.refresh(key)
+        elif action == 'adopt':
             from .legacy import adopt
             adopt(manager, key)
         else: getattr(manager, action)(key)

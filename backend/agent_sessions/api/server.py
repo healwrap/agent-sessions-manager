@@ -136,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
         browser_probe = self.path.startswith('/api/browser-checks/')
         app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
-        proxy_service = self.path in {'/api/proxy-services/install', '/api/proxy-services/parse', '/api/proxy-services/save', '/api/proxy-services/start', '/api/proxy-services/stop', '/api/proxy-services/adopt'}
+        proxy_service = self.path in {'/api/proxy-services/install', '/api/proxy-services/parse', '/api/proxy-services/save', '/api/proxy-services/start', '/api/proxy-services/stop', '/api/proxy-services/adopt', '/api/proxy-services/refresh'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
         if (self.path not in {'/api/preferences', '/api/settings', '/api/environments'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
@@ -291,6 +291,8 @@ def main():
     server.app_login = AppLogin(server.environments, server.app_runtime, server.browser_runtime)
     from agent_sessions.browser.session_import import SessionImport
     server.browser_session = SessionImport(server.environments, server.browser_runtime)
+    from agent_sessions.proxy_service.api import can_update
+    server.proxy_manager.updates.start(lambda key, ignored=None: can_update(server, key, ignored))
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.
@@ -303,6 +305,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        server.proxy_manager.updates.close()
         server.app_runtime.close()
         server.browser_runtime.close()
         server.proxy_manager.close()

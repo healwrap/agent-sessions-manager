@@ -103,7 +103,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
   const save = (collection: EnvironmentCollection, item: EnvironmentItem) =>
     change({ collection, action: 'save', item });
   const proxyCommand = async (
-    action: 'install' | 'save' | 'start' | 'stop' | 'adopt',
+    action: 'install' | 'save' | 'start' | 'stop' | 'adopt' | 'refresh',
     body: unknown = {},
   ) => {
     begin();

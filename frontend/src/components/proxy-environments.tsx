@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Globe2, Pencil, Play, Plus, ScanLine, Square } from 'lucide-react';
+import {
+  Eye,
+  Globe2,
+  Pencil,
+  Play,
+  Plus,
+  RefreshCw,
+  ScanLine,
+  Square,
+} from 'lucide-react';
 import type {
   EnvironmentSettings,
   ProxyConfig,
@@ -17,6 +26,7 @@ import {
   StatusBadge,
 } from './ui';
 import { ProxyCoreControl } from './proxy-core-control';
+import { ProxyDetails } from './proxy-details';
 
 export function ProxyEnvironments({
   data,
@@ -34,11 +44,12 @@ export function ProxyEnvironments({
   onDelete: (id: string) => void;
   onInspect: (proxy: ProxyConfig) => void;
   onCommand: (
-    action: 'install' | 'start' | 'stop' | 'adopt',
+    action: 'install' | 'start' | 'stop' | 'adopt' | 'refresh',
     id?: string,
   ) => void;
 }) {
   const [query, setQuery] = useState('');
+  const [view, setView] = useState<ProxyConfig>();
   const visible = data.proxies.filter((item) =>
     `${item.name} ${item.url}`
       .toLowerCase()
@@ -172,6 +183,30 @@ export function ProxyEnvironments({
                         检测
                       </Button>
                       <IconButton
+                        label={`查看代理 ${item.name}`}
+                        icon={<Eye size={17} />}
+                        onClick={() => setView(item)}
+                      />
+                      {service?.subscription && (
+                        <IconButton
+                          label={`更新订阅 ${item.name}`}
+                          icon={
+                            <RefreshCw
+                              size={17}
+                              className={
+                                service.subscription.status === 'updating'
+                                  ? 'ui-spin'
+                                  : ''
+                              }
+                            />
+                          }
+                          disabled={
+                            busy || service.subscription.status === 'updating'
+                          }
+                          onClick={() => onCommand('refresh', item.id)}
+                        />
+                      )}
+                      <IconButton
                         label={`编辑代理 ${item.name}`}
                         icon={<Pencil size={17} />}
                         disabled={busy || running}
@@ -194,12 +229,27 @@ export function ProxyEnvironments({
                   {service?.error && (
                     <Notice tone="error">{service.error}</Notice>
                   )}
+                  {service?.subscription?.status === 'pending' && (
+                    <Notice>订阅已更新，环境停止后应用</Notice>
+                  )}
+                  {service?.subscription?.error && (
+                    <Notice tone="warning">{service.subscription.error}</Notice>
+                  )}
                 </ResourceRow>
               );
             })}
           </div>
         )}
       </CollectionPanel>
+      {view && (
+        <ProxyDetails
+          item={view}
+          service={data.proxy_runtime?.entries.find(
+            (row) => row.id === view.id,
+          )}
+          onClose={() => setView(undefined)}
+        />
+      )}
     </section>
   );
 }

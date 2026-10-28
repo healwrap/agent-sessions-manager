@@ -4,11 +4,13 @@ from pathlib import Path
 import subprocess
 import shutil
 import threading
+import time
 from uuid import UUID, uuid4
 from .config import configuration, direct_domains, node_config, DEFAULT_DIRECT
 from .core import ProxyCore
 from .imports import NodeImports
 from .process import ProxyProcess, private_json, free_port
+from .subscriptions import SubscriptionUpdates, settings as subscription_settings
 
 
 class ProxyManager:
@@ -19,6 +21,7 @@ class ProxyManager:
         self.imports = NodeImports()
         self.lock = threading.RLock()
         self.processes, self.errors = {}, {}
+        self.updates = SubscriptionUpdates(self)
 
     def entry_directory(self, key):
         try: UUID(key)
@@ -50,7 +53,7 @@ class ProxyManager:
         finally: candidate.unlink(missing_ok=True)
 
     def save(self, value):
-        if not isinstance(value, dict) or set(value)-{'id', 'name', 'token', 'index', 'direct_domains'}:
+        if not isinstance(value, dict) or set(value)-{'id', 'name', 'token', 'index', 'direct_domains', 'interval_hours'}:
             raise ValueError('专用代理配置字段无效')
         key = value.get('id') or str(uuid4())
         with self.lock:
@@ -62,6 +65,14 @@ class ProxyManager:
             node_config(node)
             entry = {'node': node, 'port': previous['port'] if previous else free_port(),
                      'direct_domains': direct_domains(value.get('direct_domains', DEFAULT_DIRECT)), 'auto_start': True}
+            old_subscription = (previous or {}).get('subscription')
+            source = self.imports.url(value['token']) if value.get('token') else (old_subscription or {}).get('url', '')
+            default_interval = (6 if source else 0) if value.get('token') else (old_subscription or {}).get('interval_hours', 0)
+            subscription = subscription_settings(source, node, value.get('interval_hours', default_interval),
+                                                 old_subscription if not value.get('token') else None)
+            if subscription:
+                if value.get('token'): subscription.update(last_checked=time.time(), last_updated=time.time())
+                entry['subscription'] = subscription
             item = {'id': key, 'name': value.get('name', ''), 'url': f"http://127.0.0.1:{entry['port']}", 'kind': 'managed'}
             self.environments.validate('proxies', item, self.environments.read())
             self.validate(key, entry)
@@ -80,13 +91,14 @@ class ProxyManager:
             self.start(key)
             return item
 
-    def ensure(self, proxy):
+    def ensure(self, proxy, starting_profile=None):
         if proxy and proxy.get('kind') == 'managed':
-            self.start(proxy['id'])
+            self.start(proxy['id'], starting_profile)
             if self.errors.get(proxy['id']): raise ValueError(self.errors[proxy['id']])
 
-    def start(self, key):
+    def start(self, key, starting_profile=None):
         with self.lock:
+            self.updates.apply(key, starting_profile)
             entry = self.definition(key)
             try:
                 self.process(key).start(entry['port'])
@@ -136,6 +148,7 @@ class ProxyManager:
                                     'status': 'running' if alive else 'failed' if key in self.errors or entry.get('auto_start') else 'stopped',
                                     'error': self.errors.get(key, '') or ('代理进程已退出' if not alive and entry.get('auto_start') else ''),
                                     'node': {'name': entry['node']['name'], 'type': entry['node']['type']},
+                                    'subscription': self.updates.public(key, entry),
                                     'direct_domains': entry['direct_domains']})
                 except (OSError, ValueError, KeyError) as error:
                     entries.append({'id': key, 'alive': False, 'status': 'failed', 'error': str(error), 'direct_domains': []})
@@ -143,5 +156,6 @@ class ProxyManager:
             return {'core': self.core.state(), 'entries': entries, 'adoptable': available(self.directory, self.environments)}
 
     def close(self):
+        self.updates.close()
         with self.lock:
             for process in self.processes.values(): process.stop()

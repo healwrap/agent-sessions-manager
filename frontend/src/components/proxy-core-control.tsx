@@ -1,4 +1,5 @@
-import { Download, Globe2, LoaderCircle } from 'lucide-react';
+import { Download, LoaderCircle } from 'lucide-react';
+import mihomoIcon from '../assets/components/mihomo.webp';
 import type { ProxyRuntimeState } from '../lib/environment-settings';
 import { Button, Notice, ResourceCard, StatusBadge } from './ui';
 
@@ -17,7 +18,14 @@ export function ProxyCoreControl({
     <ResourceCard
       className="ui-service-strip"
       title="Mihomo"
-      icon={<Globe2 size={22} />}
+      icon={
+        <img
+          className="agent-icon"
+          src={mihomoIcon}
+          alt=""
+          aria-hidden="true"
+        />
+      }
       subtitle={core?.version || '专用代理内核'}
       badge={
         <StatusBadge tone={core?.available ? 'success' : 'neutral'}>

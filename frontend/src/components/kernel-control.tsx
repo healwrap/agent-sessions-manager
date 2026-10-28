@@ -1,4 +1,5 @@
-import { Download, LoaderCircle, PanelsTopLeft } from 'lucide-react';
+import { Download, LoaderCircle } from 'lucide-react';
+import fingerprintIcon from '../assets/components/fingerprint-chromium.png';
 import type { BrowserRuntimeState } from '../lib/environment-settings';
 import { Button, Notice, ResourceCard, StatusBadge } from './ui';
 export function KernelControl({
@@ -17,7 +18,14 @@ export function KernelControl({
       className="kernel-control ui-service-strip"
       title="Fingerprint Chromium"
       subtitle={kernel.version || '独立浏览器内核'}
-      icon={<PanelsTopLeft size={22} />}
+      icon={
+        <img
+          className="agent-icon"
+          src={fingerprintIcon}
+          alt=""
+          aria-hidden="true"
+        />
+      }
       badge={
         <StatusBadge tone={kernel.available ? 'success' : 'neutral'}>
           {kernel.available ? '已安装' : '未安装'}

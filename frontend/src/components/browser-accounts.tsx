@@ -19,7 +19,6 @@ import {
 } from './ui';
 import { StatusBadge } from './form-controls';
 import { AgentIcon } from './agent-icon';
-import { KernelControl } from './kernel-control';
 import { AccountDetails } from './account-details';
 import { useSessionStore } from '../hooks/use-session-store';
 import { sessionStore } from '../state/session-store';
@@ -28,13 +27,11 @@ export function BrowserAccounts({
   data,
   busy,
   loading,
-  onInstall,
   ...actions
 }: AccountActions & {
   data: EnvironmentSettings;
   busy: boolean;
   loading: boolean;
-  onInstall: (action: 'check' | 'install') => void;
 }) {
   const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
@@ -99,9 +96,6 @@ export function BrowserAccounts({
           {message}
         </Notice>
       ))}
-      {!loading && !data.browser.kernel.available && (
-        <KernelControl kernel={data.browser.kernel} onInstall={onInstall} />
-      )}
       <CollectionPanel
         toolbar={
           <CollectionToolbar

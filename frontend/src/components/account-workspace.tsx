@@ -201,7 +201,6 @@ export function AccountWorkspace({
                 ).find((profile) => profile.id === id);
                 if (item) setEdit({ kind, item } as EnvironmentEdit);
               }}
-              onInstall={(action) => void installKernel(action)}
             />
           )}
           {section === 'browser' && (

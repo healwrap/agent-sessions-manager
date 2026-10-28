@@ -68,6 +68,36 @@
   max-width: 1180px;
   margin-inline: auto;
 }
+.account-workspace .environment-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1440px);
+  justify-content: center;
+  align-content: start;
+  padding: 16px clamp(20px, 2.4vw, 36px) 32px;
+}
+.account-workspace .environment-content > * {
+  min-width: 0;
+  max-width: none;
+  margin-inline: 0;
+}
+.account-workspace .ui-page-heading {
+  margin-bottom: 16px;
+}
+.account-workspace .ui-service-strip.ui-resource {
+  margin-bottom: 16px;
+}
+.account-workspace .ui-service-strip .ui-resource-heading {
+  padding-inline: 0;
+}
+.account-workspace .ui-resource-row .ui-resource-heading {
+  padding: 16px 20px 12px;
+}
+.account-workspace .ui-resource-row .ui-resource-body {
+  padding-bottom: 16px;
+}
+.accounts-manager .ui-master-detail {
+  min-height: 360px;
+}
 .account-workspace .main-header .session-title,
 .skill-workspace .main-header .session-title {
   color: var(--dsw-alias-label-secondary);

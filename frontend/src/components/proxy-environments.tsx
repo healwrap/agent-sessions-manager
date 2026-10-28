@@ -73,7 +73,10 @@ export function ProxyEnvironments({
             }
           />
         ) : (
-          <div className="ui-resource-rows" role="list">
+          <div
+            className="ui-resource-rows environment-resource-grid"
+            role="list"
+          >
             {visible.map((item) => {
               const bindings = [...data.profiles, ...data.app_profiles].filter(
                 (profile) => profile.proxy_id === item.id,
@@ -89,6 +92,7 @@ export function ProxyEnvironments({
                 <ResourceRow
                   key={item.id}
                   title={item.name}
+                  subtitle={<code>{item.url}</code>}
                   icon={<Globe2 size={22} />}
                   actions={
                     <>
@@ -119,9 +123,7 @@ export function ProxyEnvironments({
                       />
                     </>
                   }
-                >
-                  <p className="ui-resource-address">{item.url}</p>
-                </ResourceRow>
+                />
               );
             })}
           </div>

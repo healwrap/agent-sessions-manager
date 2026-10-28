@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 28px 20px;
+  padding: 20px 24px 16px;
 }
 .account-detail h2 {
   font-size: 18px;
@@ -18,7 +18,7 @@
   overflow-wrap: anywhere;
 }
 .account-client-switch {
-  padding: 0 28px;
+  padding: 0 24px;
 }
 .account-live-dot {
   width: 6px;
@@ -36,7 +36,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 24px 28px;
+  padding: 16px 24px;
 }
 .account-launch-status {
   display: flex;
@@ -58,6 +58,8 @@
 .account-launch-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
 }
 .account-section-heading {
@@ -65,7 +67,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .account-section-heading h3 {
   margin: 0;
@@ -75,12 +77,17 @@
   overflow-wrap: anywhere;
 }
 .account-environment-summary {
-  margin: 0 28px 24px;
-  padding: 20px 0 0;
+  margin: 0 24px 20px;
+  padding: 16px 0 0;
   border-top: 0.5px solid var(--dsw-alias-border-l2);
 }
 .account-environment-summary .ui-facts {
   gap: 20px 24px;
+}
+@container (min-width: 900px) {
+  .account-environment-summary .ui-facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .account-exit-ip {
   font-variant-numeric: tabular-nums;
@@ -90,7 +97,7 @@
   color: var(--dsw-alias-label-secondary);
 }
 .account-login-link {
-  padding: 0 28px 20px;
+  padding: 0 24px 16px;
 }
 @keyframes account-detail-in {
   from {

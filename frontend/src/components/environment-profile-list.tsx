@@ -85,7 +85,10 @@ export function EnvironmentProfileList({
   );
   const title = target === 'browser' ? '浏览器' : 'App';
   return (
-    <section aria-label={`${title}环境列表`}>
+    <section
+      className="environment-profile-list"
+      aria-label={`${title}环境列表`}
+    >
       <CollectionPanel
         toolbar={
           <CollectionToolbar
@@ -144,7 +147,10 @@ export function EnvironmentProfileList({
             }
           />
         ) : (
-          <div className="ui-resource-rows" role="list">
+          <div
+            className="ui-resource-rows environment-resource-grid"
+            role="list"
+          >
             {visible.map(({ profile, run, account, proxy, failed }) => {
               const checking = run?.status === 'checking';
               const live = !!run?.alive || checking;
@@ -165,7 +171,14 @@ export function EnvironmentProfileList({
                 <ResourceRow
                   key={profile.id}
                   title={profile.name}
-                  subtitle={account?.name || '未绑定账号'}
+                  subtitle={
+                    account &&
+                    (profile.name === account.name ||
+                      profile.name ===
+                        `${account.name} · ${target === 'browser' ? '浏览器' : 'Claude App'}`)
+                      ? undefined
+                      : account?.name || '未绑定账号'
+                  }
                   icon={
                     <AgentIcon
                       source={
@@ -247,6 +260,7 @@ export function EnvironmentProfileList({
                   footer={run && <BrowserLaunchReport run={run} />}
                 >
                   <FactsGrid
+                    className="environment-profile-facts"
                     columns={3}
                     items={[
                       {

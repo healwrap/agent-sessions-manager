@@ -16,6 +16,7 @@ from .proxy import ProxyRelay
 from .preflight import inspect
 from .control import BrowserControl
 from .process_state import ProcessState
+from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
 
 
 def account_url(provider):
@@ -25,6 +26,7 @@ def account_url(provider):
 class BrowserRuntime:
     def __init__(self, directory, environments, diagnostics, origin, proxy_manager=None):
         self.proxy_manager = proxy_manager
+        self.identity = ProfileIdentity(directory)
         self.directory = Path(directory)/'browser'
         self.installer = KernelInstaller(self.directory/'kernel')
         self.environments, self.diagnostics, self.origin = environments, diagnostics, origin
@@ -95,6 +97,7 @@ class BrowserRuntime:
         key = account['profile_id'] if account else value.get('profile_id')
         profile = next((row for row in settings['profiles'] if row['id'] == key), None)
         if not profile: raise ValueError('请选择已保存的浏览器环境')
+        self.identity.verify(settings, 'profiles', key)
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')
         if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
@@ -188,6 +191,10 @@ class BrowserRuntime:
             baseline = json.loads(baseline_file.read_text()) if baseline_file.exists() else None
             actual, next_baseline = browser_checks(profile, resolved, report['checks'], baseline)
             checks += actual
+            identifiers = self.identity.browser(self.environments.read(), key, control)
+            if identifiers:
+                checks.append(dict(id='browser-identity', title='设备标识隔离', policy='block', state='pass',
+                                   value='已观测的设备 Cookie 与其他浏览器环境不同', detail=''))
             allowed = not blocked(checks)
             result = {'state': 'allowed' if allowed else 'blocked', 'checks': checks,
                       'next_url': account_url(account['provider']) if account and allowed else ''}
@@ -210,6 +217,8 @@ class BrowserRuntime:
                     failures = [row['title'] for row in checks if row['policy'] == 'block' and row['state'] not in ('pass', 'skip')]
                     self.update(key, status='blocked', stage='启动已拦截，检测窗口已关闭',
                                 error='启动已拦截：'+'、'.join(failures)+'未通过', pages=[])
+            else:
+                threading.Thread(target=self._observe_identity, args=(key, run, process, control), daemon=True).start()
         except Exception as error:
             if run.get('cancelled'): return
             self.update(key, status='failed', stage='启动未完成', error=str(error))
@@ -221,6 +230,27 @@ class BrowserRuntime:
             if control: control.close()
             process = self.processes.get(key)
             if process and process.poll() is None: process.terminate()
+
+    def _observe_identity(self, key, run, process, control):
+        while not run.get('cancelled') and process.poll() is None:
+            try:
+                values = self.identity.browser(self.environments.read(), key, control)
+            except IdentityConflict as error:
+                with self.lock:
+                    if self.runs.get(key) is not run or run.get('cancelled'): return
+                    self._close_window(key)
+                    self.update(key, status='blocked', stage='设备标识隔离未通过', error=str(error))
+                return
+            except (ValueError, OSError):
+                time.sleep(5); continue
+            if values:
+                with self.lock:
+                    if self.runs.get(key) is not run or run.get('cancelled'): return
+                    checks = [row for row in run['checks'] if row['id'] != 'browser-identity']
+                    checks.append(dict(id='browser-identity', title='设备标识隔离', policy='block', state='pass',
+                                       value='已观测的设备 Cookie 与其他浏览器环境不同', detail=''))
+                    self.update(key, checks=checks)
+            time.sleep(5)
 
     def _prepare_preferences(self, directory, locale):
         # Restore only the check page before the account domain is released.

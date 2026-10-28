@@ -17,7 +17,7 @@ IDENTITY = """(async () => {
       code: account.error?.details?.error_code || '',
     };
     return typeof account.email_address === 'string' && account.uuid
-      ? {email: account.email_address} : {};
+      ? {email: account.email_address, uuid: account.uuid} : {};
   } catch { return {}; }
 })()"""
 

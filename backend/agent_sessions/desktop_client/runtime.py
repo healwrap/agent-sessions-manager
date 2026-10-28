@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import threading
 import time
+import psutil
 from agent_sessions.browser.gates import blocked
 from agent_sessions.browser.preflight import inspect
 from agent_sessions.browser.proxy import ProxyRelay
@@ -15,8 +16,12 @@ from agent_sessions.browser.process_state import ProcessState
 from .conflicts import warnings
 from .focus import focus_process, quit_process
 from .skills import sync_skills
+from .plugins import sync_plugins
 from agent_sessions.platform_process import claude_processes
 from agent_sessions.applications import app_executable
+from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
+from .network import configure as configure_network
+from .connections import ProcessConnections, ConnectionViolation, public
 
 
 def app_processes():
@@ -26,10 +31,12 @@ def app_processes():
 class AppRuntime:
     def __init__(self, directory, environments, proxy_manager=None):
         self.proxy_manager = proxy_manager
+        self.identity = ProfileIdentity(directory)
         self.directory = Path(directory)/'claude-app'
         self.environments = environments
         self.lock = threading.RLock()
         self.runs, self.processes, self.relays = {}, {}, {}
+        self.observers = {}
         self.registry = ProcessState(self.directory)
         settings = self.environments.read()
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
@@ -77,6 +84,7 @@ class AppRuntime:
         key = account.get('app_profile_id') if account else value.get('profile_id')
         profile = next((row for row in settings['app_profiles'] if row['id'] == key), None)
         if not profile: raise ValueError('请为账号绑定 Claude App 环境')
+        self.identity.verify(settings, 'app_profiles', key)
         if getattr(self, 'component_guard', None): self.component_guard('claude')
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
         if not app: raise ValueError('请先安装官方 Claude App')
@@ -114,6 +122,8 @@ class AppRuntime:
                 config = directory/'claude-code'
                 config.mkdir(parents=True, exist_ok=True, mode=0o700)
                 run['skill_inheritance'] = sync_skills(config, profile.get('inherit_skills', True))
+                plugins = sync_plugins(config, self.directory/'plugin-library', profile.get('inherit_plugins', True))
+                run['plugin_inheritance'] = {name: value for name, value in plugins.items() if name != 'environment'}
                 settings_file = directory/'config.json'
                 preferences = json.loads(settings_file.read_text()) if settings_file.exists() else {}
                 requested_locale = resolved['locale']
@@ -129,6 +139,8 @@ class AppRuntime:
                 self.relays[key] = relay
                 env = {name: value for name, value in os.environ.items() if name in ('HOME', 'PATH', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'SYSTEMROOT', 'WINDIR', 'APPDATA', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP', 'TMP', 'COMSPEC', 'PATHEXT')}
                 env.update(CLAUDE_CONFIG_DIR=str(config), TZ=resolved['timezone'])
+                env.update(plugins['environment'])
+                env.update(configure_network(config, relay))
                 args = [app_executable(app), '--user-data-dir='+str(directory),
                         '--proxy-server=http://127.0.0.1:'+str(relay.server_port),
                         '--lang='+resolved['locale'], '--accept-lang='+resolved['locale'], '--disable-quic',
@@ -136,6 +148,7 @@ class AppRuntime:
                 with (directory/'app-launch.log').open('ab') as log:
                     process = subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
                 self.processes[key] = process
+                self.observers[key] = ProcessConnections(process.pid)
                 run.update(pid=process.pid, stage='正在确认 App 的独立数据目录')
             for attempt in range(60):
                 if run.get('cancelled'): return
@@ -147,8 +160,13 @@ class AppRuntime:
                 if run.get('cancelled'): return
                 checks += [dict(id='app-storage', title='App 登录数据隔离', policy='block', state='pass', value=str(directory), detail='官方 App 已在这个独立目录创建用户数据'),
                            dict(id='code-storage', title='内嵌 Code 配置隔离', policy='block', state='pass', value=str(config), detail='独立 CLAUDE_CONFIG_DIR，启动环境不继承 CLI 的供应商与思考强度变量')]
+                identifiers = self.identity.verify(self.environments.read(), 'app_profiles', key)
+                if identifiers:
+                    checks.append(dict(id='app-identity', title='设备标识隔离', policy='block', state='pass',
+                                       value='已生成的安装、账号与 Code 标识未与其他 App 环境重复', detail=''))
                 run.update(status='running', stage='App 已启动，可在官方窗口登录', checks=checks,
                            checked_at=datetime.now(timezone.utc).isoformat())
+            threading.Thread(target=self._observe, args=(key, run, process, bool(proxy)), daemon=True).start()
         except Exception as error:
             if run.get('cancelled'): return
             run.update(status='failed', stage='App 启动未完成', error=str(error))
@@ -157,11 +175,51 @@ class AppRuntime:
             relay = self.relays.pop(key, None)
             if relay: relay.close()
 
+    def _observe(self, key, run, process, proxied):
+        while not run.get('cancelled') and process.poll() is None:
+            try:
+                self.identity.verify(self.environments.read(), 'app_profiles', key)
+                observer = self.observers.get(key)
+                if not observer: return
+                rows = observer.sample()
+                direct = [row for row in rows if public(row['host'])] if proxied else []
+                if direct: raise ConnectionViolation('发现 App 进程树的公网直连：'+'、'.join(str(row['pid'])+' → '+row['host']+':'+str(row['port']) for row in direct))
+                with self.lock:
+                    if self.runs.get(key) is not run or run.get('cancelled'): return
+                    run['network_observation'] = {'scope': 'process-tree', 'connections': rows,
+                                                  'checked_at': datetime.now(timezone.utc).isoformat()}
+                    check = dict(id='app-connections', title='App 连接采样', policy='warn', state='pass' if rows else 'unknown',
+                                 value='已观测连接未发现公网直连' if proxied and rows else '当前没有连接样本' if not rows else '当前使用系统路由',
+                                 detail='周期采样 App 及已发现子进程；系统级服务和 VM 内部进程尚未验收，不代表系统级阻断')
+                    run['checks'] = [row for row in run['checks'] if row['id'] != check['id']]+[check]
+            except (IdentityConflict, ConnectionViolation) as error:
+                try: self.stop(key)
+                except (ValueError, OSError, psutil.Error):
+                    if process.poll() is None: process.kill(); process.wait(timeout=5)
+                    relay = self.relays.pop(key, None)
+                    if relay: relay.close()
+                with self.lock:
+                    check_id = 'app-connections' if isinstance(error, ConnectionViolation) else 'app-identity'
+                    run['checks'] = [row for row in run['checks'] if row['id'] != check_id]+[
+                        dict(id=check_id, title='App 连接采样' if check_id == 'app-connections' else '设备标识隔离',
+                             policy='block', state='fail', value=str(error), detail='原登录数据保持在原目录')]
+                    run.update(status='blocked', stage='环境检查发现异常，已停止 App', error=str(error))
+                return
+            except (OSError, ValueError, psutil.Error, subprocess.TimeoutExpired) as error:
+                with self.lock:
+                    run['network_observation'] = {'scope': 'unavailable', 'error': str(error)}
+                    run['checks'] = [row for row in run['checks'] if row['id'] != 'app-connections']+[
+                        dict(id='app-connections', title='App 连接采样', policy='warn', state='unknown',
+                             value='未取得完整进程连接样本', detail=str(error))]
+            time.sleep(2)
+
     def stop(self, key):
         with self.lock:
             if key not in self.runs: raise ValueError('此 App 环境尚未启动')
             self.runs[key]['cancelled'] = True
             process = self.processes.get(key)
+            observer = self.observers.get(key)
+            if observer: observer.processes()
             if process and process.poll() is None:
                 if not quit_process(process.pid): process.terminate()
                 try: process.wait(timeout=20)
@@ -169,6 +227,9 @@ class AppRuntime:
                     if os.sys.platform != 'win32': raise ValueError('App 尚未退出，请关闭它的窗口后重试') from None
                     process.terminate()
                     process.wait(timeout=5)
+            if observer:
+                observer.finish()
+                self.observers.pop(key, None)
             relay = self.relays.pop(key, None)
             if relay: relay.close()
             self.runs[key].update(status='stopped', stage='App 已停止，登录状态保留')

@@ -1,11 +1,18 @@
 .skill-install-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
-  align-items: start;
+  align-items: stretch;
   gap: 20px;
 }
 .skill-target-panel {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+}
+.skill-target-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 .skill-target-panel > .ui-section-heading {
   margin: 0;
@@ -31,6 +38,7 @@
   padding-inline: 20px;
 }
 .skill-target-columns {
+  flex: none;
   min-height: 40px;
   border-block: 0.5px solid var(--dsw-alias-border-l1);
   background: var(--dsw-alias-bg-layer-1);
@@ -41,7 +49,9 @@
   text-align: right;
 }
 .skill-target-row {
+  flex: 1;
   min-height: 76px;
+  max-height: 96px;
   border-bottom: 0.5px solid var(--dsw-alias-border-l1);
   transition: background 160ms ease;
 }
@@ -95,7 +105,12 @@
   white-space: nowrap;
 }
 .skill-detail {
+  display: flex;
+  flex-direction: column;
   padding: 22px;
+}
+.skill-detail > .status-badge {
+  align-self: flex-start;
 }
 .skill-detail-heading {
   display: flex;
@@ -160,7 +175,8 @@
 .skill-detail-actions {
   display: flex;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: auto;
+  padding-top: 20px;
 }
 .skill-detail-actions .action-button {
   flex: 1;

@@ -1,14 +1,8 @@
 import type { AccountUsage } from './account-usage';
 import type { BrowserAccount } from './environment-settings';
 
-export const planLabels = { pro: 'Pro', max5: 'Max 5×', max20: 'Max 20×' };
+export const planLabels = { pro: 'Pro', max5: 'Max 5x', max20: 'Max 20x' };
 export type Plan = keyof typeof planLabels;
-export type TokenBasis = 'input' | 'output' | 'mixed';
-export const basisLabels = {
-  input: '纯输入 Token',
-  output: '纯输出 Token',
-  mixed: '混合 Token（含缓存）',
-};
 export interface TokenFigure {
   value: number;
   low: number | null;
@@ -21,8 +15,7 @@ export interface BenchmarkModel {
   as_of: string | null;
   rate_source: string;
   qualification: string;
-  input: TokenFigure | null;
-  output: TokenFigure | null;
+  conversion?: string;
   mixed: TokenFigure | null;
   mixed_as_of: string | null;
   plans: Partial<Record<Plan, { included: boolean; weekly_fraction: number }>>;
@@ -170,11 +163,10 @@ export function tokenCapacity(
   benchmarks: QuotaBenchmarks,
   model: BenchmarkModel,
   plan: Plan,
-  basis: TokenBasis,
   weekly = false,
 ) {
   if (model.plans[plan]?.included === false) return null;
-  const window = model[basis];
+  const window = model.mixed;
   const week = benchmarks.weekly_windows[plan];
   if (!window || (weekly && (week.value === null || week.stale))) return null;
   const scale =
@@ -191,14 +183,12 @@ export function aggregateQuota(
   items: Record<string, AccountUsage>,
   benchmarks: QuotaBenchmarks | undefined,
   model: BenchmarkModel | undefined,
-  basis: TokenBasis,
   now: number,
   weekly: boolean,
 ) {
   let remaining = 0,
     total = 0,
     count = 0,
-    shares = 0,
     known = 0,
     unknownPlans = 0,
     missingEstimate = 0;
@@ -218,7 +208,6 @@ export function aggregateQuota(
     );
     if (!window) continue;
     known++;
-    shares += Math.max(0, 1 - window.used_percent / 100);
     const plan = account.usage_plan || usage.plan;
     if (!plan) {
       unknownPlans++;
@@ -228,12 +217,12 @@ export function aggregateQuota(
       missingEstimate++;
       continue;
     }
-    const capacity = tokenCapacity(benchmarks, model, plan, basis, weekly);
+    const capacity = tokenCapacity(benchmarks, model, plan, weekly);
     if (!capacity) {
       missingEstimate++;
       continue;
     }
-    let fraction = Math.max(0, 1 - window.used_percent / 100);
+    const fraction = Math.max(0, 1 - window.used_percent / 100);
     let available = capacity.value * fraction;
     if (weekly) {
       const scoped = modelWindows(usage, model).filter(
@@ -263,7 +252,6 @@ export function aggregateQuota(
     remaining,
     total,
     count,
-    shares,
     known,
     unknownPlans,
     missingEstimate,

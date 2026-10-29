@@ -3,13 +3,11 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import type { AccountUsages } from '../hooks/use-account-usages';
 import type { EnvironmentSettings } from '../lib/environment-settings';
 import {
-  basisLabels,
   planLabels,
   tokenCapacity,
   tokens,
   type BenchmarkModel,
   type Plan,
-  type TokenBasis,
 } from '../lib/account-overview';
 import {
   Button,
@@ -26,13 +24,11 @@ export function QuotaSourceDialog({
   data,
   usage,
   model,
-  basis,
   onClose,
 }: {
   data: EnvironmentSettings;
   usage: AccountUsages;
   model?: BenchmarkModel;
-  basis: TokenBasis;
   onClose: () => void;
 }) {
   const source = usage.benchmarks;
@@ -60,16 +56,25 @@ export function QuotaSourceDialog({
                 value: new Date(source.generated_at).toLocaleString('zh-CN'),
               },
               { label: '模型', value: model?.label || '未选择' },
-              { label: '换算口径', value: basisLabels[basis] },
+              { label: '换算口径', value: '混合 Token（含缓存）' },
             ]}
           />
           <p className="quota-source-description">
-            根据第三方测得的额度容量，乘以各账号的实际剩余比例。不同模型、输入、输出和混合口径分别换算。
+            按所选模型的混合 Token
+            容量，乘以各账号的实际剩余比例，再汇总为可用估算。
           </p>
+          {model?.conversion && (
+            <Notice>
+              {model.label}：{model.conversion}。
+              {model.rate_source === 'list_price_until_separable'
+                ? '模型消耗比例暂按价格比例近似。'
+                : '模型消耗比例采用数据源公布的结果。'}
+            </Notice>
+          )}
           <div className="quota-source-table-wrap">
             <table className="quota-source-table">
               <caption>
-                {model?.label} · {basisLabels[basis]} · 满额估算
+                {model?.label} · 混合 Token（含缓存） · 满额估算
               </caption>
               <thead>
                 <tr>
@@ -80,15 +85,19 @@ export function QuotaSourceDialog({
               </thead>
               <tbody>
                 {(Object.keys(planLabels) as Plan[]).map((plan) => {
-                  const five =
-                    model && tokenCapacity(source, model, plan, basis);
+                  const excluded = model?.plans[plan]?.included === false;
+                  const five = model && tokenCapacity(source, model, plan);
                   const week =
-                    model && tokenCapacity(source, model, plan, basis, true);
+                    model && tokenCapacity(source, model, plan, true);
                   return (
                     <tr key={plan}>
                       <th>{planLabels[plan]}</th>
                       <td>
-                        {five ? `≈ ${tokens(five.value)}` : '无可用估算'}
+                        {five
+                          ? `≈ ${tokens(five.value)}`
+                          : excluded
+                            ? '套餐未包含'
+                            : '无可用估算'}
                         {five?.low !== null && five?.high !== null && five && (
                           <small>
                             {tokens(five.low!)}–{tokens(five.high!)} Token
@@ -96,7 +105,11 @@ export function QuotaSourceDialog({
                         )}
                       </td>
                       <td>
-                        {week ? `≈ ${tokens(week.value)}` : '无可用估算'}
+                        {week
+                          ? `≈ ${tokens(week.value)}`
+                          : excluded
+                            ? '套餐未包含'
+                            : '无可用估算'}
                         {week && (
                           <small>
                             {source.weekly_windows[plan].inferred
@@ -118,36 +131,33 @@ export function QuotaSourceDialog({
                 value:
                   source.account_count === null
                     ? '未提供'
-                    : `${source.account_count} 个 Max 20× 账号`,
+                    : `${source.account_count} 个 Max 20x 账号`,
               },
               {
                 label: '模型样本日期',
-                value: (basis === 'mixed' ? model?.mixed_as_of : model?.as_of)
-                  ? new Date(
-                      (basis === 'mixed' ? model?.mixed_as_of : model?.as_of)!,
-                    ).toLocaleDateString('zh-CN')
+                value: model?.mixed_as_of
+                  ? new Date(model.mixed_as_of).toLocaleDateString('zh-CN')
                   : '未提供',
               },
             ]}
           />
           <Disclosure title="如何理解这个估算" compact>
             <p>
-              Max 20×
+              Max 20x
               的容量来自第三方实际使用与额度读数；其他套餐按来源发布的比例换算，比例依据日期为{' '}
               {source.plan_basis.as_of || '未提供'}。
             </p>
             <p>
-              纯输入、纯输出表示把整份预算用于这一类 Token
-              的等价量，二者不能相加。混合 Token
-              包含重复的缓存读取；样本缓存占比约{' '}
+              混合 Token 汇总输入、输出和缓存
+              Token，包含重复的缓存读取；样本缓存占比约{' '}
               {source.cache_read_share === null
                 ? '未知'
                 : `${(source.cache_read_share * 100).toFixed(1)}%`}
               。
             </p>
             <p>
-              账号总览只汇总近期查询成功且已知套餐的额度，重复登录的同一账号与组织只计算一次。1
-              份表示一个账号自身的完整额度；未取得数据的账号不补为 0。
+              账号总览只汇总近期查询成功且已知套餐的额度，重复登录的同一账号与组织只计算一次。套餐或模型数据缺失时显示待确认，未取得数据的账号不补为
+              0。
             </p>
             <p>
               “额度可用”表示最新读数中的 5
@@ -158,7 +168,7 @@ export function QuotaSourceDialog({
               5 分钟的可访问结果归为待确认，详情保留检测时间。
             </p>
             <p>
-              输入输出换算的依据：
+              模型换算的依据：
               {model?.rate_source === 'measured'
                 ? '第三方测得的模型消耗比例。'
                 : model?.rate_source === 'reference'

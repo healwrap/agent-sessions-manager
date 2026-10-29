@@ -5,7 +5,8 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { accountClients, type AccountActions } from '../lib/account-view';
-import { ChoiceGroup, IconButton, RemoveButton } from './ui';
+import { ChoiceGroup, IconButton, RemoveButton, StatusBadge } from './ui';
+import { planLabels } from '../lib/account-overview';
 import { AccountClientPanel } from './account-client-panel';
 import type { AccountUsages } from '../hooks/use-account-usages';
 import { AccountHealthPanel } from './account-health-panel';
@@ -38,6 +39,7 @@ export function AccountDetails({
   const live = clients.some(
     (item) => item.run?.alive || item.run?.status === 'checking',
   );
+  const plan = account.usage_plan || usage.items[account.id]?.plan;
   return (
     <section
       className="account-detail"
@@ -45,7 +47,15 @@ export function AccountDetails({
       aria-label={`${account.name} 账号详情`}
     >
       <header className="account-detail-header">
-        <h2>{account.name}</h2>
+        <div className="account-detail-identity">
+          <h2>{account.name}</h2>
+          {account.provider === 'claude' && (
+            <StatusBadge>
+              {plan ? planLabels[plan] : '套餐待确认'}
+              {account.usage_plan ? '（手动）' : ''}
+            </StatusBadge>
+          )}
+        </div>
         <div className="ui-actions">
           <IconButton
             label="编辑账号与绑定"

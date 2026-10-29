@@ -228,7 +228,11 @@ export function BrowserAccounts({
                         <strong>{account.name}</strong>
                         <span className="account-list-caption">
                           {account.provider === 'claude' ? 'Claude' : 'Codex'}
-                          {plan && <span>{planLabels[plan]}</span>}
+                          {account.provider === 'claude' && (
+                            <span>
+                              {plan ? planLabels[plan] : '套餐待确认'}
+                            </span>
+                          )}
                           {account.provider === 'claude' &&
                             health.state !== 'unknown' && (
                               <StatusBadge tone={health.tone}>

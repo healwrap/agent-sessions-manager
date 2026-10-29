@@ -14,10 +14,10 @@
 
 账号管理顶部汇总全部账号、Claude 额度可用账号、用尽、明确停用和待确认数量。可用要求近期查询成功，5 小时、周额度及当前模型实际返回的额度均未用尽；登录失效、HTTP 403 和网络故障不等于账号停用。缺失窗口、重置后未更新的窗口与过期结果不计为可用。刷新全部复用原缓存、冷却和退避，同一后端最多同时查询两个账号。账号列表、总览和详情共用一次本地轮询，隐藏页面停止查询。
 
-Token 数据来自 [All Done Sites Claude Usage Tracker](https://alldonesites.com/claude-usage-tracker/) 的[公开 JSON](https://alldonesites.com/data/claude-usage.json)，测量和换算实现见 [jonathanavis96/claude-usage-tracker](https://github.com/jonathanavis96/claude-usage-tracker)（MIT）。使用 schema v2 的 `credits.per_model` 输入/输出等价量、`credits.window_tokens.per_family` 混合量、套餐比例、各套餐周窗口和模型包含范围；不使用来源已标记弃用的 `rates` 数字。内置 2026-10-29 发布数据快照，每 6 小时在查看总览时同步，失败保留原快照和原发布时间。估算依据弹窗可指定数据源网络并同步，不上传账号信息或凭据。
+Token 数据来自 [All Done Sites Claude Usage Tracker](https://alldonesites.com/claude-usage-tracker/) 的[公开 JSON](https://alldonesites.com/data/claude-usage.json)，测量和换算实现见 [jonathanavis96/claude-usage-tracker](https://github.com/jonathanavis96/claude-usage-tracker)（MIT）。展示 schema v2 的 `credits.window_tokens.per_family` 混合量，结合套餐比例、各套餐周窗口和模型包含范围换算；不使用来源已标记弃用的 `rates` 数字。模型列表随数据源更新，目前有 Opus 5.5、Opus 5、Sonnet 5、Haiku 4.5 和 Fable 5.1；Sonnet 5.5、Haiku 5.5、Opus 4.6 在尚无独立混合量时，按 `credits.measured_rates.per_family` 已发布的消耗比例及 Opus 5 样本换算，保留价格近似说明并标注“比例估算”。仅在输入、输出共用同一比例时换算。来源补齐独立混合量后自动优先采用。内置 2026-10-29 发布数据快照，每 6 小时在查看总览时同步，失败保留原快照和原发布时间。估算依据弹窗可指定数据源网络并同步，不上传账号信息或凭据。
 
-每个账号按明确返回的 `rate_limit_tier` 识别 Pro / Max 5× / Max 20×；无法识别时不猜测，可在账号编辑中手动指定估算套餐，设置不会变更真实订阅或使已有用量缓存失效。总额按套餐分别换算；余额乘以该账号实际剩余比例。同一邮箱与组织只汇总一次，标明已覆盖账号数。没有可换算套餐时显示账号自身额度的“份”，一份表示其 100%，不代表不同套餐有相同 Token 容量。
+每个账号按服务返回的 `analytics_subscription_plan` 和 `rate_limit_tier` 识别 Pro / Max 5x / Max 20x，并在账号列表与详情标记。仅有粗粒度 Max 标签时仍需确认倍数；通用的 `default_claude_ai` 不代表 Pro。无法识别时显示套餐待确认，可在账号编辑中手动指定估算套餐，设置不会变更真实订阅或使已有用量缓存失效。总额按套餐分别换算；余额乘以该账号实际剩余比例。同一邮箱与组织只汇总一次，标明已覆盖账号数。缺少套餐或模型数据时显示缺失原因，不换成其他单位。
 
-纯输入和纯输出是把预算分别换成一种 Token 的等价量，不能相加；混合口径包含缓存重读，随第三方样本工作负载变化。模型比例中的参考值、实测值、按模型价格近似和 Pro / Max 5× 的比例推算分别保留来源说明；日期、样本账号数、估算区间和原始数据链接可在“估算依据”中查看。总览的 5 小时和周余额分别按各自窗口计算，不能相加，也不代表立刻能消耗完全部周额度。
+页面统一显示混合 Token，汇总输入、输出、缓存创建和缓存读取，随第三方样本工作负载变化。模型比例中的参考值、实测值、按模型价格近似和 Pro / Max 5x 的比例推算分别保留来源说明；日期、样本账号数、估算区间和原始数据链接可在“估算依据”中查看。总览的 5 小时和周余额分别按各自窗口计算，不能相加，也不代表立刻能消耗完全部周额度。
 
 账号访问状态单独记录：身份接口成功且邮箱核对通过后记录“可访问”和时间；明确的 `account_disabled` / `account_suspended` / `account_banned` 归为账号停用，`organization_disabled` 单独归为组织停用。401 记录登录待确认，其他 403 和连接异常不推定封禁。超过 5 分钟的可访问结果只显示“上次可访问”，总览计入待确认。检测账号与刷新用量共用受控环境及冷却间隔。

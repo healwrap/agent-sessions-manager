@@ -1,8 +1,9 @@
 {
+  "adapter_version": 2,
   "source_label": "All Done Sites",
   "source_url": "https://alldonesites.com/claude-usage-tracker/",
   "data_url": "https://alldonesites.com/data/claude-usage.json",
-  "generated_at": "2026-10-29T07:31:32.213071+00:00",
+  "generated_at": "2026-10-29T08:31:30.182451+00:00",
   "observed_at": "2026-10-27T14:47:08+00:00",
   "models": [
     {
@@ -12,16 +13,6 @@
       "as_of": "2026-10-27T14:47:08+00:00",
       "rate_source": "measured",
       "qualification": "",
-      "input": {
-        "value": 20895925.0,
-        "low": 14190440.0,
-        "high": 28551933.0
-      },
-      "output": {
-        "value": 4179185.0,
-        "low": 2838088.0,
-        "high": 9517311.0
-      },
       "mixed": {
         "value": 338000754.0,
         "low": 129587361.0,
@@ -56,16 +47,6 @@
       "as_of": "2026-10-27T14:47:08+00:00",
       "rate_source": "inferred",
       "qualification": "",
-      "input": {
-        "value": 317904915.0,
-        "low": 232241812.0,
-        "high": 410774040.0
-      },
-      "output": {
-        "value": 63580983.0,
-        "low": 46448362.0,
-        "high": 82154808.0
-      },
       "mixed": {
         "value": 5142251420.0,
         "low": 2120836470.0,
@@ -100,16 +81,6 @@
       "as_of": "2026-09-21T15:05:39+00:00",
       "rate_source": "reference",
       "qualification": "",
-      "input": {
-        "value": 63580983.0,
-        "low": 46448362.0,
-        "high": 82154808.0
-      },
-      "output": {
-        "value": 12716197.0,
-        "low": 9289672.0,
-        "high": 16430962.0
-      },
       "mixed": {
         "value": 1028450284.0,
         "low": 424167294.0,
@@ -144,16 +115,6 @@
       "as_of": "2026-10-27T14:47:08+00:00",
       "rate_source": "list_price_until_separable",
       "qualification": "Opus 5.5 is valued at its list price, 0.8x Opus; the fitted 0.753x Opus is not used, because the joint fit at its first use (span test: the new family's share of the work varies too little to separate its rate from the limit change: the rate's 95% interval runs 0.83x to 1.32x its base family's, wider than 1.5x end to end or against a search bound) cannot tell that rate apart from a five-hour limit change at that instant. The fitted rate takes over once that fit separates.",
-      "input": {
-        "value": 79476229.0,
-        "low": 58060453.0,
-        "high": 102693510.0
-      },
-      "output": {
-        "value": 15895246.0,
-        "low": 11612091.0,
-        "high": 20538702.0
-      },
       "mixed": {
         "value": 1360180030.0,
         "low": 560983736.0,
@@ -188,22 +149,117 @@
       "as_of": "2026-10-27T14:47:08+00:00",
       "rate_source": "measured",
       "qualification": "",
-      "input": {
-        "value": 126320957.0,
-        "low": 79526582.0,
-        "high": 186288855.0
-      },
-      "output": {
-        "value": 25264191.0,
-        "low": 15905316.0,
-        "high": 37257771.0
-      },
       "mixed": {
         "value": 2043296875.0,
         "low": 726238202.0,
         "high": 3497447721.0
       },
       "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "label": "Haiku 5.5",
+      "family": "haiku-5-5",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "list_price_until_separable",
+      "qualification": "Haiku 5.5 is valued at its list price, 0.02x Opus; the fitted rate is not used, because the joint fit at its first use (span test: the new family's share of the work varies too little to separate its rate from the limit change: the rate's 95% interval runs 0.05x to 20.00x its base family's, wider than 1.5x end to end or against a search bound; mixing test: only 0 pooled stretches after the candidate mixed the new family at a share of 0.2 to 0.8 of the work, and the rate is identified only by mixing; 3 are needed) cannot tell that rate apart from a five-hour limit change at that instant. The fitted rate takes over once that fit separates.",
+      "mixed": {
+        "value": 51422514200.0,
+        "low": 21208364700.0,
+        "high": 77120057850.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "conversion": "按 Opus 5 的混合 Token 样本与数据源发布的模型消耗比例换算",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-opus-4-6",
+      "label": "Opus 4.6",
+      "family": "opus-4-6",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "list_price_until_separable",
+      "qualification": "Opus 4.6 is valued at its list price, 1x Opus; the fitted rate is not used, because the joint fit at its first use (span test: the new family's share of the work varies too little to separate its rate from the limit change: the rate's 95% interval runs 0.05x to 19.35x its base family's, wider than 1.5x end to end or against a search bound; mixing test: only 0 pooled stretches after the candidate mixed the new family at a share of 0.2 to 0.8 of the work, and the rate is identified only by mixing; 3 are needed) cannot tell that rate apart from a five-hour limit change at that instant. The fitted rate takes over once that fit separates.",
+      "mixed": {
+        "value": 1028450284.0,
+        "low": 424167294.0,
+        "high": 1542401157.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "conversion": "按 Opus 5 的混合 Token 样本与数据源发布的模型消耗比例换算",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "label": "Sonnet 5.5",
+      "family": "sonnet-5-5",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "list_price_until_separable",
+      "qualification": "Sonnet 5.5 is valued at its list price, 0.4x Opus; the fitted 0.681x Opus is not used, because the joint fit at its first use (span test: the new family's share of the work varies too little to separate its rate from the limit change: the rate's 95% interval runs 1.13x to 2.38x its base family's, wider than 1.5x end to end or against a search bound) cannot tell that rate apart from a five-hour limit change at that instant. The fitted rate takes over once that fit separates.",
+      "mixed": {
+        "value": 2571125710.0,
+        "low": 1060418235.0,
+        "high": 3856002892.5
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "conversion": "按 Opus 5 的混合 Token 样本与数据源发布的模型消耗比例换算",
       "plans": {
         "max20": {
           "as_of": "2026-09-16",
@@ -259,7 +315,7 @@
     "max20": {
       "value": 4.16,
       "inferred": false,
-      "as_of": "2026-10-29T07:30:00.382112+00:00",
+      "as_of": "2026-10-29T07:49:33+00:00",
       "stale": false
     }
   },

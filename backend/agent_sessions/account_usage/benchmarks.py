@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import threading
 import time
-from .benchmark_data import DATA_URL, normalize_benchmarks
+from .benchmark_data import DATA_URL, DATA_VERSION, normalize_benchmarks
 
 REFRESH_INTERVAL = 6*3600
 
@@ -21,7 +21,7 @@ class QuotaBenchmarks:
         self.data = saved.get('data') or seed
         self.proxy_id = saved.get('proxy_id', '')
         self.fetched_at = saved.get('fetched_at', 0)
-        self.next_refresh = self.fetched_at+REFRESH_INTERVAL
+        self.next_refresh = self.fetched_at+REFRESH_INTERVAL if self.data.get('adapter_version') == DATA_VERSION else 0
         self.refreshing, self.error = False, ''
 
     def read(self):
@@ -29,7 +29,7 @@ class QuotaBenchmarks:
             return {**self.data, 'proxy_id': self.proxy_id, 'fetched_at': self.fetched_at or None,
                     'refreshing': self.refreshing, 'error': self.error,
                     'next_refresh_at': self.next_refresh,
-                    'stale': time.time()-self.fetched_at >= REFRESH_INTERVAL}
+                    'stale': self.data.get('adapter_version') != DATA_VERSION or time.time()-self.fetched_at >= REFRESH_INTERVAL}
 
     def refresh(self, value=None, *, automatic=False):
         value = {} if value is None else value

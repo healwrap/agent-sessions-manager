@@ -17,6 +17,13 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+.account-detail-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
 .account-client-switch {
   padding: 0 24px;
 }

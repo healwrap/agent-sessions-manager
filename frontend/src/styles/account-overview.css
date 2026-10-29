@@ -85,8 +85,12 @@
   padding-top: 12px;
   gap: 12px;
 }
-.account-overview-options > .select {
+.account-overview-options > .custom-select {
   min-width: 0;
+}
+.account-overview-basis {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
 }
 .quota-source-table-wrap {
   overflow-x: auto;

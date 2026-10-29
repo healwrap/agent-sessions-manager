@@ -10,10 +10,8 @@ import type { EnvironmentSettings } from '../lib/environment-settings';
 import {
   aggregateQuota,
   accountHealth,
-  basisLabels,
   quotaState,
   tokens,
-  type TokenBasis,
 } from '../lib/account-overview';
 import {
   Button,
@@ -38,7 +36,6 @@ export function AccountOverview({
   modelId: string;
   onModel: (id: string) => void;
 }) {
-  const [basis, setBasis] = useState<TokenBasis>('output');
   const [sourceOpen, setSourceOpen] = useState(false);
   const { benchmarks, items, now } = usage;
   const models = benchmarks?.models || [];
@@ -58,7 +55,7 @@ export function AccountOverview({
   const refreshing = Object.values(items).some((row) => row.refreshing);
   const canRefresh = Object.values(items).some((row) => row.can_refresh);
   const quota = [false, true].map((weekly) =>
-    aggregateQuota(data.accounts, items, benchmarks, model, basis, now, weekly),
+    aggregateQuota(data.accounts, items, benchmarks, model, now, weekly),
   );
   return (
     <Panel className="account-overview" aria-label="账号总览">
@@ -121,12 +118,8 @@ export function AccountOverview({
           <div className="account-overview-metric" key={index}>
             <span>{index ? '本周' : '5 小时'}剩余额度</span>
             <strong>
-              {row.count
-                ? `≈ ${tokens(row.remaining)}`
-                : row.known
-                  ? row.shares.toFixed(2)
-                  : '—'}
-              <small>{row.count ? 'Token' : row.known ? '份' : ''}</small>
+              {row.count ? `≈ ${tokens(row.remaining)}` : '—'}
+              {row.count > 0 && <small>Token</small>}
             </strong>
             <p>
               {row.count
@@ -134,7 +127,7 @@ export function AccountOverview({
                 : row.known
                   ? row.unknownPlans
                     ? `${row.unknownPlans} 个账号套餐待确认`
-                    : '当前模型或口径缺少估算数据'
+                    : '当前模型缺少可用估算数据'
                   : '等待账号用量数据'}
             </p>
           </div>
@@ -158,19 +151,11 @@ export function AccountOverview({
               onChange={onModel}
               options={models.map((row) => ({
                 value: row.id,
-                label: row.label,
+                label: row.conversion ? `${row.label} · 比例估算` : row.label,
               }))}
             />
           )}
-          <Select
-            label="Token 换算口径"
-            value={basis}
-            onChange={(value) => setBasis(value as TokenBasis)}
-            options={Object.entries(basisLabels).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-          />
+          <span className="account-overview-basis">混合 Token（含缓存）</span>
           <Button
             variant="text"
             size="small"
@@ -187,7 +172,6 @@ export function AccountOverview({
           data={data}
           usage={usage}
           model={model}
-          basis={basis}
           onClose={() => setSourceOpen(false)}
         />
       )}

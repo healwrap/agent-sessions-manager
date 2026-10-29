@@ -4,7 +4,7 @@ from agent_sessions.context.locator import codex_root
 from agent_sessions.paths import claude_root, claude_desktop_root, cursor_root
 from .contract import PathField, SourcePlugin
 from .codex import Store
-from .claude_source import ClaudeSourceStore
+from .claude_accounts import ClaudeAccountsStore
 from .antigravity import AntigravityStore
 from .dsh import DshStore
 from .cursor import CursorStore
@@ -13,8 +13,8 @@ PLUGINS = (
     SourcePlugin('codex:local', 'Codex', lambda p: Store(p['codex:local']),
                  (PathField('codex:local', '会话目录', codex_root),), capabilities={'attachments': True}),
     SourcePlugin('claude:local', 'Claude Code',
-                 lambda p: ClaudeSourceStore(p['claude:local'], p['claude:desktop']),
-                 (PathField('claude:local', '会话目录', claude_root, '桌面端与 CLI 共用的会话目录'),
+                 lambda p: ClaudeAccountsStore(p['claude:local'], p['claude:desktop'], p.get('app:state')),
+                 (PathField('claude:local', '会话目录', claude_root, '桌面端与 CLI 共用的目录，同时读取本应用管理的 Claude App 环境'),
                   PathField('claude:desktop', '补充会话索引（可选）', claude_desktop_root,
                             '用于补充桌面会话标题，目录不存在也可读取共享正文。')),
                  aliases={'claude:desktop': 'desktop/'}, capabilities={'source_blocks': True, 'attachments': True}),

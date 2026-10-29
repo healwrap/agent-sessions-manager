@@ -245,7 +245,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def configured_store(config, preferences):
     from agent_sessions.sources.catalog import MultiStore
-    store = MultiStore(paths={key: Path(path) for key, path in config['paths'].items()})
+    store = MultiStore(paths={key: Path(path) for key, path in config['paths'].items()}, state_home=preferences.path.parent)
     store.settings = preferences
     store.disabled = {store.registry.public_source(key) for key, enabled in config['enabled'].items() if not enabled}
     return store

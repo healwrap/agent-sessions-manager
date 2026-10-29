@@ -18,14 +18,15 @@ def public_source(source):
 
 class MultiStore:
     def __init__(self, codex=None, claude=None, antigravity=None, antigravity_cli=None,
-                 claude_desktop=None, dsh=None, cursor=None, *, paths=None, plugins=PLUGINS):
+                 claude_desktop=None, dsh=None, cursor=None, *, paths=None, plugins=PLUGINS, state_home=None):
         if paths is None:
             roots = (codex, claude, antigravity, antigravity_cli, claude_desktop, dsh, cursor)
             defaults = path_fields()
             paths = {key: Path(root) if root is not None else defaults[key].default()
                      for key, root in zip(SOURCE_KEYS, roots)}
         self.paths = {key: Path(path) for key, path in paths.items()}
-        self.registry = SourceRegistry(plugins, self.paths)
+        adapter_paths = {**self.paths, **({'app:state': Path(state_home)} if state_home is not None else {})}
+        self.registry = SourceRegistry(plugins, adapter_paths)
         self.adapters = self.registry.adapters
         self.codex = self.adapters.get('codex:local')
         self.errors = {}; self.project_overrides = {}; self.disabled = set()

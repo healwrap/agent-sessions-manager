@@ -200,36 +200,6 @@ export function AccountWorkspace({
               {error}
             </Notice>
           )}
-          {section === 'accounts' &&
-            !loading &&
-            !guide.active &&
-            (!data.accounts.length || guide.progress) && (
-              <div className="guide-start">
-                <p>
-                  {guide.progress
-                    ? '上次的引导可以继续。'
-                    : '第一次使用？先用示例账号体验操作。'}
-                </p>
-                {!isGuideDemo && (
-                  <Button
-                    variant="primary"
-                    onClick={() => guideStore.demonstrate()}
-                  >
-                    演示操作
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() =>
-                    guide.progress
-                      ? guideStore.resume()
-                      : guideStore.start('setup')
-                  }
-                >
-                  {guide.progress ? '继续配置' : '开始配置'}
-                </Button>
-              </div>
-            )}
           {section === 'accounts' && (
             <BrowserAccounts
               guidedAccountId={

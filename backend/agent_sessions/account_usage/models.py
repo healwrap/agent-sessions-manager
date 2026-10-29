@@ -38,7 +38,7 @@ def normalize(data):
         scope = value.get('scope') or {}
         model = scope.get('model') if isinstance(scope, dict) else None
         name = model.get('display_name') if isinstance(model, dict) else None
-        percent = number(value.get('utilization'))
+        percent = number(value.get('percent') if 'percent' in value else value.get('utilization'))
         if isinstance(name, str) and percent is not None and not any(name.casefold() in row['id'].casefold() for row in windows):
             windows.append({'id': 'model:'+name, 'label': name+' · 7 天', 'used_percent': percent,
                             'resets_at': reset_time(value.get('resets_at'))})

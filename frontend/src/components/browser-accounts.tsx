@@ -25,7 +25,7 @@ import { sessionStore } from '../state/session-store';
 import { guideStore } from '../state/guide-store';
 import { useAccountUsages } from '../hooks/use-account-usages';
 import { AccountOverview } from './account-overview';
-import { quotaState, planLabels, accountHealth } from '../lib/account-overview';
+import { accountListStatus, planLabels } from '../lib/account-overview';
 
 export function BrowserAccounts({
   data,
@@ -198,17 +198,17 @@ export function BrowserAccounts({
                 data-guide="account-list"
               >
                 {visible.map(({ account, status }) => {
-                  const quota = quotaState(
-                    usage.items[account.id],
-                    usage.now,
-                    selectedModel,
-                  );
                   const plan =
                     account.usage_plan || usage.items[account.id]?.plan;
-                  const health = accountHealth(
-                    usage.items[account.id],
-                    usage.now,
-                  );
+                  const summary =
+                    account.provider === 'claude'
+                      ? accountListStatus(
+                          usage.items[account.id],
+                          usage.now,
+                          selectedModel,
+                          status,
+                        )
+                      : status;
                   return (
                     <button
                       className="account-list-item"
@@ -228,37 +228,12 @@ export function BrowserAccounts({
                         <strong>{account.name}</strong>
                         <span className="account-list-caption">
                           {account.provider === 'claude' ? 'Claude' : 'Codex'}
-                          {account.provider === 'claude' && (
-                            <span>
-                              {plan ? planLabels[plan] : '套餐待确认'}
-                            </span>
+                          {account.provider === 'claude' && plan && (
+                            <span>{planLabels[plan]}</span>
                           )}
-                          {account.provider === 'claude' &&
-                            health.state !== 'unknown' && (
-                              <StatusBadge tone={health.tone}>
-                                {health.label}
-                              </StatusBadge>
-                            )}
-                          {account.provider === 'claude' && (
-                            <StatusBadge
-                              tone={
-                                quota.state === 'available'
-                                  ? 'success'
-                                  : quota.state === 'restricted'
-                                    ? 'error'
-                                    : quota.state === 'exhausted'
-                                      ? 'warning'
-                                      : 'neutral'
-                              }
-                            >
-                              {quota.label}
-                            </StatusBadge>
-                          )}
-                          {status.label !== '凭据已保存' && (
-                            <StatusBadge tone={status.tone}>
-                              {status.label}
-                            </StatusBadge>
-                          )}
+                          <StatusBadge tone={summary.tone}>
+                            {summary.label}
+                          </StatusBadge>
                         </span>
                       </span>
                       <ChevronRight className="account-list-arrow" size={16} />

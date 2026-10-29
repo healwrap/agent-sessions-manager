@@ -1,4 +1,5 @@
 import type { AccountUsage } from './account-usage';
+import type { accountStatus } from './account-view';
 import type { BrowserAccount } from './environment-settings';
 
 export const planLabels = { pro: 'Pro', max5: 'Max 5x', max20: 'Max 20x' };
@@ -151,6 +152,29 @@ export function modelWindows(usage: AccountUsage, model?: BenchmarkModel) {
             row.label.toLowerCase().includes(family)),
       )
     : [];
+}
+export function accountListStatus(
+  usage: AccountUsage | undefined,
+  now: number,
+  model: BenchmarkModel | undefined,
+  runtime: ReturnType<typeof accountStatus>,
+) {
+  const health = accountHealth(usage, now);
+  if (health.tone === 'error') return health;
+  const quota = quotaState(usage, now, model);
+  if (quota.state === 'exhausted')
+    return { label: quota.label, tone: 'warning' as const };
+  if (runtime.tone === 'error' || runtime.label === '检查中') return runtime;
+  if (usage?.refreshing) return { label: '检测中', tone: 'neutral' as const };
+  if (quota.state === 'available' && health.state === 'accessible')
+    return { label: '可用', tone: 'success' as const };
+  if (usage?.status === 'login_required')
+    return { label: '需重新登录', tone: 'warning' as const };
+  if (runtime.label === '待登录') return runtime;
+  return {
+    label: quota.state === 'unknown' ? quota.label : '待确认',
+    tone: 'neutral' as const,
+  };
 }
 export function tokens(value: number) {
   return new Intl.NumberFormat('en-US', {

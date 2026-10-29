@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import type { AccountUsages } from '../hooks/use-account-usages';
-import type { EnvironmentSettings } from '../lib/environment-settings';
 import {
   planLabels,
   tokenCapacity,
@@ -14,25 +12,20 @@ import {
   ContentDialog,
   Disclosure,
   FactsGrid,
-  Field,
   Notice,
-  Select,
   StatusBadge,
 } from './ui';
 
 export function QuotaSourceDialog({
-  data,
   usage,
   model,
   onClose,
 }: {
-  data: EnvironmentSettings;
   usage: AccountUsages;
   model?: BenchmarkModel;
   onClose: () => void;
 }) {
   const source = usage.benchmarks;
-  const [proxyId, setProxyId] = useState(source?.proxy_id || '');
   return (
     <ContentDialog
       title="额度估算依据"
@@ -179,21 +172,6 @@ export function QuotaSourceDialog({
               查看原始估算数据
             </a>
           </Disclosure>
-          <Field label="数据源访问网络">
-            <Select
-              label="估算数据源代理"
-              value={proxyId}
-              onChange={setProxyId}
-              disabled={source.refreshing}
-              options={[
-                { value: '', label: '系统网络' },
-                ...data.proxies.map((row) => ({
-                  value: row.id,
-                  label: row.name,
-                })),
-              ]}
-            />
-          </Field>
           <div className="quota-source-sync">
             <StatusBadge
               tone={source.error || source.stale ? 'warning' : 'success'}
@@ -210,10 +188,9 @@ export function QuotaSourceDialog({
               disabled={
                 source.refreshing ||
                 (!!source.fetched_at &&
-                  usage.now / 1000 - source.fetched_at < 60 &&
-                  proxyId === source.proxy_id)
+                  usage.now / 1000 - source.fetched_at < 60)
               }
-              onClick={() => void usage.refreshBenchmarks(proxyId)}
+              onClick={() => void usage.refreshBenchmarks()}
             >
               <RefreshCw
                 size={15}
@@ -224,8 +201,7 @@ export function QuotaSourceDialog({
           </div>
           {source.error && <Notice tone="warning">{source.error}</Notice>}
           <p className="quota-source-description">
-            每 6
-            小时更新一次公共数据。此请求仅下载测量结果，不上传账号或登录凭据。
+            每 6 小时通过系统网络自动更新公共数据。
           </p>
         </>
       ) : (

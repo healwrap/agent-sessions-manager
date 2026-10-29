@@ -19,7 +19,7 @@ class AccountUsage:
         self.path = Path(directory)/'account-usage.json'
         self.environments = environments
         self.sources = UsageSources(browser, app, proxies)
-        self.benchmarks = QuotaBenchmarks(directory, environments, proxies)
+        self.benchmarks = QuotaBenchmarks(directory)
         self.workers = ThreadPoolExecutor(max_workers=2, thread_name_prefix='account-usage')
         self.lock, self.closed = threading.RLock(), False
         try:

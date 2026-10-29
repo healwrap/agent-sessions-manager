@@ -57,7 +57,6 @@ export function sampleBenchmarks(): QuotaBenchmarks {
     cache_read_share: 0.962,
     sample_count: null,
     account_count: null,
-    proxy_id: '',
     fetched_at: null,
     refreshing: false,
     error: '',

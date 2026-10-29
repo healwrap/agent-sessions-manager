@@ -36,7 +36,6 @@ export interface QuotaBenchmarks {
   cache_read_share: number | null;
   sample_count: number | null;
   account_count: number | null;
-  proxy_id: string;
   fetched_at: number | null;
   refreshing: boolean;
   error: string;

@@ -67,12 +67,12 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
       wake.current();
     }
   };
-  const refreshBenchmarks = async (proxyId: string) => {
+  const refreshBenchmarks = async () => {
     try {
       const value = await request<QuotaBenchmarks>(
         '/api/account-usage/benchmarks',
         {},
-        { proxy_id: proxyId },
+        {},
       );
       if (mounted.current) setBenchmarks(value);
     } catch (reason) {

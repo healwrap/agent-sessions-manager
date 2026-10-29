@@ -169,7 +169,6 @@ export function AccountOverview({
       {usage.error && <Notice tone="error">{usage.error}</Notice>}
       {sourceOpen && (
         <QuotaSourceDialog
-          data={data}
           usage={usage}
           model={model}
           onClose={() => setSourceOpen(false)}

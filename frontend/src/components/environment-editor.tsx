@@ -20,12 +20,14 @@ export function EnvironmentEditor({
   edit,
   proxies,
   gates,
+  accountName,
   onSave,
   onClose,
 }: {
   edit: EnvironmentEdit;
   proxies: ProxyConfig[];
   gates: GateDefinition[];
+  accountName?: string;
   onSave: (kind: EnvironmentCollection, item: EnvironmentItem) => Promise<void>;
   onClose: () => void;
 }) {
@@ -115,7 +117,14 @@ export function EnvironmentEditor({
         </>
       }
     >
-      <Field label="名称" htmlFor="environment-editor-0">
+      <Field
+        label={
+          accountName && browser.name_account_id
+            ? '名称（随账号更新，可自定义）'
+            : '名称'
+        }
+        htmlFor="environment-editor-0"
+      >
         <TextInput
           id="environment-editor-0"
           autoFocus
@@ -123,8 +132,14 @@ export function EnvironmentEditor({
           required
           maxLength={120}
           value={value.name}
-          onChange={(event) => field('name', event.target.value)}
-          placeholder={profile ? '例如：Claude 日常使用' : '例如：美国固定出口'}
+          onChange={(event) =>
+            setValue((current) => ({
+              ...current,
+              name: event.target.value,
+              ...(profile ? { name_account_id: '' } : {}),
+            }))
+          }
+          placeholder={profile ? '填写账号邮箱或名字' : '例如：美国固定出口'}
         />
       </Field>
       {profile ? (

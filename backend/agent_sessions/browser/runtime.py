@@ -58,8 +58,11 @@ class BrowserRuntime:
                 if self.processes[key].poll() is None:
                     try: self.runs[key]['pages'] = control.pages()
                     except ValueError as error: self.runs[key]['error'] = str(error)
+            settings = self.environments.read()
+            for profile in settings['profiles']:
+                if profile['id'] in self.runs: self.runs[profile['id']]['name'] = profile['name']
             self.registry.save(self.runs)
-            return {'kernel': {**kernel.discover(self.directory/'kernel'), 'installation': self.installer.state()}, 'sessions': {profile['id']: session_state(self.directory/'profiles'/hashlib.sha256(profile['id'].encode()).hexdigest()[:32], profile['provider']) for profile in self.environments.read()['profiles']}, 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()]}
+            return {'kernel': {**kernel.discover(self.directory/'kernel'), 'installation': self.installer.state()}, 'sessions': {profile['id']: session_state(self.directory/'profiles'/hashlib.sha256(profile['id'].encode()).hexdigest()[:32], profile['provider']) for profile in settings['profiles']}, 'runs': [{**row, 'alive': bool(self.processes.get(key) and self.processes[key].poll() is None)} for key, row in self.runs.items()]}
 
     def update(self, key, **fields):
         with self.lock:

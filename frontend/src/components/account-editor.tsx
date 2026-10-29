@@ -75,15 +75,16 @@ export function AccountEditor({
         </>
       }
     >
-      <Field label="账号名称" htmlFor="account-editor-0">
+      <Field label="账号邮箱或名称" htmlFor="account-editor-0">
         <TextInput
           id="account-editor-0"
           ref={nameInput}
           autoFocus
           required
+          maxLength={120}
           value={value.name}
           onChange={(event) => setValue({ ...value, name: event.target.value })}
-          placeholder="例如：Claude 工作账号"
+          placeholder="优先填写账号邮箱，没有邮箱时填写名字"
         />
       </Field>
       <Field label="Agent">

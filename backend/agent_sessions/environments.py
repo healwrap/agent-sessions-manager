@@ -8,7 +8,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from .browser.gates import definitions, DEFAULTS
 from .browser.proxy import validate_proxy
-from .account_profiles import COLLECTIONS, provision, put
+from .account_profiles import COLLECTIONS, provision, put, sync_profile_names, profile_name
 from .applications import installed_apps
 from .profile_ownership import owners, remember, validate_binding
 
@@ -21,12 +21,14 @@ class EnvironmentSettings:
     def read(self):
         with self.lock:
             value = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
-            return {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
+            current = {'profiles': value.get('profiles', []), 'proxies': value.get('proxies', []),
                     'app_profiles': [{**row, 'inherit_skills': row.get('inherit_skills', True),
                                       'inherit_plugins': row.get('inherit_plugins', True)} for row in value.get('app_profiles', [])],
                     'accounts': [{**row, 'app_profile_id': row.get('app_profile_id', '')} for row in value.get('accounts', [])],
                     'profile_owners': owners(value, self.path.parent),
                     'apps': installed_apps(self.path.parent), 'gate_definitions': definitions()}
+            sync_profile_names(current)
+            return current
 
     def change(self, value):
         if not isinstance(value, dict): raise ValueError('环境配置格式无效')
@@ -48,7 +50,12 @@ class EnvironmentSettings:
                 current[collection] = [item for item in current[collection] if item['id'] != key]
             else:
                 item = self.validate(collection, value.get('item'), current)
+                if collection in ('profiles', 'app_profiles') and item.get('name_account_id'):
+                    account = next((row for row in current['accounts'] if row['id'] == item['name_account_id']), None)
+                    if not account or item['name'] != profile_name(account, collection):
+                        item = {**item, 'name_account_id': ''}
                 put(current, collection, item)
+            sync_profile_names(current)
             remember(current)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix('.tmp')
@@ -62,7 +69,7 @@ class EnvironmentSettings:
         required = {'proxies': {'name', 'url'}, 'accounts': {'name', 'provider', 'profile_id'},
                     'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'},
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
-        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
+        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates', 'name_account_id'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
         if collection == 'app_profiles': optional |= {'inherit_skills', 'inherit_plugins'}
         if collection == 'proxies': optional |= {'kind'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
@@ -81,6 +88,7 @@ class EnvironmentSettings:
             if item.get('kind', 'external') not in ('external', 'managed'): raise ValueError('代理类型无效')
             validate_proxy(item['url'])
         elif collection == 'accounts':
+            item = {**item, 'name': item['name'].strip()}
             if item['provider'] not in ('claude', 'codex'): raise ValueError('请选择账号类型')
             if not item['profile_id'] and not item.get('app_profile_id'): raise ValueError('请绑定至少一个独立环境')
             for field, target in (('profile_id', 'profiles'), ('app_profile_id', 'app_profiles')):

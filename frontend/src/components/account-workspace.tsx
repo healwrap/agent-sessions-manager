@@ -289,6 +289,16 @@ export function AccountWorkspace({
           edit={edit}
           proxies={data.proxies}
           gates={data.gate_definitions}
+          accountName={
+            edit.item
+              ? data.accounts.find(
+                  (account) =>
+                    edit.item &&
+                    'name_account_id' in edit.item &&
+                    account.id === edit.item.name_account_id,
+                )?.name
+              : undefined
+          }
           onSave={save}
           onClose={() => setEdit(null)}
         />

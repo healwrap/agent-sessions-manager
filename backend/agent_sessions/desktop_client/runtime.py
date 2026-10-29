@@ -56,6 +56,8 @@ class AppRuntime:
                     relay = self.relays.pop(key, None)
                     if relay: threading.Thread(target=relay.close, daemon=True).start()
             settings = self.environments.read()
+            for profile in settings['app_profiles']:
+                if profile['id'] in self.runs: self.runs[profile['id']]['name'] = profile['name']
             for key, relay in self.relays.items():
                 with relay.connections_lock: self.runs[key]['proxy_hosts'] = sorted(relay.observed_hosts)
             self.registry.save(self.runs)

@@ -20,6 +20,7 @@ export interface GateResult {
 export interface ProfileRoute {
   id: string;
   name: string;
+  name_account_id?: string;
   proxy_id: string;
   locale: string;
   timezone: string;

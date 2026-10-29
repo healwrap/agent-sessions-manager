@@ -15,6 +15,14 @@ export interface AccountUsage {
   next_refresh_at: number;
   error: string;
   source_label: string;
+  identity?: string;
+  plan?: '' | 'pro' | 'max5' | 'max20';
+  plan_source?: 'claude' | 'manual';
+  health?: {
+    state: 'accessible' | 'disabled' | 'organization_disabled' | 'unknown';
+    checked_at: number;
+    message: string;
+  };
   organization_id: string;
   organization_name: string;
   organizations: { id: string; name: string }[];

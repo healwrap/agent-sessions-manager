@@ -83,6 +83,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = environment_state(self.server)
             elif parsed.path == '/api/account-usage':
                 result = self.server.account_usage.read(get('account_id'))
+            elif parsed.path == '/api/account-usage/overview':
+                result = self.server.account_usage.overview()
             elif parsed.path == '/api/proxy-services':
                 result = self.server.proxy_manager.state()
             elif parsed.path == '/api/proxy-services/config':
@@ -145,7 +147,7 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        usage = self.path == '/api/account-usage/refresh'
+        usage = self.path in {'/api/account-usage/refresh', '/api/account-usage/refresh-all', '/api/account-usage/benchmarks'}
         skill = self.path in {'/api/skills/plan', '/api/skills/apply', '/api/skills/restore'}
         runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')
@@ -174,7 +176,12 @@ class Handler(BaseHTTPRequestHandler):
             value = json.loads(self.rfile.read(length))
             if usage:
                 if length > 4096 or self.headers.get_content_type() != 'application/json': raise ValueError('用量参数应使用不超过 4 KB 的 JSON')
-                self.respond(200, self.server.account_usage.refresh(value))
+                command = self.path.rsplit('/', 1)[-1]
+                if command == 'benchmarks':
+                    result = self.server.account_usage.benchmarks.refresh(value)
+                else:
+                    result = getattr(self.server.account_usage, command.replace('-', '_'))(value)
+                self.respond(200, result)
             elif self.path == '/api/components':
                 if length > 4096 or self.headers.get_content_type() != 'application/json': raise ValueError('组件参数应使用不超过 4 KB 的 JSON')
                 self.respond(200, self.server.component_manager.command(value))

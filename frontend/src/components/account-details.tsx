@@ -7,18 +7,22 @@ import type {
 import { accountClients, type AccountActions } from '../lib/account-view';
 import { ChoiceGroup, IconButton, RemoveButton } from './ui';
 import { AccountClientPanel } from './account-client-panel';
+import type { AccountUsages } from '../hooks/use-account-usages';
+import { AccountHealthPanel } from './account-health-panel';
 
 export function AccountDetails({
   account,
   data,
   busy,
   guidedTarget,
+  usage,
   ...actions
 }: AccountActions & {
   account: BrowserAccount;
   data: EnvironmentSettings;
   busy: boolean;
   guidedTarget?: 'browser' | 'app';
+  usage: AccountUsages;
 }) {
   const clients = accountClients(account, data);
   const [target, setTarget] = useState(
@@ -58,6 +62,9 @@ export function AccountDetails({
           />
         </div>
       </header>
+      {account.provider === 'claude' && (
+        <AccountHealthPanel accountId={account.id} usage={usage} busy={busy} />
+      )}
       <div className="account-client-switch">
         <ChoiceGroup
           label="选择使用方式"
@@ -89,6 +96,7 @@ export function AccountDetails({
         client={client}
         data={data}
         busy={busy}
+        usage={usage}
         {...actions}
       />
     </section>

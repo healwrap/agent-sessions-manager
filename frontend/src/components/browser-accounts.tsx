@@ -23,6 +23,9 @@ import { AccountDetails } from './account-details';
 import { useSessionStore } from '../hooks/use-session-store';
 import { sessionStore } from '../state/session-store';
 import { guideStore } from '../state/guide-store';
+import { useAccountUsages } from '../hooks/use-account-usages';
+import { AccountOverview } from './account-overview';
+import { quotaState, planLabels, accountHealth } from '../lib/account-overview';
 
 export function BrowserAccounts({
   data,
@@ -30,6 +33,7 @@ export function BrowserAccounts({
   loading,
   guidedAccountId,
   guidedTarget,
+  active = true,
   ...actions
 }: AccountActions & {
   data: EnvironmentSettings;
@@ -37,7 +41,13 @@ export function BrowserAccounts({
   loading: boolean;
   guidedAccountId?: string;
   guidedTarget?: 'browser' | 'app';
+  active?: boolean;
 }) {
+  const usage = useAccountUsages(data, active);
+  const [estimateModel, setEstimateModel] = useState('claude-opus-5-5');
+  const selectedModel =
+    usage.benchmarks?.models.find((row) => row.id === estimateModel) ||
+    usage.benchmarks?.models[0];
   const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
   const [query, setQuery] = useState('');
@@ -103,6 +113,13 @@ export function BrowserAccounts({
     visible.find((item) => item.account.id === selected) || visible[0];
   return (
     <div className="accounts-manager">
+      <AccountOverview
+        data={data}
+        usage={usage}
+        busy={busy}
+        modelId={estimateModel}
+        onModel={setEstimateModel}
+      />
       {data.app_runtime.warnings?.map((message) => (
         <Notice tone="warning" key={message}>
           {message}
@@ -180,35 +197,70 @@ export function BrowserAccounts({
                 aria-label="账号列表"
                 data-guide="account-list"
               >
-                {visible.map(({ account, status }) => (
-                  <button
-                    className="account-list-item"
-                    type="button"
-                    key={account.id}
-                    aria-pressed={current.account.id === account.id}
-                    aria-label={`查看账号 ${account.name}`}
-                    onClick={() => {
-                      setSelected(account.id);
-                      guideStore.selectedAccount(account.id);
-                    }}
-                  >
-                    <span className="account-avatar">
-                      <AgentIcon source={account.provider} />
-                    </span>
-                    <span className="account-list-identity">
-                      <strong>{account.name}</strong>
-                      <span className="account-list-caption">
-                        {account.provider === 'claude' ? 'Claude' : 'Codex'}
-                        {status.label !== '凭据已保存' && (
-                          <StatusBadge tone={status.tone}>
-                            {status.label}
-                          </StatusBadge>
-                        )}
+                {visible.map(({ account, status }) => {
+                  const quota = quotaState(
+                    usage.items[account.id],
+                    usage.now,
+                    selectedModel,
+                  );
+                  const plan =
+                    account.usage_plan || usage.items[account.id]?.plan;
+                  const health = accountHealth(
+                    usage.items[account.id],
+                    usage.now,
+                  );
+                  return (
+                    <button
+                      className="account-list-item"
+                      type="button"
+                      key={account.id}
+                      aria-pressed={current.account.id === account.id}
+                      aria-label={`查看账号 ${account.name}`}
+                      onClick={() => {
+                        setSelected(account.id);
+                        guideStore.selectedAccount(account.id);
+                      }}
+                    >
+                      <span className="account-avatar">
+                        <AgentIcon source={account.provider} />
                       </span>
-                    </span>
-                    <ChevronRight className="account-list-arrow" size={16} />
-                  </button>
-                ))}
+                      <span className="account-list-identity">
+                        <strong>{account.name}</strong>
+                        <span className="account-list-caption">
+                          {account.provider === 'claude' ? 'Claude' : 'Codex'}
+                          {plan && <span>{planLabels[plan]}</span>}
+                          {account.provider === 'claude' &&
+                            health.state !== 'unknown' && (
+                              <StatusBadge tone={health.tone}>
+                                {health.label}
+                              </StatusBadge>
+                            )}
+                          {account.provider === 'claude' && (
+                            <StatusBadge
+                              tone={
+                                quota.state === 'available'
+                                  ? 'success'
+                                  : quota.state === 'restricted'
+                                    ? 'error'
+                                    : quota.state === 'exhausted'
+                                      ? 'warning'
+                                      : 'neutral'
+                              }
+                            >
+                              {quota.label}
+                            </StatusBadge>
+                          )}
+                          {status.label !== '凭据已保存' && (
+                            <StatusBadge tone={status.tone}>
+                              {status.label}
+                            </StatusBadge>
+                          )}
+                        </span>
+                      </span>
+                      <ChevronRight className="account-list-arrow" size={16} />
+                    </button>
+                  );
+                })}
               </div>
             }
           >
@@ -217,6 +269,7 @@ export function BrowserAccounts({
               account={current.account}
               data={data}
               busy={busy}
+              usage={usage}
               guidedTarget={guidedTarget}
               {...actions}
             />

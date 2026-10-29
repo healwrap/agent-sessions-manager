@@ -17,14 +17,18 @@ def retry_after(value):
 
 def checked(response):
     status, data = response.get('status', 0), response.get('data')
+    error = data.get('error', {}) if isinstance(data, dict) else {}
+    details = error.get('details', {}) if isinstance(error, dict) else {}
+    code = details.get('error_code', '') if isinstance(details, dict) else ''
+    code = code or (error.get('error_code') or error.get('type', '') if isinstance(error, dict) else '')
+    if status in (400, 401, 403):
+        if code == 'organization_disabled': raise UsageError('organization_disabled', 'Claude 返回：此组织已停用')
+        if code in ('account_disabled', 'account_suspended', 'account_banned'):
+            raise UsageError('account_disabled', 'Claude 返回：此账号已停用或封禁')
     if status == 429:
         raise UsageError('rate_limited', 'Claude 暂时限制了用量查询，稍后自动恢复', retry_after(response.get('retry_after')))
     if status == 401: raise UsageError('login_required', '登录已失效，请在此账号环境内重新登录')
     if status == 403:
-        error = data.get('error', {}) if isinstance(data, dict) else {}
-        details = error.get('details', {}) if isinstance(error, dict) else {}
-        code = details.get('error_code', '') if isinstance(details, dict) else ''
-        if code == 'organization_disabled': raise UsageError('blocked', '此账号的组织已停用，无法读取用量')
         raise UsageError('blocked', 'Claude 拒绝了此次用量查询，请在账号环境内确认访问状态')
     if status != 200: raise UsageError('error', f'用量服务返回 HTTP {status}' if status else '用量服务连接未完成')
     if not isinstance(data, (dict, list)):

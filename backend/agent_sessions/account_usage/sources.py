@@ -7,15 +7,25 @@ from agent_sessions.browser.preflight import inspect
 from .credentials import read as read_token
 from .models import UsageError, normalize
 from .transport import checked, oauth_json
+from .benchmark_data import subscription_plan
 
 
 def verify_email(account, email):
     expected = account['name'].strip()
-    if '@' in expected and (not isinstance(email, str) or email.casefold() != expected.casefold()):
+    if not isinstance(email, str) or '@' not in email:
+        raise UsageError('login_required', '未取得 Claude 登录身份，请在此账号环境中确认登录')
+    if '@' in expected and email.casefold() != expected.casefold():
         raise UsageError('blocked', '当前环境登录的账号与所选账号不一致，请先确认登录身份')
 
 
-def browser_json(control, session, path):
+def with_metadata(payload, metadata):
+    try: return {**normalize(payload), **metadata}
+    except UsageError as error:
+        error.metadata = metadata
+        raise
+
+
+def browser_json(control, session, path, metadata=None):
     expression = '''(async () => {
       if (location.origin !== 'https://claude.ai') return {status: 0};
       const response = await fetch(PATH, {credentials:'include', cache:'no-store',
@@ -33,7 +43,10 @@ def browser_json(control, session, path):
                                                   'returnByValue': True}, session)
     if result.get('exceptionDetails'): raise UsageError('error', '账号浏览器读取用量失败，请检查页面连接')
     value = result.get('result', {}).get('value') or {}
-    return checked(value), value.get('active_org', '')
+    try: return checked(value), value.get('active_org', '')
+    except UsageError as error:
+        error.metadata = metadata or {}
+        raise
 
 
 class UsageSources:
@@ -74,9 +87,15 @@ class UsageSources:
         info = identity.get('account') or identity
         email = info.get('email') or info.get('email_address')
         verify_email(account, email)
-        result = normalize(oauth_json('/api/oauth/usage', token, proxy['url']))
-        return {**result, 'source': 'oauth', 'source_label': 'App 内 Claude Code', 'identity': email or '',
-                'organization_id': '', 'organization_name': '', 'organizations': []}
+        metadata = {'source': 'oauth', 'source_label': 'App 内 Claude Code', 'identity': email or '',
+                'plan': subscription_plan(identity),
+                'organization_id': '', 'organization_name': '', 'organizations': [],
+                'health': {'state': 'accessible', 'checked_at': time.time(), 'message': 'Claude 账号身份接口可访问'}}
+        try: payload = oauth_json('/api/oauth/usage', token, proxy['url'])
+        except UsageError as error:
+            error.metadata = metadata
+            raise
+        return with_metadata(payload, metadata)
 
     def web(self, account, control, organization):
         # Startup checks release the relay before their page navigates to Claude.
@@ -93,14 +112,18 @@ class UsageSources:
         identity, _ = browser_json(control, item['session'], '/api/account')
         email = identity.get('email_address') if isinstance(identity, dict) else None
         verify_email(account, email)
-        organizations, active = browser_json(control, item['session'], '/api/organizations')
-        if not isinstance(organizations, list): raise UsageError('unavailable', '未取得账号的组织列表')
+        metadata = {'source': 'browser', 'source_label': '独立浏览器', 'identity': email or '',
+                    'health': {'state': 'accessible', 'checked_at': time.time(), 'message': 'Claude 账号身份接口可访问'}}
+        organizations, active = browser_json(control, item['session'], '/api/organizations', metadata)
+        if not isinstance(organizations, list): raise UsageError('unavailable', '未取得账号的组织列表', metadata=metadata)
         choices = [{'id': row['uuid'], 'name': row['name'] if isinstance(row.get('name'), str) and row['name'] else row['uuid']}
                    for row in organizations if isinstance(row, dict) and isinstance(row.get('uuid'), str)]
         selected = next((row for row in choices if row['id'] == (organization or active)), None)
-        if organization and not selected: raise UsageError('organization_required', '所选组织不属于当前登录账号', organizations=choices)
+        if organization and not selected: raise UsageError('organization_required', '所选组织不属于当前登录账号', organizations=choices, metadata=metadata)
         if not selected and len(choices) == 1: selected = choices[0]
-        if not selected: raise UsageError('organization_required', '请选择需要查看用量的组织', organizations=choices)
-        payload, _ = browser_json(control, item['session'], '/api/organizations/'+quote(selected['id'], safe='')+'/usage')
-        return {**normalize(payload), 'source': 'browser', 'source_label': '独立浏览器', 'identity': email or '',
-                'organization_id': selected['id'], 'organization_name': selected['name'], 'organizations': choices}
+        if not selected: raise UsageError('organization_required', '请选择需要查看用量的组织', organizations=choices, metadata=metadata)
+        organization_info = next(row for row in organizations if row.get('uuid') == selected['id'])
+        metadata.update(plan=subscription_plan(identity, organization_info), organization_id=selected['id'],
+                        organization_name=selected['name'], organizations=choices)
+        payload, _ = browser_json(control, item['session'], '/api/organizations/'+quote(selected['id'], safe='')+'/usage', metadata)
+        return with_metadata(payload, metadata)

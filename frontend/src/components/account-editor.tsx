@@ -8,6 +8,7 @@ import { accountGuide } from '../lib/guide-links';
 import { demoDefaults } from '../lib/demo-mode';
 import { EditorDialog, TextInput } from './form-controls';
 import { Select } from './select';
+import { planLabels } from '../lib/account-overview';
 export interface AccountRoute {
   proxy_id: string;
   proxy_url?: string;
@@ -93,6 +94,27 @@ export function AccountEditor({
         />
       </Field>
       {!account && <GuideLink {...accountGuide} />}
+      {value.provider === 'claude' && (
+        <Field label="用量估算套餐">
+          <Select
+            label="用量估算套餐"
+            value={value.usage_plan || ''}
+            options={[
+              { value: '', label: '自动识别套餐' },
+              ...Object.entries(planLabels).map(([id, label]) => ({
+                value: id,
+                label,
+              })),
+            ]}
+            onChange={(usage_plan) =>
+              setValue({
+                ...value,
+                usage_plan: usage_plan as BrowserAccount['usage_plan'],
+              })
+            }
+          />
+        </Field>
+      )}
       <Field label="Agent">
         <Select
           label="账号 Agent"

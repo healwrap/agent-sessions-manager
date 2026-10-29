@@ -1,0 +1,143 @@
+.account-overview {
+  margin-bottom: 16px;
+}
+.account-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding-block: 6px 18px;
+}
+.account-overview-metric {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding-left: 20px;
+  border-left: 0.5px solid var(--dsw-alias-border-l2);
+}
+.account-overview-metric:first-child {
+  border: 0;
+  padding-left: 0;
+}
+.account-overview-metric > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+}
+.account-overview-metric strong {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.account-overview-metric[data-tone='available'] strong {
+  color: var(--dsw-alias-state-business-primary);
+}
+.account-overview-metric small {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+.account-overview-metric p,
+.quota-source-description {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+.account-overview-footer,
+.account-overview-health,
+.account-health-panel,
+.account-health-identity,
+.account-health-identity > span,
+.account-overview-states,
+.account-overview-options,
+.quota-source-sync {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.account-overview-health {
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+.account-health-panel {
+  justify-content: space-between;
+  margin: 0 24px 16px;
+  font-size: 13px;
+}
+.account-health-identity > span,
+.account-health-identity time {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.account-overview-footer {
+  justify-content: space-between;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  padding-top: 12px;
+  gap: 12px;
+}
+.account-overview-options > .select {
+  min-width: 0;
+}
+.quota-source-table-wrap {
+  overflow-x: auto;
+}
+.quota-source-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+.quota-source-table caption {
+  text-align: left;
+  padding-bottom: 8px;
+  font-weight: 500;
+}
+.quota-source-table th,
+.quota-source-table td {
+  padding: 10px 12px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  vertical-align: top;
+  font-weight: 400;
+}
+.quota-source-table thead th,
+.quota-source-table small {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.quota-source-table small {
+  display: block;
+  margin-top: 4px;
+}
+.quota-source-table tr:last-child > * {
+  border-bottom: 0;
+}
+.quota-source-sync {
+  justify-content: space-between;
+}
+@container (max-width: 900px) {
+  .account-overview-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .account-overview-metric:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+@container (max-width: 440px) {
+  .account-overview-metric strong {
+    font-size: 23px;
+  }
+  .account-overview-metric {
+    padding-left: 12px;
+  }
+}

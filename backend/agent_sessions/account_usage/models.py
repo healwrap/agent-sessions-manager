@@ -4,10 +4,11 @@ import math
 
 
 class UsageError(Exception):
-    def __init__(self, state, message, retry_after=0, organizations=None):
+    def __init__(self, state, message, retry_after=0, organizations=None, metadata=None):
         super().__init__(message)
         self.state, self.retry_after = state, retry_after
         self.organizations = organizations or []
+        self.metadata = metadata or {}
 
 
 def number(value):

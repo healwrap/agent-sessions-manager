@@ -1,0 +1,196 @@
+import { useState } from 'react';
+import {
+  ChartNoAxesCombined,
+  CircleHelp,
+  RefreshCw,
+  Users,
+} from 'lucide-react';
+import type { AccountUsages } from '../hooks/use-account-usages';
+import type { EnvironmentSettings } from '../lib/environment-settings';
+import {
+  aggregateQuota,
+  accountHealth,
+  basisLabels,
+  quotaState,
+  tokens,
+  type TokenBasis,
+} from '../lib/account-overview';
+import {
+  Button,
+  Notice,
+  Panel,
+  SectionHeading,
+  Select,
+  StatusBadge,
+} from './ui';
+import { QuotaSourceDialog } from './quota-source-dialog';
+
+export function AccountOverview({
+  data,
+  usage,
+  busy,
+  modelId,
+  onModel,
+}: {
+  data: EnvironmentSettings;
+  usage: AccountUsages;
+  busy: boolean;
+  modelId: string;
+  onModel: (id: string) => void;
+}) {
+  const [basis, setBasis] = useState<TokenBasis>('output');
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const { benchmarks, items, now } = usage;
+  const models = benchmarks?.models || [];
+  const model = models.find((row) => row.id === modelId) || models[0];
+  const claude = data.accounts.filter((row) => row.provider === 'claude');
+  const counts = { available: 0, exhausted: 0, restricted: 0, unknown: 0 };
+  const healthCounts = {
+    accessible: 0,
+    disabled: 0,
+    organization_disabled: 0,
+    unknown: 0,
+  };
+  for (const account of claude)
+    counts[quotaState(items[account.id], now, model).state]++;
+  for (const account of claude)
+    healthCounts[accountHealth(items[account.id], now).state]++;
+  const refreshing = Object.values(items).some((row) => row.refreshing);
+  const canRefresh = Object.values(items).some((row) => row.can_refresh);
+  const quota = [false, true].map((weekly) =>
+    aggregateQuota(data.accounts, items, benchmarks, model, basis, now, weekly),
+  );
+  return (
+    <Panel className="account-overview" aria-label="账号总览">
+      <SectionHeading
+        title="账号总览"
+        icon={<ChartNoAxesCombined size={17} />}
+        actions={
+          <Button
+            variant="text"
+            size="small"
+            disabled={busy || !canRefresh || refreshing}
+            onClick={() => void usage.refreshAll()}
+          >
+            <RefreshCw size={14} className={refreshing ? 'ui-spin' : ''} />
+            {refreshing ? '正在更新' : '刷新全部'}
+          </Button>
+        }
+      />
+      <div className="account-overview-health" aria-label="账号封禁状态汇总">
+        <span>账号状态</span>
+        <StatusBadge tone={healthCounts.accessible ? 'success' : 'neutral'}>
+          可访问 {healthCounts.accessible}
+        </StatusBadge>
+        <StatusBadge tone={healthCounts.disabled ? 'error' : 'neutral'}>
+          已封禁／停用 {healthCounts.disabled}
+        </StatusBadge>
+        {!!healthCounts.organization_disabled && (
+          <StatusBadge tone="error">
+            组织停用 {healthCounts.organization_disabled}
+          </StatusBadge>
+        )}
+        <StatusBadge>待确认 {healthCounts.unknown}</StatusBadge>
+      </div>
+      <div className="account-overview-metrics">
+        <div className="account-overview-metric">
+          <span>
+            <Users size={15} />
+            账号总数
+          </span>
+          <strong>
+            {data.accounts.length}
+            <small>个</small>
+          </strong>
+          <p>
+            Claude {claude.length}
+            {data.accounts.length > claude.length
+              ? ` · Codex ${data.accounts.length - claude.length}`
+              : ''}
+          </p>
+        </div>
+        <div className="account-overview-metric" data-tone="available">
+          <span>额度可用账号</span>
+          <strong>
+            {usage.loading ? '—' : counts.available}
+            <small>个</small>
+          </strong>
+          <p>5 小时、周额度均有余额</p>
+        </div>
+        {quota.map((row, index) => (
+          <div className="account-overview-metric" key={index}>
+            <span>{index ? '本周' : '5 小时'}剩余额度</span>
+            <strong>
+              {row.count
+                ? `≈ ${tokens(row.remaining)}`
+                : row.known
+                  ? row.shares.toFixed(2)
+                  : '—'}
+              <small>{row.count ? 'Token' : row.known ? '份' : ''}</small>
+            </strong>
+            <p>
+              {row.count
+                ? `总量 ≈ ${tokens(row.total)} · ${row.count}/${claude.length} 个账号`
+                : row.known
+                  ? row.unknownPlans
+                    ? `${row.unknownPlans} 个账号套餐待确认`
+                    : '当前模型或口径缺少估算数据'
+                  : '等待账号用量数据'}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="account-overview-footer">
+        <div className="account-overview-states" aria-label="账号额度状态">
+          <StatusBadge tone={counts.exhausted ? 'warning' : 'neutral'}>
+            额度用尽 {counts.exhausted}
+          </StatusBadge>
+          <StatusBadge tone={counts.restricted ? 'error' : 'neutral'}>
+            已停用 {counts.restricted}
+          </StatusBadge>
+          <StatusBadge>待确认 {counts.unknown}</StatusBadge>
+        </div>
+        <div className="account-overview-options">
+          {!!models.length && (
+            <Select
+              label="估算模型"
+              value={model?.id || ''}
+              onChange={onModel}
+              options={models.map((row) => ({
+                value: row.id,
+                label: row.label,
+              }))}
+            />
+          )}
+          <Select
+            label="Token 换算口径"
+            value={basis}
+            onChange={(value) => setBasis(value as TokenBasis)}
+            options={Object.entries(basisLabels).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setSourceOpen(true)}
+          >
+            <CircleHelp size={14} />
+            估算依据
+          </Button>
+        </div>
+      </div>
+      {usage.error && <Notice tone="error">{usage.error}</Notice>}
+      {sourceOpen && (
+        <QuotaSourceDialog
+          data={data}
+          usage={usage}
+          model={model}
+          basis={basis}
+          onClose={() => setSourceOpen(false)}
+        />
+      )}
+    </Panel>
+  );
+}

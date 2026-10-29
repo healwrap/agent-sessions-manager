@@ -178,6 +178,12 @@ export function sampleUsage(
 ): AccountUsage {
   return {
     account_id: account.id,
+    plan: account.usage_plan || 'pro',
+    health: {
+      state: loggedIn ? 'accessible' : 'unknown',
+      checked_at: Date.now() / 1000,
+      message: '演示账号状态',
+    },
     status: loggedIn ? 'ready' : 'login_required',
     refreshing: false,
     can_refresh: true,

@@ -23,12 +23,14 @@ import { Button, FactsGrid } from './ui';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
 import { AccountUsagePanel } from './account-usage-panel';
+import type { AccountUsages } from '../hooks/use-account-usages';
 
 export function AccountClientPanel({
   account,
   client,
   data,
   busy,
+  usage,
   onRuntime,
   onLogin,
   onSessionLogin,
@@ -48,6 +50,7 @@ export function AccountClientPanel({
   client: AccountClient;
   data: EnvironmentSettings;
   busy: boolean;
+  usage: AccountUsages;
 }) {
   const { profile, run, session, target } = client;
   const checking = run?.status === 'checking';
@@ -195,7 +198,7 @@ export function AccountClientPanel({
         </div>
       )}
       {account.provider === 'claude' && (
-        <AccountUsagePanel account={account} data={data} busy={busy} />
+        <AccountUsagePanel account={account} usage={usage} busy={busy} />
       )}
       {profile && (
         <>

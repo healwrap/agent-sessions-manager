@@ -1,10 +1,7 @@
 import { ChartNoAxesCombined, RefreshCw } from 'lucide-react';
-import { useAccountUsage } from '../hooks/use-account-usage';
+import type { AccountUsages } from '../hooks/use-account-usages';
 import { currency, resetLabel } from '../lib/account-usage';
-import type {
-  BrowserAccount,
-  EnvironmentSettings,
-} from '../lib/environment-settings';
+import type { BrowserAccount } from '../lib/environment-settings';
 import {
   Button,
   BusyState,
@@ -17,18 +14,17 @@ import {
 
 export function AccountUsagePanel({
   account,
-  data: settings,
+  usage,
   busy,
 }: {
   account: BrowserAccount;
-  data: EnvironmentSettings;
+  usage: AccountUsages;
   busy: boolean;
 }) {
-  const browser = settings.browser.runs.find(
-    (row) => row.profile_id === account.profile_id,
-  );
-  const ready = !!browser?.alive && browser.status === 'running';
-  const { data, error, now, refresh } = useAccountUsage(account.id, ready);
+  const { error, now } = usage;
+  const data = usage.items[account.id];
+  const refresh = (organization?: string) =>
+    usage.refresh(account.id, organization);
   const cached = !!data?.updated_at && (data.status !== 'ready' || data.stale);
   const wait = data
     ? Math.max(0, Math.ceil((data.next_refresh_at * 1000 - now) / 60_000))

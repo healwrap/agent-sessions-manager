@@ -202,6 +202,7 @@ export function AccountWorkspace({
           )}
           {section === 'accounts' && (
             <BrowserAccounts
+              active={active}
               guidedAccountId={
                 guide.active ? guide.progress?.accountId : undefined
               }

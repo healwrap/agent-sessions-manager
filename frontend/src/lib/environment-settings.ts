@@ -46,6 +46,7 @@ export interface BrowserAccount {
   provider: 'claude' | 'codex';
   profile_id: string;
   app_profile_id?: string;
+  usage_plan?: '' | 'pro' | 'max5' | 'max20';
 }
 export interface BrowserRun {
   profile_id: string;

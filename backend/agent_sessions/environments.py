@@ -69,7 +69,7 @@ class EnvironmentSettings:
         required = {'proxies': {'name', 'url'}, 'accounts': {'name', 'provider', 'profile_id'},
                     'profiles': {'name', 'provider', 'engine', 'proxy_id', 'locale', 'timezone', 'fingerprint_seed'},
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
-        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates', 'name_account_id'} if collection in ('profiles', 'app_profiles') else {'app_profile_id'} if collection == 'accounts' else set()
+        optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates', 'name_account_id'} if collection in ('profiles', 'app_profiles') else {'app_profile_id', 'usage_plan'} if collection == 'accounts' else set()
         if collection == 'app_profiles': optional |= {'inherit_skills', 'inherit_plugins'}
         if collection == 'proxies': optional |= {'kind'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
@@ -90,6 +90,7 @@ class EnvironmentSettings:
         elif collection == 'accounts':
             item = {**item, 'name': item['name'].strip()}
             if item['provider'] not in ('claude', 'codex'): raise ValueError('请选择账号类型')
+            if item.get('usage_plan', '') not in ('', 'pro', 'max5', 'max20'): raise ValueError('请选择有效的用量估算套餐')
             if not item['profile_id'] and not item.get('app_profile_id'): raise ValueError('请绑定至少一个独立环境')
             for field, target in (('profile_id', 'profiles'), ('app_profile_id', 'app_profiles')):
                 if not item.get(field): continue

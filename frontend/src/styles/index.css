@@ -66,6 +66,7 @@
 @import './accounts.css' layer(components);
 @import './account-details.css' layer(components);
 @import './account-usage.css' layer(components);
+@import './account-overview.css' layer(components);
 @import './dsh/progress.css' layer(components);
 @import './account-client.css' layer(components);
 @import './dsh/controls.css' layer(components);

@@ -33,6 +33,7 @@ def main():
         '--collect-all', 'tzdata',
         '--add-data', str(ROOT/'frontend/dist')+os.pathsep+'frontend/dist',
         '--add-data', str(ROOT/'backend/agent_sessions/browser/locales.json')+os.pathsep+'agent_sessions/browser',
+        '--add-data', str(ROOT/'backend/agent_sessions/account_usage/benchmark_seed.json')+os.pathsep+'agent_sessions/account_usage',
         '--add-data', str(ROOT/'build/skill-payload')+os.pathsep+'skill-payload',
         ROOT/'scripts/trajectory_server.py')
     triple = subprocess.check_output(['rustc', '--print', 'host-tuple'], text=True).strip()

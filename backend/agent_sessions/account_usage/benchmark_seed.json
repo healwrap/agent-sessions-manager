@@ -1,0 +1,269 @@
+{
+  "source_label": "All Done Sites",
+  "source_url": "https://alldonesites.com/claude-usage-tracker/",
+  "data_url": "https://alldonesites.com/data/claude-usage.json",
+  "generated_at": "2026-10-29T07:31:32.213071+00:00",
+  "observed_at": "2026-10-27T14:47:08+00:00",
+  "models": [
+    {
+      "id": "claude-fable-5-1",
+      "label": "Fable 5.1",
+      "family": "fable",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "measured",
+      "qualification": "",
+      "input": {
+        "value": 20895925.0,
+        "low": 14190440.0,
+        "high": 28551933.0
+      },
+      "output": {
+        "value": 4179185.0,
+        "low": 2838088.0,
+        "high": 9517311.0
+      },
+      "mixed": {
+        "value": 338000754.0,
+        "low": 129587361.0,
+        "high": 663736818.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 0.5
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 0.5
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": false,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 0.0
+        }
+      }
+    },
+    {
+      "id": "claude-haiku-4-5",
+      "label": "Haiku 4.5",
+      "family": "haiku",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "inferred",
+      "qualification": "",
+      "input": {
+        "value": 317904915.0,
+        "low": 232241812.0,
+        "high": 410774040.0
+      },
+      "output": {
+        "value": 63580983.0,
+        "low": 46448362.0,
+        "high": 82154808.0
+      },
+      "mixed": {
+        "value": 5142251420.0,
+        "low": 2120836470.0,
+        "high": 7712005785.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-opus-5",
+      "label": "Opus 5",
+      "family": "opus",
+      "as_of": "2026-09-21T15:05:39+00:00",
+      "rate_source": "reference",
+      "qualification": "",
+      "input": {
+        "value": 63580983.0,
+        "low": 46448362.0,
+        "high": 82154808.0
+      },
+      "output": {
+        "value": 12716197.0,
+        "low": 9289672.0,
+        "high": 16430962.0
+      },
+      "mixed": {
+        "value": 1028450284.0,
+        "low": 424167294.0,
+        "high": 1542401157.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-opus-5-5",
+      "label": "Opus 5.5",
+      "family": "opus-5-5",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "list_price_until_separable",
+      "qualification": "Opus 5.5 is valued at its list price, 0.8x Opus; the fitted 0.753x Opus is not used, because the joint fit at its first use (span test: the new family's share of the work varies too little to separate its rate from the limit change: the rate's 95% interval runs 0.83x to 1.32x its base family's, wider than 1.5x end to end or against a search bound) cannot tell that rate apart from a five-hour limit change at that instant. The fitted rate takes over once that fit separates.",
+      "input": {
+        "value": 79476229.0,
+        "low": 58060453.0,
+        "high": 102693510.0
+      },
+      "output": {
+        "value": 15895246.0,
+        "low": 11612091.0,
+        "high": 20538702.0
+      },
+      "mixed": {
+        "value": 1360180030.0,
+        "low": 560983736.0,
+        "high": 2039907310.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    },
+    {
+      "id": "claude-sonnet-5",
+      "label": "Sonnet 5",
+      "family": "sonnet",
+      "as_of": "2026-10-27T14:47:08+00:00",
+      "rate_source": "measured",
+      "qualification": "",
+      "input": {
+        "value": 126320957.0,
+        "low": 79526582.0,
+        "high": 186288855.0
+      },
+      "output": {
+        "value": 25264191.0,
+        "low": 15905316.0,
+        "high": 37257771.0
+      },
+      "mixed": {
+        "value": 2043296875.0,
+        "low": 726238202.0,
+        "high": 3497447721.0
+      },
+      "mixed_as_of": "2026-09-21T15:05:39+00:00",
+      "plans": {
+        "max20": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "max5": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        },
+        "pro": {
+          "as_of": "2026-09-16",
+          "included": true,
+          "source_url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan",
+          "weekly_fraction": 1.0
+        }
+      }
+    }
+  ],
+  "plan_ratios": {
+    "pro": 0.05,
+    "max5": 0.3,
+    "max20": 1.0
+  },
+  "plan_basis": {
+    "as_of": "2026-01-25",
+    "credits_per_window": {
+      "max20": 11000000,
+      "max5": 3300000,
+      "pro": 550000
+    },
+    "dated": true,
+    "kind": "credits_table",
+    "scope": "one five-hour window",
+    "source_url": "https://she-llac.com/claude-limits"
+  },
+  "weekly_windows": {
+    "pro": {
+      "value": 4.99,
+      "inferred": true,
+      "as_of": null,
+      "stale": false
+    },
+    "max5": {
+      "value": 6.93,
+      "inferred": true,
+      "as_of": null,
+      "stale": false
+    },
+    "max20": {
+      "value": 4.16,
+      "inferred": false,
+      "as_of": "2026-10-29T07:30:00.382112+00:00",
+      "stale": false
+    }
+  },
+  "cache_read_share": 0.9617,
+  "sample_count": 12.0,
+  "account_count": 4.0
+}

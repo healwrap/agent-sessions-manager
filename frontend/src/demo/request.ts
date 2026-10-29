@@ -5,6 +5,7 @@ import type {
   EnvironmentItem,
 } from '../lib/environment-settings';
 import { initialState } from '../state/model';
+import { sampleBenchmarks } from './usage';
 import {
   createDemoSettings,
   sampleReport,
@@ -253,6 +254,26 @@ export const demoRequest: Request = async <T>(
   } else if (path === '/api/preferences') {
     if (body) local.preferences = body as typeof local.preferences;
     value = { value: local.preferences, saved: true };
+  } else if (
+    ['/api/account-usage/overview', '/api/account-usage/refresh-all'].includes(
+      path,
+    )
+  ) {
+    value = {
+      items: data.accounts
+        .filter((row) => row.provider === 'claude')
+        .map((account) =>
+          sampleUsage(
+            account,
+            data.browser.sessions?.[account.profile_id]?.state === 'saved' ||
+              data.app_runtime.sessions[account.app_profile_id || '']?.state ===
+                'saved',
+          ),
+        ),
+      benchmarks: sampleBenchmarks(),
+    };
+  } else if (path === '/api/account-usage/benchmarks') {
+    value = sampleBenchmarks();
   } else if (path.startsWith('/api/account-usage')) {
     const account = data.accounts.find((row) => row.id === args.account_id)!;
     value = sampleUsage(

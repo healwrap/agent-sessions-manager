@@ -40,6 +40,7 @@
 }
 .account-list-identity {
   display: grid;
+  align-content: start;
   gap: 2px;
   min-width: 0;
 }
@@ -47,7 +48,9 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .account-list-identity > span {
   color: var(--dsw-alias-label-tertiary);

@@ -101,10 +101,10 @@ def synchronize(root, profile_id, settings, paths=None):
                 continue
             if own:
                 cli_id = own.cli_id
-            elif not any(row.cli_id == base_id for row in existing) and base_id not in used:
-                cli_id = base_id
+            elif not existing and not used:
+                cli_id = str(uuid5(NAMESPACE_URL, 'agent-sessions:'+profile_id+':'+base_id+':'+cwd+':primary'))
             else:
-                cli_id = str(uuid5(NAMESPACE_URL, 'agent-sessions:'+base_id+':'+cwd+':'+source.origin))
+                cli_id = str(uuid5(NAMESPACE_URL, 'agent-sessions:'+profile_id+':'+base_id+':'+cwd+':'+source.origin))
                 if cli_id in used: cli_id = str(uuid5(NAMESPACE_URL, cli_id+':'+source.digest))
                 result['branches'] += 1
             used.add(cli_id)

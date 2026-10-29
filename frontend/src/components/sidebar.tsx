@@ -27,15 +27,18 @@ export function Sidebar({
   onSkills?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
-  const groups = agentGroups(
-    state.sessions,
-    state.projects,
-    state.preferences,
-    state.provider,
-    state.query,
-    state.sources,
-    state.searchMode,
-  );
+  const groups =
+    state.initializing && !state.sources.length
+      ? []
+      : agentGroups(
+          state.sessions,
+          state.projects,
+          state.preferences,
+          state.provider,
+          state.query,
+          state.sources,
+          state.searchMode,
+        );
   return (
     <WorkspaceSidebar
       label="会话侧边栏"
@@ -82,7 +85,7 @@ export function Sidebar({
             ).map(({ id, label }) => ({
               value: id,
               label,
-              icon: <AgentIcon source={id} monochrome />,
+              icon: <AgentIcon source={id} />,
             })),
           ]}
         />

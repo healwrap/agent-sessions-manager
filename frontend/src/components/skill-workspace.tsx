@@ -101,7 +101,7 @@ export function SkillWorkspace({
                   onClick={() => setSelected(target.id)}
                   aria-current={selected === target.id ? 'true' : undefined}
                 >
-                  <AgentIcon source={target.id} monochrome />
+                  <AgentIcon source={target.id} />
                   <span>{target.name}</span>
                   <i className="skill-sidebar-dot" data-state={target.state} />
                 </button>

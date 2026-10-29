@@ -44,7 +44,7 @@ export function SidebarAgentGroup({
     <section className="agent-group" aria-label={group.label}>
       <button className="agent-heading" aria-expanded={open} onClick={toggle}>
         <Icon name="right" className="project-chevron" />
-        <AgentIcon source={group.id} monochrome />
+        <AgentIcon source={group.id} />
         <MarqueeTitle className="agent-name" text={group.label} />
         <span className="agent-session-count" title={`${group.count} 个会话`}>
           {group.count}

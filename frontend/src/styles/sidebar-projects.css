@@ -7,9 +7,9 @@
   gap: 10px;
   width: 100%;
   height: 42px;
-  padding: 0 4px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   text-align: left;
@@ -29,7 +29,7 @@
   min-width: 0;
   overflow: hidden;
   font-size: 14px;
-  font-weight: 550;
+  font-weight: 400;
 }
 .agent-session-count {
   flex: none;
@@ -38,7 +38,16 @@
   font-variant-numeric: tabular-nums;
 }
 .agent-projects {
-  padding-left: 12px;
+  padding: 0;
+}
+.agent-projects .project-heading {
+  padding-inline: 28px 12px;
+}
+.agent-projects .session-item {
+  padding-inline: 56px 12px;
+}
+.agent-projects .more-sessions {
+  padding-left: 56px;
 }
 .project-heading {
   display: flex;
@@ -48,7 +57,7 @@
   height: 34px;
   padding: 0 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   color: inherit;
   text-align: left;

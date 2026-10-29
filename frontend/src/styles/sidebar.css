@@ -106,7 +106,7 @@
 .sidebar .session-list {
   width: var(--sidebar-width);
   margin-inline: -12px;
-  padding-inline: 4px;
+  padding-inline: 0;
   scrollbar-gutter: stable;
   overflow-y: auto;
   min-height: 0;
@@ -120,7 +120,7 @@
   height: 32px;
   padding: 0 8px 0 28px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   text-align: left;
   color: inherit;

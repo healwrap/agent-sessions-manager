@@ -5,6 +5,7 @@ import type {
 } from '../lib/environment-settings';
 import { Button, Field, GuideLink, Notice } from './ui';
 import { accountGuide } from '../lib/guide-links';
+import { demoDefaults } from '../lib/demo-mode';
 import { EditorDialog, TextInput } from './form-controls';
 import { Select } from './select';
 export interface AccountRoute {
@@ -34,7 +35,7 @@ export function AccountEditor({
     () =>
       account || {
         id: '',
-        name: '',
+        name: demoDefaults.accountName,
         provider: 'claude',
         profile_id: '__new__',
         app_profile_id: '__new__',

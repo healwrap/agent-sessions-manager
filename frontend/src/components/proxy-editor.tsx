@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Upload } from 'lucide-react';
 import { request } from '../lib/api';
 import type {
   EnvironmentSettings,
@@ -25,6 +24,8 @@ import { ProxyDetails } from './proxy-details';
 import { ProxyCoreInstallNotice } from './proxy-core-control';
 import { GuideLink } from './ui/guide-link';
 import { proxyGuide } from '../lib/guide-links';
+import { demoDefaults } from '../lib/demo-mode';
+import { ProxyFileButton } from './proxy-file-button';
 
 export function ProxyEditor({
   item,
@@ -51,10 +52,12 @@ export function ProxyEditor({
   const [mode, setMode] = useState<'external' | 'managed'>(
     item ? item.kind || 'external' : 'managed',
   );
-  const [name, setName] = useState(item?.name || '');
+  const [name, setName] = useState(item?.name || demoDefaults.proxyName);
   const [url, setUrl] = useState(item?.url || '');
   const subscriptionUrl = managed?.subscription?.url || '';
-  const [link, setLink] = useState(subscriptionUrl);
+  const [link, setLink] = useState(
+    subscriptionUrl || demoDefaults.subscription,
+  );
   const initialLink = useRef(link);
   const [source, setSource] = useState('');
   const initialSource = useRef(source);
@@ -72,7 +75,6 @@ export function ProxyEditor({
   const [domains, setDomains] = useState(originalDomains);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  const file = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!item || item.kind !== 'managed') return;
@@ -305,27 +307,17 @@ export function ProxyEditor({
                 />
               </Field>
               <div className="proxy-import-actions">
-                <input
-                  ref={file}
-                  type="file"
-                  accept=".yaml,.yml,.json,.txt"
-                  hidden
-                  onChange={(event) => {
-                    const selected = event.target.files?.[0];
-                    if (selected)
-                      void operation(async () => {
-                        if (selected.size > 1_000_000)
-                          throw new Error('配置文件不能超过 1 MB');
-                        setSource(await selected.text());
-                        setImported(undefined);
-                      });
-                    event.target.value = '';
-                  }}
+                <ProxyFileButton
+                  disabled={locked}
+                  onSelect={(selected) =>
+                    void operation(async () => {
+                      if (selected.size > 1_000_000)
+                        throw new Error('配置文件不能超过 1 MB');
+                      setSource(await selected.text());
+                      setImported(undefined);
+                    })
+                  }
                 />
-                <Button disabled={locked} onClick={() => file.current?.click()}>
-                  <Upload size={16} />
-                  导入配置文件
-                </Button>
                 <Button
                   disabled={locked || !source.trim()}
                   onClick={() => void parse()}

@@ -32,6 +32,7 @@ export default defineConfig({
         browserCheck: fileURLToPath(
           new URL('./browser-check.html', import.meta.url),
         ),
+        guideDemo: fileURLToPath(new URL('./guide-demo.html', import.meta.url)),
       },
     },
   },

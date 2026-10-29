@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { BrowserAccount } from '../lib/environment-settings';
 import { request } from '../lib/api';
 import { guideStore } from '../state/guide-store';
+import { isGuideDemo } from '../lib/demo-mode';
 import { Button, Notice } from './ui';
 
 interface Identity {
@@ -28,9 +29,13 @@ export function GuideLoginCheck({
     setResult(undefined);
     setError('');
     try {
-      const value = await request<Identity>('/api/browser-login', {
-        account_id: account.id,
-      });
+      const value = await request<Identity>(
+        isGuideDemo ? '/api/demo/login' : '/api/browser-login',
+        {
+          account_id: account.id,
+          ...(isGuideDemo ? { target } : {}),
+        },
+      );
       setResult(value);
       if (
         value.state === 'verified' &&
@@ -45,7 +50,7 @@ export function GuideLoginCheck({
       setBusy(false);
     }
   };
-  if (target === 'app' || account.provider !== 'claude')
+  if (!isGuideDemo && (target === 'app' || account.provider !== 'claude'))
     return (
       <>
         <p>在{target === 'app' ? 'App' : '浏览器'}内确认当前账号。</p>
@@ -57,7 +62,13 @@ export function GuideLoginCheck({
   return (
     <>
       <Button disabled={!ready || busy} onClick={() => void inspect()}>
-        {busy ? '正在核对…' : '检查登录身份'}
+        {busy
+          ? '正在核对…'
+          : isGuideDemo
+            ? target === 'app'
+              ? '模拟 App 登录'
+              : '模拟邮箱登录'
+            : '检查登录身份'}
       </Button>
       {error && <Notice tone="error">{error}</Notice>}
       {result && (

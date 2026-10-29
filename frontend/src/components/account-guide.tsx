@@ -10,6 +10,7 @@ import { guideStore, useGuide } from '../state/guide-store';
 import { sessionStore } from '../state/session-store';
 import { Button, GuidedTour, Notice, Select, type GuidedStep } from './ui';
 import { GuideLoginCheck } from './guide-login-check';
+import { isGuideDemo } from '../lib/demo-mode';
 
 export interface GuideNetworkResult {
   proxyId: string;
@@ -261,7 +262,11 @@ export function AccountGuide({
       step.selector = 'dialog[aria-label="Claude App 登录引导"]';
     step.body = (
       <>
-        <p>{definition.hint}</p>
+        <p>
+          {isGuideDemo
+            ? '体验模拟登录，无需输入真实邮箱或验证码。'
+            : definition.hint}
+        </p>
         <GuideLoginCheck
           key={account.id + target}
           account={account}
@@ -288,6 +293,8 @@ export function AccountGuide({
       </>
     );
   if (id === 'done') {
+    if (isGuideDemo)
+      step.body = <p>演示已完成。可以继续体验，或退出后配置自己的账号。</p>;
     if (!account) step.selector = '[data-guide="account-toolbar"]';
     step.onContinue = guideStore.finish;
     step.continueLabel = '完成';

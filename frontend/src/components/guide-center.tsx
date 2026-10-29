@@ -1,17 +1,16 @@
-import { useState } from 'react';
 import type { WorkspacePage } from '../workspace';
 import { guideStore, useGuide, type GuideTopic } from '../state/guide-store';
-import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { accountGuide, proxyGuide } from '../lib/guide-links';
-import {
-  Button,
-  ContentDialog,
-  Disclosure,
-  Field,
-  GuideLink,
-  Notice,
-  Select,
-} from './ui';
+import { isGuideDemo } from '../lib/demo-mode';
+import { Play } from 'lucide-react';
+import { Button, ContentDialog, Disclosure, GuideLink } from './ui';
+
+const demonstrations = [
+  { topic: 'proxy', label: '代理配置' },
+  { topic: 'account', label: '添加账号' },
+  { topic: 'login', label: '登录账号' },
+  { topic: 'switch', label: '切换账号' },
+] as const;
 
 export function GuideCenter({
   onNavigate,
@@ -19,132 +18,59 @@ export function GuideCenter({
   onNavigate: (page: WorkspacePage) => void;
 }) {
   const { helpOpen, progress } = useGuide();
-  const { data, loading, error } = useEnvironmentSettings(helpOpen, false);
-  const [accountId, setAccountId] = useState('');
-  const [target, setTarget] = useState('browser');
-  const [detail, setDetail] = useState<'login' | 'switch'>();
   if (!helpOpen) return null;
-  const selected =
-    data.accounts.find((item) => item.id === accountId) || data.accounts[0];
-  const close = () => {
-    setDetail(undefined);
-    guideStore.closeHelp();
-  };
-  const start = (topic: GuideTopic) => {
-    setDetail(undefined);
-    guideStore.start(
-      topic,
-      selected?.id,
-      selected?.provider === 'claude'
-        ? (target as 'browser' | 'app')
-        : 'browser',
-    );
+  const start = () => {
+    guideStore.start('setup');
     onNavigate('accounts');
   };
   const resume = () => {
-    setDetail(undefined);
     guideStore.resume();
     onNavigate('accounts');
+  };
+  const demonstrate = (topic: GuideTopic = 'setup') => {
+    if (isGuideDemo)
+      guideStore.start(topic, 'demo-account-1', progress?.target);
+    else guideStore.demonstrate(topic);
   };
   return (
     <ContentDialog
       title="帮助与引导"
       className="guide-center-dialog"
-      onClose={close}
+      onClose={guideStore.closeHelp}
       footer={
         <>
           {progress && (
-            <Button
-              variant="ghost"
-              disabled={loading}
-              onClick={() => start('setup')}
-            >
+            <Button variant="ghost" onClick={start}>
               重新开始
             </Button>
           )}
-          <Button
-            variant="primary"
-            disabled={loading}
-            onClick={() => (progress ? resume() : start('setup'))}
-          >
-            {progress ? '继续引导' : '开始引导'}
+          {!isGuideDemo && (
+            <Button variant="ghost" onClick={progress ? resume : start}>
+              {progress ? '继续配置' : '开始配置'}
+            </Button>
+          )}
+          <Button variant="primary" onClick={() => demonstrate()}>
+            <Play size={15} />
+            演示操作
           </Button>
         </>
       }
     >
-      {error && <Notice tone="error">{error}</Notice>}
       <GuideLink {...accountGuide} />
       <GuideLink href={proxyGuide.href} title={proxyGuide.title} />
       <div className="guide-sections">
-        <Disclosure compact title="单项引导">
+        <Disclosure compact title="单项演示">
           <div className="ui-actions guide-shortcuts">
-            <Button
-              size="small"
-              disabled={loading}
-              onClick={() => start('proxy')}
-            >
-              代理配置
-            </Button>
-            <Button
-              size="small"
-              disabled={loading}
-              onClick={() => start('account')}
-            >
-              添加账号
-            </Button>
-            {data.accounts.length > 0 && (
-              <>
-                <Button
-                  size="small"
-                  aria-pressed={detail === 'login'}
-                  onClick={() => setDetail('login')}
-                >
-                  登录账号
-                </Button>
-                <Button
-                  size="small"
-                  aria-pressed={detail === 'switch'}
-                  onClick={() => setDetail('switch')}
-                >
-                  切换账号
-                </Button>
-              </>
-            )}
-          </div>
-          {detail && (
-            <div className="ui-stack">
-              <Field label="账号">
-                <Select
-                  label="引导账号"
-                  value={selected?.id || ''}
-                  options={data.accounts.map((item) => ({
-                    value: item.id,
-                    label: item.name,
-                  }))}
-                  onChange={(id) => {
-                    setAccountId(id);
-                    setTarget('browser');
-                  }}
-                />
-              </Field>
-              {selected?.provider === 'claude' && (
-                <Field label="使用方式">
-                  <Select
-                    label="引导使用方式"
-                    value={target}
-                    onChange={setTarget}
-                    options={[
-                      { value: 'browser', label: '独立浏览器' },
-                      { value: 'app', label: 'Claude App' },
-                    ]}
-                  />
-                </Field>
-              )}
-              <Button onClick={() => start(detail)}>
-                开始{detail === 'login' ? '登录' : '切号'}引导
+            {demonstrations.map(({ topic, label }) => (
+              <Button
+                key={topic}
+                size="small"
+                onClick={() => demonstrate(topic)}
+              >
+                {label}
               </Button>
-            </div>
-          )}
+            ))}
+          </div>
         </Disclosure>
         <Disclosure compact title="使用提示">
           <p>邮件登录链接在对应账号的浏览器中打开。</p>

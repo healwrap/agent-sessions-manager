@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { copyText } from '../lib/api';
+import { isGuideDemo } from '../lib/demo-mode';
 import { resourceTarget } from '../lib/resource-links';
 import { sessionStore } from '../state/session-store';
 import { MenuItem, MenuSurface } from './menu-surface';
@@ -66,6 +67,10 @@ export function ResourceLink({
   if (!resource) return <>{children}</>;
   const open = async (reveal = false) => {
     setMenu(null);
+    if (isGuideDemo) {
+      sessionStore.notify('演示模式不会打开本机文件或应用。');
+      return;
+    }
     try {
       if (!window.__TAURI__?.core)
         throw new Error('请在桌面应用中打开本地文件。');

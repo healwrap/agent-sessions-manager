@@ -1,9 +1,14 @@
 import type { Request } from './types';
+import { isGuideDemo } from './demo-mode';
 export const request: Request = async <T>(
   path: string,
   params = {},
   body?: unknown,
 ): Promise<T> => {
+  if (isGuideDemo) {
+    const { demoRequest } = await import('../demo/request');
+    return demoRequest<T>(path, params, body);
+  }
   const query = new URLSearchParams(
     Object.entries(params).map(([k, v]) => [k, String(v)]),
   ).toString();
@@ -39,6 +44,7 @@ export const request: Request = async <T>(
   }
 };
 export async function copyText(text: string) {
+  if (isGuideDemo) throw new Error('演示模式不会修改剪贴板。');
   if (window.__TAURI__?.clipboardManager)
     await window.__TAURI__.clipboardManager.writeText(text);
   else await navigator.clipboard.writeText(text);

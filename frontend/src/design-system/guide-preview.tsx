@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { accountGuide, proxyGuide } from '../lib/guide-links';
+import GuideDemoDialog from '../components/guide-demo-dialog';
 import {
   Button,
   Disclosure,
@@ -16,6 +17,7 @@ import {
 export function GuidePreview() {
   const [stage, setStage] = useState(-1);
   const [dialog, setDialog] = useState(false);
+  const [demo, setDemo] = useState(false);
   const [name, setName] = useState('');
   const [route, setRoute] = useState('proxy');
   const definitions: GuidedStep[] = [
@@ -47,6 +49,7 @@ export function GuidePreview() {
     <Panel title="页面操作引导">
       <div className="ui-stack">
         <Button onClick={() => setStage(0)}>体验 Tour 引导</Button>
+        <Button onClick={() => setDemo(true)}>体验示例账号演示</Button>
         <Button
           data-guide="preview-open"
           onClick={() => {
@@ -69,6 +72,7 @@ export function GuidePreview() {
           <p>用于帮助弹窗中的操作与简短提示。</p>
         </Disclosure>
       </div>
+      {demo && <GuideDemoDialog onClose={() => setDemo(false)} />}
       {dialog && (
         <EditorDialog
           title="引导组件示例"

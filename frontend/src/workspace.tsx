@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { App } from './app';
 import { StartPage } from './components/start-page';
 import { AccountWorkspace } from './components/account-workspace';
@@ -10,10 +10,14 @@ import type { SettingsResponse } from './lib/types';
 import { sessionStore } from './state/session-store';
 import { SettingsDialog } from './components/settings-dialog';
 import { GuideCenter } from './components/guide-center';
+import { guideStore, useGuide } from './state/guide-store';
+
+const GuideDemoDialog = lazy(() => import('./components/guide-demo-dialog'));
 
 export type WorkspacePage = 'sessions' | 'accounts' | 'skills';
 
 export function Workspace() {
+  const { demoOpen, demoTopic } = useGuide();
   const [page, setPage] = useState<WorkspacePage | 'home'>('home');
   const [sessionsOpened, setSessionsOpened] = useState(false);
   const [accountsOpened, setAccountsOpened] = useState(false);
@@ -118,6 +122,14 @@ export function Workspace() {
       )}
       <SettingsDialog open={state.settingsOpen} />
       <GuideCenter onNavigate={navigate} />
+      {demoOpen && (
+        <Suspense fallback={null}>
+          <GuideDemoDialog
+            initialTopic={demoTopic}
+            onClose={guideStore.closeDemo}
+          />
+        </Suspense>
+      )}
       {state.toast && (
         <div id="toast" role="status">
           {state.toast}

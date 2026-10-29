@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { request } from '../lib/api';
+import { isGuideDemo } from '../lib/demo-mode';
 import type {
   BrowserAccount,
   EnvironmentSettings,
@@ -25,7 +26,9 @@ export function AppLoginGuide({
   data: EnvironmentSettings;
   onClose: () => void;
 }) {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(
+    isGuideDemo ? 'https://claude.ai/magic-link?demo=1' : '',
+  );
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [openingApp, setOpeningApp] = useState(false);

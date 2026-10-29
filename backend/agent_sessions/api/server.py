@@ -30,7 +30,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         extra_connect = ' https://claude.ai https://www.cloudflare.com https://api.ipify.org https://*.dns4.browserleaks.org https://*.dns6.browserleaks.org https://*.dns4.browserleaks.net https://*.dns6.browserleaks.net' if urlparse(self.path).path == '/browser-check.html' else ''
-        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'{extra_connect}; frame-ancestors 'none'; base-uri 'none'")
+        demo = urlparse(self.path).path == '/guide-demo.html'
+        connect = "'none'" if demo else "'self'" + extra_connect
+        ancestors = "'self'" if demo else "'none'"
+        forms = "; form-action 'none'" if demo else ''
+        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src {connect}; frame-ancestors {ancestors}{forms}; base-uri 'none'")
         self.end_headers()
         self.wfile.write(body)
 

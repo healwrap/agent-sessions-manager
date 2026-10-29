@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { isGuideDemo } from '../lib/demo-mode';
 
 export const guideTopics = {
   setup: '首次配置',
@@ -45,7 +46,7 @@ const steps: GuideStep[] = [
   'done',
 ];
 function read(): GuideProgress | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || isGuideDemo) return null;
   try {
     const value = JSON.parse(localStorage.getItem(key) || 'null');
     if (
@@ -69,14 +70,22 @@ function read(): GuideProgress | null {
     return null;
   }
 }
-let state = { helpOpen: false, active: false, progress: read() };
+let state = {
+  helpOpen: false,
+  demoOpen: false,
+  demoTopic: 'setup' as GuideTopic,
+  active: false,
+  progress: read(),
+};
 const listeners = new Set<() => void>();
 function update(patch: Partial<typeof state>) {
   state = { ...state, ...patch };
   try {
-    if (state.progress)
-      localStorage.setItem(key, JSON.stringify(state.progress));
-    else localStorage.removeItem(key);
+    if (!isGuideDemo) {
+      if (state.progress)
+        localStorage.setItem(key, JSON.stringify(state.progress));
+      else localStorage.removeItem(key);
+    }
   } catch {
     /* The current guide still works when local storage is unavailable. */
   }
@@ -88,6 +97,14 @@ export const guideStore = {
   },
   help: () => update({ active: false, helpOpen: true }),
   closeHelp: () => update({ helpOpen: false }),
+  demonstrate: (topic: GuideTopic = 'setup') =>
+    update({
+      helpOpen: false,
+      active: false,
+      demoOpen: true,
+      demoTopic: topic,
+    }),
+  closeDemo: () => update({ demoOpen: false }),
   pause: () => update({ active: false }),
   finish: () => update({ active: false, progress: null }),
   start(

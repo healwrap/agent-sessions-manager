@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AccountGuide, type GuideNetworkResult } from './account-guide';
 import { guideStore, useGuide } from '../state/guide-store';
+import { isGuideDemo } from '../lib/demo-mode';
 import { Globe2, PanelsTopLeft, Plus, Users } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import type {
@@ -111,7 +112,7 @@ export function AccountWorkspace({
         className="account-workspace"
         closed={sidebarClosed}
         animations={settings.animations}
-        title="Agent Sessions"
+        title={isGuideDemo ? '演示模式 · 仅使用示例数据' : 'Agent Sessions'}
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (
@@ -207,16 +208,25 @@ export function AccountWorkspace({
                 <p>
                   {guide.progress
                     ? '上次的引导可以继续。'
-                    : '第一次使用？带你配置第一个账号。'}
+                    : '第一次使用？先用示例账号体验操作。'}
                 </p>
+                {!isGuideDemo && (
+                  <Button
+                    variant="primary"
+                    onClick={() => guideStore.demonstrate()}
+                  >
+                    演示操作
+                  </Button>
+                )}
                 <Button
+                  variant="ghost"
                   onClick={() =>
                     guide.progress
                       ? guideStore.resume()
                       : guideStore.start('setup')
                   }
                 >
-                  {guide.progress ? '继续引导' : '开始引导'}
+                  {guide.progress ? '继续配置' : '开始配置'}
                 </Button>
               </div>
             )}

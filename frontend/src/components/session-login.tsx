@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
+import { isGuideDemo } from '../lib/demo-mode';
 import type {
   BrowserAccount,
   BrowserProfile,
@@ -23,7 +24,7 @@ export function SessionLogin({
   profile: BrowserProfile;
   onClose: () => void;
 }) {
-  const [secret, setSecret] = useState('');
+  const [secret, setSecret] = useState(isGuideDemo ? 'sk-demo-example' : '');
   const [email, setEmail] = useState(() =>
     account.name.includes('@') ? account.name : '',
   );

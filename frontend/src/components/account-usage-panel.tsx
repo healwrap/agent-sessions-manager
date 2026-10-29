@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, ExternalLink, RefreshCw } from 'lucide-react';
+import { ChartNoAxesCombined, RefreshCw } from 'lucide-react';
 import { useAccountUsage } from '../hooks/use-account-usage';
 import { currency, resetLabel } from '../lib/account-usage';
 import type {
@@ -19,12 +19,10 @@ export function AccountUsagePanel({
   account,
   data: settings,
   busy,
-  onOpenBrowser,
 }: {
   account: BrowserAccount;
   data: EnvironmentSettings;
   busy: boolean;
-  onOpenBrowser: () => void;
 }) {
   const browser = settings.browser.runs.find(
     (row) => row.profile_id === account.profile_id,
@@ -36,8 +34,6 @@ export function AccountUsagePanel({
     ? Math.max(0, Math.ceil((data.next_refresh_at * 1000 - now) / 60_000))
     : 0;
   const extra = data?.extra_usage;
-  const needsBrowser =
-    data && ['requires_browser', 'login_required'].includes(data.status);
   return (
     <section className="account-usage" aria-label="账号用量">
       <SectionHeading
@@ -134,21 +130,9 @@ export function AccountUsagePanel({
           </strong>
         </div>
       )}
-      {needsBrowser && account.profile_id && (
-        <Button
-          disabled={busy || browser?.status === 'checking'}
-          onClick={onOpenBrowser}
-        >
-          <ExternalLink size={15} />
-          {browser?.status === 'checking' ? '浏览器正在检查' : '打开账号浏览器'}
-        </Button>
-      )}
       {data?.updated_at && (
         <div className="account-usage-updated">
-          <span>
-            {data.source_label}
-            {data.organization_name ? ` · ${data.organization_name}` : ''}
-          </span>
+          <span>{data.organization_name}</span>
           <time dateTime={new Date(data.updated_at * 1000).toISOString()}>
             更新于 {new Date(data.updated_at * 1000).toLocaleString('zh-CN')}
           </time>

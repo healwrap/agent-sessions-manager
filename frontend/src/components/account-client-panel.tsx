@@ -195,14 +195,7 @@ export function AccountClientPanel({
         </div>
       )}
       {account.provider === 'claude' && (
-        <AccountUsagePanel
-          account={account}
-          data={data}
-          busy={busy}
-          onOpenBrowser={() =>
-            onRuntime('open', { account_id: account.id }, 'browser')
-          }
-        />
+        <AccountUsagePanel account={account} data={data} busy={busy} />
       )}
       {profile && (
         <>

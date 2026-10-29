@@ -1,31 +1,18 @@
-.guide-demo-dialog {
-  width: calc(100vw - 24px);
-  height: calc(100dvh - 24px);
-  max-width: none;
-  max-height: none;
+.guide-demo-workspace {
+  position: fixed;
+  inset: 0;
 }
-.guide-demo-dialog > .editor-dialog-frame {
-  height: 100%;
-  max-height: none;
-}
-.guide-demo-dialog .editor-dialog-body {
-  display: flex;
-  padding: 0;
-  overflow: hidden;
-  border-block: 0.5px solid var(--dsw-alias-border-l2);
-}
-.guide-demo-dialog iframe {
+.guide-demo-workspace iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: 0;
 }
-.guide-demo-dialog .editor-dialog-footer {
-  align-items: center;
-  flex-wrap: wrap;
-}
-.guide-demo-scenarios {
+.guide-demo-controls {
+  position: absolute;
+  inset: 0 16px auto auto;
+  height: var(--workspace-header-height);
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-right: auto;
+  align-items: center;
+  gap: 4px;
 }

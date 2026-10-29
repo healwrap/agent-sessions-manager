@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { accountGuide, proxyGuide } from '../lib/guide-links';
-import GuideDemoDialog from '../components/guide-demo-dialog';
+import GuideDemoWorkspace from '../components/guide-demo-workspace';
 import {
   Button,
   Disclosure,
@@ -72,7 +72,7 @@ export function GuidePreview() {
           <p>用于帮助弹窗中的操作与简短提示。</p>
         </Disclosure>
       </div>
-      {demo && <GuideDemoDialog onClose={() => setDemo(false)} />}
+      {demo && <GuideDemoWorkspace onClose={() => setDemo(false)} />}
       {dialog && (
         <EditorDialog
           title="引导组件示例"

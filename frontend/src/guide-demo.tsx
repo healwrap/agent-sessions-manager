@@ -15,6 +15,12 @@ Object.defineProperty(window, 'sessionStorage', { value: demoStorage() });
 const params = new URLSearchParams(location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 const animations = params.get('animations') !== 'false';
+const host = params.get('host');
+document.documentElement.classList.toggle(
+  'desktop-host',
+  host === 'macos' || host === 'desktop',
+);
+document.documentElement.classList.toggle('desktop-macos', host === 'macos');
 applyTheme(theme, false);
 document.documentElement.classList.toggle('motion-off', !animations);
 sessionStore.update({

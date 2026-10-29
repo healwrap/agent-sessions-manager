@@ -12,7 +12,9 @@ import { SettingsDialog } from './components/settings-dialog';
 import { GuideCenter } from './components/guide-center';
 import { guideStore, useGuide } from './state/guide-store';
 
-const GuideDemoDialog = lazy(() => import('./components/guide-demo-dialog'));
+const GuideDemoWorkspace = lazy(
+  () => import('./components/guide-demo-workspace'),
+);
 
 export type WorkspacePage = 'sessions' | 'accounts' | 'skills';
 
@@ -61,6 +63,7 @@ export function Workspace() {
   useEffect(() => {
     const openSettings = (event: KeyboardEvent) => {
       if (
+        demoOpen ||
         event.isComposing ||
         event.altKey ||
         event.shiftKey ||
@@ -75,7 +78,7 @@ export function Workspace() {
     };
     window.addEventListener('keydown', openSettings);
     return () => window.removeEventListener('keydown', openSettings);
-  }, []);
+  }, [demoOpen]);
   function navigate(next: WorkspacePage) {
     if (next === 'sessions') setSessionsOpened(true);
     else history.replaceState(null, '', location.pathname);
@@ -85,55 +88,60 @@ export function Workspace() {
   }
   return (
     <>
-      {page === 'home' && <StartPage onNavigate={navigate} />}
-      {skillsOpened && (
-        <div
-          className="workspace-session"
-          hidden={page !== 'skills'}
-          inert={page !== 'skills'}
-        >
-          <SkillWorkspace onNavigate={navigate} active={page === 'skills'} />
-        </div>
-      )}
-      {accountsOpened && (
-        <div
-          className="workspace-session"
-          hidden={page !== 'accounts'}
-          inert={page !== 'accounts'}
-        >
-          <AccountWorkspace
-            onNavigate={navigate}
-            active={page === 'accounts'}
-          />
-        </div>
-      )}
-      {sessionsOpened && (
-        <div
-          className="workspace-session"
-          hidden={page !== 'sessions'}
-          inert={page !== 'sessions'}
-        >
-          <App
-            active={page === 'sessions'}
-            onAccounts={() => navigate('accounts')}
-            onSkills={() => navigate('skills')}
-          />
-        </div>
-      )}
-      <SettingsDialog open={state.settingsOpen} />
-      <GuideCenter onNavigate={navigate} />
+      <div className="workspace-view" hidden={demoOpen} inert={demoOpen}>
+        {page === 'home' && <StartPage onNavigate={navigate} />}
+        {skillsOpened && (
+          <div
+            className="workspace-session"
+            hidden={page !== 'skills'}
+            inert={page !== 'skills'}
+          >
+            <SkillWorkspace
+              onNavigate={navigate}
+              active={page === 'skills' && !demoOpen}
+            />
+          </div>
+        )}
+        {accountsOpened && (
+          <div
+            className="workspace-session"
+            hidden={page !== 'accounts'}
+            inert={page !== 'accounts'}
+          >
+            <AccountWorkspace
+              onNavigate={navigate}
+              active={page === 'accounts' && !demoOpen}
+            />
+          </div>
+        )}
+        {sessionsOpened && (
+          <div
+            className="workspace-session"
+            hidden={page !== 'sessions'}
+            inert={page !== 'sessions'}
+          >
+            <App
+              active={page === 'sessions' && !demoOpen}
+              onAccounts={() => navigate('accounts')}
+              onSkills={() => navigate('skills')}
+            />
+          </div>
+        )}
+        <SettingsDialog open={state.settingsOpen} />
+        <GuideCenter onNavigate={navigate} />
+        {state.toast && (
+          <div id="toast" role="status">
+            {state.toast}
+          </div>
+        )}
+      </div>
       {demoOpen && (
         <Suspense fallback={null}>
-          <GuideDemoDialog
+          <GuideDemoWorkspace
             initialTopic={demoTopic}
             onClose={guideStore.closeDemo}
           />
         </Suspense>
-      )}
-      {state.toast && (
-        <div id="toast" role="status">
-          {state.toast}
-        </div>
       )}
     </>
   );

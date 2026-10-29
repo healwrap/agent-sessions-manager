@@ -1,5 +1,6 @@
 .workspace-page,
-.workspace-session {
+.workspace-session,
+.workspace-view {
   width: 100%;
   height: 100%;
 }

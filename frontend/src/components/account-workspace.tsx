@@ -112,7 +112,7 @@ export function AccountWorkspace({
         className="account-workspace"
         closed={sidebarClosed}
         animations={settings.animations}
-        title={isGuideDemo ? '演示模式 · 仅使用示例数据' : 'Agent Sessions'}
+        title={isGuideDemo ? '演示模式' : 'Agent Sessions'}
         onExpand={() => setSidebarClosed(false)}
         actions={
           sidebarClosed && (

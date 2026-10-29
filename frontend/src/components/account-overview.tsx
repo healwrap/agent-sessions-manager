@@ -155,7 +155,9 @@ export function AccountOverview({
               }))}
             />
           )}
-          <span className="account-overview-basis">混合 Token（含缓存）</span>
+          <span className="account-overview-basis">
+            混合 Token（含缓存）· 社区估算
+          </span>
           <Button
             variant="text"
             size="small"

@@ -7,7 +7,7 @@ import threading
 import time
 from urllib.parse import urlsplit
 from urllib.request import getproxies, proxy_bypass
-from .benchmark_data import DATA_URL, DATA_VERSION, normalize_benchmarks
+from .benchmark_data import DATA_URL, DATA_VERSION, PLAN_BASIS, PLAN_RATIOS, normalize_benchmarks
 
 REFRESH_INTERVAL = 6*3600
 
@@ -26,7 +26,8 @@ class QuotaBenchmarks:
 
     def read(self):
         with self.lock:
-            return {**self.data, 'fetched_at': self.fetched_at or None,
+            return {**self.data, 'plan_ratios': PLAN_RATIOS.copy(), 'plan_basis': PLAN_BASIS.copy(),
+                    'fetched_at': self.fetched_at or None,
                     'refreshing': self.refreshing, 'error': self.error,
                     'next_refresh_at': self.next_refresh,
                     'stale': self.data.get('adapter_version') != DATA_VERSION or time.time()-self.fetched_at >= REFRESH_INTERVAL}

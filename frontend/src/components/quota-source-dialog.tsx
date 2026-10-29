@@ -37,11 +37,26 @@ export function QuotaSourceDialog({
           <FactsGrid
             items={[
               {
-                label: '数据来源',
+                label: '社区 Token 数据',
                 value: (
                   <a href={source.source_url} target="_blank" rel="noreferrer">
                     {source.source_label} <ExternalLink size={13} />
                   </a>
+                ),
+              },
+              {
+                label: '套餐倍数依据',
+                value: source.plan_basis.source_url ? (
+                  <a
+                    href={source.plan_basis.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {source.plan_basis.source_label || '套餐比例来源'}{' '}
+                    <ExternalLink size={13} />
+                  </a>
+                ) : (
+                  '演示比例'
                 ),
               },
               {
@@ -50,6 +65,7 @@ export function QuotaSourceDialog({
               },
               { label: '模型', value: model?.label || '未选择' },
               { label: '换算口径', value: '混合 Token（含缓存）' },
+              { label: '实时余额依据', value: 'Claude 账号用量读数' },
             ]}
           />
           <p className="quota-source-description">
@@ -106,8 +122,8 @@ export function QuotaSourceDialog({
                         {week && (
                           <small>
                             {source.weekly_windows[plan].inferred
-                              ? '按套餐比例推算'
-                              : '按实测周窗口换算'}
+                              ? '社区周容量推算'
+                              : '社区周窗口测量'}
                           </small>
                         )}
                       </td>
@@ -136,9 +152,10 @@ export function QuotaSourceDialog({
           />
           <Disclosure title="如何理解这个估算" compact>
             <p>
-              Max 20x
-              的容量来自第三方实际使用与额度读数；其他套餐按来源发布的比例换算，比例依据日期为{' '}
-              {source.plan_basis.as_of || '未提供'}。
+              5 小时套餐倍数采用 Claude 官方说明：Pro 为基准，Max 5x 为 5
+              倍，Max 20x 为 20 倍。 核对日期为{' '}
+              {source.plan_basis.as_of || '未提供'}。Token
+              容量与周容量采用社区样本估算。
             </p>
             <p>
               混合 Token 汇总输入、输出和缓存

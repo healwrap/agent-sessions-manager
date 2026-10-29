@@ -4,8 +4,12 @@ from .models import number, reset_time
 
 SOURCE_URL = 'https://alldonesites.com/claude-usage-tracker/'
 DATA_URL = 'https://alldonesites.com/data/claude-usage.json'
-DATA_VERSION = 2
+DATA_VERSION = 3
 PLANS = ('pro', 'max5', 'max20')
+PLAN_RATIOS = {'pro': .05, 'max5': .25, 'max20': 1}
+PLAN_BASIS = {'source_label': 'Claude 官方套餐说明', 'as_of': '2026-10-29',
+              'source_url': 'https://support.claude.com/en/articles/11049741-what-is-the-max-plan',
+              'kind': 'official_per_session_multiplier', 'scope': '5 小时周期'}
 
 
 def figure(value):
@@ -65,9 +69,6 @@ def normalize_benchmarks(data):
                        'plans': (data.get('model_plan_limits') or {}).get(model, {})})
     extended_models(data, credits, tokens, models)
     if not models: raise ValueError('第三方数据没有可识别的模型换算结果')
-    ratios = {plan: number((data.get('plan_ratios') or {}).get(plan)) for plan in PLANS}
-    if ratios.get('max20') != 1 or any(value is None for value in ratios.values()):
-        raise ValueError('第三方数据缺少有效的套餐比例')
     weekly = {}
     for plan in PLANS:
         row = (data.get('weekly_windows') or {}).get(plan) or {}
@@ -76,7 +77,7 @@ def normalize_benchmarks(data):
                         'as_of': estimate.get('as_of'), 'stale': bool(estimate.get('stale'))}
     return {'adapter_version': DATA_VERSION, 'source_label': 'All Done Sites', 'source_url': SOURCE_URL, 'data_url': DATA_URL,
             'generated_at': generated, 'observed_at': credits.get('as_of'), 'models': models,
-            'plan_ratios': ratios, 'plan_basis': data.get('plan_ratios_basis') or {},
+            'plan_ratios': PLAN_RATIOS.copy(), 'plan_basis': PLAN_BASIS.copy(),
             'weekly_windows': weekly, 'cache_read_share': number((tokens.get('cache_read_share') or {}).get('value')),
             'sample_count': number(tokens.get('n')), 'account_count': number(data.get('passive_account_count'))}
 
@@ -84,7 +85,7 @@ def normalize_benchmarks(data):
 def subscription_plan(identity, organization=None):
     """Only recognize explicit service plan fields; an unknown tier stays unknown."""
     organization = organization or identity.get('organization') or {}
-    labels = [organization.get('analytics_subscription_plan'), organization.get('rate_limit_tier'),
+    labels = [organization.get('analytics_subscription_plan'), organization.get('rate_limit_tier'), organization.get('organization_type'),
               identity.get('rate_limit_tier')]
     labels = [re.sub(r'[\s_-]+', '_', value.lower().replace('×', 'x')).strip('_')
               for value in labels if isinstance(value, str)]

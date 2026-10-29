@@ -1,9 +1,9 @@
 {
-  "adapter_version": 2,
+  "adapter_version": 3,
   "source_label": "All Done Sites",
   "source_url": "https://alldonesites.com/claude-usage-tracker/",
   "data_url": "https://alldonesites.com/data/claude-usage.json",
-  "generated_at": "2026-10-29T08:31:30.182451+00:00",
+  "generated_at": "2026-10-29T09:31:28.976202+00:00",
   "observed_at": "2026-10-27T14:47:08+00:00",
   "models": [
     {
@@ -284,20 +284,15 @@
   ],
   "plan_ratios": {
     "pro": 0.05,
-    "max5": 0.3,
-    "max20": 1.0
+    "max5": 0.25,
+    "max20": 1
   },
   "plan_basis": {
-    "as_of": "2026-01-25",
-    "credits_per_window": {
-      "max20": 11000000,
-      "max5": 3300000,
-      "pro": 550000
-    },
-    "dated": true,
-    "kind": "credits_table",
-    "scope": "one five-hour window",
-    "source_url": "https://she-llac.com/claude-limits"
+    "source_label": "Claude 官方套餐说明",
+    "as_of": "2026-10-29",
+    "source_url": "https://support.claude.com/en/articles/11049741-what-is-the-max-plan",
+    "kind": "official_per_session_multiplier",
+    "scope": "5 小时周期"
   },
   "weekly_windows": {
     "pro": {

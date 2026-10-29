@@ -28,7 +28,7 @@ export interface QuotaBenchmarks {
   observed_at: string | null;
   models: BenchmarkModel[];
   plan_ratios: Record<Plan, number>;
-  plan_basis: { as_of?: string; source_url?: string };
+  plan_basis: { as_of?: string; source_url?: string; source_label?: string };
   weekly_windows: Record<
     Plan,
     { value: number | null; inferred: boolean; stale: boolean }
@@ -141,7 +141,7 @@ export function quotaState(
     return { state: 'unknown', label: '模型额度待确认' };
   return { state: 'available', label: '额度可用' };
 }
-function modelWindows(usage: AccountUsage, model?: BenchmarkModel) {
+export function modelWindows(usage: AccountUsage, model?: BenchmarkModel) {
   const family = model?.family.split('-')[0];
   return family
     ? usage.windows.filter(

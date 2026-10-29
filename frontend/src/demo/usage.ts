@@ -47,7 +47,7 @@ export function sampleBenchmarks(): QuotaBenchmarks {
             }
           : {},
     })),
-    plan_ratios: { pro: 0.05, max5: 0.3, max20: 1 },
+    plan_ratios: { pro: 0.05, max5: 0.25, max20: 1 },
     plan_basis: {},
     weekly_windows: {
       pro: { value: 5, inferred: true, stale: false },

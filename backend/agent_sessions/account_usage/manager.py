@@ -9,6 +9,7 @@ import time
 from .models import UsageError
 from .sources import UsageSources
 from .benchmarks import QuotaBenchmarks
+from .oauth_authorization import UsageAuthorization
 
 MIN_REFRESH = 180
 CACHE_TTL = 300
@@ -18,7 +19,9 @@ class AccountUsage:
     def __init__(self, directory, environments, browser, app, proxies):
         self.path = Path(directory)/'account-usage.json'
         self.environments = environments
-        self.sources = UsageSources(browser, app, proxies)
+        self.authorization = UsageAuthorization(directory, environments, browser, app, proxies)
+        self.sources = UsageSources(browser, app, proxies, self.authorization)
+        self.authorization.on_verified = lambda key: self.refresh({'account_id': key})
         self.benchmarks = QuotaBenchmarks(directory)
         self.workers = ThreadPoolExecutor(max_workers=2, thread_name_prefix='account-usage')
         self.lock, self.closed = threading.RLock(), False
@@ -37,7 +40,7 @@ class AccountUsage:
                     if row['id'] in (account.get('profile_id'), account.get('app_profile_id'))]
         proxies = [row for row in settings['proxies'] if any(profile['proxy_id'] == row['id'] for profile in profiles)]
         identity = {field: value for field, value in account.items() if field != 'usage_plan'}
-        binding = hashlib.sha256(json.dumps([identity, profiles, proxies], sort_keys=True).encode()).hexdigest()
+        binding = hashlib.sha256(json.dumps([identity, profiles, proxies, self.authorization.revision(key)], sort_keys=True).encode()).hexdigest()
         return account, settings, binding
 
     def entry(self, key, binding):
@@ -59,7 +62,18 @@ class AccountUsage:
                 'account_id': key, 'can_refresh': not row['refreshing'] and time.time() >= row['next_refresh_at'],
                 'plan': account.get('usage_plan') or row.get('plan', ''),
                 'plan_source': 'manual' if account.get('usage_plan') else 'claude',
+                'authorization': self.authorization.state(key),
                 'stale': not row['updated_at'] or reset_due or time.time()-row['updated_at'] >= CACHE_TTL}
+
+    def authorize(self, value):
+        try: return self.authorization.start(value)
+        except UsageError as error: raise ValueError(str(error)) from None
+
+    def authorize_complete(self, value):
+        return self.authorization.complete(value)
+
+    def authorize_cancel(self, value):
+        return self.authorization.cancel(value)
 
     def overview(self):
         settings = self.environments.read()
@@ -107,7 +121,7 @@ class AccountUsage:
                 failures = row.get('failures', 0)+1
                 delay = min(600, 30*2**min(failures-1, 5))
                 if error.state in ('blocked', 'unavailable'): delay = 15
-                if error.state in ('requires_browser', 'login_required', 'organization_required'): delay = 0
+                if error.state in ('requires_browser', 'login_required', 'organization_required', 'authorization_required'): delay = 0
                 if error.state == 'rate_limited': delay = max(300, min(86400, error.retry_after), delay)
                 row.update(error.metadata)
                 if error.state in ('account_disabled', 'organization_disabled'):
@@ -131,5 +145,6 @@ class AccountUsage:
 
     def close(self):
         with self.lock: self.closed = True
+        self.authorization.close()
         self.workers.shutdown(wait=False, cancel_futures=True)
         self.benchmarks.close()

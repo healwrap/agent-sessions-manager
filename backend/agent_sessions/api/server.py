@@ -83,6 +83,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = environment_state(self.server)
             elif parsed.path == '/api/account-usage':
                 result = self.server.account_usage.read(get('account_id'))
+            elif parsed.path.startswith('/api/account-usage/authorization/'):
+                result = self.server.account_usage.authorization.read(parsed.path.rsplit('/', 1)[-1])
             elif parsed.path == '/api/account-usage/overview':
                 result = self.server.account_usage.overview()
             elif parsed.path == '/api/proxy-services':
@@ -147,7 +149,8 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
 
     def do_POST(self):
-        usage = self.path in {'/api/account-usage/refresh', '/api/account-usage/refresh-all', '/api/account-usage/benchmarks'}
+        usage = self.path in {'/api/account-usage/refresh', '/api/account-usage/refresh-all', '/api/account-usage/benchmarks',
+                              '/api/account-usage/authorize', '/api/account-usage/authorize-complete', '/api/account-usage/authorize-cancel'}
         skill = self.path in {'/api/skills/plan', '/api/skills/apply', '/api/skills/restore'}
         runtime = self.path in {'/api/app-runtime/open', '/api/browser-runtime/open', '/api/app-runtime/start', '/api/app-runtime/stop', '/api/browser-kernel/install', '/api/browser-runtime/start', '/api/browser-runtime/stop', '/api/browser-runtime/region', '/api/browser-runtime/check'}
         browser_probe = self.path.startswith('/api/browser-checks/')

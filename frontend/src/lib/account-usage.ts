@@ -18,6 +18,11 @@ export interface AccountUsage {
   identity?: string;
   plan?: '' | 'pro' | 'max5' | 'max20';
   plan_source?: 'claude' | 'manual';
+  authorization?: {
+    state: 'none' | 'ready' | 'login_required';
+    email: string;
+    error: string;
+  };
   health?: {
     state: 'accessible' | 'disabled' | 'organization_disabled' | 'unknown';
     checked_at: number;
@@ -34,6 +39,16 @@ export interface AccountUsage {
     currency: string;
     resets_at: string | null;
   } | null;
+}
+
+export interface UsageAuthorizationJob {
+  id: string;
+  account_id: string;
+  account_name: string;
+  state:
+    'preparing' | 'waiting' | 'verifying' | 'verified' | 'failed' | 'cancelled';
+  stage: string;
+  error: string;
 }
 
 export function resetLabel(value: string | null, now: number) {

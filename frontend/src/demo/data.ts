@@ -5,6 +5,7 @@ import type {
 } from '../lib/environment-settings';
 import type { AccountUsage } from '../lib/account-usage';
 import type { ClaudeReport } from '../lib/claude-diagnostics';
+import { demoUsageAuthorization } from './usage-authorization';
 
 export const sampleSubscription = 'https://subscription.example.com/demo';
 export const sampleSource =
@@ -179,6 +180,7 @@ export function sampleUsage(
   return {
     account_id: account.id,
     plan: account.usage_plan || 'pro',
+    authorization: demoUsageAuthorization(account.id),
     health: {
       state: loggedIn ? 'accessible' : 'unknown',
       checked_at: Date.now() / 1000,

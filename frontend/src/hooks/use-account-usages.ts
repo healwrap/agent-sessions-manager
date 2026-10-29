@@ -116,7 +116,11 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
           const first =
             row.status === 'idle' ||
             (readyIds.split(',').includes(row.account_id) &&
-              ['requires_browser', 'login_required'].includes(row.status));
+              [
+                'requires_browser',
+                'login_required',
+                'authorization_required',
+              ].includes(row.status));
           if (
             row.can_refresh &&
             ((row.stale && retryable) ||

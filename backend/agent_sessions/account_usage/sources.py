@@ -5,17 +5,9 @@ from urllib.parse import quote, urlsplit
 from agent_sessions.browser.gates import blocked
 from agent_sessions.browser.preflight import inspect
 from .credentials import read as read_token
-from .models import UsageError, normalize
+from .models import UsageError, normalize, verify_email
 from .transport import checked, oauth_json
 from .benchmark_data import subscription_plan
-
-
-def verify_email(account, email):
-    expected = account['name'].strip()
-    if not isinstance(email, str) or '@' not in email:
-        raise UsageError('login_required', '未取得 Claude 登录身份，请在此账号环境中确认登录')
-    if '@' in expected and email.casefold() != expected.casefold():
-        raise UsageError('blocked', '当前环境登录的账号与所选账号不一致，请先确认登录身份')
 
 
 def with_metadata(payload, metadata):
@@ -50,10 +42,14 @@ def browser_json(control, session, path, metadata=None):
 
 
 class UsageSources:
-    def __init__(self, browser, app, proxy_manager):
+    def __init__(self, browser, app, proxy_manager, authorization=None):
         self.browser, self.app, self.proxy_manager = browser, app, proxy_manager
+        self.authorization = authorization
 
     def fetch(self, account, settings, organization=''):
+        if self.authorization and self.authorization.has(account['id']):
+            payload, metadata = self.authorization.fetch(account['id'])
+            return with_metadata(payload, metadata)
         key = account.get('profile_id')
         with self.browser.lock:
             control = self.browser.controls.get(key)
@@ -69,9 +65,14 @@ class UsageSources:
             return self.web(account, control, organization)
         key = account.get('app_profile_id')
         profile = next((row for row in settings['app_profiles'] if row['id'] == key), None)
-        if not profile: raise UsageError('requires_browser', '打开此账号的独立浏览器并登录后，即可查询用量')
+        if not profile:
+            raise UsageError('authorization_required', '请先授权后台查询，之后无需保持浏览器打开')
         self.app.identity.verify(settings, 'app_profiles', key)
-        token = read_token(self.app.profile_directory(key)/'claude-code')
+        try: token = read_token(self.app.profile_directory(key)/'claude-code')
+        except UsageError as error:
+            if error.state in ('requires_browser', 'login_required'):
+                raise UsageError('authorization_required', '请先授权后台查询，之后无需保持浏览器打开') from None
+            raise
         proxy = next((row for row in settings['proxies'] if row['id'] == profile.get('proxy_id')), None)
         if not proxy: raise UsageError('blocked', '请先为 App 环境绑定专用代理，再查询用量')
         self.proxy_manager.ensure(proxy)

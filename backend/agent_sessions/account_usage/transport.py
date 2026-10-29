@@ -36,24 +36,32 @@ def checked(response):
     return data
 
 
-def oauth_json(path, token, proxy):
+def proxy_response(host, path, proxy, body=None, token=''):
     if not proxy: raise UsageError('blocked', '请先为账号环境绑定专用代理，再查询用量')
-    connection = http.client.HTTPSConnection('api.anthropic.com', timeout=8)
+    if host not in ('api.anthropic.com', 'platform.claude.com'): raise ValueError('授权服务地址无效')
+    connection = http.client.HTTPSConnection(host, timeout=10)
     raw = None
     try:
-        raw = connect_upstream(proxy, 'api.anthropic.com', 443)
-        raw.settimeout(8)
-        connection.sock = ssl.create_default_context().wrap_socket(raw, server_hostname='api.anthropic.com')
-        connection.request('GET', path, headers={'Authorization': 'Bearer '+token,
-            'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': 'Agent-Sessions/1.0', 'Accept': 'application/json'})
+        raw = connect_upstream(proxy, host, 443)
+        raw.settimeout(10)
+        connection.sock = ssl.create_default_context().wrap_socket(raw, server_hostname=host)
+        headers = {'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': 'Agent-Sessions/1.0', 'Accept': 'application/json'}
+        if token: headers['Authorization'] = 'Bearer '+token
+        if body is not None: headers['Content-Type'] = 'application/json'
+        connection.request('POST' if body is not None else 'GET', path,
+                           body=json.dumps(body).encode() if body is not None else None, headers=headers)
         response = connection.getresponse()
         body = response.read(524289)
         if len(body) > 524288: raise UsageError('error', '用量响应超过大小限制')
         try: data = json.loads(body)
         except ValueError: data = None
-        return checked({'status': response.status, 'data': data, 'retry_after': response.getheader('Retry-After')})
+        return {'status': response.status, 'data': data, 'retry_after': response.getheader('Retry-After')}
     except (OSError, http.client.HTTPException):
         raise UsageError('error', '通过账号专用代理读取用量失败，请检查代理连接') from None
     finally:
         connection.close()
         if raw: raw.close()
+
+
+def oauth_json(path, token, proxy):
+    return checked(proxy_response('api.anthropic.com', path, proxy, token=token))

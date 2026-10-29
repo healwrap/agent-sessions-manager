@@ -112,9 +112,11 @@ export function quotaState(
       state: 'unknown',
       label: usage?.refreshing
         ? '查询中'
-        : usage?.status === 'login_required'
-          ? '需重新登录'
-          : '额度待确认',
+        : usage?.status === 'authorization_required'
+          ? '待授权'
+          : usage?.status === 'login_required'
+            ? '需重新登录'
+            : '额度待确认',
     };
   const five = currentWindow(usage, 'five_hour', now);
   const week = currentWindow(usage, 'seven_day', now);

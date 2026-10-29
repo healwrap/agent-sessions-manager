@@ -1,4 +1,5 @@
-import { ChartNoAxesCombined, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { ChartNoAxesCombined, KeyRound, RefreshCw } from 'lucide-react';
 import type { AccountUsages } from '../hooks/use-account-usages';
 import { currency, resetLabel } from '../lib/account-usage';
 import type { BrowserAccount } from '../lib/environment-settings';
@@ -11,6 +12,7 @@ import {
   Select,
   StatusBadge,
 } from './ui';
+import { UsageAuthorization } from './usage-authorization';
 
 export function AccountUsagePanel({
   account,
@@ -23,6 +25,7 @@ export function AccountUsagePanel({
 }) {
   const { error, now } = usage;
   const data = usage.items[account.id];
+  const [authorizationOpen, setAuthorizationOpen] = useState(false);
   const refresh = (organization?: string) =>
     usage.refresh(account.id, organization);
   const cached = !!data?.updated_at && (data.status !== 'ready' || data.stale);
@@ -39,6 +42,16 @@ export function AccountUsagePanel({
         actions={
           <>
             {cached && <StatusBadge tone="warning">上次结果</StatusBadge>}
+            <Button
+              variant="text"
+              disabled={busy || !account.profile_id}
+              onClick={() => setAuthorizationOpen(true)}
+            >
+              <KeyRound size={15} />
+              {data?.authorization && data.authorization.state !== 'none'
+                ? '重新授权'
+                : '授权后台查询'}
+            </Button>
             <Button
               variant="text"
               disabled={busy || !data?.can_refresh || data.refreshing}
@@ -128,11 +141,22 @@ export function AccountUsagePanel({
       )}
       {data?.updated_at && (
         <div className="account-usage-updated">
-          <span>{data.organization_name}</span>
+          <span>
+            {[data.source_label, data.organization_name]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
           <time dateTime={new Date(data.updated_at * 1000).toISOString()}>
             更新于 {new Date(data.updated_at * 1000).toLocaleString('zh-CN')}
           </time>
         </div>
+      )}
+      {authorizationOpen && (
+        <UsageAuthorization
+          account={account}
+          onClose={() => setAuthorizationOpen(false)}
+          onVerified={() => void refresh()}
+        />
       )}
     </section>
   );

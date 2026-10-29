@@ -11,6 +11,14 @@ class UsageError(Exception):
         self.metadata = metadata or {}
 
 
+def verify_email(account, email):
+    expected = account['name'].strip()
+    if not isinstance(email, str) or '@' not in email:
+        raise UsageError('login_required', '未取得 Claude 登录身份，请确认此账号的授权')
+    if '@' in expected and email.casefold() != expected.casefold():
+        raise UsageError('blocked', '授权账号与所选账号不一致，请使用此账号的登录授权')
+
+
 def number(value):
     return float(value) if type(value) in (int, float) and math.isfinite(value) and value >= 0 else None
 

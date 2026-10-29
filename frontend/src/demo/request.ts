@@ -6,6 +6,7 @@ import type {
 } from '../lib/environment-settings';
 import { initialState } from '../state/model';
 import { sampleBenchmarks } from './usage';
+import { demoAuthorize } from './usage-authorization';
 import {
   createDemoSettings,
   sampleReport,
@@ -254,6 +255,15 @@ export const demoRequest: Request = async <T>(
   } else if (path === '/api/preferences') {
     if (body) local.preferences = body as typeof local.preferences;
     value = { value: local.preferences, saved: true };
+  } else if (
+    path.startsWith('/api/account-usage/authorization/') ||
+    [
+      '/api/account-usage/authorize',
+      '/api/account-usage/authorize-complete',
+      '/api/account-usage/authorize-cancel',
+    ].includes(path)
+  ) {
+    value = demoAuthorize(path, args);
   } else if (
     ['/api/account-usage/overview', '/api/account-usage/refresh-all'].includes(
       path,

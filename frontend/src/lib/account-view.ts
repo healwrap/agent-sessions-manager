@@ -22,6 +22,7 @@ export interface AccountActions {
   onLogin: (account: BrowserAccount) => void;
   onSessionLogin: (account: BrowserAccount) => void;
   onEditProfile: (kind: 'profiles' | 'app_profiles', id: string) => void;
+  onManageBrowser: () => void;
   onRuntime: (
     action: 'open' | 'stop',
     body: { profile_id?: string; account_id?: string },
@@ -94,7 +95,11 @@ export function clientIssue(client: AccountClient) {
   if (!client.profile) return '尚未绑定环境';
   if (!client.available)
     return client.target === 'browser'
-      ? '浏览器内核未就绪'
+      ? client.profile &&
+        'engine' in client.profile &&
+        client.profile.engine === 'chrome'
+        ? 'Google Chrome 环境已停用，请新建 Fingerprint Chromium 环境'
+        : '尚未安装 Fingerprint Chromium'
       : '尚未安装 Claude App';
   if (['blocked', 'failed', 'interrupted'].includes(client.run?.status || ''))
     return (

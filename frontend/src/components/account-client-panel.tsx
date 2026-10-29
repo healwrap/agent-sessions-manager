@@ -33,9 +33,15 @@ export function AccountClientPanel({
   onSessionLogin,
   onEditProfile,
   onEditAccount,
+  onManageBrowser,
 }: Pick<
   AccountActions,
-  'onRuntime' | 'onLogin' | 'onSessionLogin' | 'onEditProfile' | 'onEditAccount'
+  | 'onRuntime'
+  | 'onLogin'
+  | 'onSessionLogin'
+  | 'onEditProfile'
+  | 'onEditAccount'
+  | 'onManageBrowser'
 > & {
   account: BrowserAccount;
   client: AccountClient;
@@ -172,6 +178,11 @@ export function AccountClientPanel({
       {issue && !checking && (
         <div className="account-issue" role="alert">
           <span>{issue}</span>
+          {target === 'browser' && profile && !client.available && (
+            <Button onClick={onManageBrowser} disabled={busy}>
+              管理浏览器内核
+            </Button>
+          )}
           {profile && client.available && (
             <Button onClick={open} disabled={busy}>
               {blockedCheck ? '重新检查' : '重新打开'}

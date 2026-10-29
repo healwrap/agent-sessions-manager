@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import plistlib
 import sys
-from agent_sessions.applications import app_executable
 
 
 @lru_cache(maxsize=12)
@@ -52,8 +51,6 @@ def seed_number(value):
 
 
 def for_profile(profile, directory, apps):
-    if profile['engine'] != 'chrome': return discover(directory)
-    app = next((row for row in apps if row['id'] == 'chrome'), None)
-    path = Path(app_executable(app)) if app else None
-    return {'available': bool(path and path.is_file()), 'name': 'Google Chrome', 'path': str(path or ''),
-            'source': 'Agent Sessions 管理' if app and app.get('managed') else '本机安装', 'version': app.get('version', '') if app else ''}
+    if profile['engine'] == 'chrome':
+        return {'available': False, 'name': 'Google Chrome（已停用）', 'path': '', 'source': '', 'version': ''}
+    return discover(directory)

@@ -97,6 +97,8 @@ class BrowserRuntime:
         key = account['profile_id'] if account else value.get('profile_id')
         profile = next((row for row in settings['profiles'] if row['id'] == key), None)
         if not profile: raise ValueError('请选择已保存的浏览器环境')
+        if profile['engine'] == 'chrome':
+            raise ValueError('Google Chrome 环境已停用，请新建 Fingerprint Chromium 环境')
         self.identity.verify(settings, 'profiles', key)
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')

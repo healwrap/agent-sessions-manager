@@ -7,9 +7,9 @@
 | Claude 网页与官方 App 分别管理 | 一个本地账号分别绑定浏览器 Profile 和 App Profile，登录数据各自保存；不假定两者共享登录态。 |
 | 多账号切换 | 账号创建、重命名、绑定、删除配置；账号入口打开其绑定环境，已有账号网页优先聚焦，不重复启动同一 Profile。 |
 | 独立浏览器状态 | 每个 Profile 使用应用目录内独立 `--user-data-dir`；Cookie、Local Storage、历史和缓存分别保存。删除配置保留浏览数据。 |
-| Chrome 启动与管理 | 支持本机 Google Chrome 和 Fingerprint Chromium；启动、聚焦、重试、停止，显示实际 PID、数据目录、当前标签页和运行状态。 |
-| 独立指纹 | Fingerprint Chromium 使用固定种子；Google Chrome 使用其原生设备指纹，不把原生 Chrome 的 Profile 称为指纹伪装。Canvas 可跨次比较。 |
-| 独立语言与时区 | 可手动设置或从出口定位；没有跟随系统选项。普通 Chrome 在新标签页执行前应用区域设置，指纹内核使用原生参数。 |
+| 浏览器启动与管理 | 账号环境仅使用 Fingerprint Chromium；启动、聚焦、重试、停止，显示实际 PID、数据目录、当前标签页和运行状态。不提供普通 Google Chrome 选项，历史 Chrome 配置禁止启动，更换内核需新建环境并保留旧数据。 |
+| 独立指纹 | Fingerprint Chromium 使用固定种子，Canvas 可跨次比较。 |
+| 独立语言与时区 | 可手动设置或从出口定位；没有跟随系统选项。指纹内核使用原生参数。 |
 | 只给指定环境代理 | 每个环境绑定 HTTP、HTTPS 或 SOCKS5 代理，可带认证；经本机转发器交给该环境，不改系统代理或 TUN，不在代理失败后切回直连。 |
 | 启动前检查 | 保留代理、地区、指定出口的门控。每项可强制、提醒或关闭；强制失败或未验证保持拦截，不为通过验收而关闭。 |
 | 在目标浏览器检测 | 管理页直接在对应 Profile 打开本地采样页并接收结果；外部 SunBrowser / Chrome 保留一次性链接。 |
@@ -39,7 +39,7 @@ App 同时向 Chromium 参数、子进程环境和独立 Code `settings.json` �
 
 Git 的 SSH 传输另通过环境内的 `GIT_SSH_COMMAND` 指定 OpenSSH `ProxyCommand`，使用本应用的标准输入输出隧道连接相同转发器。隧道只连接本机入口；入口关闭时返回失败，不自行建立公网连接。它不更改全局 Git / SSH 配置或主机密钥校验。任意工具自行创建的其他网络连接仍受连接采样检查，不能据此宣称所有原生流量已被系统级拦截。
 
-## 验收记录（2026-10-27）
+## 历史验收记录（2026-10-27，包含当时支持的普通 Chrome）
 
 - 已实测指纹 Chromium 与普通 Chrome 在不同数据目录中运行，分别返回 `en-US / America/Los_Angeles` 与 `ja-JP / Asia/Tokyo`。
 - 两者使用独立绑定的代理，代理、地区、固定 IPv6 出口、语言与时区的强制门控均通过。

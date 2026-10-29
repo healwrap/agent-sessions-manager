@@ -75,7 +75,6 @@ export function BrowserProfileFields({
                   value: 'fingerprint-chromium',
                   label: 'Fingerprint Chromium',
                 },
-                { value: 'chrome', label: 'Google Chrome（原生指纹）' },
               ]}
               onChange={(engine) =>
                 onChange({ engine: engine as BrowserProfile['engine'] })

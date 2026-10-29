@@ -93,7 +93,9 @@ class EnvironmentSettings:
                 if any(row.get(field) == item[field] and row['id'] != key for row in current['accounts']):
                     raise ValueError('此环境已绑定其他账号，请为新账号创建独立环境')
         else:
-            if collection == 'profiles' and (item['provider'] not in ('claude', 'codex') or item['engine'] not in ('ccbaga', 'chrome', 'fingerprint-chromium')):
+            if collection == 'profiles' and item['engine'] == 'chrome':
+                raise ValueError('账号环境仅支持 Fingerprint Chromium，请新建指纹浏览器环境')
+            if collection == 'profiles' and (item['provider'] not in ('claude', 'codex') or item['engine'] not in ('ccbaga', 'fingerprint-chromium')):
                 raise ValueError('请选择 Agent 和浏览器')
             if collection == 'profiles' and any(row['profile_id'] == key and row['provider'] != item['provider'] for row in current['accounts']):
                 raise ValueError('此环境已绑定账号，Agent 类型应与账号一致')

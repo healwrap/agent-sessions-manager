@@ -31,6 +31,7 @@ export interface ProfileRoute {
 }
 export interface BrowserProfile extends ProfileRoute {
   provider: 'claude' | 'codex';
+  // Retain the legacy Chrome value for displaying unsupported saved profiles.
   engine: 'fingerprint-chromium' | 'ccbaga' | 'chrome';
   fingerprint_seed: string;
 }
@@ -170,9 +171,7 @@ export function browserAvailable(
   data: EnvironmentSettings,
   profile?: BrowserProfile,
 ) {
-  return profile?.engine === 'chrome'
-    ? data.apps.some((app) => app.id === 'chrome')
-    : data.browser.kernel.available;
+  return profile?.engine !== 'chrome' && data.browser.kernel.available;
 }
 export const runLabels: Record<BrowserRun['status'], string> = {
   checking: '启动检查中',

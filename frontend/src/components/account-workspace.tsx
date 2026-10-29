@@ -192,6 +192,7 @@ export function AccountWorkspace({
               onSessionLogin={(account) => setSessionAccountId(account.id)}
               onEditAccount={(item) => setAccountEdit({ item })}
               onDelete={(id) => void remove('accounts', id)}
+              onManageBrowser={() => setSection('browser')}
               onRuntime={(action, body, target) =>
                 void runtime(action, body, target)
               }

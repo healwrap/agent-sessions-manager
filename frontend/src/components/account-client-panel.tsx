@@ -75,8 +75,8 @@ export function AccountClientPanel({
       ? 1
       : 2;
   return (
-    <div className="account-client-panel">
-      <div className="account-launch-bar">
+    <div className="account-client-panel" data-guide-target={target}>
+      <div className="account-launch-bar" data-guide="account-login">
         <div className="account-launch-status">
           <StatusBadge tone={tone}>
             {run ? runLabels[run.status] : profile ? '尚未启动' : '待绑定'}
@@ -106,6 +106,7 @@ export function AccountClientPanel({
               onClick={() =>
                 onRuntime('stop', { profile_id: profile.id }, target)
               }
+              data-guide="account-stop"
             >
               <Square size={14} />
               {checking ? '取消启动' : '停止'}
@@ -115,6 +116,7 @@ export function AccountClientPanel({
             <Button
               variant="primary"
               className="account-open"
+              data-guide="account-open"
               disabled={busy || checking || !client.available}
               onClick={open}
             >
@@ -136,6 +138,7 @@ export function AccountClientPanel({
           ) : (
             <Button
               variant="primary"
+              data-guide="account-open"
               onClick={() => onEditAccount(account)}
               disabled={busy}
             >

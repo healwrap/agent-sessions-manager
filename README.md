@@ -65,6 +65,7 @@ Agent Sessions 的重点是两个工作区：**会话管理**和**账号管理**
 账号登录使用对应服务的官方流程。平台支持、隔离范围、登录与检测的实际验收情况见：
 
 - [账号与独立环境](references/account-environments.md)
+- [页面操作引导](references/user-guides.md)：首次配置、代理、登录与切换账号。
 - [专用代理配置](references/dedicated-proxies.md)
 - [平台与组件管理](references/runtime-components.md)
 - [Claude App 的本机 Skill 与插件继承](references/claude-plugin-inheritance.md)

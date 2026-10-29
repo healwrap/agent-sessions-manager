@@ -9,6 +9,7 @@ import { request } from './lib/api';
 import type { SettingsResponse } from './lib/types';
 import { sessionStore } from './state/session-store';
 import { SettingsDialog } from './components/settings-dialog';
+import { GuideCenter } from './components/guide-center';
 
 export type WorkspacePage = 'sessions' | 'accounts' | 'skills';
 
@@ -116,6 +117,7 @@ export function Workspace() {
         </div>
       )}
       <SettingsDialog open={state.settingsOpen} />
+      <GuideCenter onNavigate={navigate} />
       {state.toast && (
         <div id="toast" role="status">
           {state.toast}

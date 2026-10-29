@@ -32,6 +32,7 @@
     "@shikijs/langs": "4.3.1",
     "clsx": "^2.1.1",
     "diff": "^9.0.0",
+    "driver.js": "1.10.2",
     "interactjs": "1.10.28",
     "json5": "^2.2.3",
     "lucide-react": "^1.49.0",

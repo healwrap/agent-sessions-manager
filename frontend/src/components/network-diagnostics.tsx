@@ -25,9 +25,11 @@ import {
 export function NetworkDiagnostics({
   active,
   initialProxy,
+  onReport,
 }: {
   active: boolean;
   initialProxy?: string;
+  onReport?: (report: ClaudeReport | null, proxy: string) => void;
 }) {
   const [mode, setMode] = useState(initialProxy ? 'proxy' : 'direct');
   const [proxy, setProxy] = useState(initialProxy || 'http://127.0.0.1:7897');
@@ -52,6 +54,7 @@ export function NetworkDiagnostics({
   const run = async () => {
     setRunning(true);
     setError('');
+    onReport?.(null, mode === 'proxy' ? proxy : '');
     try {
       const result = await request<ClaudeReport>(
         '/api/claude-diagnostics/run',
@@ -67,6 +70,7 @@ export function NetworkDiagnostics({
       );
       setReport(result);
       setHistory(result.history);
+      onReport?.(result, mode === 'proxy' ? proxy : '');
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -98,6 +102,7 @@ export function NetworkDiagnostics({
     <section className="diagnostic-body" aria-label="网络环境检测">
       <form
         className="diagnostic-form"
+        data-guide="proxy-diagnostic-form"
         data-mode={mode}
         onSubmit={(event) => {
           event.preventDefault();
@@ -108,7 +113,11 @@ export function NetworkDiagnostics({
           <Select
             label="检测链路"
             value={mode}
-            onChange={setMode}
+            onChange={(value) => {
+              setMode(value);
+              setReport(null);
+              onReport?.(null, value === 'proxy' ? proxy : '');
+            }}
             disabled={running}
             options={[
               { value: 'direct', label: '系统路由' },
@@ -130,7 +139,11 @@ export function NetworkDiagnostics({
               value={proxy}
               required
               disabled={running}
-              onChange={(event) => setProxy(event.target.value)}
+              onChange={(event) => {
+                setProxy(event.target.value);
+                setReport(null);
+                onReport?.(null, mode === 'proxy' ? event.target.value : '');
+              }}
               placeholder="http://127.0.0.1:7897"
               spellCheck={false}
             />
@@ -151,7 +164,10 @@ export function NetworkDiagnostics({
       {running && <BusyState label="正在检测网络" />}
       {report ? (
         <>
-          <div className="diagnostic-summary">
+          <div
+            className="diagnostic-summary"
+            data-guide="proxy-diagnostic-result"
+          >
             <div>
               <strong>最近检测</strong>
               <time>{checkedTime(report.checked_at)}</time>

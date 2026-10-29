@@ -1,5 +1,7 @@
 export { Button, IconButton } from '../primitives';
 export { SettingsButton } from './settings-button';
+export { GuideLink } from './guide-link';
+export { GuidedTour, type GuidedStep } from './guided-tour';
 export {
   TextInput,
   TextArea,

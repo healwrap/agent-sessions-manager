@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { AccountGuide, type GuideNetworkResult } from './account-guide';
+import { guideStore, useGuide } from '../state/guide-store';
 import { Globe2, PanelsTopLeft, Plus, Users } from 'lucide-react';
 import type { WorkspacePage } from '../workspace';
 import type {
@@ -57,6 +59,8 @@ export function AccountWorkspace({
   onNavigate: (page: WorkspacePage) => void;
   active?: boolean;
 }) {
+  const guide = useGuide();
+  const [network, setNetwork] = useState<GuideNetworkResult>();
   const [section, setSection] = useState<EnvironmentSection>('accounts');
   const [sidebarClosed, setSidebarClosed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState<number>();
@@ -87,6 +91,20 @@ export function AccountWorkspace({
   const sessionProfile = data.profiles.find(
     (item) => item.id === sessionAccount?.profile_id,
   );
+  const inspectProxy = (item: ProxyConfig) => {
+    setNetwork(undefined);
+    if (item.kind === 'managed')
+      void proxyCommand('start', { id: item.id })
+        .then((latest) => {
+          if (
+            latest.proxy_runtime?.entries.find((row) => row.id === item.id)
+              ?.alive
+          )
+            setDiagnosticProxy(item);
+        })
+        .catch(() => {});
+    else setDiagnosticProxy(item);
+  };
   return (
     <>
       <WorkspaceLayout
@@ -115,6 +133,7 @@ export function AccountWorkspace({
                 <button
                   className="panel-row"
                   key={id}
+                  data-guide={id === 'proxies' ? 'proxy-nav' : undefined}
                   aria-current={section === id ? 'page' : undefined}
                   onClick={() => setSection(id)}
                 >
@@ -130,49 +149,46 @@ export function AccountWorkspace({
           </WorkspaceSidebar>
         }
       >
-        <div className="environment-content ui-page" data-section={section}>
+        <div
+          className="environment-content ui-page"
+          data-section={section}
+          data-guide="account-toolbar"
+        >
           <PageHeading
             title={current.title}
             actions={
-              <>
-                {section === 'accounts' ? (
-                  <Button
-                    variant="primary"
-                    disabled={loading || busy}
-                    onClick={() => setAccountEdit({})}
-                  >
-                    <Plus size={16} />
-                    添加账号
-                  </Button>
-                ) : section === 'claude-app' ? (
-                  <Button
-                    variant="primary"
-                    disabled={loading || busy}
-                    onClick={() => setEdit({ kind: 'app_profiles' })}
-                  >
-                    <Plus size={16} />
-                    新建 App 环境
-                  </Button>
-                ) : section === 'browser' ? (
-                  <Button
-                    variant="primary"
-                    onClick={() => setEdit({ kind: 'profiles' })}
-                    disabled={loading || busy}
-                  >
-                    <Plus size={16} />
-                    新建浏览器环境
-                  </Button>
-                ) : section === 'proxies' ? (
-                  <Button
-                    variant="primary"
-                    onClick={() => setEdit({ kind: 'proxies' })}
-                    disabled={loading || busy}
-                  >
-                    <Plus size={16} />
-                    添加代理
-                  </Button>
-                ) : null}
-              </>
+              <Button
+                variant="primary"
+                disabled={loading || busy}
+                data-guide={
+                  section === 'accounts'
+                    ? 'account-add'
+                    : section === 'proxies'
+                      ? 'proxy-add'
+                      : undefined
+                }
+                onClick={() => {
+                  if (section === 'accounts') setAccountEdit({});
+                  else
+                    setEdit({
+                      kind:
+                        section === 'proxies'
+                          ? 'proxies'
+                          : section === 'browser'
+                            ? 'profiles'
+                            : 'app_profiles',
+                    });
+                }}
+              >
+                <Plus size={16} />
+                {section === 'accounts'
+                  ? '添加账号'
+                  : section === 'proxies'
+                    ? '添加代理'
+                    : section === 'browser'
+                      ? '新建浏览器环境'
+                      : '新建 App 环境'}
+              </Button>
             }
           />
           {error && (
@@ -183,8 +199,33 @@ export function AccountWorkspace({
               {error}
             </Notice>
           )}
+          {section === 'accounts' &&
+            !loading &&
+            !guide.active &&
+            (!data.accounts.length || guide.progress) && (
+              <div className="guide-start">
+                <p>
+                  {guide.progress
+                    ? '上次的引导可以继续。'
+                    : '第一次使用？带你配置第一个账号。'}
+                </p>
+                <Button
+                  onClick={() =>
+                    guide.progress
+                      ? guideStore.resume()
+                      : guideStore.start('setup')
+                  }
+                >
+                  {guide.progress ? '继续引导' : '开始引导'}
+                </Button>
+              </div>
+            )}
           {section === 'accounts' && (
             <BrowserAccounts
+              guidedAccountId={
+                guide.active ? guide.progress?.accountId : undefined
+              }
+              guidedTarget={guide.active ? guide.progress?.target : undefined}
               data={data}
               busy={busy}
               loading={loading}
@@ -237,20 +278,8 @@ export function AccountWorkspace({
               onSaveExternal={(item) => save('proxies', item)}
               onDelete={(id) => void remove('proxies', id)}
               onCommand={proxyCommand}
-              onInspect={(item) => {
-                if (item.kind === 'managed')
-                  void proxyCommand('start', { id: item.id })
-                    .then((latest) => {
-                      if (
-                        latest.proxy_runtime?.entries.find(
-                          (row) => row.id === item.id,
-                        )?.alive
-                      )
-                        setDiagnosticProxy(item);
-                    })
-                    .catch(() => {});
-                else setDiagnosticProxy(item);
-              }}
+              onInspect={inspectProxy}
+              onSavedProxy={(proxy) => guideStore.proxySaved(proxy.id)}
             />
           )}
         </div>
@@ -262,6 +291,10 @@ export function AccountWorkspace({
           onClose={() => setDiagnosticProxy(undefined)}
         >
           <NetworkDiagnostics
+            key={diagnosticProxy.id + diagnosticProxy.url}
+            onReport={(report, proxyUrl) =>
+              setNetwork({ proxyId: diagnosticProxy.id, proxyUrl, report })
+            }
             active={active}
             initialProxy={diagnosticProxy.url}
           />
@@ -272,7 +305,16 @@ export function AccountWorkspace({
           account={accountEdit.item}
           data={data}
           busy={busy}
-          onSave={provision}
+          initialProxyId={guide.active ? guide.progress?.proxyId : undefined}
+          onSave={async (item, route) => {
+            const latest = await provision(item, route);
+            const saved = latest.accounts.find((row) =>
+              item.id
+                ? row.id === item.id
+                : !data.accounts.some((old) => old.id === row.id),
+            );
+            if (saved) guideStore.accountSaved(saved.id);
+          }}
           onClose={() => setAccountEdit(undefined)}
         />
       )}
@@ -299,7 +341,7 @@ export function AccountWorkspace({
                 )?.name
               : undefined
           }
-          onSave={save}
+          onSave={(kind, item) => save(kind, item).then(() => {})}
           onClose={() => setEdit(null)}
         />
       )}
@@ -311,6 +353,25 @@ export function AccountWorkspace({
           onClose={() => setSessionAccountId('')}
         />
       )}
+      <AccountGuide
+        data={data}
+        active={active}
+        loading={loading}
+        section={section}
+        proxyEditing={edit?.kind === 'proxies'}
+        accountEditing={!!accountEdit}
+        diagnostic={diagnosticProxy}
+        network={network}
+        appLoginId={loginAccountId}
+        animations={settings.animations}
+        onSection={setSection}
+        onExpand={() => setSidebarClosed(false)}
+        onProxy={() => setEdit({ kind: 'proxies' })}
+        onAccount={() => setAccountEdit({})}
+        onInspect={inspectProxy}
+        onCloseDiagnostic={() => setDiagnosticProxy(undefined)}
+        onCloseLogin={() => setLoginAccountId('')}
+      />
     </>
   );
 }

@@ -63,6 +63,7 @@ export function ProxyActions({
         variant="text"
         disabled={busy}
         aria-label={`检测代理 ${item.name}`}
+        data-guide-proxy-id={item.id}
         onClick={() => onInspect(item)}
       >
         <ScanLine size={16} />

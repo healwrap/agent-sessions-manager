@@ -71,6 +71,9 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.app_runtime.state()
             elif parsed.path == '/api/browser-runtime':
                 result = self.server.browser_runtime.state()
+            elif parsed.path == '/api/browser-login':
+                from agent_sessions.browser.login_identity import inspect_login
+                result = inspect_login(self.server.browser_runtime, get('account_id'))
             elif parsed.path == '/api/environments':
                 from agent_sessions.proxy_service.api import environment_state
                 result = environment_state(self.server)

@@ -3,7 +3,8 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button, Field, Notice } from './ui';
+import { Button, Field, GuideLink, Notice } from './ui';
+import { accountGuide } from '../lib/guide-links';
 import { EditorDialog, TextInput } from './form-controls';
 import { Select } from './select';
 export interface AccountRoute {
@@ -16,12 +17,14 @@ export function AccountEditor({
   busy,
   onSave,
   onClose,
+  initialProxyId,
 }: {
   account?: BrowserAccount;
   data: EnvironmentSettings;
   busy: boolean;
   onSave: (account: BrowserAccount, route: AccountRoute) => Promise<void>;
   onClose: () => void;
+  initialProxyId?: string;
 }) {
   const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -37,7 +40,7 @@ export function AccountEditor({
         app_profile_id: '__new__',
       },
   );
-  const [proxy, setProxy] = useState('');
+  const [proxy, setProxy] = useState(initialProxyId || '');
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const creating =
@@ -48,6 +51,7 @@ export function AccountEditor({
   };
   return (
     <EditorDialog
+      guide="account-editor"
       title={account ? '编辑账号' : '添加账号'}
       busy={busy}
       onClose={onClose}
@@ -70,7 +74,7 @@ export function AccountEditor({
             variant="primary"
             disabled={busy || (!value.profile_id && !value.app_profile_id)}
           >
-            {busy ? '保存中…' : account ? '保存账号' : '创建账号与环境'}
+            {busy ? '保存中…' : account ? '保存账号' : '保存并创建环境'}
           </Button>
         </>
       }
@@ -87,6 +91,7 @@ export function AccountEditor({
           placeholder="优先填写账号邮箱，没有邮箱时填写名字"
         />
       </Field>
+      {!account && <GuideLink {...accountGuide} />}
       <Field label="Agent">
         <Select
           label="账号 Agent"

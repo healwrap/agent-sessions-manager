@@ -30,6 +30,7 @@ export function ProxyEnvironments({
   onDelete,
   onInspect,
   onCommand,
+  onSavedProxy,
 }: {
   data: EnvironmentSettings;
   loading: boolean;
@@ -37,10 +38,11 @@ export function ProxyEnvironments({
   creating: boolean;
   onCreate: () => void;
   onCloseCreate: () => void;
-  onSaveExternal: (item: ProxyConfig) => Promise<void>;
+  onSaveExternal: (item: ProxyConfig) => Promise<EnvironmentSettings>;
   onDelete: (id: string) => void;
   onInspect: (proxy: ProxyConfig) => void;
   onCommand: ProxyCommand;
+  onSavedProxy?: (proxy: ProxyConfig) => void;
 }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState('');
@@ -53,9 +55,10 @@ export function ProxyEnvironments({
     setSelected('');
     onCloseCreate();
   };
-  const saved = () => {
+  const saved = (proxy?: ProxyConfig) => {
     setQuery('');
     closeEditor();
+    if (proxy) onSavedProxy?.(proxy);
   };
   const editing = data.proxies.find((item) => item.id === selected);
   const inUse = (id: string) =>

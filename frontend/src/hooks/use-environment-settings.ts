@@ -90,9 +90,13 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
   const change = async (body: unknown) => {
     begin();
     try {
-      setData(
-        await request<EnvironmentSettings>('/api/environments', {}, body),
+      const latest = await request<EnvironmentSettings>(
+        '/api/environments',
+        {},
+        body,
       );
+      setData(latest);
+      return latest;
     } catch (reason) {
       setError(String(reason));
       throw reason;

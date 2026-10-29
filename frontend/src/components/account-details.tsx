@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Monitor, PanelsTopLeft, Pencil } from 'lucide-react';
 import type {
   BrowserAccount,
@@ -12,11 +12,13 @@ export function AccountDetails({
   account,
   data,
   busy,
+  guidedTarget,
   ...actions
 }: AccountActions & {
   account: BrowserAccount;
   data: EnvironmentSettings;
   busy: boolean;
+  guidedTarget?: 'browser' | 'app';
 }) {
   const clients = accountClients(account, data);
   const [target, setTarget] = useState(
@@ -26,11 +28,18 @@ export function AccountDetails({
       'browser',
   );
   const client = clients.find((item) => item.target === target) || clients[0];
+  useEffect(() => {
+    if (guidedTarget) setTarget(guidedTarget);
+  }, [guidedTarget]);
   const live = clients.some(
     (item) => item.run?.alive || item.run?.status === 'checking',
   );
   return (
-    <section className="account-detail" aria-label={`${account.name} 账号详情`}>
+    <section
+      className="account-detail"
+      data-guide-account-id={account.id}
+      aria-label={`${account.name} 账号详情`}
+    >
       <header className="account-detail-header">
         <h2>{account.name}</h2>
         <div className="ui-actions">

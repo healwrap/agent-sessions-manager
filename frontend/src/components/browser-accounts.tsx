@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronRight, Plus, SearchX, Users } from 'lucide-react';
 import type { EnvironmentSettings } from '../lib/environment-settings';
 import {
@@ -22,21 +22,33 @@ import { AgentIcon } from './agent-icon';
 import { AccountDetails } from './account-details';
 import { useSessionStore } from '../hooks/use-session-store';
 import { sessionStore } from '../state/session-store';
+import { guideStore } from '../state/guide-store';
 
 export function BrowserAccounts({
   data,
   busy,
   loading,
+  guidedAccountId,
+  guidedTarget,
   ...actions
 }: AccountActions & {
   data: EnvironmentSettings;
   busy: boolean;
   loading: boolean;
+  guidedAccountId?: string;
+  guidedTarget?: 'browser' | 'app';
 }) {
   const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
+  useEffect(() => {
+    if (guidedAccountId) {
+      setSelected(guidedAccountId);
+      setQuery('');
+      setFilter('all');
+    }
+  }, [guidedAccountId]);
   const accounts = useMemo(
     () =>
       data.accounts.map((account) => {
@@ -162,7 +174,12 @@ export function BrowserAccounts({
               );
             }}
             navigation={
-              <div className="accounts-list" role="group" aria-label="账号列表">
+              <div
+                className="accounts-list"
+                role="group"
+                aria-label="账号列表"
+                data-guide="account-list"
+              >
                 {visible.map(({ account, status }) => (
                   <button
                     className="account-list-item"
@@ -170,7 +187,10 @@ export function BrowserAccounts({
                     key={account.id}
                     aria-pressed={current.account.id === account.id}
                     aria-label={`查看账号 ${account.name}`}
-                    onClick={() => setSelected(account.id)}
+                    onClick={() => {
+                      setSelected(account.id);
+                      guideStore.selectedAccount(account.id);
+                    }}
                   >
                     <span className="account-avatar">
                       <AgentIcon source={account.provider} />
@@ -197,6 +217,7 @@ export function BrowserAccounts({
               account={current.account}
               data={data}
               busy={busy}
+              guidedTarget={guidedTarget}
               {...actions}
             />
           </MasterDetail>

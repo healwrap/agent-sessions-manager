@@ -30,6 +30,7 @@
 | 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                                         | 标题、信息分组、图标与事实展示           |
 | 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                                      | 互斥选择、搜索与筛选                     |
 | 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                                        | 空列表、加载、操作反馈与移除确认         |
+| 使用引导 | GuidedTour、GuideLink                                                                                              | 高亮真实控件、展示步骤与资料入口         |
 | 资源展示 | ResourceCard、ResourceRow                                                                                          | 组合身份、状态、操作、内容及折叠区       |
 | 表单     | Field                                                                                                              | 标签与控件关联                           |
 | 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                                 | 页面外壳、导航、工作区切换与全局设置入口 |
@@ -55,6 +56,8 @@
 NumberField 和 Switch 从 `components/ui` 导出，分别用于设置中的有界数字步进与布尔开关，样式复用 DSH 控件变量；会话设置和通用设置已使用，输入预览中提供可交互示例。Select 的 `field` 变体用于设置表单，保留通用选择器的键盘导航和弹窗内点击修复。
 
 ## 开发预览
+
+GuidedTour 复用 Driver.js 的定位、遮罩与原生弹窗层级处理，浮层通过 React portal 使用现有 Button / IconButton 和 DSH 语义变量。传入稳定的步骤 ID、定位标记、说明和可选继续操作；组件不请求业务接口。操作成功与否由页面决定。支持动态元素等待、内部滚动定位、关闭动画和 Escape 退出；目标缺失时提供返回当前步骤和暂停入口。GuideLink 用于账号教程与代理获取等资料入口，两者已接入真实账号工作区及组件预览。
 
 ProgressMeter 使用原生 progress 语义，统一显示已用比例，适配 DSH 的业务色、接近额度与达到额度状态。账户用量页和基础组件预览共用此控件。
 

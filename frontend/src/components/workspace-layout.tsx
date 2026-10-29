@@ -4,6 +4,7 @@ import { useSidebarResize } from '../hooks/use-sidebar-resize';
 import { IconButton } from './primitives';
 import { SettingsButton } from './ui/settings-button';
 import { sessionStore } from '../state/session-store';
+import { GuideButton } from './guide-button';
 
 export function WorkspaceSidebar({
   label,
@@ -43,6 +44,7 @@ export function WorkspaceSidebar({
         <footer>
           <div className="workspace-sidebar-actions">
             {footer}
+            <GuideButton />
             <SettingsButton
               onClick={() => sessionStore.update({ settingsOpen: true })}
             />
@@ -103,9 +105,12 @@ export function WorkspaceLayout({
           <div className="header-actions">
             {actions}
             {closed && (
-              <SettingsButton
-                onClick={() => sessionStore.update({ settingsOpen: true })}
-              />
+              <>
+                <GuideButton />
+                <SettingsButton
+                  onClick={() => sessionStore.update({ settingsOpen: true })}
+                />
+              </>
             )}
           </div>
         </header>

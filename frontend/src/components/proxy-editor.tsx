@@ -5,7 +5,11 @@ import type {
   EnvironmentSettings,
   ProxyConfig,
 } from '../lib/environment-settings';
-import type { ProxyCommand, ProxyConfiguration } from '../lib/proxy-config';
+import type {
+  ProxyCommand,
+  ProxyConfiguration,
+  ProxyImport,
+} from '../lib/proxy-config';
 import {
   Button,
   BusyState,
@@ -18,13 +22,9 @@ import {
   TextInput,
 } from './ui';
 import { ProxyDetails } from './proxy-details';
-
-type Imported = {
-  token: string;
-  subscription_url: string;
-  source: string;
-  nodes: { index: number; name: string; type: string; server: string }[];
-};
+import { ProxyCoreInstallNotice } from './proxy-core-control';
+import { GuideLink } from './ui/guide-link';
+import { proxyGuide } from '../lib/guide-links';
 
 export function ProxyEditor({
   item,
@@ -40,10 +40,10 @@ export function ProxyEditor({
   data: EnvironmentSettings;
   locked?: boolean;
   busy: boolean;
-  onSaveExternal: (item: ProxyConfig) => Promise<void>;
+  onSaveExternal: (item: ProxyConfig) => Promise<EnvironmentSettings>;
   onCommand: ProxyCommand;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (item?: ProxyConfig) => void;
 }) {
   const managed = data.proxy_runtime?.entries.find(
     (row) => row.id === item?.id,
@@ -64,7 +64,7 @@ export function ProxyEditor({
   const [interval, setInterval] = useState(
     String(managed?.subscription?.interval_hours ?? 6),
   );
-  const [imported, setImported] = useState<Imported>();
+  const [imported, setImported] = useState<ProxyImport>();
   const [index, setIndex] = useState('0');
   const originalDomains = (
     managed?.direct_domains || ['sankuai.com', 'meituan.com', 'meituan.net']
@@ -111,7 +111,6 @@ export function ProxyEditor({
     managed?.subscription?.last_updated,
     retry,
   ]);
-
   const sourceChanged = source.trim() !== initialSource.current.trim();
   const linkChanged = link.trim() !== initialLink.current.trim();
   const dirty =
@@ -148,7 +147,7 @@ export function ProxyEditor({
     operation(async () => {
       if (!fromLink && /^https?:\/\//.test(source.trim()))
         throw new Error('请将订阅链接填写到“订阅链接”字段');
-      const result = await request<Imported>(
+      const result = await request<ProxyImport>(
         '/api/proxy-services/parse',
         {},
         fromLink ? { source: link } : { source, subscription_url: link },
@@ -166,10 +165,12 @@ export function ProxyEditor({
     });
   const save = () =>
     operation(async () => {
+      const previousIds = new Set(data.proxies.map((row) => row.id));
+      let latest: EnvironmentSettings;
       if (mode === 'external') {
-        await onSaveExternal({ id: item?.id || '', name, url });
+        latest = await onSaveExternal({ id: item?.id || '', name, url });
       } else {
-        await onCommand('save', {
+        latest = await onCommand('save', {
           ...(item ? { id: item.id } : {}),
           name,
           ...(imported ? { token: imported.token, index: Number(index) } : {}),
@@ -180,10 +181,15 @@ export function ProxyEditor({
             .filter(Boolean),
         });
       }
-      onSaved();
+      onSaved(
+        latest.proxies.find(
+          (row) => row.id === item?.id || (!item && !previousIds.has(row.id)),
+        ),
+      );
     });
   return (
     <ContentDialog
+      guide="proxy-editor"
       title={item ? '代理配置' : '添加代理'}
       className="proxy-config-dialog"
       busy={pending || busy}
@@ -241,6 +247,7 @@ export function ProxyEditor({
               ]}
             />
           )}
+          {!item && <GuideLink {...proxyGuide} />}
           <Field label="名称" htmlFor="proxy-name">
             <TextInput
               id="proxy-name"
@@ -253,6 +260,10 @@ export function ProxyEditor({
           </Field>
           {mode === 'managed' && (
             <>
+              <ProxyCoreInstallNotice
+                state={data.proxy_runtime}
+                onInstall={() => void operation(() => onCommand('install'))}
+              />
               <Field label="订阅链接" htmlFor="proxy-subscription-url">
                 <div className="proxy-subscription-input">
                   <TextInput

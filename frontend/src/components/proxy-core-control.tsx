@@ -3,6 +3,29 @@ import mihomoIcon from '../assets/components/mihomo.webp';
 import type { ProxyRuntimeState } from '../lib/environment-settings';
 import { Button, Notice, ResourceCard, StatusBadge } from './ui';
 
+export function ProxyCoreInstallNotice({
+  state,
+  onInstall,
+}: {
+  state?: ProxyRuntimeState;
+  onInstall: () => void;
+}) {
+  if (state?.core.available) return null;
+  const installation = state?.core.installation;
+  const installing = installation?.state === 'installing';
+  return (
+    <Notice
+      action={
+        <Button disabled={installing} onClick={onInstall}>
+          {installing ? `安装中 ${installation.progress}%` : '安装内核'}
+        </Button>
+      }
+    >
+      创建专用代理需要先安装 Mihomo 内核。
+    </Notice>
+  );
+}
+
 export function ProxyCoreControl({
   state,
   busy,

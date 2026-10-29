@@ -3,6 +3,7 @@ import type { WorkspacePage } from '../workspace';
 import { workspaceChoices } from './workspace-picker';
 import { SettingsButton } from './ui';
 import { sessionStore } from '../state/session-store';
+import { GuideButton } from './guide-button';
 
 export function StartPage({
   onNavigate,
@@ -17,6 +18,7 @@ export function StartPage({
           Agent Sessions
         </span>
         <div className="header-actions">
+          <GuideButton />
           <SettingsButton
             onClick={() => sessionStore.update({ settingsOpen: true })}
           />

@@ -52,6 +52,7 @@ export function ContentDialog({
   onClose,
   onSubmit,
   footer,
+  guide,
   children,
   className = '',
 }: {
@@ -61,6 +62,7 @@ export function ContentDialog({
   onClose: () => void;
   onSubmit?: FormEventHandler<HTMLFormElement>;
   footer?: ReactNode;
+  guide?: string;
   children: ReactNode;
   className?: string;
 }) {
@@ -100,9 +102,13 @@ export function ContentDialog({
       onClose={() => !busy && onClose()}
     >
       {onSubmit ? (
-        <form onSubmit={onSubmit}>{content}</form>
+        <form onSubmit={onSubmit} data-guide={guide}>
+          {content}
+        </form>
       ) : (
-        <div className="editor-dialog-frame">{content}</div>
+        <div className="editor-dialog-frame" data-guide={guide}>
+          {content}
+        </div>
       )}
     </Dialog>
   );
@@ -118,6 +124,7 @@ export function EditorDialog({
   onClose: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   footer: ReactNode;
+  guide?: string;
   children: ReactNode;
 }) {
   return (

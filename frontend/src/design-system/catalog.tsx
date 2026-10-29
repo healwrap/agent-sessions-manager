@@ -34,6 +34,7 @@ import {
 import './catalog.css';
 import { LayoutPreview } from './layout-preview';
 import { InputPreview } from './input-preview';
+import { GuidePreview } from './guide-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
@@ -283,6 +284,7 @@ export function ComponentCatalog() {
               <SettingsButton onClick={() => setSettingsPreview(true)} />
             </div>
           </Panel>
+          <GuidePreview />
           <Panel title="空列表">
             <EmptyState
               icon={<PanelsTopLeft size={28} />}

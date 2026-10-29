@@ -114,25 +114,43 @@
   flex-wrap: wrap;
 }
 @media (max-width: 1040px), (max-height: 640px) {
-  .editor-dialog:has(> .driver-layer .ui-guide-popover),
-  .editor-dialog:has(> .driver-layer .ui-guide-popover) > form,
-  .editor-dialog:has(> .driver-layer .ui-guide-popover) > .editor-dialog-frame {
+  .editor-dialog:not(.network-diagnostics-dialog):has(
+      > .driver-layer .ui-guide-popover
+    ),
+  .editor-dialog:not(.network-diagnostics-dialog):has(
+      > .driver-layer .ui-guide-popover
+    )
+    > form,
+  .editor-dialog:not(.network-diagnostics-dialog):has(
+      > .driver-layer .ui-guide-popover
+    )
+    > .editor-dialog-frame {
     max-height: calc(100vh - 212px);
   }
-  .editor-dialog:has(> .driver-layer .ui-guide-popover) {
+  .editor-dialog:not(.network-diagnostics-dialog):has(
+      > .driver-layer .ui-guide-popover
+    ) {
     margin-block: 24px auto;
   }
-  .driver-layer .driver-popover.ui-guide-popover {
+  .editor-dialog:not(.network-diagnostics-dialog)
+    > .driver-layer
+    .driver-popover.ui-guide-popover {
     inset: auto auto 12px 50% !important;
     width: min(720px, calc(100vw - 48px));
     max-height: 164px;
     padding: 14px;
     transform: translateX(-50%);
   }
-  .driver-layer .ui-guide-content h2 {
+  .editor-dialog:not(.network-diagnostics-dialog)
+    > .driver-layer
+    .ui-guide-content
+    h2 {
     margin-block: 4px;
   }
-  .driver-layer .ui-guide-content > footer {
+  .editor-dialog:not(.network-diagnostics-dialog)
+    > .driver-layer
+    .ui-guide-content
+    > footer {
     margin-top: 8px;
   }
 }

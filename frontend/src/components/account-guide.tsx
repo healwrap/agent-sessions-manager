@@ -207,7 +207,10 @@ export function AccountGuide({
       report.checks.some(
         (row) => row.id === 'claude-trace' && row.state === 'pass',
       );
-    if (passed) step.selector = '[data-guide="proxy-diagnostic-result"]';
+    if (passed) {
+      step.selector = '[data-guide="proxy-diagnostic-exits"]';
+      step.popover = { side: 'top', align: 'end' };
+    }
     step.body = (
       <>
         {passed ? (

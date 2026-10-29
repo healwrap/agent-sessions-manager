@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { driver, type Driver } from 'driver.js';
+import { driver, type Driver, type Popover } from 'driver.js';
 import { X } from 'lucide-react';
 import { Button, IconButton } from '../primitives';
 import 'driver.js/dist/driver.css';
@@ -18,6 +18,7 @@ export interface GuidedStep {
   title: string;
   chapter: string;
   body: ReactNode;
+  popover?: Pick<Popover, 'side' | 'align'>;
   continueLabel?: string;
   onContinue?: () => void;
   continueDisabled?: boolean;
@@ -113,7 +114,7 @@ export function GuidedTour({
       setMissing(false);
       tour.highlight({
         element: found,
-        popover: { side: 'bottom', align: 'start' },
+        popover: { side: 'bottom', align: 'start', ...step.popover },
       });
     };
     const observer = new MutationObserver(locate);
@@ -144,7 +145,13 @@ export function GuidedTour({
       instance.current = null;
       setContainer(null);
     };
-  }, [step?.id, step?.selector, animations]);
+  }, [
+    step?.id,
+    step?.selector,
+    step?.popover?.side,
+    step?.popover?.align,
+    animations,
+  ]);
   useLayoutEffect(() => {
     if (!container) return;
     const observer = new ResizeObserver(() => instance.current?.refresh());

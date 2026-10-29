@@ -84,7 +84,7 @@ export function DiagnosticEgress({ report }: { report: ClaudeReport }) {
   const split = claude.ip && cloudflare.ip && claude.ip !== cloudflare.ip;
   return (
     <>
-      <div className="diagnostic-egress">
+      <div className="diagnostic-egress" data-guide="proxy-diagnostic-exits">
         {[
           {
             title: 'Claude 域名出口',

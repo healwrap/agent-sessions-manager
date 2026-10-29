@@ -38,6 +38,7 @@ export function GuidePreview() {
     {
       id: 'preview-result',
       selector: '[data-guide="preview-result"]',
+      popover: { side: 'top', align: 'end' },
       title: '完成这段操作',
       chapter: '组件预览 · 3 / 3',
       body: <p>表单已经提交。引导仅维护页面内示例状态。</p>,

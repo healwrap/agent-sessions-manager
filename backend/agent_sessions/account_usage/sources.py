@@ -1,5 +1,6 @@
 """Query only the browser or Code login belonging to the selected account."""
 import json
+import time
 from urllib.parse import quote, urlsplit
 from agent_sessions.browser.gates import blocked
 from agent_sessions.browser.preflight import inspect
@@ -78,9 +79,14 @@ class UsageSources:
                 'organization_id': '', 'organization_name': '', 'organizations': []}
 
     def web(self, account, control, organization):
-        targets = control.command('Target.getTargets')['targetInfos']
-        target = next((row for row in targets if row['type'] == 'page' and urlsplit(row['url']).scheme == 'https'
-                       and urlsplit(row['url']).hostname == 'claude.ai'), None)
+        # Startup checks release the relay before their page navigates to Claude.
+        deadline = time.monotonic()+12
+        while True:
+            targets = control.command('Target.getTargets')['targetInfos']
+            target = next((row for row in targets if row['type'] == 'page' and urlsplit(row['url']).scheme == 'https'
+                           and urlsplit(row['url']).hostname == 'claude.ai'), None)
+            if target or time.monotonic() >= deadline: break
+            time.sleep(.3)
         if not target: raise UsageError('requires_browser', '请在此账号的独立浏览器中打开 Claude 页面后查询')
         with control.lock: item = control.sessions.get(target['targetId'])
         if not item or not item['ready'].is_set(): raise UsageError('error', '浏览器管理连接尚未就绪，请稍后刷新')

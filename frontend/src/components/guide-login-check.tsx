@@ -48,12 +48,9 @@ export function GuideLoginCheck({
   if (target === 'app' || account.provider !== 'claude')
     return (
       <>
-        <p>
-          请在{target === 'app' ? '此账号的 App' : '绑定浏览器'}
-          中核对当前账号，浏览器和 App 的登录结果分别确认。
-        </p>
+        <p>在{target === 'app' ? 'App' : '浏览器'}内确认当前账号。</p>
         <Button disabled={!ready} onClick={() => guideStore.go('done')}>
-          我已在窗口确认登录
+          我已确认登录
         </Button>
       </>
     );

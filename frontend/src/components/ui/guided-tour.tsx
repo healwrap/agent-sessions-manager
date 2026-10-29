@@ -50,6 +50,7 @@ export function GuidedTour({
       duration: 160,
       stagePadding: 6,
       stageRadius: 12,
+      popoverOffset: 12,
       overlayColor: getComputedStyle(document.body)
         .getPropertyValue('--dsw-alias-bg-mask-1')
         .trim(),
@@ -58,6 +59,12 @@ export function GuidedTour({
       allowClose: false,
       popoverClass: 'ui-guide-popover',
       showButtons: [],
+      onHighlighted() {
+        // 等待高亮动画结束，再按 React 内容的实际尺寸定位。
+        window.requestAnimationFrame(() => {
+          if (!disposed) instance.current?.refresh();
+        });
+      },
       onPopoverRender(dom) {
         dom.title.hidden = dom.description.hidden = dom.footer.hidden = true;
         dom.closeButton.hidden = dom.arrow.hidden = true;
@@ -94,7 +101,10 @@ export function GuidedTour({
         }, 6000);
         return;
       }
-      if (target === found && tour.isActive()) return;
+      if (target === found && tour.isActive()) {
+        tour.refresh();
+        return;
+      }
       target = found;
       clearTimeout(timeout);
       timeout = undefined;
@@ -158,11 +168,8 @@ export function GuidedTour({
             </header>
             <h2 id="ui-guide-title">{step.title}</h2>
             <div className="ui-guide-description">{step.body}</div>
-            <footer>
-              <Button variant="ghost" onClick={onPause}>
-                稍后继续
-              </Button>
-              {step.onContinue && (
+            {step.onContinue && (
+              <footer>
                 <Button
                   variant="primary"
                   onClick={step.onContinue}
@@ -170,8 +177,8 @@ export function GuidedTour({
                 >
                   {step.continueLabel || '继续'}
                 </Button>
-              )}
-            </footer>
+              </footer>
+            )}
           </section>,
           container,
         )}

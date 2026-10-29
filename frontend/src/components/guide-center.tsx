@@ -18,13 +18,6 @@ import {
   Select,
 } from './ui';
 
-const descriptions: Record<GuideTopic, string> = {
-  setup: '跟着页面提示，完成代理、账号与首次登录。',
-  proxy: '添加现成代理或导入订阅，再检测最终出口。',
-  account: '填写账号资料，绑定代理并创建独立环境。',
-  login: '从绑定的环境启动，完成邮件登录并确认状态。',
-  switch: '停止当前环境，再打开另一个账号。',
-};
 export function GuideCenter({
   onNavigate,
 }: {
@@ -34,10 +27,16 @@ export function GuideCenter({
   const { data, loading, error } = useEnvironmentSettings(helpOpen, false);
   const [accountId, setAccountId] = useState('');
   const [target, setTarget] = useState('browser');
+  const [detail, setDetail] = useState<'login' | 'switch'>();
   if (!helpOpen) return null;
   const selected =
     data.accounts.find((item) => item.id === accountId) || data.accounts[0];
+  const close = () => {
+    setDetail(undefined);
+    guideStore.closeHelp();
+  };
   const start = (topic: GuideTopic) => {
+    setDetail(undefined);
     guideStore.start(
       topic,
       selected?.id,
@@ -47,109 +46,109 @@ export function GuideCenter({
     );
     onNavigate('accounts');
   };
+  const resume = () => {
+    setDetail(undefined);
+    guideStore.resume();
+    onNavigate('accounts');
+  };
   return (
     <ContentDialog
       title="帮助与引导"
-      onClose={guideStore.closeHelp}
-      footer={<Button onClick={guideStore.closeHelp}>关闭</Button>}
-    >
-      {progress && (
-        <Notice
-          action={
+      className="guide-center-dialog"
+      onClose={close}
+      footer={
+        <>
+          {progress && (
             <Button
-              onClick={() => {
-                guideStore.resume();
-                onNavigate('accounts');
-              }}
+              variant="ghost"
+              disabled={loading}
+              onClick={() => start('setup')}
             >
-              继续引导
+              重新开始
             </Button>
-          }
-        >
-          上次进行到「{guideTopics[progress.topic]}」。
-        </Notice>
-      )}
+          )}
+          <Button
+            variant="primary"
+            disabled={loading}
+            onClick={() => (progress ? resume() : start('setup'))}
+          >
+            {progress ? '继续引导' : '开始引导'}
+          </Button>
+        </>
+      }
+    >
+      <p className="guide-summary">
+        {progress
+          ? `上次：${guideTopics[progress.topic]}`
+          : '代理 → 账号 → 登录'}
+      </p>
       {error && <Notice tone="error">{error}</Notice>}
-      <div>
-        {(['setup', 'proxy', 'account'] as GuideTopic[]).map((topic) => (
-          <div className="guide-topic" key={topic}>
-            <div>
-              <strong>{guideTopics[topic]}</strong>
-              <p>{descriptions[topic]}</p>
-            </div>
-            <Button onClick={() => start(topic)} disabled={loading}>
-              开始
+      <GuideLink {...accountGuide} />
+      <GuideLink href={proxyGuide.href} title={proxyGuide.title} />
+      <Disclosure title="单项引导">
+        <div className="ui-actions guide-shortcuts">
+          <Button disabled={loading} onClick={() => start('proxy')}>
+            代理配置
+          </Button>
+          <Button disabled={loading} onClick={() => start('account')}>
+            添加账号
+          </Button>
+          {data.accounts.length > 0 && (
+            <>
+              <Button
+                aria-pressed={detail === 'login'}
+                onClick={() => setDetail('login')}
+              >
+                登录账号
+              </Button>
+              <Button
+                aria-pressed={detail === 'switch'}
+                onClick={() => setDetail('switch')}
+              >
+                切换账号
+              </Button>
+            </>
+          )}
+        </div>
+        {detail && (
+          <div className="ui-stack">
+            <Field label="账号">
+              <Select
+                label="引导账号"
+                value={selected?.id || ''}
+                options={data.accounts.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                }))}
+                onChange={(id) => {
+                  setAccountId(id);
+                  setTarget('browser');
+                }}
+              />
+            </Field>
+            {selected?.provider === 'claude' && (
+              <Field label="使用方式">
+                <Select
+                  label="引导使用方式"
+                  value={target}
+                  onChange={setTarget}
+                  options={[
+                    { value: 'browser', label: '独立浏览器' },
+                    { value: 'app', label: 'Claude App' },
+                  ]}
+                />
+              </Field>
+            )}
+            <Button onClick={() => start(detail)}>
+              开始{detail === 'login' ? '登录' : '切号'}引导
             </Button>
           </div>
-        ))}
-      </div>
-      {data.accounts.length > 0 && (
-        <>
-          <Field label="要使用的账号">
-            <Select
-              label="引导账号"
-              value={selected?.id || ''}
-              options={data.accounts.map((item) => ({
-                value: item.id,
-                label: item.name,
-              }))}
-              onChange={(id) => {
-                setAccountId(id);
-                setTarget('browser');
-              }}
-            />
-          </Field>
-          <Field label="使用方式">
-            <Select
-              label="引导使用方式"
-              value={target}
-              onChange={setTarget}
-              options={[
-                { value: 'browser', label: '独立浏览器' },
-                ...(selected?.provider === 'claude'
-                  ? [{ value: 'app', label: 'Claude App' }]
-                  : []),
-              ]}
-            />
-          </Field>
-          {(['login', 'switch'] as GuideTopic[]).map((topic) => (
-            <div className="guide-topic" key={topic}>
-              <div>
-                <strong>{guideTopics[topic]}</strong>
-                <p>{descriptions[topic]}</p>
-              </div>
-              <Button onClick={() => start(topic)}>开始</Button>
-            </div>
-          ))}
-        </>
-      )}
-      <GuideLink {...accountGuide} />
-      <GuideLink {...proxyGuide} />
-      <Disclosure title="日常使用注意项">
-        <p>
-          从账号管理进入对应的专用浏览器或
-          App。邮件链接复制到此账号绑定的浏览器打开，浏览器和 App 分别确认登录。
-        </p>
-        <p>
-          切号时停止当前环境，再打开另一个账号，通常不需要 Claude Log
-          out。修改代理、节点或出口前，先停止使用该配置的环境。
-        </p>
-        <p>
-          在代理配置中为明确需要直连的国内或公司内网服务设置域名规则；在设置的组件管理中安装、更新或卸载组件。
-        </p>
+        )}
       </Disclosure>
-      <Disclosure title="遇到登录或代理问题">
-        <p>
-          代理失败时核对地址、协议、认证和上游线路后重新检测。出口不一致时核对所选节点与指定
-          IP。
-        </p>
-        <p>
-          没有邮件时检查邮箱与垃圾邮件目录。account_session_invalid
-          表示当前凭据无效，可重新通过邮箱登录。
-        </p>
-        <p>
-          代理检测通过、实际环境出口和登录身份分别确认；待确认表示还缺少观测结果。
-        </p>
+      <Disclosure title="使用提示">
+        <p>邮件登录链接在对应账号的浏览器中打开。</p>
+        <p>切号先停止环境，无需退出网站账号。</p>
+        <p>修改代理前，先停止使用它的环境。</p>
       </Disclosure>
     </ContentDialog>
   );

@@ -115,17 +115,16 @@
   margin: 0;
   color: var(--dsw-alias-label-secondary);
 }
-.guide-topic {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-block: 12px;
-  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+.guide-center-dialog {
+  width: min(480px, calc(100vw - 40px));
 }
-.guide-topic p {
-  margin: 4px 0 0;
+.guide-summary {
+  margin: 0;
   color: var(--dsw-alias-label-secondary);
+}
+.guide-shortcuts {
+  flex-wrap: wrap;
+  margin-block: 8px 16px;
 }
 @media (max-width: 1040px), (max-height: 640px) {
   .editor-dialog:has(> .driver-layer .ui-guide-popover),

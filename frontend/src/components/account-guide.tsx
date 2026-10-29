@@ -189,7 +189,7 @@ export function AccountGuide({
                 });
               }}
             >
-              使用已有代理，继续检测
+              使用这个代理
             </Button>
           </>
         )}
@@ -209,14 +209,13 @@ export function AccountGuide({
     if (passed) step.selector = '[data-guide="proxy-diagnostic-result"]';
     step.body = (
       <>
-        <p>{definition.hint}</p>
         {passed ? (
           <p>
-            本次出口：{report!.exits.claude.ip} ·{' '}
+            {report!.exits.claude.ip} ·{' '}
             {report!.exits.claude.country || '地区待确认'}
           </p>
         ) : (
-          <p>尚未取得通过的检测结果，请在检测窗口重新检查。</p>
+          <p>检测未通过，请重试。</p>
         )}
       </>
     );
@@ -229,8 +228,7 @@ export function AccountGuide({
           guideStore.go('account-add');
         }
       };
-      step.continueLabel =
-        progress.topic === 'proxy' ? '完成本段' : '继续：添加账号';
+      step.continueLabel = progress.topic === 'proxy' ? '完成' : '添加账号';
     }
   }
   if (id === 'account-open' && (missingKernel || missingApp)) {
@@ -240,10 +238,7 @@ export function AccountGuide({
       : '[data-guide="account-toolbar"]';
     step.body = (
       <>
-        <p>
-          先安装{missingKernel ? '专用浏览器内核' : 'Claude App'}
-          ，安装完成后再继续。
-        </p>
+        <p>请先安装{missingKernel ? '浏览器内核' : 'Claude App'}。</p>
         {missingApp && (
           <Button
             onClick={() => {
@@ -259,9 +254,7 @@ export function AccountGuide({
   }
   if (id === 'account-open' && account && !profileId) {
     step.selector = selectors[id];
-    step.body = (
-      <p>此账号还未绑定环境。点击「绑定环境」，为它创建或选择独立环境。</p>
-    );
+    step.body = <p>点击「绑定环境」，创建或选择一个环境。</p>;
   }
   if (id === 'login' && account) {
     if (target === 'app' && appLoginId === account.id)
@@ -283,7 +276,7 @@ export function AccountGuide({
   if (id === 'switch-pick' && data.accounts.length < 2)
     step.body = (
       <>
-        <p>还需要另一个账号。添加后可以继续本段切号引导。</p>
+        <p>先添加另一个账号。</p>
         <Button
           onClick={() => {
             guideStore.go('account-add');
@@ -297,11 +290,11 @@ export function AccountGuide({
   if (id === 'done') {
     if (!account) step.selector = '[data-guide="account-toolbar"]';
     step.onContinue = guideStore.finish;
-    step.continueLabel = '完成引导';
+    step.continueLabel = '完成';
   }
   if ((id === 'proxy-test' || id === 'proxy-result') && !proxy) {
     step.selector = '[data-guide="proxy-add"]';
-    step.body = <Notice>原代理已不存在，请重新添加或选择现有代理。</Notice>;
+    step.body = <Notice>代理已移除，请重新选择。</Notice>;
     step.onContinue = () => guideStore.go('proxy-nav', { proxyId: undefined });
     step.continueLabel = '重新选择';
   }
@@ -314,9 +307,7 @@ export function AccountGuide({
     !account
   ) {
     step.selector = '[data-guide="account-toolbar"]';
-    step.body = (
-      <Notice>原账号已不存在，请重新添加或在帮助中选择现有账号。</Notice>
-    );
+    step.body = <Notice>账号已移除，请重新添加。</Notice>;
     step.onContinue = () => guideStore.go('account-add');
     step.continueLabel = '添加账号';
   }

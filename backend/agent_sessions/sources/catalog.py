@@ -85,7 +85,8 @@ class MultiStore:
         selected, progress = search_sessions(self, rows, query, search_mode, provider, include_subagents)
         projects = {}
         for row in selected:
-            group = projects.setdefault(row['project_id'], {k: row[k] for k in ('project_id', 'project_label', 'project_path', 'project_source')})
+            group = projects.setdefault((row['source_id'], row['project_id']),
+                                        {k: row[k] for k in ('project_id', 'project_label', 'project_path', 'project_source', 'source_id')})
             group['count'] = group.get('count', 0)+1
         filtered = [r for r in selected if not project_id or r['project_id'] == project_id]
         current = os.environ.get('CODEX_THREAD_ID')

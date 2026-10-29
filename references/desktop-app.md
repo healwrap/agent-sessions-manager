@@ -16,7 +16,7 @@ macOS 应用打开后自动启动随附后台，无需运行 Python、打开浏�
 
 会话按各 Agent 自己的项目或目录排列：Codex 使用自己的项目成员关系，DSH 使用原生 workspace 归属和标题，其余来源使用本身的索引或会话工作目录，不自动套用其他 Agent 的项目名。DSH 旧会话没有 workspace 成员记录时，仅在其自身有唯一同目录 workspace 时归入该项目；有歧义则保留目录归属。可筛选来源、切换对话/轨迹、查看事件详情、置顶、修改显示名、归档与恢复、移动到项目。管理动作保存在应用自己的 `view.json`，不修改原 Agent 记录。没有目录归属的会话进入“未分配项目”。
 
-筛选单个来源时不重复显示 Agent 标签；查看全部来源时，来源名称放在标题下方。会话管理按钮悬停或键盘聚焦时显示，复用日期位置，不额外挤占标题。会话与项目的长标题悬停后缓慢往返滚动，移开即复位；不溢出的标题保持静止，关闭动画或系统减少动态效果时提供完整标题提示。
+会话侧栏按「Agent → 项目 → 会话」分层排列，Agent 行使用单色图标并显示会话数量，默认收起，点击可展开或收起；展开状态写入应用自己的视图设置。不同 Agent 的同目录项目分别展开和分页。搜索时自动展开有匹配结果的 Agent 分组，也可手动收起。会话行保留账号、子代理和非交互任务标签。会话管理按钮悬停或键盘聚焦时显示，复用日期位置，不额外挤占标题。会话与项目的长标题悬停后缓慢往返滚动，移开即复位；不溢出的标题保持静止，关闭动画或系统减少动态效果时提供完整标题提示。
 
 ## 数据能力
 
@@ -39,6 +39,8 @@ macOS 应用打开后自动启动随附后台，无需运行 Python、打开浏�
 出口地区显示中文国家名和国旗，Cloudflare 节点显示城市与节点代码。IP 信誉沿用 Net.Coffee 网页查询接口，展示 Claude 实测出口的来源信任分（越高越好）、网络类型和代理等标记；失败、未知和查询额度耗尽均保留为未完成。该来源评分与住宅分类不代表 Claude 账号风控结论。面板复用项目的 Dialog、Select、设置行、按钮与加载提示。
 
 Claude Code 共享正文目录默认遵循 `CLAUDE_CONFIG_DIR`，否则使用 `~/.claude`。可选桌面会话索引默认目录：macOS 为 `~/Library/Application Support/Claude/claude-code-sessions`，Windows 为 `%APPDATA%/Claude/claude-code-sessions`，Linux 为 `$XDG_CONFIG_HOME/Claude/claude-code-sessions` 或 `~/.config/Claude/claude-code-sessions`。索引目录不存在时仍读取共享正文，不要求创建目录或搬动正文。索引路径保留在 Claude Code 设置卡片的“补充会话索引”中，旧 `--claude-desktop-home` 参数仍兼容。本机已核验桌面与 CLI 读取同一份 JSONL，而非两份同步副本。DSH 默认根目录为 `~/.dsh`。
+
+本应用管理的 Claude App 环境会自动加入同一个 Claude Code 分组，同时展示多个账号保存在本机的 Code 会话，无需切换当前账号。会话标题下显示绑定的账号名，未绑定时显示环境名；只有索引、没有正文的会话保留摘要空态。各环境的会话标识独立，详情、搜索、父子关系和上下文引用沿用对应环境。浏览器端 Chat 和 Cowork 历史尚未接入。
 
 Cursor 默认目录：macOS 为 `~/Library/Application Support/Cursor/User`，Windows 为 `%APPDATA%/Cursor/User`，Linux 为 `$XDG_CONFIG_HOME/Cursor/User` 或 `~/.config/Cursor/User`。设置也接受上一级 `Cursor` 目录；便携或自定义用户目录可手动配置，读取命令使用 `--cursor-home`。目录读取只查询原生头部索引，消息与工具结果按会话和消息键读取，不把整个数据库导出到缓存。使用只读事务处理 WAL，一并观察主库与 WAL 版本来识别增量更新。项目优先取原生 `workspaceIdentifier`，旧工作区记录使用自身 `workspace.json`，不借用 Codex 项目名称。适配依据本机原始数据库与安装包实现，后续存储格式变化需另行核验；2026-10-02 已核验本机 3.15.19，旧内嵌格式与头部表迁移通过 fixture 验证。
 

@@ -8,10 +8,12 @@ import {
 import { createTraceLoader } from './trace-loader';
 import { createNavigation, updateAddress } from './navigation';
 import { request } from '../lib/api';
+import { projectGroupKey } from '../lib/agent-groups';
 import type { SearchMode } from '../lib/search';
 import type {
   Catalogue,
   Preferences,
+  Project,
   Request,
   Settings,
   SettingsResponse,
@@ -174,7 +176,8 @@ export class SessionStore {
         this.update({ catalogueLoading: false });
     }
   }
-  async loadProject(key: string) {
+  async loadProject(project: Project) {
+    const key = projectGroupKey(project);
     if (
       this.state.projectLoading.has(key) ||
       this.state.projectPages[key] === null
@@ -186,8 +189,8 @@ export class SessionStore {
     });
     try {
       const data = await this.api<Catalogue>('/api/sessions', {
-        project: key,
-        provider: this.state.provider,
+        project: project.project_id,
+        provider: project.source_id || this.state.provider,
         q: this.state.query,
         search_mode: this.state.searchMode,
         subagents: this.state.preferences.showSubagents !== false ? 1 : 0,
@@ -211,7 +214,8 @@ export class SessionStore {
       }
     }
   }
-  toggleProject(key: string, open: boolean) {
+  toggleProject(project: Project, open: boolean) {
+    const key = projectGroupKey(project);
     const opened = new Set(this.state.projectOpen),
       closed = new Set(this.state.projectClosed);
     if (open) {
@@ -222,14 +226,15 @@ export class SessionStore {
       closed.add(key);
     }
     this.update({ projectOpen: opened, projectClosed: closed });
-    if (open) void this.loadProject(key);
+    if (open) void this.loadProject(project);
   }
-  expandProject(key: string, expand: boolean) {
+  expandProject(project: Project, expand: boolean) {
+    const key = projectGroupKey(project);
     const expanded = new Set(this.state.projectExpanded);
     if (expand) expanded.add(key);
     else expanded.delete(key);
     this.update({ projectExpanded: expanded });
-    if (expand) void this.loadProject(key);
+    if (expand) void this.loadProject(project);
   }
   async filter(
     provider: string,

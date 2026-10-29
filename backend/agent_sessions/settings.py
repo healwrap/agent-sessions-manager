@@ -92,9 +92,11 @@ class ViewSettings:
             return {'saved': True, 'value': json.loads(self.path.read_text(encoding='utf-8'))}
 
     def write(self, value):
-        allowed = {'pinned', 'archived', 'aliases', 'metadata', 'projectAssignments', 'showSubagents', 'sidebarWidth', 'detailWidth', 'accountListWidth'}
+        allowed = {'pinned', 'archived', 'aliases', 'metadata', 'projectAssignments', 'showSubagents', 'sidebarWidth', 'detailWidth', 'accountListWidth', 'expandedAgents'}
         if not isinstance(value, dict) or set(value)-allowed:
             raise ValueError('会话视图设置格式无效')
+        if 'expandedAgents' in value and (not isinstance(value['expandedAgents'], list) or any(not isinstance(key, str) for key in value['expandedAgents'])):
+            raise ValueError('Agent 分组展开设置无效')
         if 'showSubagents' in value and type(value['showSubagents']) is not bool:
             raise ValueError('子代理显示选项无效')
         if 'sidebarWidth' in value and (type(value['sidebarWidth']) is not int or not 180 <= value['sidebarWidth'] <= 520):

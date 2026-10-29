@@ -106,8 +106,8 @@
 .sidebar .session-list {
   width: var(--sidebar-width);
   margin-inline: -12px;
-  padding-inline: 12px;
-  scrollbar-gutter: stable both-edges;
+  padding-inline: 4px;
+  scrollbar-gutter: stable;
   overflow-y: auto;
   min-height: 0;
   flex: 1;

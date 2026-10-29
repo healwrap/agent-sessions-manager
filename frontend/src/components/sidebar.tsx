@@ -1,16 +1,15 @@
 import { useSessionSearch } from '../hooks/use-session-search';
 import type { AppState } from '../state/session-store';
 import { sessionStore } from '../state/session-store';
-import { projectGroups, relativeDate, sessionTitle } from '../lib/selectors';
+import { agentGroups } from '../lib/agent-groups';
 import { sourceNames, type Session } from '../lib/types';
-import { Collapse, Icon, IconButton } from './primitives';
+import { Collapse, IconButton } from './primitives';
 import { StartupContent } from './startup-content';
-import { MarqueeTitle } from './marquee-title';
 import { Select } from './select';
 import { SearchField } from './search-field';
 import { SessionFilters } from './session-filters';
 import { AgentIcon } from './agent-icon';
-import { SessionLabels } from './session-labels';
+import { SidebarAgentGroup } from './sidebar-agent-group';
 import { WorkspaceSidebar } from './workspace-layout';
 import { WorkspacePicker } from './workspace-picker';
 import { ChoiceGroup } from './ui';
@@ -28,7 +27,7 @@ export function Sidebar({
   onSkills?: () => void;
 }) {
   const { search, setSearch, toggleSearch } = useSessionSearch(state);
-  const groups = projectGroups(
+  const groups = agentGroups(
     state.sessions,
     state.projects,
     state.preferences,
@@ -96,7 +95,7 @@ export function Sidebar({
           </div>
         ))}
       <div className="workspace-header">
-        <span>项目</span>
+        <span>会话</span>
         <div>
           <IconButton
             icon="search"
@@ -171,147 +170,15 @@ export function Sidebar({
               没有匹配的会话
             </div>
           )}
-        {groups.map((group) => {
-          const key = group.project_id,
-            open =
-              state.projectOpen.has(key) ||
-              (!!state.query && group.items.length > 0),
-            expanded = state.projectExpanded.has(key);
-          let visible =
-            expanded || state.query ? group.items : group.items.slice(0, 5);
-          const current = group.items.find((item) => item.id === state.id);
-          if (current && !visible.includes(current))
-            visible = [...visible.slice(0, 4), current];
-          return (
-            <section key={key} className="project-group">
-              <button
-                className="project-heading"
-                aria-expanded={open}
-                title={group.project_path}
-                onClick={() => sessionStore.toggleProject(key, !open)}
-              >
-                <Icon name="right" className="project-chevron" />
-                <Icon name="folder" className="project-folder" />
-                <MarqueeTitle
-                  className="project-name"
-                  text={group.project_label}
-                />
-              </button>
-              <Collapse open={open}>
-                {visible.map((item) => (
-                  <div
-                    key={item.id}
-                    className="session-item"
-                    data-source-visible={
-                      !state.provider ||
-                      item.session_kind === 'subagent' ||
-                      item.execution_mode === 'non_interactive'
-                    }
-                    aria-current={item.id === state.id}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      const rect = event.currentTarget.getBoundingClientRect();
-                      onManage(
-                        item,
-                        event.clientX || rect.right,
-                        event.clientY || rect.bottom,
-                      );
-                    }}
-                  >
-                    <button
-                      className="session-select flex min-w-0 flex-1 items-center text-left"
-                      onClick={() => void sessionStore.selectSession(item.id)}
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === 'ContextMenu' ||
-                          (event.shiftKey && event.key === 'F10')
-                        ) {
-                          event.preventDefault();
-                          const rect =
-                            event.currentTarget.getBoundingClientRect();
-                          onManage(item, rect.right, rect.bottom);
-                        }
-                      }}
-                    >
-                      <span className="session-copy">
-                        <MarqueeTitle
-                          className="session-name"
-                          text={sessionTitle(item, state.preferences)}
-                        />
-                        <SessionLabels
-                          item={item}
-                          sources={state.sources}
-                          provider={state.provider}
-                        />
-                      </span>
-                      <span className="session-date">
-                        {relativeDate(item.updated_at)}
-                      </span>
-                    </button>
-                    <IconButton
-                      icon="more"
-                      label={
-                        '会话操作 ' + sessionTitle(item, state.preferences)
-                      }
-                      className="icon-button session-options"
-                      aria-haspopup="menu"
-                      aria-expanded={managedId === item.id}
-                      onClick={(event) => {
-                        const rect =
-                          event.currentTarget.getBoundingClientRect();
-                        onManage(item, rect.right, rect.bottom);
-                      }}
-                    />
-                  </div>
-                ))}
-                {group.count > 5 && !expanded && !state.query && (
-                  <button
-                    className="more-sessions"
-                    onClick={() => sessionStore.expandProject(key, true)}
-                  >
-                    展开其余 {Math.max(0, group.count - visible.length)} 个会话
-                  </button>
-                )}
-                {state.query &&
-                  group.count > visible.length &&
-                  state.projectPages[key] !== null && (
-                    <button
-                      className="more-sessions"
-                      disabled={state.projectLoading.has(key)}
-                      onClick={() => void sessionStore.loadProject(key)}
-                    >
-                      更多匹配会话
-                    </button>
-                  )}
-                {expanded && (
-                  <>
-                    <button
-                      className="more-sessions"
-                      onClick={() => sessionStore.expandProject(key, false)}
-                    >
-                      收起会话
-                    </button>
-                    {state.projectPages[key] !== null && (
-                      <button
-                        className="more-sessions"
-                        disabled={state.projectLoading.has(key)}
-                        onClick={() => void sessionStore.loadProject(key)}
-                      >
-                        展开更多会话
-                      </button>
-                    )}
-                  </>
-                )}
-                {open && !group.items.length && (
-                  <p className="px-7 text-xs text-muted">
-                    {state.projectLoading.has(key) ? '正在读取…' : '没有会话'}
-                  </p>
-                )}
-              </Collapse>
-            </section>
-          );
-        })}
+        {groups.map((group) => (
+          <SidebarAgentGroup
+            key={group.id}
+            state={state}
+            group={group}
+            onManage={onManage}
+            managedId={managedId}
+          />
+        ))}
       </nav>
     </WorkspaceSidebar>
   );

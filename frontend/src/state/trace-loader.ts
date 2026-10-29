@@ -1,5 +1,6 @@
 import type { SessionStore } from './session-store';
 import type { Trajectory } from '../lib/types';
+import { projectGroupKey } from '../lib/agent-groups';
 export function createTraceLoader(store: SessionStore) {
   const generations = { trace: 0, chat: 0 };
   const refreshing = new Set<'trace' | 'chat'>();
@@ -118,14 +119,20 @@ export function createTraceLoader(store: SessionStore) {
         const item = first.session || { ...first, updated_at: '', count: 1 };
         store.update({ sessions: [...store.state.sessions, item] });
       }
+      const project = first.session || {
+        ...first,
+        count: 1,
+        source_id: `${first.provider}:${first.instance_id}`,
+      };
+      const projectKey = projectGroupKey(project);
       if (
-        !store.state.projectClosed.has(first.project_id) &&
-        !store.state.projectOpen.has(first.project_id)
+        !store.state.projectClosed.has(projectKey) &&
+        !store.state.projectOpen.has(projectKey)
       ) {
         store.update({
-          projectOpen: new Set(store.state.projectOpen).add(first.project_id),
+          projectOpen: new Set(store.state.projectOpen).add(projectKey),
         });
-        void store.loadProject(first.project_id);
+        void store.loadProject(project);
       }
       if (store.state.error) store.update({ error: '' });
       return true;

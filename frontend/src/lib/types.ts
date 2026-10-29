@@ -3,9 +3,14 @@ export interface Project {
   project_label: string;
   project_path: string;
   project_source?: string;
+  source_id?: string;
   count: number;
 }
 export interface Session extends Project {
+  account_id?: string;
+  account_name?: string;
+  environment_id?: string;
+  environment_name?: string;
   session_kind?: 'main' | 'subagent';
   execution_mode?: 'non_interactive';
   session_source?: string;
@@ -20,7 +25,6 @@ export interface Session extends Project {
   title: string;
   updated_at: string;
   provider: string;
-  source_id?: string;
   instance_id?: string;
   provider_label: string;
 }
@@ -61,6 +65,7 @@ export interface Settings {
   fontSize: number;
 }
 export interface Preferences {
+  expandedAgents?: string[];
   sidebarWidth?: number;
   detailWidth?: number;
   accountListWidth?: number;

@@ -20,6 +20,7 @@ export function SessionLabels({
     !provider &&
       (sources.find((entry) => entry.id === source)?.label ||
         item.provider_label),
+    item.account_name || item.environment_name,
     item.session_kind === 'subagent' && '子代理',
     executionLabel,
   ]

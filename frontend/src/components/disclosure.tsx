@@ -6,12 +6,14 @@ export function Disclosure({
   title,
   children,
   open,
+  compact = false,
   scrollToEndOnOpen = false,
   className = '',
 }: {
   title: ReactNode;
   children: ReactNode;
   open?: boolean;
+  compact?: boolean;
   scrollToEndOnOpen?: boolean;
   className?: string;
 }) {
@@ -66,6 +68,7 @@ export function Disclosure({
       ref={section}
       className={`disclosure ${className}`}
       data-open={expanded}
+      data-compact={compact || undefined}
     >
       <button
         className="disclosure-trigger"

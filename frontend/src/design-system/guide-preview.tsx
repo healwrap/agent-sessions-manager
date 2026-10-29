@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { accountGuide, proxyGuide } from '../lib/guide-links';
 import {
   Button,
+  Disclosure,
   EditorDialog,
   Field,
   GuideLink,
@@ -60,6 +61,13 @@ export function GuidePreview() {
         </div>
         <GuideLink {...accountGuide} />
         <GuideLink {...proxyGuide} />
+        <Disclosure compact title="紧凑折叠区">
+          <div className="ui-actions">
+            <Button size="small">代理配置</Button>
+            <Button size="small">添加账号</Button>
+          </div>
+          <p>用于帮助弹窗中的操作与简短提示。</p>
+        </Disclosure>
       </div>
       {dialog && (
         <EditorDialog

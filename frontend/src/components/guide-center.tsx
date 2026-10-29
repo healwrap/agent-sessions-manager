@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import type { WorkspacePage } from '../workspace';
-import {
-  guideStore,
-  guideTopics,
-  useGuide,
-  type GuideTopic,
-} from '../state/guide-store';
+import { guideStore, useGuide, type GuideTopic } from '../state/guide-store';
 import { useEnvironmentSettings } from '../hooks/use-environment-settings';
 import { accountGuide, proxyGuide } from '../lib/guide-links';
 import {
@@ -77,79 +72,86 @@ export function GuideCenter({
         </>
       }
     >
-      <p className="guide-summary">
-        {progress
-          ? `上次：${guideTopics[progress.topic]}`
-          : '代理 → 账号 → 登录'}
-      </p>
       {error && <Notice tone="error">{error}</Notice>}
       <GuideLink {...accountGuide} />
       <GuideLink href={proxyGuide.href} title={proxyGuide.title} />
-      <Disclosure title="单项引导">
-        <div className="ui-actions guide-shortcuts">
-          <Button disabled={loading} onClick={() => start('proxy')}>
-            代理配置
-          </Button>
-          <Button disabled={loading} onClick={() => start('account')}>
-            添加账号
-          </Button>
-          {data.accounts.length > 0 && (
-            <>
-              <Button
-                aria-pressed={detail === 'login'}
-                onClick={() => setDetail('login')}
-              >
-                登录账号
-              </Button>
-              <Button
-                aria-pressed={detail === 'switch'}
-                onClick={() => setDetail('switch')}
-              >
-                切换账号
-              </Button>
-            </>
-          )}
-        </div>
-        {detail && (
-          <div className="ui-stack">
-            <Field label="账号">
-              <Select
-                label="引导账号"
-                value={selected?.id || ''}
-                options={data.accounts.map((item) => ({
-                  value: item.id,
-                  label: item.name,
-                }))}
-                onChange={(id) => {
-                  setAccountId(id);
-                  setTarget('browser');
-                }}
-              />
-            </Field>
-            {selected?.provider === 'claude' && (
-              <Field label="使用方式">
+      <div className="guide-sections">
+        <Disclosure compact title="单项引导">
+          <div className="ui-actions guide-shortcuts">
+            <Button
+              size="small"
+              disabled={loading}
+              onClick={() => start('proxy')}
+            >
+              代理配置
+            </Button>
+            <Button
+              size="small"
+              disabled={loading}
+              onClick={() => start('account')}
+            >
+              添加账号
+            </Button>
+            {data.accounts.length > 0 && (
+              <>
+                <Button
+                  size="small"
+                  aria-pressed={detail === 'login'}
+                  onClick={() => setDetail('login')}
+                >
+                  登录账号
+                </Button>
+                <Button
+                  size="small"
+                  aria-pressed={detail === 'switch'}
+                  onClick={() => setDetail('switch')}
+                >
+                  切换账号
+                </Button>
+              </>
+            )}
+          </div>
+          {detail && (
+            <div className="ui-stack">
+              <Field label="账号">
                 <Select
-                  label="引导使用方式"
-                  value={target}
-                  onChange={setTarget}
-                  options={[
-                    { value: 'browser', label: '独立浏览器' },
-                    { value: 'app', label: 'Claude App' },
-                  ]}
+                  label="引导账号"
+                  value={selected?.id || ''}
+                  options={data.accounts.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                  }))}
+                  onChange={(id) => {
+                    setAccountId(id);
+                    setTarget('browser');
+                  }}
                 />
               </Field>
-            )}
-            <Button onClick={() => start(detail)}>
-              开始{detail === 'login' ? '登录' : '切号'}引导
-            </Button>
-          </div>
-        )}
-      </Disclosure>
-      <Disclosure title="使用提示">
-        <p>邮件登录链接在对应账号的浏览器中打开。</p>
-        <p>切号先停止环境，无需退出网站账号。</p>
-        <p>修改代理前，先停止使用它的环境。</p>
-      </Disclosure>
+              {selected?.provider === 'claude' && (
+                <Field label="使用方式">
+                  <Select
+                    label="引导使用方式"
+                    value={target}
+                    onChange={setTarget}
+                    options={[
+                      { value: 'browser', label: '独立浏览器' },
+                      { value: 'app', label: 'Claude App' },
+                    ]}
+                  />
+                </Field>
+              )}
+              <Button onClick={() => start(detail)}>
+                开始{detail === 'login' ? '登录' : '切号'}引导
+              </Button>
+            </div>
+          )}
+        </Disclosure>
+        <Disclosure compact title="使用提示">
+          <p>邮件登录链接在对应账号的浏览器中打开。</p>
+          <p>切号先停止环境，无需退出网站账号。</p>
+          <p>修改代理前，先停止使用它的环境。</p>
+        </Disclosure>
+      </div>
     </ContentDialog>
   );
 }

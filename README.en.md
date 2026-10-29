@@ -58,6 +58,7 @@ Configure independent browsers for Claude/Codex accounts. Claude accounts can al
 
 - **Separate accounts and environments:** bind browser and Claude App profiles, with independent data directories, language, time zone, and proxy settings.
 - **Open and switch:** open, focus, or stop an environment from its account. Running environments retain their own login state and configuration.
+- **Continue across accounts:** before starting Claude App, synchronize all local Code conversations from managed accounts and the local CLI into the target environment. Later launches update compatible histories and retain independently continued branches.
 - **Dedicated proxies:** add HTTP/SOCKS endpoints or import subscriptions and Clash configurations. The app manages a separate Mihomo process without changing the system proxy.
 - **On-demand checks:** inspect proxy, egress, and environment results. Browser and App checks remain distinct, with configured preflight rules applied at launch.
 - **Components:** install, update, and remove Fingerprint Chromium, Mihomo, and official Claude App from Settings. Components download on demand; environment configuration is stored separately from program files.
@@ -68,6 +69,7 @@ Accounts use the respective service's official login flow. For platform support,
 - [Dedicated proxies](references/dedicated-proxies.md)
 - [Platforms and components](references/runtime-components.md)
 - [Local Skill and plugin inheritance in Claude App](references/claude-plugin-inheritance.md)
+- [Conversation sync between Claude App accounts](references/claude-session-sync.md)
 
 ## Skills: maintain local installation entries
 
@@ -77,7 +79,7 @@ Operations show actual paths and a change plan before execution, then re-read th
 
 ## Local data and runtime boundaries
 
-- Source histories are read-only. Names, archives, project organization, and reading preferences are stored separately.
+- The session workspace reads source histories without modifying them. Names, archives, project organization, and reading preferences are stored separately. Launch-time account sync writes into the target managed Claude App environment and keeps complete backups of replaced target files.
 - Account configuration, environment settings, and independent data directories stay local. Reading history does not require uploading conversations; login, component downloads, and on-demand network checks connect to the relevant services.
 - The interface and backend run locally, with the service bound to loopback only.
 - Runtime connection sampling can detect anomalies and stop environments. It is not an operating-system network block; coverage depends on validation for each platform.

@@ -197,6 +197,10 @@ class ClaudeDesktopStore(ClaudeStore):
             matches = by_id.get(native, [])
             direct = self.transcripts/'projects'/re.sub(r'[^a-zA-Z0-9]', '-', item['cwd'])/(str(native)+'.jsonl')
             transcript = direct if direct in matches else matches[0] if len(matches) == 1 else None
+            if transcript is None and isinstance(item.get('stagedTranscriptPath'), str):
+                staged = Path(item['stagedTranscriptPath'])
+                if staged.parent.resolve() == (path.parent/'imported-staging').resolve() and staged.is_file():
+                    transcript = staged
             if transcript: represented.add(transcript)
             files[key] = transcript or path
             cwd = item.get('originCwd') or item['cwd']
@@ -205,7 +209,8 @@ class ClaudeDesktopStore(ClaudeStore):
             if isinstance(updated, (int, float)): updated = datetime.fromtimestamp(updated/1000).astimezone().isoformat()
             rows[key] = {'id': key, 'native_id': native or item['sessionId'], 'title': title, 'cwd': cwd,
                          'updated_at': str(updated), 'transcript_available': transcript is not None,
-                         'transcript_key': str(transcript.relative_to(self.transcripts/'projects')).removesuffix('.jsonl') if transcript else None,
+                         'transcript_key': str(transcript.relative_to(self.transcripts/'projects')).removesuffix('.jsonl')
+                         if transcript and transcript.is_relative_to(self.transcripts/'projects') else None,
                          'unavailable_reason': '找到多份同 ID 正文，且无法确认桌面会话目录。' if len(matches) > 1 and transcript is None else None,
                          **self.project(key, cwd)}
         for row in shared_rows:

@@ -22,6 +22,7 @@ from agent_sessions.applications import app_executable
 from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
 from .network import configure as configure_network
 from .connections import ProcessConnections, ConnectionViolation, public
+from .session_sync import synchronize
 
 
 def app_processes():
@@ -37,6 +38,7 @@ class AppRuntime:
         self.lock = threading.RLock()
         self.runs, self.processes, self.relays = {}, {}, {}
         self.observers = {}
+        self.session_paths = lambda: {}
         self.registry = ProcessState(self.directory)
         settings = self.environments.read()
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
@@ -123,6 +125,14 @@ class AppRuntime:
                 directory.mkdir(parents=True, exist_ok=True, mode=0o700)
                 config = directory/'claude-code'
                 config.mkdir(parents=True, exist_ok=True, mode=0o700)
+                run['stage'] = '正在同步全部本地 Code 会话'
+                synced = synchronize(self.directory.parent, key, self.environments.read(), self.session_paths())
+                run['session_sync'] = synced
+                checks.append(dict(id='app-session-sync', title='账号间会话同步', policy='warn',
+                                   state='pass' if synced['state'] == 'complete' else 'unknown',
+                                   value=synced['message'],
+                                   detail='；'.join(row['path']+'：'+row['reason'] for row in synced['issues'])))
+                if run.get('cancelled'): return
                 run['skill_inheritance'] = sync_skills(config, profile.get('inherit_skills', True))
                 plugins = sync_plugins(config, self.directory/'plugin-library', profile.get('inherit_plugins', True))
                 run['plugin_inheritance'] = {name: value for name, value in plugins.items() if name != 'environment'}

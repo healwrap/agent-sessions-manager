@@ -42,6 +42,10 @@ export function AppAccounts({
           </StatusBadge>
         }
       />
+      <Notice>
+        启动或切换账号前，自动同步各账号及本机 CLI 的全部本地 Code
+        会话，可在官方 App 中继续对话。
+      </Notice>
       <EnvironmentProfileList
         data={data}
         target="app"

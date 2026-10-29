@@ -318,6 +318,7 @@ def main():
     server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}', server.proxy_manager)
     from agent_sessions.desktop_client.runtime import AppRuntime
     server.app_runtime = AppRuntime(args.state_home, server.environments, server.proxy_manager)
+    server.app_runtime.session_paths = lambda: server.app_settings.read()['paths']
     from agent_sessions.account_usage.manager import AccountUsage
     server.account_usage = AccountUsage(args.state_home, server.environments, server.browser_runtime, server.app_runtime, server.proxy_manager)
     from agent_sessions.desktop_client.login import AppLogin

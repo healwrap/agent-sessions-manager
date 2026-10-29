@@ -19,7 +19,7 @@ import {
   type AccountActions,
   type AccountClient,
 } from '../lib/account-view';
-import { Button, FactsGrid } from './ui';
+import { Button, FactsGrid, Notice } from './ui';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
 import { AccountUsagePanel } from './account-usage-panel';
@@ -71,6 +71,9 @@ export function AccountClientPanel({
   };
   const blockedCheck = run?.checks.some(
     (check) => check.policy === 'block' && check.state !== 'pass',
+  );
+  const sessionSync = run?.checks.find(
+    (check) => check.id === 'app-session-sync',
   );
   const progress = !run?.checks.length
     ? 0
@@ -150,6 +153,12 @@ export function AccountClientPanel({
           )}
         </div>
       </div>
+      {target === 'app' && (
+        <Notice>
+          {sessionSync?.value ||
+            '每次启动前自动同步各账号及本机 CLI 的全部本地 Code 会话，可在官方 App 中继续对话。'}
+        </Notice>
+      )}
       {checking && (
         <div
           className="account-launch-progress"

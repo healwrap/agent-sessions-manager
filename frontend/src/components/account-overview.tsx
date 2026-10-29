@@ -123,7 +123,7 @@ export function AccountOverview({
             </strong>
             <p>
               {row.count
-                ? `总量 ≈ ${tokens(row.total)} · ${row.count}/${claude.length} 个账号`
+                ? `满额估算 ≈ ${tokens(row.total)} · 已计入 ${row.count}/${claude.length} 个账号`
                 : row.known
                   ? row.unknownPlans
                     ? `${row.unknownPlans} 个账号套餐待确认`

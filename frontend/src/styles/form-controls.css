@@ -73,6 +73,8 @@
 .editor-dialog-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  /* Let the body scroll instead of compressing overflowing form contents. */
+  grid-auto-rows: max-content;
   align-content: start;
   gap: 20px;
   flex: 1 1 auto;

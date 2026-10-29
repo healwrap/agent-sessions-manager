@@ -20,4 +20,8 @@ Token 数据来自 [All Done Sites Claude Usage Tracker](https://alldonesites.co
 
 页面统一显示混合 Token，汇总输入、输出、缓存创建和缓存读取，随第三方样本工作负载变化。模型比例中的参考值、实测值、按模型价格近似和 Pro / Max 5x 的比例推算分别保留来源说明；日期、样本账号数、估算区间和原始数据链接可在“估算依据”中查看。总览的 5 小时和周余额分别按各自窗口计算，不能相加，也不代表立刻能消耗完全部周额度。
 
+套餐的 5 小时容量倍数采用 [Claude 官方 Max 说明](https://support.claude.com/en/articles/11049741-what-is-the-max-plan)，核对日期为 2026-10-29：Pro 为基准，Max 5x 为 5 倍，Max 20x 为 20 倍。旧社区表的 Max 5x / Pro 为 6 倍，不再采用。应用读取旧缓存时也会立即应用官方倍数。这个官方比例不延伸为官方周容量；Token 基础容量与周窗口仍标为社区测量或推算。
+
+另核对了 [ccusage Blocks](https://ccusage.com/guide/blocks-reports) 和 [Claude Code Usage Monitor](https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor)。前者支持用历史最大窗口或用户指定限额，后者 v4 区分官方读数、本地估算和未知状态，均未给出可直接替代的、按当前每种模型独立实测的固定混合 Token 配额。未将旧版预设 Token 数或 API 定价当作订阅固定额度。
+
 账号访问状态单独记录：身份接口成功且邮箱核对通过后记录“可访问”和时间；明确的 `account_disabled` / `account_suspended` / `account_banned` 归为账号停用，`organization_disabled` 单独归为组织停用。401 记录登录待确认，其他 403 和连接异常不推定封禁。超过 5 分钟的可访问结果只显示“上次可访问”，总览计入待确认。检测账号与刷新用量共用受控环境及冷却间隔。

@@ -1,0 +1,75 @@
+.account-usage {
+  display: grid;
+  gap: 16px;
+  margin: 0 24px 20px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  min-width: 0;
+}
+.account-usage .ui-section-heading {
+  margin: 0;
+}
+.account-usage .ui-section-heading h3 {
+  font-size: 14px;
+  line-height: 22px;
+}
+.account-usage-windows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+.account-usage-window {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.account-usage-value,
+.account-usage-spending,
+.account-usage-updated {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.account-usage-value {
+  flex-wrap: wrap;
+}
+.account-usage-value > span {
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+}
+.account-usage-value strong {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.account-usage-value strong span {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dsw-alias-label-secondary);
+}
+.account-usage-window time,
+.account-usage-updated,
+.account-usage-empty {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+.account-usage-spending {
+  font-size: 13px;
+}
+.account-usage-updated {
+  flex-wrap: wrap;
+}
+.account-usage-empty {
+  margin: 0;
+}
+@container (max-width: 480px) {
+  .account-usage {
+    margin-inline: 20px;
+  }
+  .account-usage-windows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -24,6 +24,7 @@ import {
   Notice,
   PageHeading,
   Panel,
+  ProgressMeter,
   ResourceCard,
   Select,
   SettingsButton,
@@ -114,6 +115,14 @@ export function ComponentCatalog() {
       ) : (
         <div className="catalog-grid">
           <InputPreview />
+          <Panel title="额度进度">
+            {[26, 85, 100].map((value) => (
+              <div key={value}>
+                <p>{value}% 已用</p>
+                <ProgressMeter label={`${value}% 用量`} value={value} />
+              </div>
+            ))}
+          </Panel>
           <Panel title="按钮与状态">
             <div className="ui-actions">
               <Button variant="primary" onClick={() => setDialog(true)}>

@@ -22,6 +22,7 @@ import {
 import { Button, FactsGrid } from './ui';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
+import { AccountUsagePanel } from './account-usage-panel';
 
 export function AccountClientPanel({
   account,
@@ -189,6 +190,16 @@ export function AccountClientPanel({
             </Button>
           )}
         </div>
+      )}
+      {account.provider === 'claude' && (
+        <AccountUsagePanel
+          account={account}
+          data={data}
+          busy={busy}
+          onOpenBrowser={() =>
+            onRuntime('open', { account_id: account.id }, 'browser')
+          }
+        />
       )}
       {profile && (
         <>

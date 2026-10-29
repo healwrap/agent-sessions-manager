@@ -109,7 +109,7 @@ export function AccountClientPanel({
               data-guide="account-stop"
             >
               <Square size={14} />
-              {checking ? '取消启动' : '停止'}
+              {checking ? '取消检查' : '停止'}
             </Button>
           )}
           {profile ? (

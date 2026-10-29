@@ -216,14 +216,17 @@ export function EnvironmentProfileList({
                         </Button>
                       )}
                       {live && (
-                        <IconButton
-                          label={`停止环境 ${profile.name}`}
-                          icon={<Square size={16} />}
+                        <Button
+                          variant="text"
+                          aria-label={`${checking ? '取消检查' : '停止环境'} ${profile.name}`}
                           disabled={busy}
                           onClick={() =>
                             onRuntime('stop', { profile_id: profile.id })
                           }
-                        />
+                        >
+                          <Square size={16} />
+                          {checking ? '取消检查' : '停止'}
+                        </Button>
                       )}
                       <Button
                         variant="outline"

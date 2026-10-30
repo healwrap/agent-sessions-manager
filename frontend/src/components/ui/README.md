@@ -16,7 +16,7 @@
 | ChoiceGroup 下划线导航         | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                                                        |
 | Select / 菜单                  | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                                                             |
 | Tooltip 悬浮提示               | `packages/client/ui-primitives/src/Tooltip.tsx`、`Tooltip.module.css`                                                                                                      | `ui/tooltip.tsx`、`styles/dsh/tooltip.css`，统一悬停、焦点与顶层定位                            |
-| Toast 浮动提示                 | `packages/client/ui-primitives/src/Toast.tsx`、`Toast.module.css`                                                                                                          | `ui/toast.tsx`、`styles/dsh/toast.css`，沿用深色表面、顶部居中与定时淡出                        |
+| Toast 浮动提示                 | 会话管理原有 `#toast` 外观；生命周期参考 DSH `packages/client/ui-primitives/src/Toast.tsx`                                                                                 | `ui/toast.tsx`、`styles/dsh/toast.css`，沿用底部居中的紧凑深色提示                              |
 | 状态标签几何                   | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名                                             |
 | ContentDialog / EditorDialog   | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，共用标题、关闭、滚动体与底部操作区                                  |
 | 设置面板                       | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                                                           |
@@ -78,7 +78,7 @@ Tooltip / TooltipLayer 使用 DSH Tooltip 的紧凑深色表面、R8 圆角与 1
 
 Toast 用于短暂反馈，通过 `toast('提示文字', { tone: 'success' })` 调用，支持 info / success / warning / error、可选行内 action 和 holdMs。工作区、独立演示页及组件预览各挂载一个 ToastLayer；原有 sessionStore.notify 也使用这个组件。每次调用更新展示序号，相同文字可重新触发，新消息替换旧消息，旧计时器不会关闭新消息。
 
-沿用 DSH Toast 的深色表面、R16、14px / 22px 排版、顶部 40px 居中及淡出：普通和成功提示停留 3 秒，警告和错误停留 5 秒，再用 1 秒淡出。通过手动 popover 进入顶层，保证弹窗内可见；不抢焦点，提示表面允许点击穿透，仅 action 可点击。关闭动画时仍按时移除。网络系统代理状态差异使用 Toast，相同差异在刷新或轮询时只提示一次；恢复一致后再次出现差异才重新提示。
+沿用会话管理原有 `#toast` 外观：深色表面、R8、12px / 18px 排版、8px / 16px 内边距，底部 145px 居中。普通和成功提示停留 3 秒，警告和错误停留 5 秒，再用 1 秒淡出。通过手动 popover 进入顶层，保证弹窗内可见；不抢焦点，提示表面允许点击穿透，仅 action 可点击。关闭动画时仍按时移除。网络系统代理状态差异使用 Toast，相同差异在刷新或轮询时只提示一次；恢复一致后再次出现差异才重新提示。
 
 启动现有 Vite 服务后访问 `/?components=1`，查看浅深色、按钮、搜索筛选、资源状态、表单弹窗、加载与空列表。示例只维护页面内状态。
 

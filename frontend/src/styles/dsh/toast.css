@@ -1,41 +1,26 @@
-/* Adapted from DeepSeek Harness Toast.module.css, MIT. */
+/* Existing session toast surface; shared lifecycle adapted from DSH, MIT. */
 .app-toast {
   position: fixed;
   inset: auto;
-  top: 40px;
+  bottom: 145px;
   left: 50%;
   z-index: 1100;
   margin: 0;
   border: 0;
   pointer-events: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
   width: max-content;
-  max-width: min(640px, calc(100vw - 48px));
-  padding: 12px 16px;
-  border-radius: var(--dsw-radius-lg);
+  max-width: calc(100vw - 32px);
+  padding: 8px 16px;
+  border-radius: var(--dsw-radius-sm);
   background: var(--dsw-alias-toast-bg);
   color: var(--dsw-alias-toast-label);
-  font-size: 14px;
-  line-height: 22px;
-  box-shadow: var(--dsw-shadow-lv3);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
   transform: translateX(-50%);
   animation:
     app-toast-in 160ms ease-out,
     app-toast-fade 1000ms ease var(--dsh-toast-hold) forwards;
-}
-.app-toast-icon {
-  flex: none;
-}
-.app-toast[data-tone='warning'] .app-toast-icon {
-  color: var(--dsw-alias-state-warn-label);
-}
-.app-toast[data-tone='error'] .app-toast-icon {
-  color: var(--dsw-alias-state-error-secondary);
-}
-.app-toast[data-tone='success'] .app-toast-icon {
-  color: var(--dsw-alias-state-success-primary);
 }
 .app-toast-text {
   min-width: 0;
@@ -62,11 +47,9 @@
 @keyframes app-toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -6px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
   }
 }
 @keyframes app-toast-fade {

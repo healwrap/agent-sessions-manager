@@ -6,7 +6,6 @@ import {
   type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, CircleAlert, Info } from 'lucide-react';
 import { useSessionStore } from '../../hooks/use-session-store';
 import { sessionStore } from '../../state/session-store';
 import type { ToastOptions } from '../../state/model';
@@ -61,8 +60,6 @@ export function Toast({
     const timer = setTimeout(() => done.current(), holdMs + 1000);
     return () => clearTimeout(timer);
   }, [holdMs]);
-  const Symbol =
-    tone === 'success' ? CheckCircle2 : tone === 'info' ? Info : CircleAlert;
   return createPortal(
     <div
       ref={ref}
@@ -73,7 +70,6 @@ export function Toast({
       aria-atomic="true"
       style={{ '--dsh-toast-hold': `${holdMs}ms` } as CSSProperties}
     >
-      <Symbol className="app-toast-icon" size={18} aria-hidden="true" />
       <span className="app-toast-text">
         {text}
         {action && (

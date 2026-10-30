@@ -10,14 +10,14 @@ export const guideSteps: Record<
     hint: '点击左侧「网络设置」。',
   },
   'proxy-add': {
-    title: '添加出口线路',
+    title: '添加 Claude 节点',
     chapter: '网络准备 · 2 / 5',
-    hint: '连接 Clash Verge 后，点击「添加线路」。',
+    hint: '点击「添加节点」。',
   },
   'proxy-form': {
-    title: '保存出口线路',
+    title: '保存 Claude 节点',
     chapter: '网络准备 · 3 / 5',
-    hint: '选择 Clash 中的固定节点，保存线路。',
+    hint: '填写节点名称和代理地址，然后保存。',
   },
   'proxy-test': {
     title: '检测代理',

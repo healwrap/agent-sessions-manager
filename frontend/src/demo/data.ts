@@ -19,6 +19,12 @@ export function createDemoSettings(): EnvironmentSettings {
         url: 'http://127.0.0.1:18901',
         kind: 'clash',
         clash_node: '示例节点 · 东京',
+        node: {
+          name: '示例节点 · 东京',
+          type: 'http',
+          server: '203.0.113.10',
+          port: 8080,
+        },
       },
       {
         id: 'demo-proxy-2',
@@ -26,6 +32,12 @@ export function createDemoSettings(): EnvironmentSettings {
         url: 'http://127.0.0.1:18902',
         kind: 'clash',
         clash_node: '示例节点 · 洛杉矶',
+        node: {
+          name: '示例节点 · 洛杉矶',
+          type: 'socks5',
+          server: '203.0.113.20',
+          port: 1080,
+        },
       },
     ],
     apps: [
@@ -42,6 +54,9 @@ export function createDemoSettings(): EnvironmentSettings {
       group: 'Agent Sessions · Claude',
       current_node: '示例节点 · 东京',
       routing_ready: true,
+      routing_active: true,
+      auto_prepare: true,
+      system_proxy: { supported: true, enabled: false, error: '' },
       domains: ['example.com'],
       dns: ['192.0.2.53'],
       nodes: [

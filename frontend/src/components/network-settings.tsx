@@ -3,6 +3,7 @@ import {
   ExternalLink,
   Network,
   RefreshCw,
+  RotateCcw,
   ScanLine,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ import {
 import clashVergeIcon from '../assets/components/clash-verge.png';
 import '../styles/network-settings.css';
 import { NetworkLines } from './network-lines';
+import { NetworkControls } from './network-controls';
 
 const empty: ClashNetwork = {
   connected: false,
@@ -156,30 +158,44 @@ export function NetworkSettings({
         {network.connected && network.mode !== 'rule' && (
           <Notice tone="warning">请将 Clash Verge 切换到规则模式。</Notice>
         )}
-        {network.connected && !network.tun && (
-          <Notice tone="warning">
-            请在 Clash Verge 开启 TUN，再启动账号环境。
-          </Notice>
-        )}
-        {network.connected && !!lines.length && !network.routing_ready && (
-          <Notice
-            tone="warning"
-            action={
-              <Button
-                disabled={pending}
-                onClick={() =>
-                  void run('apply', {
-                    domains: network.domains,
-                    dns: network.dns,
-                  })
-                }
-              >
-                应用分流
-              </Button>
-            }
-          >
-            账号分流规则未生效
-          </Notice>
+        {network.connected &&
+          !network.tun &&
+          network.auto_prepare === false && (
+            <Notice tone="warning">
+              请在 Clash Verge 开启 TUN，再启动账号环境。
+            </Notice>
+          )}
+        {network.connected &&
+          network.routing_active &&
+          !!lines.length &&
+          !network.routing_ready && (
+            <Notice
+              tone="warning"
+              action={
+                <Button
+                  disabled={pending}
+                  onClick={() =>
+                    void run('apply', {
+                      domains: network.domains,
+                      dns: network.dns,
+                    })
+                  }
+                >
+                  应用分流
+                </Button>
+              }
+            >
+              账号分流规则未生效
+            </Notice>
+          )}
+        <NetworkControls
+          network={network}
+          pending={pending}
+          locked={locked}
+          onChange={(name, enabled) => void run('control', { name, enabled })}
+        />
+        {network.restore_error && (
+          <Notice tone="warning">{network.restore_error}</Notice>
         )}
         <Disclosure title="Clash 连接信息" compact>
           <FactsGrid
@@ -190,11 +206,34 @@ export function NetworkSettings({
                 value: network.connected
                   ? (network.controller || network.endpoint).startsWith('http')
                     ? '本机 HTTP 接口'
-                    : '本机服务'
+                    : (network.controller || '').startsWith('\\\\.\\pipe\\')
+                      ? '本机命名管道'
+                      : '本机服务'
                   : '未连接',
               },
+              {
+                label: '接口认证',
+                value:
+                  network.secret_source === 'auto'
+                    ? '自动读取本机密钥'
+                    : network.secret_source === 'manual'
+                      ? '使用保存的密钥'
+                      : '未配置密钥',
+              },
+              { label: '当前订阅', value: network.profile?.name || '未取得' },
             ]}
           />
+          <Button
+            disabled={pending || locked || !lines.length}
+            onClick={() =>
+              void (network.routing_active
+                ? run('reset')
+                : run('apply', { domains: network.domains, dns: network.dns }))
+            }
+          >
+            <RotateCcw size={16} />
+            {network.routing_active ? '停用分流并恢复原配置' : '启用账号分流'}
+          </Button>
         </Disclosure>
       </ResourceCard>
       <CollectionPanel
@@ -202,9 +241,9 @@ export function NetworkSettings({
           <CollectionToolbar
             query={query}
             onQuery={setQuery}
-            searchLabel="搜索出口线路"
+            searchLabel="搜索 Claude 节点"
           >
-            <SectionHeading title="出口线路" />
+            <SectionHeading title="Claude 专用节点" />
           </CollectionToolbar>
         }
       >
@@ -261,7 +300,6 @@ export function NetworkSettings({
           item={editing}
           existingIds={data.proxies.map((row) => row.id)}
           locked={locked}
-          network={network}
           onClose={() => {
             setEditing(undefined);
             onCloseCreate();

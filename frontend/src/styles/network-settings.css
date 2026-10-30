@@ -9,6 +9,12 @@
   width: 32px;
   height: 32px;
 }
+.network-controls {
+  display: grid;
+}
+.network-controls .settings-row:first-child {
+  padding-top: 0;
+}
 .account-workspace .network-settings .network-line .ui-resource-heading {
   padding-block: 12px;
 }

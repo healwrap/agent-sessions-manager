@@ -3,6 +3,7 @@ import type {
   BrowserAccount,
   EnvironmentCollection,
   EnvironmentItem,
+  ProxyConfig,
 } from '../lib/environment-settings';
 import { initialState } from '../state/model';
 import { sampleBenchmarks } from './usage';
@@ -163,20 +164,58 @@ export const demoRequest: Request = async <T>(
   if (path === '/api/environments') value = environments(body);
   else if (path.startsWith('/api/network')) {
     if (path.endsWith('/save-line')) {
+      const key = args.id || id('proxy');
+      let node: NonNullable<ProxyConfig['node']>;
+      if (args.address) {
+        const address = new URL(args.address);
+        node = {
+          name: 'agent-sessions-node-' + key,
+          type: address.protocol.startsWith('socks5') ? 'socks5' : 'http',
+          server: address.hostname,
+          port: Number(address.port),
+        };
+      } else {
+        try {
+          node = {
+            ...JSON.parse(args.node_yaml),
+            name: 'agent-sessions-node-' + key,
+          };
+        } catch {
+          throw new Error('演示模式的单节点配置请使用 JSON，或改用代理地址。');
+        }
+      }
       const item = {
-        id: args.id || id('proxy'),
+        id: key,
         name: args.name,
         url: 'http://127.0.0.1:18903',
         kind: 'clash' as const,
-        clash_node: args.node,
+        clash_node: node.name,
+        node,
       };
       const index = data.proxies.findIndex((row) => row.id === item.id);
       if (index < 0) data.proxies.push(item);
       else data.proxies[index] = item;
+      data.network!.nodes = data.proxies.map((row) => ({
+        name: row.clash_node,
+        type: row.node?.type || 'http',
+      }));
       value = data;
     } else if (path.endsWith('/intranet'))
       value = { addresses: ['192.0.2.10'], reachable: true, host: args.host };
     else {
+      if (path.endsWith('/control')) {
+        const control = body as { name: string; enabled: boolean };
+        if (control.name === 'system_proxy')
+          data.network!.system_proxy!.enabled = control.enabled;
+        if (control.name === 'tun') data.network!.tun = control.enabled;
+        if (control.name === 'auto_prepare')
+          data.network!.auto_prepare = control.enabled;
+      }
+      if (path.endsWith('/reset')) {
+        data.network!.routing_active = false;
+        data.network!.routing_ready = false;
+        data.network!.current_node = '';
+      }
       if (path.endsWith('/apply')) Object.assign(data.network!, body);
       if (path.endsWith('/prepare'))
         data.network!.current_node =

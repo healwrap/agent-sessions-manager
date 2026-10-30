@@ -7,6 +7,10 @@ def command(server, action, value):
     if not isinstance(value, dict): raise ValueError('网络参数格式无效')
     manager = server.network
     if action == 'connect': return manager.connect(value)
+    if action == 'control': return manager.control(value)
+    if action == 'reset':
+        if value: raise ValueError('恢复参数无效')
+        return manager.reset()
     if action == 'apply': return manager.apply(value)
     if action == 'refresh':
         if value: raise ValueError('刷新参数无效')

@@ -51,7 +51,7 @@ const sections = [
     id: 'proxies',
     title: '网络设置',
     icon: Globe2,
-    description: '连接 Clash Verge，为账号选择出口线路并配置直连规则。',
+    description: '配置 Claude 专用节点，通过 Clash Verge 分流并设置直连规则。',
   },
 ] as const;
 
@@ -180,7 +180,7 @@ export function AccountWorkspace({
                 {section === 'accounts'
                   ? '添加账号'
                   : section === 'proxies'
-                    ? '添加线路'
+                    ? '添加节点'
                     : section === 'browser'
                       ? '新建浏览器环境'
                       : '新建 App 环境'}

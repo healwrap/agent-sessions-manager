@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import socket
 import sys
+import tempfile
 from urllib.parse import urlparse
 import yaml
 
@@ -26,6 +27,17 @@ def source_config():
     return value
 
 
+def local_config():
+    """The runtime file has the active secret; config.yaml also exists before first launch."""
+    for name in ('clash-verge.yaml', 'config.yaml'):
+        path = verge_directory()/name
+        if not path.is_file(): continue
+        try: value = yaml.safe_load(path.read_text(encoding='utf-8'))
+        except yaml.YAMLError as error: raise ValueError('Clash 配置解析失败：'+str(error)) from None
+        if isinstance(value, dict): return value
+    return {}
+
+
 class UnixConnection(http.client.HTTPConnection):
     def __init__(self, path):
         super().__init__('localhost', timeout=2)
@@ -39,9 +51,10 @@ class UnixConnection(http.client.HTTPConnection):
 
 class Controller:
     def __init__(self, settings):
-        config = source_config() if not settings.get('endpoint') else {}
+        config = local_config()
         endpoint = settings.get('endpoint', '')
-        self.secret = settings.get('secret') or config.get('secret', '')
+        self.secret = settings.get('secret') or config.get('secret') or ''
+        if not isinstance(self.secret, str): raise ValueError('Clash 接口密钥应为文本')
         if endpoint:
             parsed = urlparse(endpoint)
             host = parsed.hostname or ''
@@ -53,8 +66,24 @@ class Controller:
             self.endpoint = endpoint.rstrip('/')
             self.connection = lambda: http.client.HTTPConnection(host, parsed.port or 80, timeout=2)
         else:
+            pipe = config.get('external-controller-pipe', '') if sys.platform == 'win32' else ''
+            if pipe:
+                from .windows_pipe import PipeConnection
+                # Recent Verge releases use an owner-scoped service pipe instead of the sidecar pipe.
+                import re
+                owner = re.search(r'verge-mihomo-sidecar-release-([a-f0-9]{64})$', pipe)
+                service_pipe = r'\\.\pipe\verge-mihomo-production-'+owner[1] if owner else ''
+                if service_pipe:
+                    import ctypes
+                    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+                    kernel.WaitNamedPipeW.argtypes = [ctypes.c_wchar_p, ctypes.c_ulong]
+                    if kernel.WaitNamedPipeW(service_pipe, 1): pipe = service_pipe
+                self.endpoint = pipe
+                self.connection = lambda: PipeConnection(pipe)
+                return
             service = Path(f'/var/run/clash-verge-service/users/{os.getuid()}/verge-mihomo.sock') if sys.platform == 'darwin' else None
             path = str(service) if service and service.exists() else config.get('external-controller-unix', '')
+            if not path and sys.platform == 'darwin': path = str(Path(tempfile.gettempdir())/'verge-mihomo.sock')
             if path and hasattr(socket, 'AF_UNIX') and Path(path).exists():
                 self.endpoint = path
                 self.connection = lambda: UnixConnection(path)

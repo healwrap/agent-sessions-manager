@@ -128,7 +128,7 @@ class BrowserRuntime:
     def _launch(self, profile, proxy, account, found, run):
         key, ticket = profile['id'], None
         try:
-            if self.network: self.network.ensure(proxy, key)
+            if self.network: self.network.ensure(proxy, key, run)
             modes = policy(profile)
             url = proxy['url'] if proxy else ''
             resolved, checks = inspect(profile, proxy)

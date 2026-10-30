@@ -19,20 +19,24 @@ import {
 export function NetworkLineEditor({
   item,
   existingIds,
-  network,
   locked = false,
   onClose,
   onSaved,
 }: {
   item?: ProxyConfig;
   existingIds: string[];
-  network: ClashNetwork;
   locked?: boolean;
   onClose: () => void;
   onSaved: (data: EnvironmentSettings, id: string) => void;
 }) {
   const [name, setName] = useState(item?.name || '');
-  const [node, setNode] = useState(item?.clash_node || '');
+  const [format, setFormat] = useState(item?.node ? 'config' : 'address');
+  const [address, setAddress] = useState('');
+  const [nodeConfig, setNodeConfig] = useState(
+    item?.node
+      ? JSON.stringify({ ...item.node, name: undefined }, null, 2)
+      : '',
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const save = async () => {
@@ -43,13 +47,16 @@ export function NetworkLineEditor({
       const data = await request<EnvironmentSettings>(
         '/api/network/save-line',
         {},
-        { id: item?.id, name, node },
+        {
+          id: item?.id,
+          name,
+          ...(format === 'address' ? { address } : { node_yaml: nodeConfig }),
+        },
       );
       const saved = data.proxies.find(
         (row) =>
           row.kind === 'clash' &&
           row.name === name.trim() &&
-          row.clash_node === node &&
           (item ? row.id === item.id : !existingIds.includes(row.id)),
       );
       onSaved(data, saved!.id);
@@ -61,7 +68,7 @@ export function NetworkLineEditor({
   };
   return (
     <ContentDialog
-      title={item ? '配置出口线路' : '添加出口线路'}
+      title={item ? '配置 Claude 节点' : '添加 Claude 节点'}
       guide="proxy-editor"
       busy={pending}
       onClose={onClose}
@@ -77,16 +84,21 @@ export function NetworkLineEditor({
           <Button
             type="submit"
             variant="primary"
-            disabled={pending || locked || !name.trim() || !node}
+            disabled={
+              pending ||
+              locked ||
+              !name.trim() ||
+              !(format === 'address' ? address.trim() : nodeConfig.trim())
+            }
           >
-            保存线路
+            保存节点
           </Button>
         </>
       }
     >
       {error && <Notice tone="error">{error}</Notice>}
       {locked && <Notice>停止运行中的环境后可修改配置。</Notice>}
-      <Field label="线路名称" htmlFor="network-line-name">
+      <Field label="节点名称" htmlFor="network-line-name">
         <TextInput
           disabled={locked}
           id="network-line-name"
@@ -95,27 +107,45 @@ export function NetworkLineEditor({
           required
         />
       </Field>
-      <Field label="Clash 节点">
+      <Field label="配置方式">
         <Select
           disabled={locked}
-          label="出口节点"
-          value={node}
-          onChange={(value) => {
-            setNode(value);
-            if (!name) setName(value);
-          }}
+          label="节点配置方式"
+          value={format}
+          onChange={setFormat}
           options={[
-            { value: '', label: '选择固定节点' },
-            ...network.nodes.map((row) => ({
-              value: row.name,
-              label: row.name,
-            })),
+            { value: 'address', label: 'HTTP / SOCKS5 地址' },
+            { value: 'config', label: '单节点 YAML / JSON' },
           ]}
         />
       </Field>
-      {!network.nodes.length && (
-        <Notice>请先在 Clash Verge 导入节点配置，再刷新网络设置。</Notice>
+      {format === 'address' ? (
+        <Field label="代理地址" htmlFor="network-node-address">
+          <TextInput
+            disabled={locked}
+            id="network-node-address"
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+            placeholder="socks5://用户名:密码@服务器:端口"
+            autoComplete="off"
+            required
+          />
+        </Field>
+      ) : (
+        <Field label="单节点配置" htmlFor="network-node-config">
+          <TextArea
+            disabled={locked}
+            id="network-node-config"
+            value={nodeConfig}
+            onChange={(event) => setNodeConfig(event.target.value)}
+            placeholder={
+              'type: socks5\nserver: proxy.example.com\nport: 1080\nusername: user\npassword: password'
+            }
+            rows={8}
+          />
+        </Field>
       )}
+      <p className="network-bound-accounts">仅保存此节点，不导入或更新订阅。</p>
     </ContentDialog>
   );
 }
@@ -189,7 +219,7 @@ export function NetworkConnectionEditor({
           placeholder={
             network.secret_set
               ? '已保存，留空保留'
-              : '自动连接时从 Clash 配置读取'
+              : '留空从本机 Clash 配置自动读取'
           }
           autoComplete="off"
         />

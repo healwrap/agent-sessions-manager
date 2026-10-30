@@ -116,6 +116,13 @@ export interface BrowserRuntimeState {
   sessions?: Record<string, LocalSession>;
 }
 export interface ProxyConfig {
+  node?: {
+    name: string;
+    type: string;
+    server: string;
+    port: number;
+    [key: string]: unknown;
+  };
   id: string;
   name: string;
   url: string;
@@ -157,6 +164,16 @@ export interface ClashNetwork {
   routing_ready: boolean;
   domains: string[];
   dns: string[];
+  auto_prepare?: boolean;
+  routing_active?: boolean;
+  restore_error?: string;
+  secret_source?: 'auto' | 'manual' | 'none';
+  profile?: { name: string; type: string; dynamic_providers: number };
+  system_proxy?: {
+    supported: boolean;
+    enabled: boolean | null;
+    error: string;
+  };
 }
 export type EnvironmentSection =
   'accounts' | 'browser' | 'claude-app' | 'proxies';

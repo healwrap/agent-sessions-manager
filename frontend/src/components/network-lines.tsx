@@ -36,7 +36,7 @@ export function NetworkLines({
     return (
       <EmptyState
         icon={<Globe2 size={28} />}
-        title={query ? '没有匹配的线路' : '还没有出口线路'}
+        title={query ? '没有匹配的节点' : '还没有 Claude 专用节点'}
       />
     );
   const bound = (id: string) =>
@@ -71,7 +71,11 @@ export function NetworkLines({
             title={item.name}
             subtitle={
               <span className="network-line-meta">
-                <span>{item.clash_node}</span>
+                <span>
+                  {item.node
+                    ? `${item.node.type.toUpperCase()} · ${item.node.server}:${item.node.port}`
+                    : item.clash_node}
+                </span>
                 {accounts && <span>{accounts}</span>}
                 {previous && (
                   <span title={new Date(previous.checked_at).toLocaleString()}>
@@ -104,7 +108,7 @@ export function NetworkLines({
                 <RemoveButton
                   label={'移除线路 ' + item.name}
                   disabled={busy || !!accounts}
-                  message="移除此出口线路？"
+                  message="移除此 Claude 节点？"
                   onRemove={() => onDelete(item.id)}
                 />
               </>
@@ -113,11 +117,7 @@ export function NetworkLines({
             {data.network?.connected &&
               !data.network.nodes.some(
                 (row) => row.name === item.clash_node,
-              ) && (
-                <Notice tone="warning">
-                  绑定节点已不存在，请重新选择线路。
-                </Notice>
-              )}
+              ) && <Notice tone="warning">请配置 Claude 专用节点。</Notice>}
           </ResourceRow>
         );
       })}

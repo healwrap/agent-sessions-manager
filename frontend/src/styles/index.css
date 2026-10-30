@@ -36,6 +36,7 @@
 @import './dsh/thinking.css' layer(components);
 @import './dsh/assistant-tool-calls.css' layer(components);
 @import './dsh/tooltip.css' layer(components);
+@import './dsh/toast.css' layer(components);
 @import './dsh/json-layout.css' layer(components);
 @import './dsh/json-strings.css' layer(components);
 @import './dsh/json-actions.css' layer(components);

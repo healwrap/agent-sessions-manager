@@ -1,6 +1,7 @@
+import { useEffect, useRef } from 'react';
 import type { ClashNetwork } from '../lib/environment-settings';
 import { SettingsRow } from './settings/row';
-import { Notice, Switch } from './ui';
+import { dismissToast, Switch, toast } from './ui';
 
 export function NetworkControls({
   network,
@@ -15,6 +16,23 @@ export function NetworkControls({
   loadingControl?: string;
   onChange: (name: string, enabled: boolean) => void;
 }) {
+  const warning = useRef<{ text: string; sequence: number } | null>(null);
+  const proxy = network.system_proxy;
+  const message =
+    proxy?.error ||
+    (network.connected &&
+    typeof proxy?.clash_configured === 'boolean' &&
+    typeof proxy.enabled === 'boolean' &&
+    proxy.clash_configured !== proxy.enabled
+      ? `本机系统代理${proxy.enabled ? '已开启' : '已关闭'}，Clash 设置仍为${proxy.clash_configured ? '开启' : '关闭'}。请在 Clash 中同步开关。`
+      : '');
+  useEffect(() => {
+    if (warning.current?.text === message) return;
+    if (warning.current) dismissToast(warning.current.sequence);
+    warning.current = message
+      ? { text: message, sequence: toast(message, { tone: 'warning' }) }
+      : null;
+  }, [message]);
   return (
     <div className="network-controls">
       <SettingsRow
@@ -67,21 +85,6 @@ export function NetworkControls({
       {locked && (
         <p className="network-bound-accounts">停止账号环境后可修改网络开关。</p>
       )}
-      {network.system_proxy?.error && (
-        <Notice tone="warning">{network.system_proxy.error}</Notice>
-      )}
-      {typeof network.system_proxy?.clash_configured === 'boolean' &&
-        network.system_proxy.enabled !== null &&
-        network.system_proxy.clash_configured !==
-          network.system_proxy.enabled && (
-          <Notice tone="warning">
-            Clash 设置为
-            {network.system_proxy.clash_configured ? '开启' : '关闭'}
-            系统代理，本机实际
-            {network.system_proxy.enabled ? '已开启' : '未开启'}
-            。上方开关显示本机实际状态，请在 Clash 中调整设置。
-          </Notice>
-        )}
     </div>
   );
 }

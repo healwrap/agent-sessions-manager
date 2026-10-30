@@ -7,6 +7,7 @@ import { guideStore, guideTopics, type GuideTopic } from './state/guide-store';
 import { sessionStore } from './state/session-store';
 import { applyTheme } from './lib/theme';
 import { demoStorage } from './demo/storage';
+import { ToastLayer } from './components/ui/toast';
 import './styles/index.css';
 
 // Demo storage belongs to this frame, never to the application origin.
@@ -56,11 +57,7 @@ function DemoApp() {
         onNavigate={() => sessionStore.notify('演示包含账号、环境与代理操作。')}
       />
       <GuideCenter onNavigate={() => {}} />
-      {state.toast && (
-        <div id="toast" role="status">
-          {state.toast}
-        </div>
-      )}
+      <ToastLayer />
     </>
   );
 }

@@ -29,6 +29,7 @@ import {
   IconButton,
   Tooltip,
   TooltipLayer,
+  ToastLayer,
   ResourceCard,
   Select,
   SettingsButton,
@@ -39,6 +40,7 @@ import './catalog.css';
 import { LayoutPreview } from './layout-preview';
 import { InputPreview } from './input-preview';
 import { GuidePreview } from './guide-preview';
+import { ToastPreview } from './toast-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
@@ -120,6 +122,7 @@ export function ComponentCatalog() {
       ) : (
         <div className="catalog-grid">
           <InputPreview />
+          <ToastPreview />
           <Panel title="悬浮提示">
             <div className="ui-actions">
               <IconButton label="重新授权" icon={<KeyRound size={17} />} />
@@ -391,6 +394,7 @@ export function ComponentCatalog() {
         </EditorDialog>
       )}
       <TooltipLayer />
+      <ToastLayer />
     </main>
   );
 }

@@ -33,5 +33,12 @@ export { ResourceCard, ResourceRow } from './resource-card';
 export { Field } from './field';
 export { ProgressMeter } from './progress-meter';
 export { Tooltip, TooltipLayer } from './tooltip';
+export {
+  Toast,
+  ToastLayer,
+  toast,
+  dismissToast,
+  type ToastOptions,
+} from './toast';
 export { WorkspacePicker } from '../workspace-picker';
 export { WorkspaceLayout, WorkspaceSidebar } from '../workspace-layout';

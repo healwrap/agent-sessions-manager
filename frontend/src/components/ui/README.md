@@ -16,6 +16,7 @@
 | ChoiceGroup 下划线导航         | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                                                        |
 | Select / 菜单                  | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                                                             |
 | Tooltip 悬浮提示               | `packages/client/ui-primitives/src/Tooltip.tsx`、`Tooltip.module.css`                                                                                                      | `ui/tooltip.tsx`、`styles/dsh/tooltip.css`，统一悬停、焦点与顶层定位                            |
+| Toast 浮动提示                 | `packages/client/ui-primitives/src/Toast.tsx`、`Toast.module.css`                                                                                                          | `ui/toast.tsx`、`styles/dsh/toast.css`，沿用深色表面、顶部居中与定时淡出                        |
 | 状态标签几何                   | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名                                             |
 | ContentDialog / EditorDialog   | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，共用标题、关闭、滚动体与底部操作区                                  |
 | 设置面板                       | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                                                           |
@@ -31,7 +32,7 @@
 | 基础控件 | Button、IconButton、TextInput、TextArea、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                        |
 | 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                                         | 标题、信息分组、图标与事实展示             |
 | 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                                      | 互斥选择、搜索与筛选                       |
-| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton、Tooltip、TooltipLayer                                                 | 空列表、加载、操作反馈、悬浮提示与移除确认 |
+| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton、Tooltip、TooltipLayer、Toast、ToastLayer、toast                       | 空列表、加载、操作反馈、浮动提示与移除确认 |
 | 使用引导 | GuidedTour、GuideLink                                                                                              | 高亮真实控件、展示步骤与资料入口           |
 | 资源展示 | ResourceCard、ResourceRow                                                                                          | 组合身份、状态、操作、内容及折叠区         |
 | 表单     | Field                                                                                                              | 标签与控件关联                             |
@@ -74,6 +75,10 @@ ProgressMeter 使用原生 progress 语义，统一显示已用比例，适配 D
 Tooltip / TooltipLayer 使用 DSH Tooltip 的紧凑深色表面、R8 圆角与 13px / 20px 排版，替代浏览器的原生 `title` 提示。工作区统一挂载一个 TooltipLayer；IconButton 自动显示 label 或显式 title，Button 的显式 title 也接入同一层。普通文本使用 `<Tooltip label="完整内容">…</Tooltip>`，已有控件可以设置 `data-tooltip`，不增加影响布局的包裹节点。
 
 鼠标悬停延迟 350ms，键盘焦点立即显示；点击、离开、滚动、失焦和 Escape 关闭。提示通过 HTML popover 进入顶层，自行绘制样式，支持禁用控件、弹窗内控件、屏幕边缘翻转及长路径换行。打开期间用 aria-describedby 关联控件，关闭时保留原有描述；沿用减少动态效果偏好。组件预览包含普通、禁用和长文本提示。
+
+Toast 用于短暂反馈，通过 `toast('提示文字', { tone: 'success' })` 调用，支持 info / success / warning / error、可选行内 action 和 holdMs。工作区、独立演示页及组件预览各挂载一个 ToastLayer；原有 sessionStore.notify 也使用这个组件。每次调用更新展示序号，相同文字可重新触发，新消息替换旧消息，旧计时器不会关闭新消息。
+
+沿用 DSH Toast 的深色表面、R16、14px / 22px 排版、顶部 40px 居中及淡出：普通和成功提示停留 3 秒，警告和错误停留 5 秒，再用 1 秒淡出。通过手动 popover 进入顶层，保证弹窗内可见；不抢焦点，提示表面允许点击穿透，仅 action 可点击。关闭动画时仍按时移除。网络系统代理状态差异使用 Toast，相同差异在刷新或轮询时只提示一次；恢复一致后再次出现差异才重新提示。
 
 启动现有 Vite 服务后访问 `/?components=1`，查看浅深色、按钮、搜索筛选、资源状态、表单弹窗、加载与空列表。示例只维护页面内状态。
 

@@ -4,6 +4,7 @@ import {
   emptyPreferences,
   type AppState,
   type View,
+  type ToastOptions,
 } from './model';
 import { createTraceLoader } from './trace-loader';
 import { createNavigation, updateAddress } from './navigation';
@@ -31,7 +32,6 @@ export class SessionStore {
   private listeners = new Set<() => void>();
   private sessionsGeneration = 0;
   private preferenceSave = Promise.resolve();
-  private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private scrollPositions = { trace: 0, chat: 0 };
   state: AppState = initialState();
   constructor(readonly api: Request = request) {}
@@ -63,10 +63,13 @@ export class SessionStore {
       },
     });
   }
-  notify(message: string) {
-    clearTimeout(this.toastTimer);
-    this.update({ toast: message });
-    this.toastTimer = setTimeout(() => this.update({ toast: '' }), 3500);
+  notify(message: string, options: ToastOptions = {}) {
+    const sequence = this.state.toastSequence + 1;
+    this.update({
+      toast: message,
+      toastSequence: sequence,
+      toastOptions: options,
+    });
   }
 
   async initialize() {

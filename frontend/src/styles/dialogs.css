@@ -28,20 +28,6 @@ dialog pre {
   font-size: 20px;
   color: inherit;
 }
-#toast {
-  position: fixed;
-  z-index: 20;
-  bottom: 145px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: var(--dsw-alias-toast-bg);
-  color: var(--dsw-alias-toast-label);
-  font-size: 12px;
-  max-width: calc(100vw - 32px);
-  overflow-wrap: anywhere;
-}
 #handoff-text {
   width: 100%;
   height: 300px;

@@ -58,6 +58,11 @@ export const emptyPreferences = (): Preferences => ({
   metadata: {},
   projectAssignments: {},
 });
+export interface ToastOptions {
+  tone?: 'info' | 'success' | 'warning' | 'error';
+  holdMs?: number;
+  action?: { label: string; onClick: () => void };
+}
 export interface AppState {
   initializing: boolean;
   catalogueLoading: boolean;
@@ -89,6 +94,8 @@ export interface AppState {
   settingsOpen: boolean;
   themePreview: ThemePreference | null;
   toast: string;
+  toastSequence: number;
+  toastOptions: ToastOptions;
   error: string;
   foldTurns: boolean;
   foldCalls: boolean;
@@ -132,6 +139,8 @@ export const initialState = (): AppState => ({
   settingsOpen: false,
   themePreview: null,
   toast: '',
+  toastSequence: 0,
+  toastOptions: {},
   error: '',
   foldTurns: false,
   foldCalls: false,

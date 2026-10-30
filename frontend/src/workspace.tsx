@@ -12,6 +12,7 @@ import { SettingsDialog } from './components/settings-dialog';
 import { GuideCenter } from './components/guide-center';
 import { guideStore, useGuide } from './state/guide-store';
 import { TooltipLayer } from './components/ui/tooltip';
+import { ToastLayer } from './components/ui/toast';
 
 const GuideDemoWorkspace = lazy(
   () => import('./components/guide-demo-workspace'),
@@ -130,11 +131,6 @@ export function Workspace() {
         )}
         <SettingsDialog open={state.settingsOpen} />
         <GuideCenter onNavigate={navigate} />
-        {state.toast && (
-          <div id="toast" role="status">
-            {state.toast}
-          </div>
-        )}
       </div>
       {demoOpen && (
         <Suspense fallback={null}>
@@ -145,6 +141,7 @@ export function Workspace() {
         </Suspense>
       )}
       <TooltipLayer />
+      <ToastLayer />
     </>
   );
 }

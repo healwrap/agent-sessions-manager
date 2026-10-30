@@ -21,7 +21,8 @@ from agent_sessions.platform_process import claude_processes
 from agent_sessions.applications import app_executable
 from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
 from .network import configure as configure_network
-from .connections import ProcessConnections, ConnectionViolation, public
+from .connections import ProcessConnections, ConnectionViolation, SAMPLE_INTERVAL
+from .connection_observation import observation, checks as connection_checks, describe as describe_connection
 from .session_sync import synchronize, restore_report
 
 
@@ -162,7 +163,7 @@ class AppRuntime:
                 with (directory/'app-launch.log').open('ab') as log:
                     process = subprocess.Popen(args, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
                 self.processes[key] = process
-                self.observers[key] = ProcessConnections(process.pid)
+                self.observers[key] = ProcessConnections(process.pid, app_executable(app), config)
                 run.update(pid=process.pid, stage='正在确认 App 的独立数据目录')
             for attempt in range(60):
                 if run.get('cancelled'): return
@@ -190,25 +191,24 @@ class AppRuntime:
             if relay: relay.close()
 
     def _observe(self, key, run, process, proxied):
+        identity_at = 0
         while not run.get('cancelled') and process.poll() is None:
+            started = time.monotonic()
             try:
-                self.identity.verify(self.environments.read(), 'app_profiles', key)
+                if started >= identity_at:
+                    self.identity.verify(self.environments.read(), 'app_profiles', key)
+                    identity_at = started+2
                 observer = self.observers.get(key)
                 if not observer: return
                 rows = observer.sample()
-                direct = [row for row in rows if public(row['host'])] if proxied else []
-                if direct:
-                    run['network_observation'] = {'scope': 'process-tree', 'connections': rows, 'violations': direct,
-                                                  'checked_at': datetime.now(timezone.utc).isoformat()}
-                    raise ConnectionViolation('发现 App 进程树的公网直连：'+'、'.join(str(row['pid'])+' → '+row['host']+':'+str(row['port']) for row in direct))
+                snapshot = observation(rows, proxied)
+                if snapshot['violations']:
+                    run['network_observation'] = snapshot
+                    raise ConnectionViolation('发现 Claude 组件的公网直连：'+'；'.join(describe_connection(row) for row in snapshot['violations']))
                 with self.lock:
                     if self.runs.get(key) is not run or run.get('cancelled'): return
-                    run['network_observation'] = {'scope': 'process-tree', 'connections': rows,
-                                                  'checked_at': datetime.now(timezone.utc).isoformat()}
-                    check = dict(id='app-connections', title='App 连接采样', policy='warn', state='pass' if rows else 'unknown',
-                                 value='已观测连接未发现公网直连' if proxied and rows else '当前没有连接样本' if not rows else '当前使用系统路由',
-                                 detail='周期采样 App 及已发现子进程；系统级服务和 VM 内部进程尚未验收，不代表系统级阻断')
-                    run['checks'] = [row for row in run['checks'] if row['id'] != check['id']]+[check]
+                    run['network_observation'] = snapshot
+                    run['checks'] = [row for row in run['checks'] if row['id'] not in ('app-connections', 'app-tool-connections')]+connection_checks(snapshot, proxied)
             except (IdentityConflict, ConnectionViolation) as error:
                 try: self.stop(key)
                 except (ValueError, OSError, psutil.Error):
@@ -218,17 +218,17 @@ class AppRuntime:
                 with self.lock:
                     check_id = 'app-connections' if isinstance(error, ConnectionViolation) else 'app-identity'
                     run['checks'] = [row for row in run['checks'] if row['id'] != check_id]+[
-                        dict(id=check_id, title='App 连接采样' if check_id == 'app-connections' else '设备标识隔离',
+                        dict(id=check_id, title='Claude 连接采样' if check_id == 'app-connections' else '设备标识隔离',
                              policy='block', state='fail', value=str(error), detail='原登录数据保持在原目录')]
                     run.update(status='blocked', stage='环境检查发现异常，已停止 App', error=str(error))
                 return
             except (OSError, ValueError, psutil.Error, subprocess.TimeoutExpired) as error:
                 with self.lock:
-                    run['network_observation'] = {'scope': 'unavailable', 'error': str(error)}
+                    run['network_observation'] = {'scope': 'unavailable', 'sample_interval_ms': round(SAMPLE_INTERVAL*1000), 'error': str(error)}
                     run['checks'] = [row for row in run['checks'] if row['id'] != 'app-connections']+[
-                        dict(id='app-connections', title='App 连接采样', policy='warn', state='unknown',
+                        dict(id='app-connections', title='Claude 连接采样', policy='warn', state='unknown',
                              value='未取得完整进程连接样本', detail=str(error))]
-            time.sleep(2)
+            time.sleep(max(.05, SAMPLE_INTERVAL-(time.monotonic()-started)))
 
     def stop(self, key):
         with self.lock:

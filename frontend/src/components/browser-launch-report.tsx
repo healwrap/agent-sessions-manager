@@ -7,7 +7,7 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
     <div className="environment-gate-results">
       {checks.map((check) => {
         const tone =
-          check.policy === 'off'
+          check.policy === 'off' || check.state === 'info'
             ? 'neutral'
             : check.state === 'pass'
               ? 'success'
@@ -43,7 +43,11 @@ export function GateResults({ checks }: { checks: GateResult[] }) {
                 : check.state === 'pass'
                   ? '通过'
                   : check.label ||
-                    (check.state === 'unknown' ? '无法判定' : '失败')}
+                    (check.state === 'info'
+                      ? '已记录'
+                      : check.state === 'unknown'
+                        ? '无法判定'
+                        : '失败')}
             </StatusBadge>
           </div>
         );

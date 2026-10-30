@@ -11,7 +11,7 @@ export interface GateResult {
   id: string;
   title: string;
   policy: GateMode;
-  state: 'pass' | 'fail' | 'unknown' | 'skip';
+  state: 'pass' | 'fail' | 'unknown' | 'skip' | 'info';
   value: string;
   detail: string;
   label?: string;

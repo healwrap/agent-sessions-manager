@@ -67,7 +67,7 @@ class ProcessState:
 
     def save(self, runs):
         fields = ('profile_id', 'account_id', 'name', 'status', 'stage', 'checked_at', 'checks',
-                  'resolved', 'browser_checks', 'error', 'engine', 'pid', 'data_directory', 'session_sync')
+                  'resolved', 'browser_checks', 'error', 'engine', 'pid', 'data_directory', 'session_sync', 'network_observation')
         value = {key: {field: row[field] for field in fields if field in row} for key, row in runs.items()}
         content = json.dumps(value, ensure_ascii=False, indent=2)
         with self.lock:

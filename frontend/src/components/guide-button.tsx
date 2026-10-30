@@ -6,7 +6,7 @@ export function GuideButton() {
   return (
     <IconButton
       className="guide-trigger"
-      icon={<CircleHelp size={17} />}
+      icon={<CircleHelp size={16} strokeWidth={1.6} />}
       label="帮助与引导"
       onClick={guideStore.help}
     />

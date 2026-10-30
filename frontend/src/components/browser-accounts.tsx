@@ -1,17 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronRight, Plus, SearchX, Users } from 'lucide-react';
 import type { EnvironmentSettings } from '../lib/environment-settings';
-import {
-  accountClients,
-  accountStatus,
-  needsAttention,
-  type AccountActions,
-} from '../lib/account-view';
+import { accountClients, type AccountActions } from '../lib/account-view';
 import {
   Button,
   BusyState,
-  ChoiceGroup,
-  CollectionToolbar,
   CollectionPanel,
   MasterDetail,
   EmptyState,
@@ -25,7 +18,15 @@ import { sessionStore } from '../state/session-store';
 import { guideStore } from '../state/guide-store';
 import { useAccountUsages } from '../hooks/use-account-usages';
 import { AccountOverview } from './account-overview';
-import { accountListStatus, planLabels } from '../lib/account-overview';
+import { planLabels } from '../lib/account-overview';
+import {
+  accountState,
+  accountStates,
+  defaultAccountFilters,
+  matchesRuntime,
+  type AccountStateKind,
+} from '../lib/account-state';
+import { AccountFilters } from './account-filters';
 
 export function BrowserAccounts({
   data,
@@ -45,18 +46,13 @@ export function BrowserAccounts({
 }) {
   const usage = useAccountUsages(data, active);
   const [estimateModel, setEstimateModel] = useState('claude-opus-5-5');
-  const selectedModel =
-    usage.benchmarks?.models.find((row) => row.id === estimateModel) ||
-    usage.benchmarks?.models[0];
   const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filters, setFilters] = useState(defaultAccountFilters);
   useEffect(() => {
     if (guidedAccountId) {
       setSelected(guidedAccountId);
-      setQuery('');
-      setFilter('all');
+      setFilters(defaultAccountFilters);
     }
   }, [guidedAccountId]);
   const accounts = useMemo(
@@ -69,36 +65,32 @@ export function BrowserAccounts({
             (client) =>
               data.proxies.find(
                 (proxy) => proxy.id === client.profile?.proxy_id,
-              )?.name || '系统路由',
+              )?.name || '未绑定代理',
           );
         return {
           account,
           clients,
           proxies,
-          status: accountStatus(clients),
-          running: clients.some((client) => client.run?.alive),
-          attention: clients.some(needsAttention),
+          status: accountState(
+            account,
+            data,
+            usage.items[account.id],
+            usage.now,
+          ),
+          plan: account.usage_plan || usage.items[account.id]?.plan,
         };
       }),
-    [data],
+    [data, usage.items, usage.now],
   );
-  const filters = [
-    { id: 'all', label: '全部', count: accounts.length },
-    {
-      id: 'running',
-      label: '运行中',
-      count: accounts.filter((item) => item.running).length,
-    },
-    {
-      id: 'attention',
-      label: '待处理',
-      count: accounts.filter((item) => item.attention).length,
-    },
-  ];
-  const visible = accounts.filter(
+  const matching = accounts.filter(
     (item) =>
-      (filter === 'all' ||
-        (filter === 'running' ? item.running : item.attention)) &&
+      (filters.provider === 'all' ||
+        item.account.provider === filters.provider) &&
+      (filters.plan === 'all' ||
+        (filters.plan === 'unknown'
+          ? !item.plan
+          : item.plan === filters.plan)) &&
+      matchesRuntime(item.clients, filters.runtime) &&
       [
         item.account.name,
         item.account.provider,
@@ -107,7 +99,17 @@ export function BrowserAccounts({
       ]
         .join(' ')
         .toLocaleLowerCase()
-        .includes(query.trim().toLocaleLowerCase()),
+        .includes(filters.query.trim().toLocaleLowerCase()),
+  );
+  const counts = Object.fromEntries([
+    ['all', matching.length],
+    ...Object.keys(accountStates).map((kind) => [
+      kind,
+      matching.filter((item) => item.status.kind === kind).length,
+    ]),
+  ]) as Record<'all' | AccountStateKind, number>;
+  const visible = matching.filter(
+    (item) => filters.state === 'all' || item.status.kind === filters.state,
   );
   const current =
     visible.find((item) => item.account.id === selected) || visible[0];
@@ -127,23 +129,11 @@ export function BrowserAccounts({
       ))}
       <CollectionPanel
         toolbar={
-          <CollectionToolbar
-            query={query}
-            onQuery={setQuery}
-            searchLabel="搜索账号"
-            placeholder="搜索账号或代理"
-          >
-            <ChoiceGroup
-              label="筛选账号状态"
-              value={filter}
-              onChange={setFilter}
-              items={filters.map((item) => ({
-                value: item.id,
-                label: item.label,
-                count: item.count,
-              }))}
-            />
-          </CollectionToolbar>
+          <AccountFilters
+            value={filters}
+            counts={counts}
+            onChange={setFilters}
+          />
         }
       >
         {loading && !accounts.length ? (
@@ -170,8 +160,7 @@ export function BrowserAccounts({
             action={
               <Button
                 onClick={() => {
-                  setQuery('');
-                  setFilter('all');
+                  setFilters(defaultAccountFilters);
                 }}
               >
                 清除筛选
@@ -197,18 +186,7 @@ export function BrowserAccounts({
                 aria-label="账号列表"
                 data-guide="account-list"
               >
-                {visible.map(({ account, status }) => {
-                  const plan =
-                    account.usage_plan || usage.items[account.id]?.plan;
-                  const summary =
-                    account.provider === 'claude'
-                      ? accountListStatus(
-                          usage.items[account.id],
-                          usage.now,
-                          selectedModel,
-                          status,
-                        )
-                      : status;
+                {visible.map(({ account, status, plan }) => {
                   return (
                     <button
                       className="account-list-item"
@@ -231,8 +209,8 @@ export function BrowserAccounts({
                           {account.provider === 'claude' && plan && (
                             <span>{planLabels[plan]}</span>
                           )}
-                          <StatusBadge tone={summary.tone}>
-                            {summary.label}
+                          <StatusBadge tone={status.tone}>
+                            {status.label}
                           </StatusBadge>
                         </span>
                       </span>
@@ -249,6 +227,7 @@ export function BrowserAccounts({
               data={data}
               busy={busy}
               usage={usage}
+              status={current.status}
               guidedTarget={guidedTarget}
               {...actions}
             />

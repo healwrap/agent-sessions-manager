@@ -5,11 +5,19 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { accountClients, type AccountActions } from '../lib/account-view';
-import { ChoiceGroup, IconButton, RemoveButton, StatusBadge } from './ui';
+import {
+  ChoiceGroup,
+  IconButton,
+  RemoveButton,
+  SectionHeading,
+  StatusBadge,
+} from './ui';
 import { planLabels } from '../lib/account-overview';
 import { AccountClientPanel } from './account-client-panel';
 import type { AccountUsages } from '../hooks/use-account-usages';
-import { AccountHealthPanel } from './account-health-panel';
+import { AccountStatusPanel } from './account-status-panel';
+import { AccountUsagePanel } from './account-usage-panel';
+import type { AccountState } from '../lib/account-state';
 
 export function AccountDetails({
   account,
@@ -17,6 +25,7 @@ export function AccountDetails({
   busy,
   guidedTarget,
   usage,
+  status,
   ...actions
 }: AccountActions & {
   account: BrowserAccount;
@@ -24,6 +33,7 @@ export function AccountDetails({
   busy: boolean;
   guidedTarget?: 'browser' | 'app';
   usage: AccountUsages;
+  status: AccountState;
 }) {
   const clients = accountClients(account, data);
   const [target, setTarget] = useState(
@@ -72,13 +82,19 @@ export function AccountDetails({
           />
         </div>
       </header>
+      <AccountStatusPanel
+        accountId={account.id}
+        usage={usage}
+        status={status}
+      />
       {account.provider === 'claude' && (
-        <AccountHealthPanel accountId={account.id} usage={usage} busy={busy} />
+        <AccountUsagePanel account={account} usage={usage} busy={busy} />
       )}
       <div className="account-client-switch">
+        <SectionHeading level={3} title="访问环境" />
         <ChoiceGroup
-          label="选择使用方式"
-          variant="segmented"
+          label="选择访问环境"
+          variant="tabs"
           value={client.target}
           onChange={setTarget}
           items={clients.map((item) => ({
@@ -106,7 +122,6 @@ export function AccountDetails({
         client={client}
         data={data}
         busy={busy}
-        usage={usage}
         {...actions}
       />
     </section>

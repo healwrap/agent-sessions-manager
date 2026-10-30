@@ -64,33 +64,6 @@ export function accountClients(
   ];
 }
 
-export function needsAttention(client: AccountClient) {
-  if (!client.profile) return false;
-  return (
-    !client.available ||
-    ['blocked', 'failed', 'interrupted'].includes(client.run?.status || '') ||
-    (client.session?.state !== 'saved' &&
-      !client.run?.alive &&
-      client.run?.status !== 'checking')
-  );
-}
-
-export function accountStatus(clients: AccountClient[]) {
-  if (clients.some((client) => client.run?.status === 'checking'))
-    return { label: '检查中', tone: 'warning' as const };
-  if (
-    clients.some((client) =>
-      ['blocked', 'failed', 'interrupted'].includes(client.run?.status || ''),
-    )
-  )
-    return { label: '需处理', tone: 'error' as const };
-  if (clients.some((client) => client.run?.alive))
-    return { label: '运行中', tone: 'success' as const };
-  if (clients.some((client) => client.session?.state === 'saved'))
-    return { label: '凭据已保存', tone: 'neutral' as const };
-  return { label: '待登录', tone: 'neutral' as const };
-}
-
 export function clientIssue(client: AccountClient) {
   if (!client.profile) return '尚未绑定环境';
   if (!client.available)

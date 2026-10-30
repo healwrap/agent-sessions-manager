@@ -7,20 +7,9 @@ import {
 } from 'lucide-react';
 import type { AccountUsages } from '../hooks/use-account-usages';
 import type { EnvironmentSettings } from '../lib/environment-settings';
-import {
-  aggregateQuota,
-  accountHealth,
-  quotaState,
-  tokens,
-} from '../lib/account-overview';
-import {
-  Button,
-  Notice,
-  Panel,
-  SectionHeading,
-  Select,
-  StatusBadge,
-} from './ui';
+import { aggregateQuota, tokens } from '../lib/account-overview';
+import { Button, Notice, Panel, SectionHeading, Select } from './ui';
+import { accountState } from '../lib/account-state';
 import { QuotaSourceDialog } from './quota-source-dialog';
 
 export function AccountOverview({
@@ -41,17 +30,10 @@ export function AccountOverview({
   const models = benchmarks?.models || [];
   const model = models.find((row) => row.id === modelId) || models[0];
   const claude = data.accounts.filter((row) => row.provider === 'claude');
-  const counts = { available: 0, exhausted: 0, restricted: 0, unknown: 0 };
-  const healthCounts = {
-    accessible: 0,
-    disabled: 0,
-    organization_disabled: 0,
-    unknown: 0,
-  };
-  for (const account of claude)
-    counts[quotaState(items[account.id], now, model).state]++;
-  for (const account of claude)
-    healthCounts[accountHealth(items[account.id], now).state]++;
+  const available = data.accounts.filter(
+    (account) =>
+      accountState(account, data, items[account.id], now).kind === 'available',
+  ).length;
   const refreshing = Object.values(items).some((row) => row.refreshing);
   const canRefresh = Object.values(items).some((row) => row.can_refresh);
   const quota = [false, true].map((weekly) =>
@@ -74,21 +56,6 @@ export function AccountOverview({
           </Button>
         }
       />
-      <div className="account-overview-health" aria-label="账号封禁状态汇总">
-        <span>账号状态</span>
-        <StatusBadge tone={healthCounts.accessible ? 'success' : 'neutral'}>
-          可访问 {healthCounts.accessible}
-        </StatusBadge>
-        <StatusBadge tone={healthCounts.disabled ? 'error' : 'neutral'}>
-          已封禁／停用 {healthCounts.disabled}
-        </StatusBadge>
-        {!!healthCounts.organization_disabled && (
-          <StatusBadge tone="error">
-            组织停用 {healthCounts.organization_disabled}
-          </StatusBadge>
-        )}
-        <StatusBadge>待确认 {healthCounts.unknown}</StatusBadge>
-      </div>
       <div className="account-overview-metrics">
         <div className="account-overview-metric">
           <span>
@@ -107,12 +74,12 @@ export function AccountOverview({
           </p>
         </div>
         <div className="account-overview-metric" data-tone="available">
-          <span>额度可用账号</span>
+          <span>可用账号</span>
           <strong>
-            {usage.loading ? '—' : counts.available}
+            {usage.loading ? '—' : available}
             <small>个</small>
           </strong>
-          <p>5 小时、周额度均有余额</p>
+          <p>账号可访问，5 小时与周额度均有余额</p>
         </div>
         {quota.map((row, index) => (
           <div className="account-overview-metric" key={index}>
@@ -134,15 +101,6 @@ export function AccountOverview({
         ))}
       </div>
       <div className="account-overview-footer">
-        <div className="account-overview-states" aria-label="账号额度状态">
-          <StatusBadge tone={counts.exhausted ? 'warning' : 'neutral'}>
-            额度用尽 {counts.exhausted}
-          </StatusBadge>
-          <StatusBadge tone={counts.restricted ? 'error' : 'neutral'}>
-            已停用 {counts.restricted}
-          </StatusBadge>
-          <StatusBadge>待确认 {counts.unknown}</StatusBadge>
-        </div>
         <div className="account-overview-options">
           {!!models.length && (
             <Select

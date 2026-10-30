@@ -1,5 +1,4 @@
 import type { AccountUsage } from './account-usage';
-import type { accountStatus } from './account-view';
 import type { BrowserAccount } from './environment-settings';
 
 export const planLabels = { pro: 'Pro', max5: 'Max 5x', max20: 'Max 20x' };
@@ -47,7 +46,6 @@ export interface UsageOverview {
   items: AccountUsage[];
   benchmarks: QuotaBenchmarks;
 }
-export type QuotaState = 'available' | 'exhausted' | 'restricted' | 'unknown';
 export function accountHealth(usage: AccountUsage | undefined, now: number) {
   const health = usage?.health;
   if (health?.state === 'disabled' || usage?.status === 'account_disabled')
@@ -96,54 +94,6 @@ export function usageFresh(usage: AccountUsage | undefined, now: number) {
     now / 1000 - usage.updated_at < 300
   );
 }
-export function quotaState(
-  usage: AccountUsage | undefined,
-  now: number,
-  model?: BenchmarkModel,
-): { state: QuotaState; label: string } {
-  if (usage?.status === 'account_disabled')
-    return { state: 'restricted', label: '账号已停用' };
-  if (usage?.status === 'organization_disabled')
-    return { state: 'restricted', label: '组织已停用' };
-  if (usage?.plan && model?.plans[usage.plan]?.included === false)
-    return { state: 'unknown', label: '套餐未含此模型' };
-  if (!usageFresh(usage, now))
-    return {
-      state: 'unknown',
-      label: usage?.refreshing
-        ? '查询中'
-        : usage?.status === 'authorization_required'
-          ? '待授权'
-          : usage?.status === 'login_required'
-            ? '需重新登录'
-            : '额度待确认',
-    };
-  const five = currentWindow(usage, 'five_hour', now);
-  const week = currentWindow(usage, 'seven_day', now);
-  if (five && five.used_percent >= 100)
-    return { state: 'exhausted', label: '5 小时已用尽' };
-  if (week && week.used_percent >= 100)
-    return { state: 'exhausted', label: '周额度已用尽' };
-  const scoped = modelWindows(usage!, model).filter(
-    (row) => !row.resets_at || Date.parse(row.resets_at) > now,
-  );
-  if (
-    scoped.some(
-      (row) =>
-        (!row.resets_at || Date.parse(row.resets_at) > now) &&
-        row.used_percent >= 100,
-    )
-  )
-    return { state: 'exhausted', label: '模型额度已用尽' };
-  if (!five || !week) return { state: 'unknown', label: '额度不完整' };
-  if (
-    usage?.plan &&
-    (model?.plans[usage.plan]?.weekly_fraction ?? 1) < 1 &&
-    !scoped.length
-  )
-    return { state: 'unknown', label: '模型额度待确认' };
-  return { state: 'available', label: '额度可用' };
-}
 export function modelWindows(usage: AccountUsage, model?: BenchmarkModel) {
   const family = model?.family.split('-')[0];
   return family
@@ -154,29 +104,6 @@ export function modelWindows(usage: AccountUsage, model?: BenchmarkModel) {
             row.label.toLowerCase().includes(family)),
       )
     : [];
-}
-export function accountListStatus(
-  usage: AccountUsage | undefined,
-  now: number,
-  model: BenchmarkModel | undefined,
-  runtime: ReturnType<typeof accountStatus>,
-) {
-  const health = accountHealth(usage, now);
-  if (health.tone === 'error') return health;
-  const quota = quotaState(usage, now, model);
-  if (quota.state === 'exhausted')
-    return { label: quota.label, tone: 'warning' as const };
-  if (runtime.tone === 'error' || runtime.label === '检查中') return runtime;
-  if (usage?.refreshing) return { label: '检测中', tone: 'neutral' as const };
-  if (quota.state === 'available' && health.state === 'accessible')
-    return { label: '可用', tone: 'success' as const };
-  if (usage?.status === 'login_required')
-    return { label: '需重新登录', tone: 'warning' as const };
-  if (runtime.label === '待登录') return runtime;
-  return {
-    label: quota.state === 'unknown' ? quota.label : '待确认',
-    tone: 'neutral' as const,
-  };
 }
 export function tokens(value: number) {
   return new Intl.NumberFormat('en-US', {

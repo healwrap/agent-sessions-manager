@@ -25,7 +25,39 @@
   min-width: 0;
 }
 .account-client-switch {
-  padding: 0 24px;
+  margin: 0 24px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+.account-client-switch .ui-section-heading {
+  margin-bottom: 8px;
+}
+.account-status-panel {
+  display: grid;
+  gap: 6px;
+  margin: 0 24px 20px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.account-status-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.account-status-heading > svg,
+.account-status-heading time,
+.account-status-panel p {
+  color: var(--dsw-alias-label-secondary);
+}
+.account-status-heading time {
+  margin-left: auto;
+  font-size: 12px;
+  line-height: 20px;
+}
+.account-status-panel p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 .account-live-dot {
   width: 6px;
@@ -121,8 +153,9 @@
   .account-launch-bar {
     padding: 20px;
   }
-  .account-client-switch {
-    padding-inline: 20px;
+  .account-client-switch,
+  .account-status-panel {
+    margin-inline: 20px;
   }
   .account-environment-summary {
     margin-inline: 20px;

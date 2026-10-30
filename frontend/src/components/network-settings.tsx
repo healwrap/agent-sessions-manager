@@ -181,21 +181,20 @@ export function NetworkSettings({
             账号分流规则未生效
           </Notice>
         )}
-        <Disclosure title="连接详情" compact>
+        <Disclosure title="Clash 连接信息" compact>
           <FactsGrid
             items={[
               { label: '内核版本', value: network.version || '未取得' },
               {
-                label: '控制接口',
-                value: network.controller || network.endpoint || '自动发现',
-              },
-              {
-                label: 'Claude 分流节点',
-                value: network.current_node || '尚未选择',
+                label: '连接方式',
+                value: network.connected
+                  ? (network.controller || network.endpoint).startsWith('http')
+                    ? '本机 HTTP 接口'
+                    : '本机服务'
+                  : '未连接',
               },
             ]}
           />
-          <p>TUN、节点或规则变化时会停止受影响的环境。检测后停止有时间差。</p>
         </Disclosure>
       </ResourceCard>
       <CollectionPanel

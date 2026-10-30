@@ -27,9 +27,9 @@ Claude App 组件提供「禁用自动更新」开关，读取并写入官方的
 
 策略对当前用户的本机安装、受管副本及全部独立账号环境生效，下次启动 Claude 时读取。安装、重新安装或手动更新组件不会清除该策略。「检查更新」与手动安装更新仍可使用。Windows 的 Microsoft Store 更新由系统商店管理，此开关只控制 Claude 自身更新器。官方定义见 [Claude Desktop 企业配置](https://support.claude.com/en/articles/12622667-enterprise-configuration-for-claude-desktop)。
 
-网络转发由用户安装的 Clash Verge 提供；应用不再提供新建受管 Mihomo 代理或其组件安装入口。旧受管代理保留到逐条迁移完成，之后才停止对应旧进程。
+网络转发由用户安装的 Clash Verge 提供；应用不启动独立 Mihomo，不提供旧代理的导入、启动、迁移或组件管理接口。
 
-指纹 Chromium 来自 [上游发布](https://github.com/adryfish/fingerprint-chromium/releases)，Mihomo 来自 [官方发布](https://github.com/MetaCubeX/mihomo/releases)，Claude 使用 [官方下载](https://claude.com/download)对应的版本清单或 MSIX 入口。
+指纹 Chromium 来自 [上游发布](https://github.com/adryfish/fingerprint-chromium/releases)，Claude 使用 [官方下载](https://claude.com/download)对应的版本清单或 MSIX 入口。
 
 ## 平台实现与验收
 

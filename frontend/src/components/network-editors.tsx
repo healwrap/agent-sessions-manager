@@ -61,13 +61,7 @@ export function NetworkLineEditor({
   };
   return (
     <ContentDialog
-      title={
-        item
-          ? item.kind === 'clash'
-            ? '配置出口线路'
-            : '迁移出口线路'
-          : '添加出口线路'
-      }
+      title={item ? '配置出口线路' : '添加出口线路'}
       guide="proxy-editor"
       busy={pending}
       onClose={onClose}
@@ -119,11 +113,6 @@ export function NetworkLineEditor({
           ]}
         />
       </Field>
-      {item && item.kind !== 'clash' && (
-        <Notice>
-          保存后，绑定此线路的账号将使用 Clash Verge；原环境与登录数据保留。
-        </Notice>
-      )}
       {!network.nodes.length && (
         <Notice>请先在 Clash Verge 导入节点配置，再刷新网络设置。</Notice>
       )}

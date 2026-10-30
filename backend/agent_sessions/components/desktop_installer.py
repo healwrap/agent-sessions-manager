@@ -9,7 +9,7 @@ import threading
 from uuid import uuid4
 from agent_sessions.applications import managed_app, installed_apps, app_version
 from agent_sessions.platform_process import powershell, ps_literal, appx_packages
-from agent_sessions.proxy_service.process import private_json
+from agent_sessions.private_files import private_json
 from .artifacts import download, extract_zip, remove_owned
 from .catalog import latest, newer
 from .native_uninstall import uninstall

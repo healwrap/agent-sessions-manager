@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ExternalLink,
-  Globe2,
   Network,
   RefreshCw,
   ScanLine,
@@ -32,6 +31,7 @@ import {
   NetworkConnectionEditor,
   NetworkLineEditor,
 } from './network-editors';
+import clashVergeIcon from '../assets/components/clash-verge.png';
 import '../styles/network-settings.css';
 import { NetworkLines } from './network-lines';
 
@@ -60,7 +60,6 @@ export function NetworkSettings({
   onInspect,
   onDelete,
   onSavedProxy,
-  onLegacyStop,
 }: {
   data: EnvironmentSettings;
   busy: boolean;
@@ -70,7 +69,6 @@ export function NetworkSettings({
   onInspect: (item: ProxyConfig) => void;
   onDelete: (id: string) => void;
   onSavedProxy: (item: ProxyConfig) => void;
-  onLegacyStop: (id: string) => void;
 }) {
   const network = data.network || empty;
   const [query, setQuery] = useState('');
@@ -123,7 +121,7 @@ export function NetworkSettings({
       {error && <Notice tone="error">{error}</Notice>}
       <ResourceCard
         title="Clash Verge"
-        icon={<Globe2 size={22} />}
+        icon={<img src={clashVergeIcon} width={24} height={24} alt="" />}
         subtitle={
           network.connected
             ? network.tun
@@ -217,7 +215,6 @@ export function NetworkSettings({
           onEdit={setEditing}
           onInspect={onInspect}
           onDelete={onDelete}
-          onStop={onLegacyStop}
         />
       </CollectionPanel>
       <ResourceCard

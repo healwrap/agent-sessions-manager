@@ -29,15 +29,11 @@ def provision(value, current, validate):
     if set(value)-{'collection', 'action', 'item', 'route'}: raise ValueError('账号创建参数无效')
     item = value.get('item')
     route = value.get('route', {})
-    if not isinstance(item, dict) or not isinstance(route, dict) or set(route)-{'proxy_id', 'proxy_url'}:
+    if not isinstance(item, dict) or not isinstance(route, dict) or set(route)-{'proxy_id'}:
         raise ValueError('账号与环境参数无效')
     item = dict(item)
     item['id'] = item.get('id') or str(uuid4())
     proxy_id = route.get('proxy_id', '')
-    if route.get('proxy_url'):
-        proxy = validate('proxies', {'name': item.get('name', '')+' 专用代理', 'url': route['proxy_url']}, current)
-        put(current, 'proxies', proxy)
-        proxy_id = proxy['id']
     defaults = {'proxy_id': proxy_id, 'locale': 'en-US', 'timezone': 'America/Los_Angeles',
                 'locale_mode': 'proxy', 'timezone_mode': 'proxy', 'gates': {}}
     for field, collection in (('profile_id', 'profiles'), ('app_profile_id', 'app_profiles')):

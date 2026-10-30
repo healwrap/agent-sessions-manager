@@ -31,8 +31,8 @@ def app_processes():
 
 
 class AppRuntime:
-    def __init__(self, directory, environments, proxy_manager=None):
-        self.proxy_manager = proxy_manager
+    def __init__(self, directory, environments, network=None):
+        self.network = network
         self.identity = ProfileIdentity(directory)
         self.directory = Path(directory)/'claude-app'
         self.environments = environments
@@ -96,14 +96,14 @@ class AppRuntime:
         if not app: raise ValueError('请先安装官方 Claude App')
         proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not proxy: raise ValueError('绑定的代理不存在')
-        if not proxy and any(row.get('kind') == 'clash' for row in settings['proxies']): raise ValueError('请先为环境选择出口线路')
+        if not proxy or proxy.get('kind') != 'clash': raise ValueError('请先为环境选择出口线路')
         with self.lock:
             if any(row['status'] == 'checking' for row in self.runs.values()): raise ValueError('正在切换 App 环境，请稍候')
             if getattr(self, 'component_guard', None): self.component_guard('claude')
             process = self.processes.get(key)
             if process and process.poll() is None: raise ValueError('此 App 环境已打开')
             self.processes.pop(key, None)
-            if self.proxy_manager: self.proxy_manager.network.prepared.discard(key)
+            if self.network: self.network.prepared.discard(key)
             run = {'profile_id': key, 'account_id': account['id'] if account else '', 'name': profile['name'],
                    'status': 'checking', 'stage': '正在检查 App 启动环境', 'checked_at': datetime.now(timezone.utc).isoformat(),
                    'checks': [], 'resolved': {}, 'browser_checks': [], 'error': '', 'data_directory': str(self.profile_directory(key))}
@@ -114,7 +114,7 @@ class AppRuntime:
     def _launch(self, profile, proxy, app, run):
         key = profile['id']
         try:
-            if self.proxy_manager: self.proxy_manager.ensure(proxy, key)
+            if self.network: self.network.ensure(proxy, key)
             resolved, checks = inspect(profile, proxy, browser=False)
             with self.lock:
                 if run.get('cancelled'): return

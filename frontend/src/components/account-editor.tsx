@@ -11,7 +11,6 @@ import { Select } from './select';
 import { planLabels } from '../lib/account-overview';
 export interface AccountRoute {
   proxy_id: string;
-  proxy_url?: string;
 }
 export function AccountEditor({
   account,
@@ -39,7 +38,6 @@ export function AccountEditor({
       },
   );
   const [proxy, setProxy] = useState(initialProxyId || '');
-  const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const creating =
     value.profile_id === '__new__' || value.app_profile_id === '__new__';
@@ -56,8 +54,7 @@ export function AccountEditor({
       onSubmit={(event) => {
         event.preventDefault();
         void onSave(value, {
-          proxy_id: proxy === '__custom__' ? '' : proxy,
-          ...(proxy === '__custom__' ? { proxy_url: url } : {}),
+          proxy_id: proxy,
         })
           .then(onClose)
           .catch((reason) => setError(String(reason)));
@@ -195,16 +192,6 @@ export function AccountEditor({
             ]}
             onChange={setProxy}
           />
-          {proxy === '__custom__' && (
-            <TextInput
-              aria-label="新账号代理地址"
-              required
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder="http://127.0.0.1:7897 或 socks5://用户名:密码@主机:端口"
-              spellCheck={false}
-            />
-          )}
         </Field>
       )}
       <Notice>

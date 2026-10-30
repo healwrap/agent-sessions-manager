@@ -11,8 +11,6 @@ import {
   createDemoSettings,
   sampleReport,
   sampleRun,
-  sampleSource,
-  sampleSubscription,
   sampleUsage,
 } from './data';
 
@@ -29,20 +27,9 @@ if (query.get('topic') === 'switch') {
 const wait = () => new Promise((resolve) => setTimeout(resolve, 180));
 const id = (prefix: string) => `demo-${prefix}-${++serial}`;
 
-function saveAccount(
-  item: BrowserAccount,
-  route: { proxy_id: string; proxy_url?: string },
-) {
+function saveAccount(item: BrowserAccount, route: { proxy_id: string }) {
   const account = { ...item, id: item.id || id('account') };
-  let proxy_id = route.proxy_id;
-  if (route.proxy_url) {
-    proxy_id = id('proxy');
-    data.proxies.push({
-      id: proxy_id,
-      name: '示例专用代理',
-      url: route.proxy_url,
-    });
-  }
+  const proxy_id = route.proxy_id;
   const base = {
     proxy_id,
     locale: 'ja-JP',
@@ -162,74 +149,6 @@ function runtime(
   return state;
 }
 
-function proxies(path: string, body: Record<string, unknown>) {
-  if (path.endsWith('/config')) return { source: sampleSource };
-  if (path.endsWith('/parse'))
-    return {
-      token: 'demo-import',
-      source: sampleSource,
-      subscription_url: sampleSubscription,
-      nodes: [
-        {
-          index: 0,
-          name: '示例东京节点',
-          type: 'socks5',
-          server: 'proxy.example.com',
-        },
-        {
-          index: 1,
-          name: '示例洛杉矶节点',
-          type: 'socks5',
-          server: 'proxy.example.net',
-        },
-      ],
-    };
-  if (path.endsWith('/save')) {
-    const key = String(body.id || id('proxy'));
-    const entry = data.proxies.find((row) => row.id === key);
-    if (entry) entry.name = String(body.name);
-    else {
-      data.proxies.push({
-        id: key,
-        name: String(body.name),
-        url: 'http://127.0.0.1:' + (18900 + serial),
-        kind: 'managed',
-      });
-      data.proxy_runtime!.entries.push({
-        id: key,
-        alive: true,
-        status: 'running',
-        error: '',
-        node: {
-          name: body.index === 1 ? '示例洛杉矶节点' : '示例东京节点',
-          type: 'socks5',
-        },
-        direct_domains: body.direct_domains as string[],
-        subscription: {
-          url: sampleSubscription,
-          node_name: '示例节点',
-          interval_hours: Number(body.interval_hours),
-          status: 'current',
-        },
-      });
-    }
-    return data;
-  }
-  if (
-    ['start', 'stop', 'refresh', 'adopt', 'install'].some((action) =>
-      path.endsWith('/' + action),
-    )
-  ) {
-    const entry = data.proxy_runtime!.entries.find((row) => row.id === body.id);
-    if (entry && (path.endsWith('/start') || path.endsWith('/stop'))) {
-      entry.alive = path.endsWith('/start');
-      entry.status = entry.alive ? 'running' : 'stopped';
-    }
-    return data;
-  }
-  throw new Error('此代理操作不在演示范围内');
-}
-
 export const demoRequest: Request = async <T>(
   path: string,
   params = {},
@@ -266,7 +185,6 @@ export const demoRequest: Request = async <T>(
     }
   } else if (/^\/api\/(browser|app)-runtime\/(open|start|stop)$/.test(path))
     value = runtime(path, args);
-  else if (path.startsWith('/api/proxy-services/')) value = proxies(path, args);
   else if (path === '/api/settings') {
     if (body) local.settings = { ...local.settings, ...(body as object) };
     value = {

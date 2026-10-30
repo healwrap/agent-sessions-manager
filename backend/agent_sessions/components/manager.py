@@ -10,22 +10,22 @@ from .desktop_installer import DesktopInstaller
 from .native_uninstall import removable
 from .update_policy import UpdatePolicy
 
-NAMES = {'fingerprint': 'Fingerprint Chromium', 'mihomo': 'Mihomo', 'claude': 'Claude App'}
+NAMES = {'fingerprint': 'Fingerprint Chromium', 'claude': 'Claude App'}
 
 
 class ComponentManager:
-    def __init__(self, directory, browser, app, proxies):
+    def __init__(self, directory, browser, app):
         self.directory = Path(directory)
-        self.browser, self.app, self.proxies = browser, app, proxies
+        self.browser, self.app = browser, app
         self.desktop = {'claude': DesktopInstaller(directory)}
         self.auto_updates = UpdatePolicy()
 
     def installer(self, key):
-        return self.browser.installer if key == 'fingerprint' else self.proxies.core if key == 'mihomo' else self.desktop[key]
+        return self.browser.installer if key == 'fingerprint' else self.desktop[key]
 
     def operation(self, key):
         installer = self.installer(key)
-        return dict(installer.result) if key == 'mihomo' else installer.state()
+        return installer.state()
 
     def ready(self, key):
         if self.operation(key)['state'] in ('installing', 'removing'):
@@ -38,9 +38,6 @@ class ComponentManager:
             if key == 'fingerprint':
                 found = kernel.discover(self.browser.directory/'kernel')
                 owned = found.get('source') == 'Agent Sessions 管理'
-            elif key == 'mihomo':
-                found = self.proxies.core.discover()
-                owned = found['available']
             else:
                 app = next((row for row in apps if row['id'] == key), None)
                 found = {'available': bool(app), 'version': (app or {}).get('version', ''), 'path': (app or {}).get('path', '')}
@@ -67,9 +64,6 @@ class ComponentManager:
         elif key == 'claude':
             if claude_processes() or any(row['status'] == 'checking' for row in self.app.runs.values()):
                 raise ValueError('请先退出 Claude App，再安装、更新或卸载')
-        elif key == 'mihomo':
-            if any(row['alive'] for row in self.proxies.state()['entries']):
-                raise ValueError('请先停止所有专用代理，再更新或卸载代理内核')
 
     def command(self, value):
         if not isinstance(value, dict) or value.get('id') not in NAMES: raise ValueError('组件操作参数无效')
@@ -80,7 +74,7 @@ class ComponentManager:
             self.auto_updates.set_disabled(value['disabled'])
             return self.state()
         key = value['id']
-        runtime = self.proxies if key == 'mihomo' else self.app if key == 'claude' else self.browser
+        runtime = self.app if key == 'claude' else self.browser
         with runtime.lock: return self._command(value)
 
     def _command(self, value):
@@ -95,11 +89,9 @@ class ComponentManager:
             if value['path'] != row['path']: raise ValueError('组件安装位置已变化，请重新确认卸载')
             if key in self.desktop: self.desktop[key].start(action, path=row['path'])
             else:
-                root = self.browser.directory/'kernel' if key == 'fingerprint' else self.proxies.core.directory
+                root = self.browser.directory/'kernel'
                 remove_owned(root)
                 self.installer(key).update(state='idle', progress=100, error='', message='组件已卸载，环境数据保留')
-                if key == 'mihomo': self.proxies.processes.clear()
         elif key == 'fingerprint': self.browser.installer.start(check_only=action == 'check')
-        elif key == 'mihomo': self.proxies.core.install(check_only=action == 'check')
         else: self.desktop[key].start(action)
         return self.state()

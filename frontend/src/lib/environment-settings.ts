@@ -119,41 +119,8 @@ export interface ProxyConfig {
   id: string;
   name: string;
   url: string;
-  kind?: 'external' | 'managed' | 'clash';
-  clash_node?: string;
-}
-export interface ProxySubscription {
-  url: string;
-  node_name: string;
-  interval_hours: number;
-  last_checked?: number;
-  last_updated?: number;
-  error?: string;
-  status: 'updating' | 'error' | 'pending' | 'current';
-}
-export interface ManagedProxy {
-  id: string;
-  alive: boolean;
-  pid?: number;
-  status: 'running' | 'stopped' | 'failed';
-  error: string;
-  node?: { name: string; type: string };
-  direct_domains: string[];
-  subscription?: ProxySubscription | null;
-}
-export interface ProxyRuntimeState {
-  core: {
-    available: boolean;
-    version: string;
-    installation: {
-      state: string;
-      progress: number;
-      error: string;
-      message: string;
-    };
-  };
-  entries: ManagedProxy[];
-  adoptable: string[];
+  kind: 'clash';
+  clash_node: string;
 }
 export interface LocalApp {
   id: string;
@@ -174,7 +141,6 @@ export interface EnvironmentSettings {
   gate_definitions: GateDefinition[];
   browser: BrowserRuntimeState;
   app_runtime: AppRuntimeState;
-  proxy_runtime?: ProxyRuntimeState;
 }
 export interface ClashNetwork {
   connected: boolean;

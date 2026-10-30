@@ -85,7 +85,7 @@ class EnvironmentSettings:
         key = item.get('id') or str(uuid4())
         if not isinstance(key, str) or len(key) > 100: raise ValueError('配置标识无效')
         if collection == 'proxies':
-            if item.get('kind', 'external') not in ('external', 'managed', 'clash'): raise ValueError('代理类型无效')
+            if item.get('kind') != 'clash': raise ValueError('请在网络设置中选择 Clash 节点')
             if item.get('kind') == 'clash' and not item.get('clash_node'): raise ValueError('请选择 Clash 节点')
             validate_proxy(item['url'])
         elif collection == 'accounts':

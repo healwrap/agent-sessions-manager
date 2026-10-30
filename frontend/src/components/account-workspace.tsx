@@ -85,7 +85,6 @@ export function AccountWorkspace({
     remove,
     runtime,
     installKernel,
-    proxyCommand,
   } = useEnvironmentSettings(active);
   const current = sections.find((item) => item.id === section)!;
   const loginAccount = data.accounts.find((item) => item.id === loginAccountId);
@@ -98,21 +97,9 @@ export function AccountWorkspace({
   const inspectProxy = (item: ProxyConfig) => {
     setNetworkError('');
     setNetwork(undefined);
-    if (item.kind === 'clash')
-      void request('/api/network/prepare', {}, { id: item.id })
-        .then(() => setDiagnosticProxy(item))
-        .catch((reason) => setNetworkError(errorMessage(reason)));
-    else if (item.kind === 'managed')
-      void proxyCommand('start', { id: item.id })
-        .then((latest) => {
-          if (
-            latest.proxy_runtime?.entries.find((row) => row.id === item.id)
-              ?.alive
-          )
-            setDiagnosticProxy(item);
-        })
-        .catch(() => {});
-    else setDiagnosticProxy(item);
+    void request('/api/network/prepare', {}, { id: item.id })
+      .then(() => setDiagnosticProxy(item))
+      .catch((reason) => setNetworkError(errorMessage(reason)));
   };
   return (
     <>
@@ -273,9 +260,6 @@ export function AccountWorkspace({
               onCloseCreate={() => setEdit(null)}
               onReload={reload}
               onDelete={(id) => void remove('proxies', id)}
-              onLegacyStop={(id) =>
-                void proxyCommand('stop', { id }).catch(() => {})
-              }
               onInspect={inspectProxy}
               onSavedProxy={(proxy) => guideStore.proxySaved(proxy.id)}
             />

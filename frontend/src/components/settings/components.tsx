@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, RefreshCw, Trash2 } from 'lucide-react';
 import fingerprintIcon from '../../assets/components/fingerprint-chromium.png';
-import mihomoIcon from '../../assets/components/mihomo.webp';
 import { request } from '../../lib/api';
 import { AgentIcon } from '../agent-icon';
 import {
@@ -16,7 +15,7 @@ import {
 import { SettingsRow } from './row';
 
 type Component = {
-  id: 'fingerprint' | 'mihomo' | 'claude';
+  id: 'fingerprint' | 'claude';
   name: string;
   available: boolean;
   managed: boolean;
@@ -43,7 +42,6 @@ type Component = {
 type State = { platform: string; architecture: string; items: Component[] };
 const icons = {
   fingerprint: fingerprintIcon,
-  mihomo: mihomoIcon,
 };
 
 export function ComponentSettings({ active }: { active: boolean }) {
@@ -111,11 +109,10 @@ export function ComponentSettings({ active }: { active: boolean }) {
     ) : (
       <BusyState label="正在读取组件" />
     );
-  const components = data.items.filter((item) => item.id !== 'mihomo');
   return (
     <div className="component-settings">
       {error && !removing && <Notice tone="error">{error}</Notice>}
-      {components.map((item) => {
+      {data.items.map((item) => {
         const job = item.installation;
         const working = ['checking', 'installing', 'removing'].includes(
           job.state,

@@ -24,8 +24,8 @@ def account_url(provider):
 
 
 class BrowserRuntime:
-    def __init__(self, directory, environments, diagnostics, origin, proxy_manager=None):
-        self.proxy_manager = proxy_manager
+    def __init__(self, directory, environments, diagnostics, origin, network=None):
+        self.network = network
         self.identity = ProfileIdentity(directory)
         self.directory = Path(directory)/'browser'
         self.installer = KernelInstaller(self.directory/'kernel')
@@ -105,7 +105,7 @@ class BrowserRuntime:
         self.identity.verify(settings, 'profiles', key)
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')
-        if not selected and any(row.get('kind') == 'clash' for row in settings['proxies']): raise ValueError('请先为环境选择出口线路')
+        if not selected or selected.get('kind') != 'clash': raise ValueError('请先为环境选择出口线路')
         if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
         found = kernel.for_profile(profile, self.directory/'kernel', settings['apps'])
         if not found['available']: raise ValueError('未找到 '+found['name']+'，请先安装对应浏览器')
@@ -115,7 +115,7 @@ class BrowserRuntime:
                 raise ValueError('此环境正在运行或检查，请先停止后再启动')
             if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
             self.processes.pop(key, None)
-            if self.proxy_manager: self.proxy_manager.network.prepared.discard(key)
+            if self.network: self.network.prepared.discard(key)
             self.runs[key] = {'profile_id': key, 'account_id': account['id'] if account else '',
                               'name': profile['name'], 'status': 'checking', 'stage': '正在检查代理出口',
                               'checked_at': datetime.now(timezone.utc).isoformat(), 'checks': [],
@@ -128,7 +128,7 @@ class BrowserRuntime:
     def _launch(self, profile, proxy, account, found, run):
         key, ticket = profile['id'], None
         try:
-            if self.proxy_manager: self.proxy_manager.ensure(proxy, key)
+            if self.network: self.network.ensure(proxy, key)
             modes = policy(profile)
             url = proxy['url'] if proxy else ''
             resolved, checks = inspect(profile, proxy)

@@ -24,16 +24,15 @@ export function EnvironmentEditor({
   onSave,
   onClose,
 }: {
-  edit: EnvironmentEdit;
+  edit: Exclude<EnvironmentEdit, { kind: 'proxies' }>;
   proxies: ProxyConfig[];
   gates: GateDefinition[];
   accountName?: string;
   onSave: (kind: EnvironmentCollection, item: EnvironmentItem) => Promise<void>;
   onClose: () => void;
 }) {
-  const profile = edit.kind !== 'proxies';
   const native = edit.kind === 'app_profiles';
-  const [value, setValue] = useState<BrowserProfile | AppProfile | ProxyConfig>(
+  const [value, setValue] = useState<BrowserProfile | AppProfile>(
     () =>
       edit.item ||
       (native
@@ -49,43 +48,36 @@ export function EnvironmentEditor({
             inherit_skills: true,
             inherit_plugins: true,
           }
-        : profile
-          ? {
-              id: '',
-              name: '',
-              provider: 'claude',
-              engine: 'fingerprint-chromium',
-              locale_mode: 'proxy',
-              timezone_mode: 'proxy',
-              gates: {},
-              proxy_id: '',
-              locale: 'en-US',
-              timezone: 'America/Los_Angeles',
-              fingerprint_seed: crypto.randomUUID(),
-            }
-          : { id: '', name: '', url: '' }),
+        : {
+            id: '',
+            name: '',
+            provider: 'claude',
+            engine: 'fingerprint-chromium',
+            locale_mode: 'proxy',
+            timezone_mode: 'proxy',
+            gates: {},
+            proxy_id: '',
+            locale: 'en-US',
+            timezone: 'America/Los_Angeles',
+            fingerprint_seed: crypto.randomUUID(),
+          }),
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const field = (key: string, next: string) =>
-    setValue((current) => ({ ...current, [key]: next }));
   const browser = value as BrowserProfile;
-  const proxy = value as ProxyConfig;
-  const title = `${edit.item ? '编辑' : '新建'}${native ? 'Claude App 环境' : profile ? '浏览器环境' : '代理配置'}`;
+  const title = `${edit.item ? '编辑' : '新建'}${native ? 'Claude App 环境' : '浏览器环境'}`;
   const save = async () => {
     setError('');
     try {
-      if (profile) {
-        Intl.getCanonicalLocales(browser.locale);
-        new Intl.DateTimeFormat('en', { timeZone: browser.timezone }).format();
-      }
+      Intl.getCanonicalLocales(browser.locale);
+      new Intl.DateTimeFormat('en', { timeZone: browser.timezone }).format();
     } catch {
       setError('请填写有效的语言代码与时区，例如 en-US、America/Los_Angeles。');
       return;
     }
     setSaving(true);
     try {
-      await onSave(edit.kind, value as BrowserProfile | ProxyConfig);
+      await onSave(edit.kind, value as BrowserProfile | AppProfile);
       onClose();
     } catch (reason) {
       setError(String(reason));
@@ -130,33 +122,18 @@ export function EnvironmentEditor({
             setValue((current) => ({
               ...current,
               name: event.target.value,
-              ...(profile ? { name_account_id: '' } : {}),
+              name_account_id: '',
             }))
           }
-          placeholder={profile ? '填写账号邮箱或名字' : '例如：美国固定出口'}
+          placeholder="填写账号邮箱或名字"
         />
       </Field>
-      {profile ? (
-        <BrowserProfileFields
-          value={browser}
-          proxies={proxies}
-          gates={gates}
-          onChange={(patch) =>
-            setValue((current) => ({ ...current, ...patch }))
-          }
-        />
-      ) : (
-        <Field label="代理地址" htmlFor="environment-editor-1">
-          <TextInput
-            id="environment-editor-1"
-            required
-            value={proxy.url}
-            onChange={(event) => field('url', event.target.value)}
-            placeholder="http://127.0.0.1:7897"
-            spellCheck={false}
-          />
-        </Field>
-      )}
+      <BrowserProfileFields
+        value={browser}
+        proxies={proxies}
+        gates={gates}
+        onChange={(patch) => setValue((current) => ({ ...current, ...patch }))}
+      />
       {error && <Notice tone="error">{error}</Notice>}
     </EditorDialog>
   );

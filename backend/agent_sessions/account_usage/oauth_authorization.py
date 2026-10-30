@@ -41,7 +41,7 @@ class UsageAuthorization:
 
     def route(self, key):
         account, profile, proxy, binding = self.context(key)
-        self.proxies.ensure(proxy, None if proxy.get('kind') == 'clash' else profile['id'])
+        self.proxies.ensure(proxy)
         _, checks = inspect(profile, proxy, browser=False)
         if blocked(checks): raise UsageError('blocked', '账号代理预检未通过，请检查环境后重试后台查询')
         return account, proxy['url'], binding

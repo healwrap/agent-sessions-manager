@@ -21,5 +21,5 @@ def command(server, path, value):
     if set(value) != {'proxy_id'}: raise ValueError('请选择出口代理')
     proxy = next((row for row in server.environments.read()['proxies'] if row['id'] == value['proxy_id']), None)
     if value['proxy_id'] and not proxy: raise ValueError('所选代理不存在')
-    if proxy and proxy.get('kind') == 'clash': server.proxy_manager.ensure(proxy)
+    server.network.ensure(proxy)
     return region_for(proxy['url'] if proxy else '')

@@ -5,7 +5,7 @@ from .client import Controller
 
 def command(server, action, value):
     if not isinstance(value, dict): raise ValueError('网络参数格式无效')
-    manager = server.proxy_manager.network
+    manager = server.network
     if action == 'connect': return manager.connect(value)
     if action == 'apply': return manager.apply(value)
     if action == 'refresh':
@@ -16,7 +16,6 @@ def command(server, action, value):
         manager.open()
         return manager.state(True)
     if action == 'save-line':
-        from agent_sessions.proxy_service.api import environment_state
         manager.save_line(value)
         return environment_state(server)
     if action == 'prepare':
@@ -26,7 +25,7 @@ def command(server, action, value):
         manager.activate(proxy, '__inspection__')
         return manager.state(True)
     if action == 'intranet':
-        if set(value) != {'host'}: raise ValueError('请填写内网域名')
+        if set(value) != {'host'}: raise ValueError('请填写直连域名')
         host = value['host'].strip().lower()
         domains = manager.settings()['domains']
         if not host or not any(host == d or host.endswith('.'+d) for d in domains):
@@ -38,3 +37,16 @@ def command(server, action, value):
         with socket.create_connection((host, 443), timeout=3): pass
         return {'host': host, 'addresses': addresses, 'reachable': True}
     raise ValueError('网络操作无效')
+
+
+def environment_state(server):
+    return {**server.environments.read(), 'browser': server.browser_runtime.state(),
+            'app_runtime': server.app_runtime.state(), 'network': server.network.state()}
+
+
+def change_environment(server, value):
+    if value.get('collection') == 'proxies':
+        if value.get('action') != 'delete': raise ValueError('请在网络设置中选择 Clash 节点')
+        server.network.remove_line(value.get('id'))
+    else: server.environments.change(value)
+    return environment_state(server)

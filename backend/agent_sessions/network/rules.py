@@ -6,13 +6,12 @@ from pathlib import Path
 import re
 import time
 from .client import verge_directory, source_config
-from agent_sessions.proxy_service.process import private_json
+from .domains import CLAUDE_DOMAINS
+from agent_sessions.private_files import private_json
 
 START = '// BEGIN AGENT SESSIONS NETWORK'
 END = '// END AGENT SESSIONS NETWORK'
 GROUP = 'Agent Sessions · Claude'
-CLAUDE_DOMAINS = ('claude.ai', 'claude.com', 'anthropic.com', 'claudeusercontent.com',
-                  'anthropicusercontent.com', 'clau.de', 'claude.site')
 
 
 def rules(settings):

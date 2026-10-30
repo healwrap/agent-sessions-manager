@@ -7,10 +7,6 @@ import type { AccountUsage } from '../lib/account-usage';
 import type { ClaudeReport } from '../lib/claude-diagnostics';
 import { demoUsageAuthorization } from './usage-authorization';
 
-export const sampleSubscription = 'https://subscription.example.com/demo';
-export const sampleSource =
-  'proxies:\n  - name: 示例东京节点\n    type: socks5\n    server: proxy.example.com\n    port: 1080\n';
-
 export function createDemoSettings(): EnvironmentSettings {
   const data: EnvironmentSettings = {
     accounts: [],
@@ -79,15 +75,6 @@ export function createDemoSettings(): EnvironmentSettings {
       sessions: {},
     },
     app_runtime: { runs: [], sessions: {} },
-    proxy_runtime: {
-      core: {
-        available: true,
-        version: '演示版本',
-        installation: { state: 'ready', progress: 100, error: '', message: '' },
-      },
-      entries: [],
-      adoptable: [],
-    },
   };
   for (const [index, name] of [
     'alice@example.com',
@@ -132,21 +119,6 @@ export function createDemoSettings(): EnvironmentSettings {
       label: '示例登录状态',
     };
   }
-  data.proxy_runtime!.entries = data.proxies.map((proxy) => ({
-    id: proxy.id,
-    alive: true,
-    status: 'running',
-    error: '',
-    node: { name: proxy.name, type: 'socks5' },
-    direct_domains: [],
-    subscription: {
-      url: sampleSubscription,
-      node_name: proxy.name,
-      interval_hours: 6,
-      status: 'current',
-      last_updated: Date.now() / 1000,
-    },
-  }));
   return data;
 }
 

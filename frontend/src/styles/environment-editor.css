@@ -46,31 +46,6 @@
   font-size: 14px;
   line-height: 1.8;
 }
-.proxy-config-source {
-  min-height: 140px;
-  resize: vertical;
-  font-family: var(--ds-font-family-code);
-}
-.proxy-direct-domains {
-  min-height: 90px;
-  resize: vertical;
-}
-.proxy-import-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.proxy-import-actions > span {
-  flex: 1;
-  overflow-wrap: anywhere;
-}
-.proxy-source-url {
-  display: block;
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
 .component-settings {
   display: grid;
   gap: 16px;

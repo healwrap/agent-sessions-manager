@@ -16,7 +16,7 @@ Agent Sessions 的重点是两个工作区：**会话管理**和**账号管理**
 | 工作区 | 你可以做什么 |
 | --- | --- |
 | **会话管理** | 按项目回看多个 Agent 的对话、搜索历史、检查工具轨迹，并复制上下文引用 |
-| **账号管理** | 整理 Claude / Codex 账号，绑定独立浏览器或 Claude App 环境，配置专用代理并查看运行状态 |
+| **账号管理** | 整理 Claude / Codex 账号，绑定独立浏览器或 Claude App 环境，绑定 Clash Verge 出口线路并查看运行状态 |
 | Skill 管理 | 将 `agent-sessions` Skill 安装到本机 Agent，管理更新、链接、备份与恢复 |
 
 从开始页进入工作区，也可通过侧栏底部切换；设置入口在各工作区共用。
@@ -59,15 +59,15 @@ Agent Sessions 的重点是两个工作区：**会话管理**和**账号管理**
 - **账号与环境分开整理**：为账号绑定浏览器、Claude App 环境，分别保存独立数据目录、语言、时区与代理配置。
 - **启动与切换**：从账号入口打开、切回或停止对应环境；运行中的环境保留自己的登录状态与配置。
 - **会话随账号切换**：启动 Claude App 前，自动将各账号及本机 CLI 的全部本地 Code 会话同步到目标环境，在官方 App 中接着聊；后续启动增量同步，分别续聊的分支保留。
-- **专用代理**：添加 HTTP / SOCKS 地址，或导入订阅、Clash 配置并选择节点。应用管理独立 Mihomo 进程，不修改系统代理。
+- **网络设置**：连接本机 Clash Verge，绑定固定节点，为指定域名配置直连和 DNS。TUN、订阅及内核由 Clash Verge 管理。
 - **按需检查**：查看代理、出口和环境检查结果；浏览器检测与 App 检查分别展示，按已配置规则进行启动预检。
-- **组件管理**：在设置中安装、更新和卸载 Fingerprint Chromium、Mihomo 与官方 Claude App。组件按需下载，环境配置与程序文件分开保存。
+- **组件管理**：在设置中安装、更新和卸载 Fingerprint Chromium 与官方 Claude App。组件按需下载，环境配置与程序文件分开保存。
 
 账号登录使用对应服务的官方流程。平台支持、隔离范围、登录与检测的实际验收情况见：
 
 - [账号与独立环境](references/account-environments.md)
 - [页面操作引导](references/user-guides.md)：首次配置、代理、登录与切换账号。
-- [专用代理配置](references/dedicated-proxies.md)
+- [Clash Verge 网络接入](references/clash-network.md)
 - [平台与组件管理](references/runtime-components.md)
 - [Claude App 的本机 Skill 与插件继承](references/claude-plugin-inheritance.md)
 - [Claude App 账号间会话同步](references/claude-session-sync.md)

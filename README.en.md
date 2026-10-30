@@ -59,14 +59,14 @@ Configure independent browsers for Claude/Codex accounts. Claude accounts can al
 - **Separate accounts and environments:** bind browser and Claude App profiles, with independent data directories, language, time zone, and proxy settings.
 - **Open and switch:** open, focus, or stop an environment from its account. Running environments retain their own login state and configuration.
 - **Continue across accounts:** before starting Claude App, synchronize all local Code conversations from managed accounts and the local CLI into the target environment. Later launches update compatible histories and retain independently continued branches.
-- **Dedicated proxies:** add HTTP/SOCKS endpoints or import subscriptions and Clash configurations. The app manages a separate Mihomo process without changing the system proxy.
+- **Network settings:** connect to local Clash Verge, bind fixed nodes, and configure direct domains and DNS. Clash Verge manages TUN, subscriptions, and the core.
 - **On-demand checks:** inspect proxy, egress, and environment results. Browser and App checks remain distinct, with configured preflight rules applied at launch.
 - **Components:** install, update, and remove Fingerprint Chromium, Mihomo, and official Claude App from Settings. Components download on demand; environment configuration is stored separately from program files.
 
 Accounts use the respective service's official login flow. For platform support, isolation boundaries, login behavior, and validation status, see:
 
 - [Accounts and independent environments](references/account-environments.md)
-- [Dedicated proxies](references/dedicated-proxies.md)
+- [Clash Verge networking](references/clash-network.md)
 - [Platforms and components](references/runtime-components.md)
 - [Local Skill and plugin inheritance in Claude App](references/claude-plugin-inheritance.md)
 - [Conversation sync between Claude App accounts](references/claude-session-sync.md)

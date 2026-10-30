@@ -1,4 +1,4 @@
-import { Globe2, ScanLine, SlidersHorizontal, Square } from 'lucide-react';
+import { Globe2, ScanLine, SlidersHorizontal } from 'lucide-react';
 import type {
   EnvironmentSettings,
   ProxyConfig,
@@ -19,7 +19,6 @@ export function NetworkLines({
   onEdit,
   onInspect,
   onDelete,
-  onStop,
 }: {
   data: EnvironmentSettings;
   query: string;
@@ -27,10 +26,9 @@ export function NetworkLines({
   onEdit: (item: ProxyConfig) => void;
   onInspect: (item: ProxyConfig) => void;
   onDelete: (id: string) => void;
-  onStop: (id: string) => void;
 }) {
   const rows = data.proxies.filter((row) =>
-    (row.name + ' ' + (row.clash_node || row.url))
+    (row.name + ' ' + row.clash_node)
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
@@ -64,7 +62,6 @@ export function NetworkLines({
   return (
     <div role="list">
       {rows.map((item) => {
-        const legacy = item.kind !== 'clash';
         const previous = latest(item.id);
         const accounts = bound(item.id);
         return (
@@ -74,7 +71,7 @@ export function NetworkLines({
             title={item.name}
             subtitle={
               <span className="network-line-meta">
-                <span>{legacy ? item.url : item.clash_node}</span>
+                <span>{item.clash_node}</span>
                 {accounts && <span>{accounts}</span>}
                 {previous && (
                   <span title={new Date(previous.checked_at).toLocaleString()}>
@@ -86,57 +83,34 @@ export function NetworkLines({
             }
             icon={<Globe2 size={22} />}
             badge={
-              legacy ? (
-                <StatusBadge tone="neutral">待迁移</StatusBadge>
-              ) : data.network?.current_node === item.clash_node ? (
+              data.network?.current_node === item.clash_node ? (
                 <StatusBadge tone="neutral">当前出口</StatusBadge>
               ) : undefined
             }
             actions={
-              legacy ? (
-                <>
-                  {data.proxy_runtime?.entries.some(
-                    (row) => row.id === item.id && row.alive,
-                  ) && (
-                    <Button disabled={busy} onClick={() => onStop(item.id)}>
-                      <Square size={16} />
-                      停止
-                    </Button>
-                  )}
-                  <Button
-                    disabled={busy || !data.network?.connected}
-                    onClick={() => onEdit(item)}
-                  >
-                    <SlidersHorizontal size={16} />
-                    迁移到 Clash
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    disabled={busy}
-                    data-guide-proxy-id={item.id}
-                    onClick={() => onInspect(item)}
-                  >
-                    <ScanLine size={16} />
-                    检测
-                  </Button>
-                  <Button disabled={busy} onClick={() => onEdit(item)}>
-                    <SlidersHorizontal size={16} />
-                    配置
-                  </Button>
-                  <RemoveButton
-                    label={'移除线路 ' + item.name}
-                    disabled={busy || !!accounts}
-                    message="移除此出口线路？"
-                    onRemove={() => onDelete(item.id)}
-                  />
-                </>
-              )
+              <>
+                <Button
+                  disabled={busy}
+                  data-guide-proxy-id={item.id}
+                  onClick={() => onInspect(item)}
+                >
+                  <ScanLine size={16} />
+                  检测
+                </Button>
+                <Button disabled={busy} onClick={() => onEdit(item)}>
+                  <SlidersHorizontal size={16} />
+                  配置
+                </Button>
+                <RemoveButton
+                  label={'移除线路 ' + item.name}
+                  disabled={busy || !!accounts}
+                  message="移除此出口线路？"
+                  onRemove={() => onDelete(item.id)}
+                />
+              </>
             }
           >
-            {!legacy &&
-              data.network?.connected &&
+            {data.network?.connected &&
               !data.network.nodes.some(
                 (row) => row.name === item.clash_node,
               ) && (

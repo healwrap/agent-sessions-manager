@@ -8,15 +8,15 @@ import threading
 import time
 from urllib.parse import quote
 from uuid import uuid4
-from agent_sessions.proxy_service.process import free_port, private_json
-from agent_sessions.proxy_service.config import direct_domains
+from agent_sessions.private_files import free_port, private_json
+from .domains import direct_domains
 from .client import Controller, source_config, verge_directory
 from .rules import GROUP, install, rules
 
 
 class NetworkManager:
-    def __init__(self, directory, environments, proxies):
-        self.directory, self.environments, self.proxies = Path(directory), environments, proxies
+    def __init__(self, directory, environments):
+        self.directory, self.environments = Path(directory), environments
         self.path = self.directory/'clash-network.json'
         self.lock = threading.RLock()
         self.runtimes = []
@@ -134,13 +134,8 @@ class NetworkManager:
             item = {'id': key, 'name': value['name'].strip(), 'kind': 'clash',
                     'url': f'http://127.0.0.1:{port}', 'clash_node': value['node']}
             self.environments.validate('proxies', item, current)
-            old_owned = False
-            if old and old.get('kind') == 'managed':
-                # A stale imported binding may have no owned process definition.
-                old_owned = (self.proxies.entry_directory(key)/'definition.json').is_file()
             lines = [row for row in current['proxies'] if row.get('kind') == 'clash' and row['id'] != key]+[item]
             self._apply(self.settings(), lines)
-            if old_owned: self.proxies.stop(key)
             self.environments.change({'collection': 'proxies', 'action': 'save', 'item': item})
             self.invalidate()
             return item
@@ -155,6 +150,10 @@ class NetworkManager:
             self._apply(self.settings(), lines)
             self.environments.change({'collection': 'proxies', 'action': 'delete', 'id': key})
             self.invalidate()
+
+    def ensure(self, proxy, starting_profile=None):
+        if not proxy or proxy.get('kind') != 'clash': raise ValueError('请先为环境选择 Clash 出口线路')
+        self.activate(proxy, starting_profile)
 
     def activate(self, proxy, starting_profile=None):
         with self.lock:

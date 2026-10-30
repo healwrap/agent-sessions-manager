@@ -42,8 +42,8 @@ def browser_json(control, session, path, metadata=None):
 
 
 class UsageSources:
-    def __init__(self, browser, app, proxy_manager, authorization=None):
-        self.browser, self.app, self.proxy_manager = browser, app, proxy_manager
+    def __init__(self, browser, app, network, authorization=None):
+        self.browser, self.app, self.network = browser, app, network
         self.authorization = authorization
 
     def fetch(self, account, settings, organization=''):
@@ -75,7 +75,7 @@ class UsageSources:
             raise
         proxy = next((row for row in settings['proxies'] if row['id'] == profile.get('proxy_id')), None)
         if not proxy: raise UsageError('blocked', '请先为 App 环境绑定专用代理，再查询用量')
-        self.proxy_manager.ensure(proxy)
+        self.network.ensure(proxy)
         with self.app.lock:
             run = self.app.runs.get(key, {})
             relay = self.app.relays.get(key)

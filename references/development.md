@@ -28,7 +28,7 @@ backend/agent_sessions/
   environments.py                账号、环境、代理配置与本机应用发现
   browser/                       浏览器内核、代理转发、出口定位与启动门控
   desktop_client/                官方 Claude App 环境启动、隔离与连接观测
-  proxy_service/                 专用 Mihomo 进程、订阅与配置管理
+  network/                       Clash Verge 接入、账号线路与直连配置
   components/                    运行组件安装、更新与卸载
 scripts/                         两个稳定的命令行兼容入口
   session_context.py

@@ -70,6 +70,18 @@ export function NetworkControls({
       {network.system_proxy?.error && (
         <Notice tone="warning">{network.system_proxy.error}</Notice>
       )}
+      {typeof network.system_proxy?.clash_configured === 'boolean' &&
+        network.system_proxy.enabled !== null &&
+        network.system_proxy.clash_configured !==
+          network.system_proxy.enabled && (
+          <Notice tone="warning">
+            Clash 设置为
+            {network.system_proxy.clash_configured ? '开启' : '关闭'}
+            系统代理，本机实际
+            {network.system_proxy.enabled ? '已开启' : '未开启'}
+            。上方开关显示本机实际状态，请在 Clash 中调整设置。
+          </Notice>
+        )}
     </div>
   );
 }

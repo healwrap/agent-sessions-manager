@@ -16,7 +16,7 @@ def _run(args, **kwargs):
 
 def _dictionary(key):
     output = _run(['/usr/sbin/scutil'], input='show '+key+'\nquit\n')
-    return dict(re.findall(r'^[ \t]*([A-Za-z][A-Za-z0-9]*)[ \t]+:[ \t]*([^\r\n]*?)\s*$', output, re.M))
+    return dict(re.findall(r'^  ([A-Za-z][A-Za-z0-9]*)[ \t]+:[ \t]*([^\r\n]*?)\s*$', output, re.M))
 
 
 def read():

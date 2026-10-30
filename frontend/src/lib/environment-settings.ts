@@ -172,6 +172,7 @@ export interface ClashNetwork {
   system_proxy?: {
     supported: boolean;
     enabled: boolean | null;
+    clash_configured?: boolean;
     error: string;
   };
 }

@@ -32,6 +32,14 @@ def read():
             result.update(enabled=bool(values.get('ProxyEnable', (0,))[0] or values.get('AutoConfigURL', ('',))[0]),
                           server=values.get('ProxyServer', ('',))[0])
     except (OSError, ValueError) as error: result['error'] = str(error)
+    path = verge_directory()/'verge.yaml'
+    if path.is_file():
+        try:
+            config = yaml.safe_load(path.read_text(encoding='utf-8')) or {}
+            configured = config.get('enable_system_proxy')
+            if isinstance(configured, bool): result['clash_configured'] = configured
+        except (OSError, ValueError, yaml.YAMLError) as error:
+            result['error'] = 'Clash 系统代理设置读取失败：'+str(error)
     return result
 
 

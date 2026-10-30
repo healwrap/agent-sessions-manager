@@ -121,7 +121,8 @@ export function NetworkSettings({
       {error && <Notice tone="error">{error}</Notice>}
       <ResourceCard
         title="Clash Verge"
-        icon={<img src={clashVergeIcon} width={24} height={24} alt="" />}
+        className="network-clash"
+        icon={<img src={clashVergeIcon} width={32} height={32} alt="" />}
         subtitle={
           network.connected
             ? network.tun

@@ -5,6 +5,10 @@
 .network-settings .ui-collection-toolbar .ui-section-heading {
   margin: 0;
 }
+.network-clash .ui-leading-icon {
+  width: 32px;
+  height: 32px;
+}
 .account-workspace .network-settings .network-line .ui-resource-heading {
   padding-block: 12px;
 }

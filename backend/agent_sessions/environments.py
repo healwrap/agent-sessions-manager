@@ -71,7 +71,7 @@ class EnvironmentSettings:
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
         optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates', 'name_account_id'} if collection in ('profiles', 'app_profiles') else {'app_profile_id', 'usage_plan'} if collection == 'accounts' else set()
         if collection == 'app_profiles': optional |= {'inherit_skills', 'inherit_plugins'}
-        if collection == 'proxies': optional |= {'kind'}
+        if collection == 'proxies': optional |= {'kind', 'clash_node'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
         fields = set(item)-{'gates', 'inherit_skills', 'inherit_plugins'}
@@ -85,7 +85,8 @@ class EnvironmentSettings:
         key = item.get('id') or str(uuid4())
         if not isinstance(key, str) or len(key) > 100: raise ValueError('配置标识无效')
         if collection == 'proxies':
-            if item.get('kind', 'external') not in ('external', 'managed'): raise ValueError('代理类型无效')
+            if item.get('kind', 'external') not in ('external', 'managed', 'clash'): raise ValueError('代理类型无效')
+            if item.get('kind') == 'clash' and not item.get('clash_node'): raise ValueError('请选择 Clash 节点')
             validate_proxy(item['url'])
         elif collection == 'accounts':
             item = {**item, 'name': item['name'].strip()}

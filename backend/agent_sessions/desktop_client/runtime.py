@@ -96,12 +96,14 @@ class AppRuntime:
         if not app: raise ValueError('请先安装官方 Claude App')
         proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not proxy: raise ValueError('绑定的代理不存在')
+        if not proxy and any(row.get('kind') == 'clash' for row in settings['proxies']): raise ValueError('请先为环境选择出口线路')
         with self.lock:
             if any(row['status'] == 'checking' for row in self.runs.values()): raise ValueError('正在切换 App 环境，请稍候')
             if getattr(self, 'component_guard', None): self.component_guard('claude')
             process = self.processes.get(key)
             if process and process.poll() is None: raise ValueError('此 App 环境已打开')
             self.processes.pop(key, None)
+            if self.proxy_manager: self.proxy_manager.network.prepared.discard(key)
             run = {'profile_id': key, 'account_id': account['id'] if account else '', 'name': profile['name'],
                    'status': 'checking', 'stage': '正在检查 App 启动环境', 'checked_at': datetime.now(timezone.utc).isoformat(),
                    'checks': [], 'resolved': {}, 'browser_checks': [], 'error': '', 'data_directory': str(self.profile_directory(key))}
@@ -181,7 +183,7 @@ class AppRuntime:
                                        value='已生成的安装、账号与 Code 标识未与其他 App 环境重复', detail=''))
                 run.update(status='running', stage='App 已启动，可在官方窗口登录', checks=checks,
                            checked_at=datetime.now(timezone.utc).isoformat())
-            threading.Thread(target=self._observe, args=(key, run, process, bool(proxy)), daemon=True).start()
+            threading.Thread(target=self._observe, args=(key, run, process, bool(proxy), bool(proxy and proxy.get('kind') == 'clash')), daemon=True).start()
         except Exception as error:
             if run.get('cancelled'): return
             run.update(status='failed', stage='App 启动未完成', error=str(error))
@@ -190,7 +192,7 @@ class AppRuntime:
             relay = self.relays.pop(key, None)
             if relay: relay.close()
 
-    def _observe(self, key, run, process, proxied):
+    def _observe(self, key, run, process, proxied, tun=False):
         identity_at = 0
         while not run.get('cancelled') and process.poll() is None:
             started = time.monotonic()
@@ -201,7 +203,7 @@ class AppRuntime:
                 observer = self.observers.get(key)
                 if not observer: return
                 rows = observer.sample()
-                snapshot = observation(rows, proxied)
+                snapshot = observation(rows, proxied, tun)
                 if snapshot['violations']:
                     run['network_observation'] = snapshot
                     raise ConnectionViolation('发现 Claude 组件的公网直连：'+'；'.join(describe_connection(row) for row in snapshot['violations']))

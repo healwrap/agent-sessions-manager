@@ -105,6 +105,7 @@ class BrowserRuntime:
         self.identity.verify(settings, 'profiles', key)
         selected = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not selected: raise ValueError('绑定的代理不存在')
+        if not selected and any(row.get('kind') == 'clash' for row in settings['proxies']): raise ValueError('请先为环境选择出口线路')
         if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
         found = kernel.for_profile(profile, self.directory/'kernel', settings['apps'])
         if not found['available']: raise ValueError('未找到 '+found['name']+'，请先安装对应浏览器')
@@ -114,6 +115,7 @@ class BrowserRuntime:
                 raise ValueError('此环境正在运行或检查，请先停止后再启动')
             if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
             self.processes.pop(key, None)
+            if self.proxy_manager: self.proxy_manager.network.prepared.discard(key)
             self.runs[key] = {'profile_id': key, 'account_id': account['id'] if account else '',
                               'name': profile['name'], 'status': 'checking', 'stage': '正在检查代理出口',
                               'checked_at': datetime.now(timezone.utc).isoformat(), 'checks': [],

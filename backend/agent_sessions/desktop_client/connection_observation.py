@@ -7,17 +7,22 @@ def describe(row):
     return f"{row.get('process_name') or '未知进程'}（PID {row['pid']}）→ {row['host']}:{row['port']}"
 
 
-def observation(rows, proxied):
+def observation(rows, proxied, tun=False):
     direct = [row for row in rows if public(row['host'])]
     return {'scope': 'claude-components', 'sample_interval_ms': round(SAMPLE_INTERVAL*1000),
             'connections': rows,
-            'violations': [row for row in direct if proxied and row['process_scope'] == 'claude'],
+            'routing': 'tun' if tun else 'explicit-proxy',
+            'violations': [row for row in direct if proxied and not tun and row['process_scope'] == 'claude'],
             'tool_connections': [row for row in direct if row['process_scope'] == 'tool'],
             'unknown_connections': [row for row in direct if row['process_scope'] == 'unknown'],
             'checked_at': datetime.now(timezone.utc).isoformat()}
 
 
 def checks(snapshot, proxied):
+    if snapshot.get('routing') == 'tun':
+        return [dict(id='app-connections', title='Claude 连接采样', policy='warn', state='info', label='已采样',
+                     value=f'已采样 {len(snapshot["connections"])} 条进程连接',
+                     detail='TUN 模式下目标公网 IP 不等于绕过代理；另行监测 Clash 的 TUN、分流规则和当前节点。采样不能证明全量流量无泄漏。')]
     claude = [row for row in snapshot['connections'] if row['process_scope'] == 'claude']
     unknown = snapshot['unknown_connections']
     result = [dict(id='app-connections', title='Claude 连接采样', policy='warn',

@@ -21,6 +21,8 @@ class ProxyManager:
         self.lock = threading.RLock()
         self.processes, self.errors = {}, {}
         self.updates = SubscriptionUpdates(self)
+        from agent_sessions.network.manager import NetworkManager
+        self.network = NetworkManager(directory, environments, self)
 
     def entry_directory(self, key):
         try: UUID(key)
@@ -93,6 +95,8 @@ class ProxyManager:
             return item
 
     def ensure(self, proxy, starting_profile=None):
+        if proxy and proxy.get('kind') == 'clash':
+            self.network.activate(proxy, starting_profile)
         if proxy and proxy.get('kind') == 'managed':
             self.start(proxy['id'], starting_profile)
             if self.errors.get(proxy['id']): raise ValueError(self.errors[proxy['id']])
@@ -157,6 +161,7 @@ class ProxyManager:
             return {'core': self.core.state(), 'entries': entries, 'adoptable': available(self.directory, self.environments)}
 
     def close(self):
+        self.network.close()
         self.updates.close()
         with self.lock:
             for process in self.processes.values(): process.stop()

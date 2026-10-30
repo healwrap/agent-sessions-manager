@@ -81,6 +81,8 @@ class Handler(BaseHTTPRequestHandler):
             elif parsed.path == '/api/environments':
                 from agent_sessions.proxy_service.api import environment_state
                 result = environment_state(self.server)
+            elif parsed.path == '/api/network':
+                result = self.server.proxy_manager.network.state()
             elif parsed.path == '/api/account-usage':
                 result = self.server.account_usage.read(get('account_id'))
             elif parsed.path.startswith('/api/account-usage/authorization/'):
@@ -164,7 +166,8 @@ class Handler(BaseHTTPRequestHandler):
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
         proxy_service = self.path in {'/api/proxy-services/install', '/api/proxy-services/parse', '/api/proxy-services/save', '/api/proxy-services/start', '/api/proxy-services/stop', '/api/proxy-services/adopt', '/api/proxy-services/refresh'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service and not usage) or not hasattr(self.server, 'settings'):
+        network = self.path in {'/api/network/connect', '/api/network/refresh', '/api/network/open', '/api/network/apply', '/api/network/save-line', '/api/network/prepare', '/api/network/intranet'}
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not proxy_service and not usage and not network) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -183,7 +186,11 @@ class Handler(BaseHTTPRequestHandler):
             if browser_session and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('会话导入应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if usage:
+            if network:
+                if length > 20000 or self.headers.get_content_type() != 'application/json': raise ValueError('网络参数应使用不超过 20 KB 的 JSON')
+                from agent_sessions.network.api import command
+                self.respond(200, command(self.server, self.path.rsplit('/', 1)[-1], value))
+            elif usage:
                 if length > 4096 or self.headers.get_content_type() != 'application/json': raise ValueError('用量参数应使用不超过 4 KB 的 JSON')
                 command = self.path.rsplit('/', 1)[-1]
                 if command == 'benchmarks':
@@ -324,6 +331,8 @@ def main():
     server.browser_runtime = BrowserRuntime(args.state_home, server.environments, server.browser_diagnostics, f'http://127.0.0.1:{server.server_port}', server.proxy_manager)
     from agent_sessions.desktop_client.runtime import AppRuntime
     server.app_runtime = AppRuntime(args.state_home, server.environments, server.proxy_manager)
+    server.proxy_manager.network.runtimes = [('profiles', server.browser_runtime), ('app_profiles', server.app_runtime)]
+    server.proxy_manager.network.start()
     server.app_runtime.session_paths = lambda: server.app_settings.read()['paths']
     from agent_sessions.account_usage.manager import AccountUsage
     server.account_usage = AccountUsage(args.state_home, server.environments, server.browser_runtime, server.app_runtime, server.proxy_manager)

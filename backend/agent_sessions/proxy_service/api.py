@@ -3,7 +3,8 @@
 
 def environment_state(server):
     return {**server.environments.read(), 'browser': server.browser_runtime.state(),
-            'app_runtime': server.app_runtime.state(), 'proxy_runtime': server.proxy_manager.state()}
+            'app_runtime': server.app_runtime.state(), 'proxy_runtime': server.proxy_manager.state(),
+            'network': server.proxy_manager.network.state()}
 
 
 def mutable(server, key):
@@ -57,6 +58,10 @@ def change_environment(server, value):
             if value.get('action') != 'delete': raise ValueError('请在专用代理编辑器中修改此代理')
             server.proxy_manager.remove(key)
             return environment_state(server)
+        if old and old.get('kind') == 'clash' and value.get('action') == 'delete':
+            server.proxy_manager.network.remove_line(key)
+            return environment_state(server)
+        if item.get('kind') == 'clash' or old and old.get('kind') == 'clash': raise ValueError('请在网络设置中选择 Clash 节点')
         if item.get('kind') == 'managed': raise ValueError('请通过创建专用代理导入节点')
     server.environments.change(value)
     return environment_state(server)

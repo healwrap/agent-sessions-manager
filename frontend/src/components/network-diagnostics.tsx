@@ -7,7 +7,7 @@ import {
   type DiagnosticHistory,
 } from '../lib/claude-diagnostics';
 import { networkChecks } from '../lib/diagnostic-labels';
-import { Button, BusyState, EmptyState, Field, Notice } from './ui';
+import { Button, BusyState, EmptyState, Field, Notice, toast } from './ui';
 import { Network } from 'lucide-react';
 import { Select } from './select';
 import { TextInput } from './form-controls';
@@ -72,7 +72,7 @@ export function NetworkDiagnostics({
       setHistory(result.history);
       onReport?.(result, mode === 'proxy' ? proxy : '');
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
     } finally {
       setRunning(false);
     }
@@ -88,8 +88,9 @@ export function NetworkDiagnostics({
     try {
       await request('/api/claude-diagnostics/clear', {}, {});
       setHistory([]);
+      toast('已清除出口历史。', { tone: 'success' });
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
     } finally {
       setClearing(false);
     }

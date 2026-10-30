@@ -102,7 +102,9 @@ export function useSettingsAutosave(open: boolean) {
       if (ok && !sessionStore.state.settingsOpen)
         sessionStore.update({ themePreview: null });
       else if (!ok)
-        sessionStore.notify('设置尚未保存，请重新打开设置查看错误。');
+        sessionStore.notify('设置尚未保存，请重新打开设置查看错误。', {
+          tone: 'error',
+        });
     });
   };
 

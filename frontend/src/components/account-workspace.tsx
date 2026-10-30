@@ -23,7 +23,7 @@ import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
 import { NetworkSettings } from './network-settings';
 import { request } from '../lib/api';
 import { errorMessage } from '../lib/error-message';
-import { Button, ContentDialog, Notice, PageHeading } from './ui';
+import { Button, ContentDialog, Notice, PageHeading, toast } from './ui';
 import { WorkspacePicker } from './workspace-picker';
 import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
 
@@ -73,7 +73,6 @@ export function AccountWorkspace({
   const [loginAccountId, setLoginAccountId] = useState('');
   const [sessionAccountId, setSessionAccountId] = useState('');
   const [diagnosticProxy, setDiagnosticProxy] = useState<ProxyConfig>();
-  const [networkError, setNetworkError] = useState('');
   const {
     data,
     loading,
@@ -95,11 +94,10 @@ export function AccountWorkspace({
     (item) => item.id === sessionAccount?.profile_id,
   );
   const inspectProxy = (item: ProxyConfig) => {
-    setNetworkError('');
     setNetwork(undefined);
     void request('/api/network/prepare', {}, { id: item.id })
       .then(() => setDiagnosticProxy(item))
-      .catch((reason) => setNetworkError(errorMessage(reason)));
+      .catch((reason) => toast(errorMessage(reason), { tone: 'error' }));
   };
   return (
     <>
@@ -187,7 +185,7 @@ export function AccountWorkspace({
               </Button>
             }
           />
-          {(error || networkError) && (
+          {error && (
             <Notice
               tone="error"
               action={
@@ -200,7 +198,7 @@ export function AccountWorkspace({
                 </Button>
               }
             >
-              {networkError || error}
+              {error}
             </Notice>
           )}
           {section === 'accounts' && (!error || data.accounts.length > 0) && (

@@ -26,6 +26,7 @@ import {
   SectionHeading,
   StatusBadge,
   TextInput,
+  toast,
 } from './ui';
 import {
   IntranetEditor,
@@ -81,9 +82,7 @@ export function NetworkSettings({
   const [dialog, setDialog] = useState<'connection' | 'intranet'>();
   const [working, setWorking] = useState(false);
   const [loadingControl, setLoadingControl] = useState<string>();
-  const [error, setError] = useState('');
   const [host, setHost] = useState('');
-  const [result, setResult] = useState('');
   const lines = data.proxies.filter((row) => row.kind === 'clash');
   const pending = working || busy;
   const locked = [...data.browser.runs, ...data.app_runtime.runs].some(
@@ -92,12 +91,11 @@ export function NetworkSettings({
   const run = async (action: string, body: unknown = {}, control?: string) => {
     setWorking(true);
     setLoadingControl(control);
-    setError('');
     try {
       await request('/api/network/' + action, {}, body);
       await onReload();
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       setWorking(false);
       setLoadingControl(undefined);
@@ -105,17 +103,18 @@ export function NetworkSettings({
   };
   const testIntranet = async () => {
     setWorking(true);
-    setError('');
-    setResult('');
     try {
       const value = await request<{ addresses: string[] }>(
         '/api/network/intranet',
         {},
         { host },
       );
-      setResult('解析和连接正常 · ' + value.addresses.join('、'));
+      toast('解析和连接正常 · ' + value.addresses.join('、'), {
+        tone: 'success',
+        holdMs: 5000,
+      });
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       setWorking(false);
     }
@@ -126,7 +125,6 @@ export function NetworkSettings({
   };
   return (
     <section className="network-settings" aria-label="网络设置">
-      {error && <Notice tone="error">{error}</Notice>}
       <ResourceCard
         title="Clash Verge"
         className="network-clash"
@@ -303,7 +301,6 @@ export function NetworkSettings({
             </Button>
           </div>
         )}
-        {result && <Notice tone="success">{result}</Notice>}
       </ResourceCard>
       {(creating || editing) && (
         <NetworkLineEditor

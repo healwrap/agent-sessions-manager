@@ -83,7 +83,7 @@ export function ResourceLink({
         reveal,
       });
     } catch (error) {
-      sessionStore.notify(String(error));
+      sessionStore.notify(String(error), { tone: 'error' });
     }
   };
   const showMenu = (x: number, y: number) => setMenu({ x, y });
@@ -156,8 +156,14 @@ export function ResourceLink({
               onClick={() => {
                 setMenu(null);
                 void copyText(resource.target)
-                  .then(() => sessionStore.notify('已复制文件地址。'))
-                  .catch((error) => sessionStore.notify(String(error)));
+                  .then(() =>
+                    sessionStore.notify('已复制文件地址。', {
+                      tone: 'success',
+                    }),
+                  )
+                  .catch((error) =>
+                    sessionStore.notify(String(error), { tone: 'error' }),
+                  );
               }}
             >
               复制文件地址

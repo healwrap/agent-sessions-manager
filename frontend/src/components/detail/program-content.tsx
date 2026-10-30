@@ -7,6 +7,7 @@ import { Icon } from '../primitives';
 import { Payload } from './payload';
 import { OverviewSection } from './overview-section';
 import { stringWrapping } from '../../lib/string-wrapping';
+import { sessionStore } from '../../state/session-store';
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [state, setState] = useState('idle');
@@ -21,8 +22,14 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       data-state={state}
       onClick={() =>
         void copyText(text).then(
-          () => setState('copied'),
-          () => setState('failed'),
+          () => {
+            setState('copied');
+            sessionStore.notify('已复制内容。', { tone: 'success' });
+          },
+          (reason) => {
+            setState('failed');
+            sessionStore.notify(String(reason), { tone: 'error' });
+          },
         )
       }
     >

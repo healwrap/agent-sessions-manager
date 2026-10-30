@@ -68,7 +68,7 @@ export function createNavigation(store: SessionStore) {
         });
       }
     } catch (error) {
-      if (current()) store.notify(String(error));
+      if (current()) store.notify(String(error), { tone: 'error' });
     }
   }
   function cancelFocus() {
@@ -123,7 +123,7 @@ export function createNavigation(store: SessionStore) {
         },
       });
     } catch (error) {
-      if (current()) store.notify(String(error));
+      if (current()) store.notify(String(error), { tone: 'error' });
     }
   }
   return {

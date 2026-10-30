@@ -139,7 +139,7 @@ export function createTraceLoader(store: SessionStore) {
     } catch (error) {
       if (valid()) {
         store.update({ error: String(error) });
-        store.notify(String(error));
+        store.notify(String(error), { tone: 'error' });
       }
       return false;
     } finally {

@@ -6,7 +6,14 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button, EditorDialog, Notice, StatusBadge, TextArea } from './ui';
+import {
+  Button,
+  EditorDialog,
+  Notice,
+  StatusBadge,
+  TextArea,
+  toast,
+} from './ui';
 import { BrowserLaunchReport } from './browser-launch-report';
 import '../styles/app-login-guide.css';
 
@@ -90,7 +97,7 @@ export function AppLoginGuide({
     try {
       await request('/api/app-runtime/open', {}, { account_id: account.id });
     } catch (reason) {
-      if (mounted.current) setError(String(reason));
+      if (mounted.current) toast(String(reason), { tone: 'error' });
     } finally {
       if (mounted.current) setOpeningApp(false);
     }

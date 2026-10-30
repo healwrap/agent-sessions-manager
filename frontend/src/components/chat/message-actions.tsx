@@ -62,11 +62,12 @@ export function MessageActions({
     pending.current = true;
     try {
       await copyText(await text());
+      sessionStore.notify('已复制消息。', { tone: 'success' });
       setCopied(true);
       clearTimeout(timeout.current);
       timeout.current = setTimeout(() => setCopied(false), 1000);
     } catch (error) {
-      sessionStore.notify(String(error));
+      sessionStore.notify(String(error), { tone: 'error' });
     } finally {
       pending.current = false;
     }
@@ -74,9 +75,9 @@ export function MessageActions({
   const contextReference = async () => {
     try {
       await copyContextReference(id, event.ref);
-      sessionStore.notify('已复制上下文引用。');
+      sessionStore.notify('已复制上下文引用。', { tone: 'success' });
     } catch (error) {
-      sessionStore.notify(String(error));
+      sessionStore.notify(String(error), { tone: 'error' });
     }
   };
   return (

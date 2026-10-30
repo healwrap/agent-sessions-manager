@@ -11,6 +11,7 @@ import {
   ResourceCard,
   StatusBadge,
   Switch,
+  toast,
 } from '../ui';
 import { SettingsRow } from './row';
 
@@ -96,7 +97,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
       );
       setRemoving(undefined);
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
     } finally {
       revision.current++;
       pending.current = false;
@@ -281,7 +282,6 @@ export function ComponentSettings({ active }: { active: boolean }) {
               自身的本地应用数据。本应用保存的独立账号与环境数据仍会保留。
             </p>
           )}
-          {error && <Notice tone="error">{error}</Notice>}
         </ContentDialog>
       )}
     </div>

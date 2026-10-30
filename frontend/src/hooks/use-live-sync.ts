@@ -62,7 +62,7 @@ export function useLiveSync(
         failed = true;
         if (current() && String(error) !== lastError) {
           lastError = String(error);
-          sessionStore.notify(lastError);
+          sessionStore.notify(lastError, { tone: 'error' });
         }
       } finally {
         busy = false;

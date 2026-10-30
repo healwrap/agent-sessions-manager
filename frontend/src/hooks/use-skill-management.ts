@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
 import type { SkillInventory } from '../lib/skill-management';
+import { toast } from '../components/ui/toast';
 
 export function useSkillManagement(active: boolean) {
   const [data, setData] = useState<SkillInventory>();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const revision = useRef(0);
   const reload = useCallback(async () => {
     const version = ++revision.current;
@@ -29,24 +29,24 @@ export function useSkillManagement(active: boolean) {
     revision.current++;
     setBusy(true);
     setError('');
-    setNotice('');
     try {
       const next = await request<SkillInventory>(path, {}, body);
       setData(next);
       const failures = next.results?.filter((row) => !row.success) || [];
       if (failures.length)
-        setError(
-          failures.map((row) => `${row.name}：${row.message}`).join('；'),
-        );
+        toast(failures.map((row) => `${row.name}：${row.message}`).join('；'), {
+          tone: 'error',
+        });
       else
-        setNotice(
+        toast(
           next.results
-            ? `已完成 ${next.results.length} 个入口的操作，并重新读取安装状态`
+            ? `已完成 ${next.results.length} 个入口的操作。`
             : '已恢复原安装入口',
+          { tone: 'success' },
         );
       return !failures.length;
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
       throw reason;
     } finally {
       revision.current++;
@@ -54,5 +54,5 @@ export function useSkillManagement(active: boolean) {
       setLoading(false);
     }
   }
-  return { data, loading, busy, error, notice, reload, setNotice, mutate };
+  return { data, loading, busy, error, reload, mutate };
 }

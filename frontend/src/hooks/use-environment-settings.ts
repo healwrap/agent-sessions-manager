@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
 import { errorMessage } from '../lib/error-message';
+import { toast } from '../components/ui/toast';
 import type {
   BrowserRuntimeState,
   EnvironmentCollection,
@@ -98,24 +99,37 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       );
       setData(latest);
       return latest;
-    } catch (reason) {
-      setError(errorMessage(reason));
-      throw reason;
     } finally {
       finish();
     }
   };
-  const save = (collection: EnvironmentCollection, item: EnvironmentItem) =>
-    change({ collection, action: 'save', item });
-  const provision = (
+  const save = async (
+    collection: EnvironmentCollection,
+    item: EnvironmentItem,
+  ) => {
+    const value = await change({ collection, action: 'save', item });
+    toast('配置已保存。', { tone: 'success' });
+    return value;
+  };
+  const provision = async (
     item: import('../lib/environment-settings').BrowserAccount,
     route: { proxy_id: string },
-  ) => change({ collection: 'accounts', action: 'provision', item, route });
+  ) => {
+    const value = await change({
+      collection: 'accounts',
+      action: 'provision',
+      item,
+      route,
+    });
+    toast('账号配置已保存。', { tone: 'success' });
+    return value;
+  };
   const remove = async (collection: EnvironmentCollection, id: string) => {
     try {
       await change({ collection, action: 'delete', id });
-    } catch {
-      /* Workspace displays it. */
+      toast('已删除配置。', { tone: 'success' });
+    } catch (reason) {
+      toast(errorMessage(reason), { tone: 'error' });
     }
   };
   const runtime = async (
@@ -140,7 +154,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
             },
       );
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       finish();
     }
@@ -159,7 +173,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
         },
       }));
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       finish();
     }

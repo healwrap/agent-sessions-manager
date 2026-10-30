@@ -92,11 +92,12 @@ export function TerminalCard({
   const copy = async () => {
     try {
       await copyText(output.detail ? text : terminal.command);
+      sessionStore.notify('已复制终端内容。', { tone: 'success' });
       setCopied(true);
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopied(false), 1000);
     } catch (error) {
-      sessionStore.notify(String(error));
+      sessionStore.notify(String(error), { tone: 'error' });
     }
   };
   return (

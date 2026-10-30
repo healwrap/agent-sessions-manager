@@ -67,9 +67,9 @@ export function SessionActions({
   const copyContext = async (id: string) => {
     try {
       await copyContextReference(id);
-      sessionStore.notify('已复制整个会话的上下文引用。');
+      sessionStore.notify('已复制整个会话的上下文引用。', { tone: 'success' });
     } catch (error) {
-      sessionStore.notify(String(error));
+      sessionStore.notify(String(error), { tone: 'error' });
     }
   };
   return menu ? (

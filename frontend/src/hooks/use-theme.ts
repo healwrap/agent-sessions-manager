@@ -17,11 +17,11 @@ export function useTheme(
       if (preference === 'system') apply();
     };
     media.addEventListener('change', change);
-    void window.__TAURI__?.core
-      ?.invoke('set_theme', { preference })
-      .catch(() =>
-        sessionStore.notify('原生窗口外观未能切换，页面外观已更新。'),
-      );
+    void window.__TAURI__?.core?.invoke('set_theme', { preference }).catch(() =>
+      sessionStore.notify('原生窗口外观未能切换，页面外观已更新。', {
+        tone: 'warning',
+      }),
+    );
     return () => media.removeEventListener('change', change);
   }, [preference, ready]);
   useEffect(() => {

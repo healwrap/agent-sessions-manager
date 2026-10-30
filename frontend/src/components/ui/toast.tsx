@@ -36,7 +36,7 @@ export function Toast({
   onDone,
 }: ToastOptions & { text: string; onDone: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [surface, setSurface] = useState(toastSurface);
+  const [surface, setSurface] = useState<HTMLElement>(() => document.body);
   const done = useRef(onDone);
   useLayoutEffect(() => {
     done.current = onDone;
@@ -54,6 +54,13 @@ export function Toast({
     return () => observer.disconnect();
   }, []);
   useLayoutEffect(() => {
+    // A save can close its dialog and show a toast in the same commit. Resolve
+    // the host after that commit rather than using the dialog seen in render.
+    const current = toastSurface();
+    if (surface !== current) {
+      setSurface(current);
+      return;
+    }
     ref.current!.showPopover();
   }, [surface]);
   useEffect(() => {

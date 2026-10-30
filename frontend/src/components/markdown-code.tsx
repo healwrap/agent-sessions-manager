@@ -40,10 +40,13 @@ export function MarkdownCode({
               void copyText(code)
                 .then(() => {
                   setCopied(true);
+                  sessionStore.notify('已复制代码。', { tone: 'success' });
                   clearTimeout(timer.current);
                   timer.current = setTimeout(() => setCopied(false), 1000);
                 })
-                .catch((error) => sessionStore.notify(String(error)))
+                .catch((error) =>
+                  sessionStore.notify(String(error), { tone: 'error' }),
+                )
             }
           >
             <Icon name={copied ? 'check' : 'copy'} />

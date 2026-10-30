@@ -3,7 +3,7 @@ import type { BrowserAccount } from '../lib/environment-settings';
 import { request } from '../lib/api';
 import { guideStore } from '../state/guide-store';
 import { isGuideDemo } from '../lib/demo-mode';
-import { Button, Notice } from './ui';
+import { Button, Notice, toast } from './ui';
 
 interface Identity {
   state: 'pending' | 'verified' | 'mismatch';
@@ -21,13 +21,11 @@ export function GuideLoginCheck({
   ready: boolean;
 }) {
   const [result, setResult] = useState<Identity>();
-  const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const inspect = async () => {
     const progress = guideStore.state.progress;
     setBusy(true);
     setResult(undefined);
-    setError('');
     try {
       const value = await request<Identity>(
         isGuideDemo ? '/api/demo/login' : '/api/browser-login',
@@ -45,7 +43,7 @@ export function GuideLoginCheck({
       )
         guideStore.go('done');
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -70,7 +68,6 @@ export function GuideLoginCheck({
               : '模拟邮箱登录'
             : '检查登录身份'}
       </Button>
-      {error && <Notice tone="error">{error}</Notice>}
       {result && (
         <Notice tone={result.state === 'mismatch' ? 'error' : 'info'}>
           {result.message}

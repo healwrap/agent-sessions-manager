@@ -11,6 +11,7 @@ import {
   ContentDialog,
   Field,
   Notice,
+  toast,
   Select,
   TextArea,
   TextInput,
@@ -38,11 +39,9 @@ export function NetworkLineEditor({
       : '',
   );
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
   const save = async () => {
     if (locked) return;
     setPending(true);
-    setError('');
     try {
       const data = await request<EnvironmentSettings>(
         '/api/network/save-line',
@@ -60,8 +59,9 @@ export function NetworkLineEditor({
           (item ? row.id === item.id : !existingIds.includes(row.id)),
       );
       onSaved(data, saved!.id);
+      toast('节点已保存。', { tone: 'success' });
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       setPending(false);
     }
@@ -96,7 +96,6 @@ export function NetworkLineEditor({
         </>
       }
     >
-      {error && <Notice tone="error">{error}</Notice>}
       {locked && <Notice>停止运行中的环境后可修改配置。</Notice>}
       <Field label="节点名称" htmlFor="network-line-name">
         <TextInput
@@ -164,16 +163,15 @@ export function NetworkConnectionEditor({
   const [endpoint, setEndpoint] = useState(network.endpoint);
   const [secret, setSecret] = useState('');
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
   const save = async () => {
     if (locked) return;
     setPending(true);
-    setError('');
     try {
       await request('/api/network/connect', {}, { endpoint, secret });
       onSaved();
+      toast('连接设置已保存。', { tone: 'success' });
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       setPending(false);
     }
@@ -198,7 +196,6 @@ export function NetworkConnectionEditor({
         </>
       }
     >
-      {error && <Notice tone="error">{error}</Notice>}
       {locked && <Notice>停止运行中的环境后可修改配置。</Notice>}
       <Field label="控制接口" htmlFor="network-endpoint">
         <TextInput
@@ -242,7 +239,6 @@ export function IntranetEditor({
   const [domains, setDomains] = useState(network.domains.join('\n'));
   const [dns, setDns] = useState(network.dns.join('\n'));
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
   const values = (text: string) =>
     text
       .split(/[\n,，]/)
@@ -251,7 +247,6 @@ export function IntranetEditor({
   const save = async () => {
     if (locked) return;
     setPending(true);
-    setError('');
     try {
       await request(
         '/api/network/apply',
@@ -259,8 +254,9 @@ export function IntranetEditor({
         { domains: values(domains), dns: values(dns) },
       );
       onSaved();
+      toast('直连配置已保存。', { tone: 'success' });
     } catch (reason) {
-      setError(errorMessage(reason));
+      toast(errorMessage(reason), { tone: 'error' });
     } finally {
       setPending(false);
     }
@@ -285,7 +281,6 @@ export function IntranetEditor({
         </>
       }
     >
-      {error && <Notice tone="error">{error}</Notice>}
       {locked && <Notice>停止运行中的环境后可修改配置。</Notice>}
       <Field label="直连域名" htmlFor="intranet-domains">
         <TextArea

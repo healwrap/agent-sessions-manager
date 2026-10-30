@@ -111,7 +111,7 @@ export class SessionStore {
       await this.loadSessions(true, catalogue);
     } catch (error) {
       this.update({ error: String(error) });
-      this.notify(String(error));
+      this.notify(String(error), { tone: 'error' });
     } finally {
       this.update({ initializing: false });
     }
@@ -126,7 +126,7 @@ export class SessionStore {
       .then(async () => {
         await this.api('/api/preferences', {}, next);
       })
-      .catch((error) => this.notify(String(error)));
+      .catch((error) => this.notify(String(error), { tone: 'error' }));
     await this.preferenceSave;
   }
   async loadSessions(preserve = true, pending?: Promise<Catalogue>) {
@@ -173,7 +173,7 @@ export class SessionStore {
         if (id) await this.selectSession(id, params.get('ref'));
       }
     } catch (error) {
-      this.notify(String(error));
+      this.notify(String(error), { tone: 'error' });
     } finally {
       if (generation === this.sessionsGeneration)
         this.update({ catalogueLoading: false });
@@ -208,7 +208,7 @@ export class SessionStore {
         projectPages: { ...this.state.projectPages, [key]: data.next_offset },
       });
     } catch (error) {
-      this.notify(String(error));
+      this.notify(String(error), { tone: 'error' });
     } finally {
       if (generation === this.sessionsGeneration) {
         const loading = new Set(this.state.projectLoading);

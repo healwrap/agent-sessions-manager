@@ -3,7 +3,7 @@ import type {
   BrowserAccount,
   EnvironmentSettings,
 } from '../lib/environment-settings';
-import { Button, Field, GuideLink, Notice } from './ui';
+import { Button, Field, GuideLink, Notice, toast } from './ui';
 import { accountGuide } from '../lib/guide-links';
 import { demoDefaults } from '../lib/demo-mode';
 import { EditorDialog, TextInput } from './form-controls';
@@ -38,7 +38,6 @@ export function AccountEditor({
       },
   );
   const [proxy, setProxy] = useState(initialProxyId || '');
-  const [error, setError] = useState('');
   const creating =
     value.profile_id === '__new__' || value.app_profile_id === '__new__';
   const available = (collection: 'profiles' | 'app_profiles', id: string) => {
@@ -57,7 +56,7 @@ export function AccountEditor({
           proxy_id: proxy,
         })
           .then(onClose)
-          .catch((reason) => setError(String(reason)));
+          .catch((reason) => toast(String(reason), { tone: 'error' }));
       }}
       footer={
         <>
@@ -197,11 +196,6 @@ export function AccountEditor({
       <Notice>
         每个环境只属于一个账号。旧环境解绑后仍保留原登录数据，新账号会创建独立环境。
       </Notice>
-      {error && (
-        <p role="alert" className="environment-error">
-          {error}
-        </p>
-      )}
     </EditorDialog>
   );
 }

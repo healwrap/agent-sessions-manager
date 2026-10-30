@@ -30,6 +30,7 @@ import {
   Tooltip,
   TooltipLayer,
   ToastLayer,
+  toast,
   ResourceCard,
   Select,
   SettingsButton,
@@ -54,7 +55,6 @@ export function ComponentCatalog() {
   const [settingsPreview, setSettingsPreview] = useState(false);
   const [name, setName] = useState('工作浏览器');
   const [proxy, setProxy] = useState('dedicated');
-  const [notice, setNotice] = useState(false);
   useEffect(() => {
     document.body.toggleAttribute('data-ds-dark-theme', theme === 'dark');
   }, [theme]);
@@ -259,15 +259,18 @@ export function ComponentCatalog() {
             </ResourceCard>
           </div>
           <Panel title="反馈与空状态">
-            <Notice tone="success">配置已保存</Notice>
-            <Notice tone="warning">检测结果需要确认</Notice>
+            <Notice tone="success">当前出口与账号配置一致</Notice>
+            <Notice tone="warning">当前环境尚未绑定节点</Notice>
             <Notice
               tone="error"
-              action={<Button onClick={() => setNotice(true)}>重试示例</Button>}
+              action={
+                <Button onClick={() => toast('已触发重试示例。')}>
+                  重试示例
+                </Button>
+              }
             >
               示例：无法连接代理
             </Notice>
-            {notice && <Notice>已触发重试示例</Notice>}
             <BusyState label="正在检查环境" />
           </Panel>
           <Panel title="表单与弹窗">
@@ -362,7 +365,7 @@ export function ComponentCatalog() {
           onSubmit={(event) => {
             event.preventDefault();
             setDialog(false);
-            setNotice(true);
+            toast('配置已保存。', { tone: 'success' });
           }}
           footer={
             <>

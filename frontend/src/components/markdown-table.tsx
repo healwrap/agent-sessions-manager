@@ -25,10 +25,13 @@ export function MarkdownTable({
           void copyText(markdown)
             .then(() => {
               setCopied(true);
+              sessionStore.notify('已复制表格。', { tone: 'success' });
               clearTimeout(timer.current);
               timer.current = setTimeout(() => setCopied(false), 1000);
             })
-            .catch((error) => sessionStore.notify(String(error)))
+            .catch((error) =>
+              sessionStore.notify(String(error), { tone: 'error' }),
+            )
         }
       />
       <IconButton

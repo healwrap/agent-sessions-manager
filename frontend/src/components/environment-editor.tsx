@@ -7,7 +7,7 @@ import type {
   EnvironmentCollection,
   EnvironmentItem,
 } from '../lib/environment-settings';
-import { Button, Field, Notice } from './ui';
+import { Button, Field, Notice, toast } from './ui';
 import { EditorDialog, TextInput } from './form-controls';
 import { BrowserProfileFields } from './browser-profile-fields';
 
@@ -80,7 +80,7 @@ export function EnvironmentEditor({
       await onSave(edit.kind, value as BrowserProfile | AppProfile);
       onClose();
     } catch (reason) {
-      setError(String(reason));
+      toast(String(reason), { tone: 'error' });
     } finally {
       setSaving(false);
     }

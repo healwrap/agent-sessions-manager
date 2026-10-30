@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
 import { errorMessage } from '../lib/error-message';
+import { toast } from '../components/ui/toast';
 import type { AccountUsage } from '../lib/account-usage';
 import type { QuotaBenchmarks, UsageOverview } from '../lib/account-overview';
 import type { EnvironmentSettings } from '../lib/environment-settings';
@@ -48,7 +49,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
         setError('');
       }
     } catch (reason) {
-      if (mounted.current) setError(errorMessage(reason));
+      if (mounted.current) toast(errorMessage(reason), { tone: 'error' });
     } finally {
       wake.current();
     }
@@ -63,7 +64,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
       );
       if (mounted.current && version === revision.current) accept(value);
     } catch (reason) {
-      if (mounted.current) setError(errorMessage(reason));
+      if (mounted.current) toast(errorMessage(reason), { tone: 'error' });
     } finally {
       wake.current();
     }
@@ -77,7 +78,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
       );
       if (mounted.current) setBenchmarks(value);
     } catch (reason) {
-      if (mounted.current) setError(errorMessage(reason));
+      if (mounted.current) toast(errorMessage(reason), { tone: 'error' });
     } finally {
       wake.current();
     }

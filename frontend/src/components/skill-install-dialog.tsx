@@ -5,6 +5,7 @@ import { AgentIcon } from './agent-icon';
 import { EditorDialog, StatusBadge, TextInput } from './form-controls';
 import { Button } from './primitives';
 import { Select } from './select';
+import { toast } from './ui/toast';
 import {
   skillActions,
   skillStates,
@@ -60,7 +61,12 @@ export function SkillInstallDialog({
         { action, ids, method, ...(configure ? { path } : {}) },
       )
         .then((value) => current && setPlan(value))
-        .catch((reason) => current && setError(String(reason)))
+        .catch((reason) => {
+          if (current) {
+            setError(String(reason));
+            toast(String(reason), { tone: 'error' });
+          }
+        })
         .finally(() => current && setLoading(false));
     }, 180);
     return () => {
@@ -230,15 +236,12 @@ export function SkillInstallDialog({
         </div>
       )}
       {error && (
-        <div className="environment-error-bar" role="alert">
-          <span>{error}</span>
-          <Button
-            onClick={() => setRevision((value) => value + 1)}
-            disabled={busy}
-          >
-            重新检查
-          </Button>
-        </div>
+        <Button
+          onClick={() => setRevision((value) => value + 1)}
+          disabled={busy}
+        >
+          重新检查
+        </Button>
       )}
       {!configure && !remove && (
         <div className="skill-dialog-summary">

@@ -32,7 +32,7 @@ export function SkillWorkspace({
   active?: boolean;
 }) {
   const { settings } = useSessionStore();
-  const { data, loading, busy, error, notice, reload, setNotice, mutate } =
+  const { data, loading, busy, error, reload, mutate } =
     useSkillManagement(active);
   const targets = data?.targets || [];
   const [closed, setClosed] = useState(false);
@@ -206,20 +206,6 @@ export function SkillWorkspace({
                   />
                 </ResourceCard>
               )
-            )}
-            {notice && (
-              <Notice
-                tone="success"
-                action={
-                  <IconButton
-                    icon="close"
-                    label="关闭操作提示"
-                    onClick={() => setNotice('')}
-                  />
-                }
-              >
-                {notice}
-              </Notice>
             )}
             {!loading && data && !targets.length && (
               <EmptyState

@@ -1,14 +1,13 @@
-import { useState } from 'react';
 import { copyText } from '../lib/api';
 import type { LocalApp } from '../lib/environment-settings';
 import { Button } from './primitives';
 import { isGuideDemo } from '../lib/demo-mode';
+import { toast } from './ui/toast';
 
 export function EnvironmentAppButton({ app }: { app: LocalApp }) {
-  const [feedback, setFeedback] = useState('');
   const open = async () => {
     if (isGuideDemo) {
-      setFeedback('这是示例应用，演示不会打开本机程序。');
+      toast('这是示例应用，演示不会打开本机程序。');
       return;
     }
     try {
@@ -18,13 +17,13 @@ export function EnvironmentAppButton({ app }: { app: LocalApp }) {
           cwd: null,
           reveal: false,
         });
-        setFeedback('已打开');
+        toast('已打开 ' + app.name, { tone: 'success' });
       } else {
         await copyText(app.path);
-        setFeedback('已复制应用路径');
+        toast('已复制应用路径', { tone: 'success' });
       }
     } catch (error) {
-      setFeedback(String(error));
+      toast(String(error), { tone: 'error' });
     }
   };
   return (
@@ -32,7 +31,6 @@ export function EnvironmentAppButton({ app }: { app: LocalApp }) {
       <Button onClick={() => void open()} title={app.path}>
         {window.__TAURI__?.core ? '打开' : '复制路径'} {app.name}
       </Button>
-      {feedback && <span role="status">{feedback}</span>}
     </span>
   );
 }

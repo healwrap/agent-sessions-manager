@@ -80,6 +80,7 @@ export function NetworkSettings({
   const [editing, setEditing] = useState<ProxyConfig>();
   const [dialog, setDialog] = useState<'connection' | 'intranet'>();
   const [working, setWorking] = useState(false);
+  const [loadingControl, setLoadingControl] = useState<string>();
   const [error, setError] = useState('');
   const [host, setHost] = useState('');
   const [result, setResult] = useState('');
@@ -88,8 +89,9 @@ export function NetworkSettings({
   const locked = [...data.browser.runs, ...data.app_runtime.runs].some(
     (row) => row.alive || row.status === 'checking',
   );
-  const run = async (action: string, body: unknown = {}) => {
+  const run = async (action: string, body: unknown = {}, control?: string) => {
     setWorking(true);
+    setLoadingControl(control);
     setError('');
     try {
       await request('/api/network/' + action, {}, body);
@@ -98,6 +100,7 @@ export function NetworkSettings({
       setError(errorMessage(reason));
     } finally {
       setWorking(false);
+      setLoadingControl(undefined);
     }
   };
   const testIntranet = async () => {
@@ -195,7 +198,10 @@ export function NetworkSettings({
           network={network}
           pending={pending}
           locked={locked}
-          onChange={(name, enabled) => void run('control', { name, enabled })}
+          loadingControl={loadingControl}
+          onChange={(name, enabled) =>
+            void run('control', { name, enabled }, name)
+          }
         />
         {network.restore_error && (
           <Notice tone="warning">{network.restore_error}</Notice>

@@ -15,6 +15,7 @@ export function InputPreview() {
   const [link, setLink] = useState('');
   const [fontSize, setFontSize] = useState(14);
   const [enabled, setEnabled] = useState(true);
+  const [switchLoading, setSwitchLoading] = useState(false);
   return (
     <Panel title="输入框与占位提示">
       <div className="ui-stack">
@@ -67,7 +68,14 @@ export function InputPreview() {
             id="catalog-input-switch"
             label="启用示例"
             checked={enabled}
-            onChange={setEnabled}
+            loading={switchLoading}
+            onChange={(next) => {
+              setSwitchLoading(true);
+              setTimeout(() => {
+                setEnabled(next);
+                setSwitchLoading(false);
+              }, 1200);
+            }}
           />
         </Field>
       </div>

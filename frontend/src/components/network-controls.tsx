@@ -6,11 +6,13 @@ export function NetworkControls({
   network,
   pending,
   locked,
+  loadingControl,
   onChange,
 }: {
   network: ClashNetwork;
   pending: boolean;
   locked: boolean;
+  loadingControl?: string;
   onChange: (name: string, enabled: boolean) => void;
 }) {
   return (
@@ -24,6 +26,7 @@ export function NetworkControls({
           id="network-system-proxy"
           label="系统代理"
           checked={network.system_proxy?.enabled === true}
+          loading={loadingControl === 'system_proxy'}
           disabled={
             pending ||
             locked ||
@@ -42,6 +45,7 @@ export function NetworkControls({
           id="network-tun"
           label="TUN 模式"
           checked={network.tun}
+          loading={loadingControl === 'tun'}
           disabled={pending || locked}
           onChange={(value) => onChange('tun', value)}
         />
@@ -55,6 +59,7 @@ export function NetworkControls({
           id="network-auto-prepare"
           label="启动时自动准备网络"
           checked={network.auto_prepare !== false}
+          loading={loadingControl === 'auto_prepare'}
           disabled={pending}
           onChange={(value) => onChange('auto_prepare', value)}
         />

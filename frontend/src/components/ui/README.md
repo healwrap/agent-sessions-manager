@@ -9,6 +9,7 @@
 | 组件 / 规则                    | DSH 原始来源（相对 DSH 仓库）                                                                                                                                              | 本项目适配                                                                                      |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Button                         | `packages/client/ui-primitives/src/Button.module.css`                                                                                                                      | `styles/dsh/controls.css`                                                                       |
+| Switch                         | `packages/client/ui-primitives/src/Switch.tsx`、`Switch.module.css`                                                                                                        | `switch.tsx`、`styles/dsh/switch.css`                                                           |
 | Disclosure 折叠标题            | `packages/client/ui-primitives/src/DisclosureRow.module.css`                                                                                                               | `styles/disclosure.css`，透明标题，悬停只改变文字颜色；管理区增加点击留白                       |
 | Input / TextArea / SearchField | `packages/client/ui-primitives/src/Input.module.css`                                                                                                                       | `styles/dsh/input.css` 统一文字、占位提示、焦点与禁用态；`styles/search-field.css` 负责搜索容器 |
 | ChoiceGroup 分段选择           | `packages/client/ui-primitives/src/SegmentedControl.module.css`                                                                                                            | `styles/dsh/choices.css`，保留滑动指示器                                                        |
@@ -59,6 +60,8 @@
 - 演示模式直接覆盖当前工作区，内部复用同一个 AccountWorkspace、账号、代理、环境和 GuidedTour 组件，使用内存接口与示例表单值，不维护第二份页面布局。退出恢复原页面；顶栏尺寸与正式页面共用 `--workspace-header-height`。引导演示预览可从组件目录启动。
 
 NumberField 和 Switch 从 `components/ui` 导出，分别用于设置中的有界数字步进与布尔开关，样式复用 DSH 控件变量；会话设置和通用设置已使用，输入预览中提供可交互示例。Select 的 `field` 变体用于设置表单，保留通用选择器的键盘导航和弹窗内点击修复。
+
+Switch 的 `loading` 在圆点内显示加载图标，并设置 `aria-busy` 和禁用状态；页面按具体操作传入，只让当前请求对应的开关加载。保持实际 `checked` 值，等待操作及状态刷新完成后结束加载；失败时显示页面错误。输入预览中的开关模拟 1.2 秒异步操作。
 
 ## 开发预览
 

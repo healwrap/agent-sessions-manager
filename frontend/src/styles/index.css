@@ -42,6 +42,7 @@
 @import './json-inspector.css' layer(components);
 @import './dsh/overview-sections.css' layer(components);
 @import './form-controls.css' layer(components);
+@import './dsh/switch.css' layer(components);
 @import './settings.css' layer(components);
 @import './diagnostics.css' layer(components);
 @import './diagnostics-results.css' layer(components);

@@ -267,7 +267,7 @@ export function IntranetEditor({
           rows={3}
         />
       </Field>
-      <Field label="DNS 服务器（可选）" htmlFor="intranet-dns">
+      <Field label="直连 DNS（可选）" htmlFor="intranet-dns">
         <TextArea
           disabled={locked}
           id="intranet-dns"
@@ -277,6 +277,9 @@ export function IntranetEditor({
           rows={2}
         />
       </Field>
+      <p className="network-bound-accounts">
+        国内网站和直连请求使用这些 DNS，留空使用 Clash 现有配置。
+      </p>
     </ContentDialog>
   );
 }

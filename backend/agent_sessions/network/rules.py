@@ -14,6 +14,12 @@ END = '// END AGENT SESSIONS NETWORK'
 GROUP = 'Agent Sessions · Claude'
 
 
+def dns_configuration(settings):
+    if not settings['dns']: return {}, {}
+    policies = {'geosite:cn': settings['dns'], **{'+.'+domain: settings['dns'] for domain in settings['domains']}}
+    return policies, {'direct-nameserver': settings['dns'], 'direct-nameserver-follow-policy': True}
+
+
 def rules(settings):
     group = settings['group']
     company = ([f'IP-CIDR,{address}/32,DIRECT,no-resolve' if ':' not in address else
@@ -47,9 +53,10 @@ def configured(config, settings, lines=()):
                               + [f"MATCH,{line['clash_node']}"])
         result['listeners'], result['sub-rules'] = listeners, subrules
     dns = result.setdefault('dns', {})
-    if settings['domains'] and settings['dns']:
-        policy = dns.setdefault('nameserver-policy', {})
-        for domain in settings['domains']: policy['+.'+domain] = settings['dns']
+    policies, options = dns_configuration(settings)
+    if policies:
+        dns.setdefault('nameserver-policy', {}).update(policies)
+        dns.update(options)
         dns['fake-ip-filter'] = list(dict.fromkeys(dns.get('fake-ip-filter', [])+['+.'+d for d in settings['domains']]))
     return result
 
@@ -58,11 +65,15 @@ def restore_fragment(config, previous):
     config['rules'] = [row for row in config.get('rules', []) if row not in previous.get('ownedRules', previous['rules'])]
     dns = config.get('dns', {})
     policy = dns.get('nameserver-policy', {})
-    for domain in previous['domains']:
-        key = '+.'+domain
-        if policy.get(key) != previous['dns']: continue
+    policies = previous.get('dnsPolicies', {'+.'+domain: previous['dns'] for domain in previous['domains']})
+    for key, value in policies.items():
+        if policy.get(key) != value: continue
         if key in previous.get('dnsBefore', {}): policy[key] = previous['dnsBefore'][key]
         else: policy.pop(key, None)
+    for key, value in previous.get('dnsOptions', {}).items():
+        if dns.get(key) != value: continue
+        if key in previous.get('dnsOptionsBefore', {}): dns[key] = previous['dnsOptionsBefore'][key]
+        else: dns.pop(key, None)
     if 'fake-ip-filter' in dns:
         dns['fake-ip-filter'] = [row for row in dns['fake-ip-filter'] if row not in previous.get('addedFilters', [])]
 
@@ -91,11 +102,15 @@ def install(controller, settings, directory, lines=()):
     config['mode'] = running.get('mode', config.get('mode', 'rule'))
     config.setdefault('tun', {})['enable'] = bool(running.get('tun', {}).get('enable'))
     staged = configured(config, settings, lines)
-    policy = config.get('dns', {}).get('nameserver-policy', {})
-    filters = config.get('dns', {}).get('fake-ip-filter', [])
+    dns = config.get('dns', {})
+    policy = dns.get('nameserver-policy', {})
+    filters = dns.get('fake-ip-filter', [])
+    policies, options = dns_configuration(settings)
     data = json.dumps({'rules': rules(settings), 'domains': settings['domains'], 'dns': settings['dns'],
                        'ownedRules': [row for row in rules(settings) if row not in config.get('rules', [])],
-                       'dnsBefore': {key: policy[key] for domain in settings['domains'] if (key := '+.'+domain) in policy},
+                       'dnsPolicies': policies, 'dnsOptions': options,
+                       'dnsBefore': {key: policy[key] for key in policies if key in policy},
+                       'dnsOptionsBefore': {key: dns[key] for key in options if key in dns},
                        'addedFilters': ['+.'+domain for domain in settings['domains'] if settings['dns'] and '+.'+domain not in filters],
                        'listeners': [row for row in staged.get('listeners', []) if row.get('name', '').startswith('agent-sessions-')],
                        'subrules': {key: value for key, value in staged.get('sub-rules', {}).items() if key.startswith('agent-sessions-')},
@@ -115,10 +130,11 @@ main = function(config, profileName) {{
   config["proxy-groups"] = [...(config["proxy-groups"] || []).filter(g => g.name !== {json.dumps(GROUP)}), ...(network.group ? [network.group] : [])];
   config.listeners = [...(config.listeners || []).filter(l => !l.name.startsWith("agent-sessions-")), ...network.listeners.filter(l => usableNames.has(l.name))];
   config["sub-rules"] = {{...Object.fromEntries(Object.entries(config["sub-rules"] || {{}}).filter(([key]) => !key.startsWith("agent-sessions-"))), ...Object.fromEntries(Object.entries(network.subrules).filter(([key]) => usableNames.has(key)))}};
-  if (network.domains.length && network.dns.length) {{
+  if (network.dns.length) {{
     config.dns = config.dns || {{}};
     config.dns["nameserver-policy"] = config.dns["nameserver-policy"] || {{}};
-    for (const domain of network.domains) config.dns["nameserver-policy"]["+." + domain] = network.dns;
+    Object.assign(config.dns["nameserver-policy"], network.dnsPolicies);
+    Object.assign(config.dns, network.dnsOptions);
     config.dns["fake-ip-filter"] = [...new Set([...(config.dns["fake-ip-filter"] || []), ...network.domains.map(d => "+." + d)])];
   }}
   return config;

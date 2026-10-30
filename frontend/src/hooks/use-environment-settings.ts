@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
+import { errorMessage } from '../lib/error-message';
 import type {
   BrowserRuntimeState,
   EnvironmentCollection,
@@ -52,7 +53,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       const latest = await request<EnvironmentSettings>('/api/environments');
       if (version === revision.current && !pending.current) setData(latest);
     } catch (reason) {
-      setError(String(reason));
+      setError(errorMessage(reason));
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
         }
       } catch (reason) {
         if (current && !pending.current)
-          setPollError('运行状态更新失败：' + String(reason));
+          setPollError('运行状态更新失败：' + errorMessage(reason));
       }
       if (current) timer = setTimeout(() => void poll(), 1500);
     };
@@ -98,7 +99,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       setData(latest);
       return latest;
     } catch (reason) {
-      setError(String(reason));
+      setError(errorMessage(reason));
       throw reason;
     } finally {
       finish();
@@ -120,7 +121,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
       setData(latest);
       return latest;
     } catch (reason) {
-      setError(String(reason));
+      setError(errorMessage(reason));
       throw reason;
     } finally {
       finish();
@@ -159,7 +160,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
             },
       );
     } catch (reason) {
-      setError(String(reason));
+      setError(errorMessage(reason));
     } finally {
       finish();
     }
@@ -178,7 +179,7 @@ export function useEnvironmentSettings(active = true, watchRuntime = true) {
         },
       }));
     } catch (reason) {
-      setError(String(reason));
+      setError(errorMessage(reason));
     } finally {
       finish();
     }

@@ -195,12 +195,20 @@ export function AccountWorkspace({
           {error && (
             <Notice
               tone="error"
-              action={<Button onClick={() => void reload()}>重新读取</Button>}
+              action={
+                <Button
+                  size="small"
+                  disabled={loading || busy}
+                  onClick={() => void reload()}
+                >
+                  重新读取
+                </Button>
+              }
             >
               {error}
             </Notice>
           )}
-          {section === 'accounts' && (
+          {section === 'accounts' && (!error || data.accounts.length > 0) && (
             <BrowserAccounts
               active={active}
               guidedAccountId={
@@ -210,6 +218,7 @@ export function AccountWorkspace({
               data={data}
               busy={busy}
               loading={loading}
+              readError={error}
               onLogin={(account) => setLoginAccountId(account.id)}
               onSessionLogin={(account) => setSessionAccountId(account.id)}
               onEditAccount={(item) => setAccountEdit({ item })}

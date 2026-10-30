@@ -146,7 +146,13 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, OSError) as exc:
             self.respond(400, {'error': str(exc)})
         except Exception:
-            self.respond(500, {'error': '读取失败，请刷新并查看会话格式警告'})
+            if parsed.path.startswith('/api/account-usage'):
+                message = '账号用量读取失败，请重试。'
+            elif parsed.path in ('/api/environments', '/api/app-runtime', '/api/browser-runtime'):
+                message = '账号与环境读取失败，请重新读取。'
+            else:
+                message = '读取失败，请刷新并查看会话格式警告'
+            self.respond(500, {'error': message})
 
     def do_POST(self):
         usage = self.path in {'/api/account-usage/refresh', '/api/account-usage/refresh-all', '/api/account-usage/benchmarks',

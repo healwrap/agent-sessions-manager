@@ -18,12 +18,14 @@ export function AccountOverview({
   busy,
   modelId,
   onModel,
+  showError = true,
 }: {
   data: EnvironmentSettings;
   usage: AccountUsages;
   busy: boolean;
   modelId: string;
   onModel: (id: string) => void;
+  showError?: boolean;
 }) {
   const [sourceOpen, setSourceOpen] = useState(false);
   const { benchmarks, items, now } = usage;
@@ -126,7 +128,18 @@ export function AccountOverview({
           </Button>
         </div>
       </div>
-      {usage.error && <Notice tone="error">{usage.error}</Notice>}
+      {showError && usage.error && (
+        <Notice
+          tone="error"
+          action={
+            <Button size="small" onClick={() => void usage.refreshAll()}>
+              重新读取
+            </Button>
+          }
+        >
+          {usage.error}
+        </Notice>
+      )}
       {sourceOpen && (
         <QuotaSourceDialog
           usage={usage}

@@ -33,6 +33,7 @@ export function BrowserAccounts({
   data,
   busy,
   loading,
+  readError = '',
   guidedAccountId,
   guidedTarget,
   active = true,
@@ -41,11 +42,12 @@ export function BrowserAccounts({
   data: EnvironmentSettings;
   busy: boolean;
   loading: boolean;
+  readError?: string;
   guidedAccountId?: string;
   guidedTarget?: 'browser' | 'app';
   active?: boolean;
 }) {
-  const usage = useAccountUsages(data, active);
+  const usage = useAccountUsages(data, active && !readError && !loading);
   const [estimateModel, setEstimateModel] = useState('claude-opus-5-5');
   const { preferences } = useSessionStore();
   const [selected, setSelected] = useState('');
@@ -122,6 +124,7 @@ export function BrowserAccounts({
         busy={busy}
         modelId={estimateModel}
         onModel={setEstimateModel}
+        showError={!readError}
       />
       {data.app_runtime.warnings?.map((message) => (
         <Notice tone="warning" key={message}>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../lib/api';
+import { errorMessage } from '../lib/error-message';
 import type { AccountUsage } from '../lib/account-usage';
 import type { QuotaBenchmarks, UsageOverview } from '../lib/account-overview';
 import type { EnvironmentSettings } from '../lib/environment-settings';
@@ -47,7 +48,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
         setError('');
       }
     } catch (reason) {
-      if (mounted.current) setError(String(reason));
+      if (mounted.current) setError(errorMessage(reason));
     } finally {
       wake.current();
     }
@@ -62,7 +63,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
       );
       if (mounted.current && version === revision.current) accept(value);
     } catch (reason) {
-      if (mounted.current) setError(String(reason));
+      if (mounted.current) setError(errorMessage(reason));
     } finally {
       wake.current();
     }
@@ -76,7 +77,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
       );
       if (mounted.current) setBenchmarks(value);
     } catch (reason) {
-      if (mounted.current) setError(String(reason));
+      if (mounted.current) setError(errorMessage(reason));
     } finally {
       wake.current();
     }
@@ -137,7 +138,7 @@ export function useAccountUsages(settings: EnvironmentSettings, active = true) {
         }
       } catch (reason) {
         if (live) {
-          setError(String(reason));
+          setError(errorMessage(reason));
           setLoading(false);
         }
       } finally {

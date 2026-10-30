@@ -1,8 +1,16 @@
 """Native user directories and file URIs, without machine-specific paths."""
 import os
+import stat
 import sys
 from pathlib import Path, PureWindowsPath
 from urllib.parse import unquote, urlparse
+
+
+def is_junction(path):
+    """Detect Windows directory junctions without requiring Python 3.12."""
+    if os.name != 'nt': return False
+    try: return os.lstat(path).st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT
+    except (FileNotFoundError, NotADirectoryError): return False
 
 
 def state_root(platform=None, home=None, environ=None):

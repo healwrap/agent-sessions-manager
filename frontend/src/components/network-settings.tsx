@@ -190,7 +190,7 @@ export function NetworkSettings({
                 value: network.controller || network.endpoint || '自动发现',
               },
               {
-                label: '当前账号出口',
+                label: 'Claude 分流节点',
                 value: network.current_node || '尚未选择',
               },
             ]}

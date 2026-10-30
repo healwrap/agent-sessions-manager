@@ -84,7 +84,7 @@ export function NetworkLines({
             icon={<Globe2 size={22} />}
             badge={
               data.network?.current_node === item.clash_node ? (
-                <StatusBadge tone="neutral">当前出口</StatusBadge>
+                <StatusBadge tone="neutral">已选节点</StatusBadge>
               ) : undefined
             }
             actions={

@@ -22,7 +22,7 @@ def command(server, action, value):
         if set(value) != {'id'}: raise ValueError('请选择出口线路')
         proxy = next((row for row in server.environments.read()['proxies'] if row['id'] == value['id']), None)
         if not proxy or proxy.get('kind') != 'clash': raise ValueError('请选择 Clash 出口线路')
-        manager.activate(proxy, '__inspection__')
+        manager.activate(proxy)
         return manager.state(True)
     if action == 'intranet':
         if set(value) != {'host'}: raise ValueError('请填写直连域名')

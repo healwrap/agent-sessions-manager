@@ -53,6 +53,7 @@
 - SettingsButton 复用 DSH 灰色无底色图标按钮，使用标准 H32 / R12。WorkspaceSidebar 在工作区切换器右侧统一放置设置入口；WorkspaceLayout 在侧栏收起时将入口移到顶部右侧。设置弹窗由工作区根节点统一承载，关闭后保留当前页面。
 - 组件不请求业务接口、不读写账号、不修改系统设置。页面持有真实状态。
 - ContentDialog 统一管理标题、正文的 24px 水平留白、20px 内容间距、独立滚动体与固定底部操作区。正文直接放入内容，不再由页面添加内边距容器。EditorDialog 复用它的外壳，增加表单提交与字段禁用；内容弹窗内的业务表单不嵌套在另一层 form 中。
+- 弹窗初始焦点由 ContentDialog 统一设置，使用 preventScroll；需要优先聚焦的字段标记 `data-dialog-autofocus`，不使用原生 autoFocus 或页面里的重复 focus。Select 只滚动菜单自己的视口，Disclosure 展开不自动滚到底部。
 - Disclosure 的 `compact` 用于帮助弹窗等紧凑区域：沿用 DSH DisclosureRow 的 24px 标题行、16px 图标占位和 6px 间距，正文与标题文字对齐，段落间距 8px。管理列表继续使用默认的大点击区域；组件预览包含紧凑变体。
 - ContentDialog 内的 Disclosure 自动采用紧凑布局，标题不再叠加列表内边距，展开正文缩进 22px 与标题文字对齐。启动门控表单使用同一规则，不额外嵌套带边框的卡片。
 - 演示模式直接覆盖当前工作区，内部复用同一个 AccountWorkspace、账号、代理、环境和 GuidedTour 组件，使用内存接口与示例表单值，不维护第二份页面布局。退出恢复原页面；顶栏尺寸与正式页面共用 `--workspace-header-height`。引导演示预览可从组件目录启动。
@@ -78,6 +79,7 @@ Tooltip / TooltipLayer 使用 DSH Tooltip 的紧凑深色表面、R8 圆角与 1
 ## 页面组合
 
 - CollectionPanel 将搜索筛选与列表放在同一个 DSH 设置卡片表面；空状态、加载和筛选无结果均留在这个表面内，避免页面跳动。
+- CollectionPanel 按当前滚动位置保留视口所需的最小高度，切换账号、环境或筛选为空时，较短内容不会把页面滚动位置挤回上方。向上滚动时释放预留空间，不固定为历史最大高度；管理页关闭浏览器的自动滚动锚定，账号切换不播放位移动画。
 - ResourceRow 用于同一集合的资源，行间使用发丝分割线。ResourceCard 保留给独立概览。两者共享身份、状态、操作、内容和展开区的实现。
 - MasterDetail 接收导航与详情两个区域，桌面并排，窄布局转为上下；提供 navigationWidth / onNavigationResize 时复用侧边栏拖动引擎，支持方向键微调、双击恢复默认，宽度为 220–520px 并为详情保留 360px。业务页面持有选择、筛选和宽度持久化状态。账号页与交互预览已使用这个组合。
 - 同一页面保留一个主要的新建操作；集合内的打开、编辑、检测使用 DSH outline / ghost，避免每行都出现同等醒目的主按钮。

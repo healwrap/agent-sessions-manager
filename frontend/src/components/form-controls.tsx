@@ -68,11 +68,12 @@ export function ContentDialog({
 }) {
   const body = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    body.current
-      ?.querySelector<HTMLElement>(
+    const field =
+      body.current?.querySelector<HTMLElement>('[data-dialog-autofocus]') ??
+      body.current?.querySelector<HTMLElement>(
         'input:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)',
-      )
-      ?.focus({ preventScroll: true });
+      );
+    field?.focus({ preventScroll: true });
   }, []);
   const content = (
     <>

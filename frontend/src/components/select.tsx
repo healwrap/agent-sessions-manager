@@ -90,10 +90,16 @@ export function Select<Value extends string>({
   }, [open, enabled, options.length, variant]);
 
   useLayoutEffect(() => {
-    if (open)
-      menu.current
-        ?.querySelectorAll('[role="option"]')
-        [active]?.scrollIntoView({ block: 'nearest' });
+    if (!open) return;
+    const option =
+      menu.current?.querySelectorAll<HTMLElement>('[role="option"]')[active];
+    const viewport = option?.closest<HTMLElement>('.dsh-menu-viewport');
+    if (!option || !viewport) return;
+    const row = option.getBoundingClientRect();
+    const bounds = viewport.getBoundingClientRect();
+    if (row.top < bounds.top) viewport.scrollTop += row.top - bounds.top;
+    else if (row.bottom > bounds.bottom)
+      viewport.scrollTop += row.bottom - bounds.bottom;
   }, [open, active]);
 
   const show = (index = Math.max(0, selected), navigation = true) => {

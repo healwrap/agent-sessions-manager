@@ -1,5 +1,7 @@
 /* Business compositions; all controls and surface tokens remain DSH-owned. */
 .ui-collection-panel {
+  min-height: var(--collection-scroll-floor, 0px);
+  overflow-anchor: none;
   overflow: hidden;
 }
 .ui-collection-panel-toolbar {

@@ -196,11 +196,7 @@ export function BrowserProfileFields({
           </Field>
         </>
       )}
-      <Disclosure
-        className="environment-gate-editor"
-        title="启动门控"
-        scrollToEndOnOpen
-      >
+      <Disclosure className="environment-gate-editor" title="启动门控">
         {gates
           .filter(
             (gate) =>

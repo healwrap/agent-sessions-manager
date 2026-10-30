@@ -2,7 +2,6 @@
   --account-inset: 24px;
   min-width: 0;
   overflow: hidden;
-  animation: account-detail-in 160ms ease-out;
 }
 .account-detail-header {
   display: grid;
@@ -150,16 +149,6 @@
 }
 .account-login-link {
   padding: 0 var(--account-inset) 16px;
-}
-@keyframes account-detail-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 @container (max-width: 480px) {
   .account-detail {

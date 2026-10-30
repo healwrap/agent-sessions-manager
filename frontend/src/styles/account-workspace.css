@@ -21,6 +21,7 @@
   min-width: 0;
   padding: 20px clamp(24px, 3vw, 40px) 36px;
   overflow-y: auto;
+  overflow-anchor: none;
   container-type: inline-size;
 }
 .environment-muted {

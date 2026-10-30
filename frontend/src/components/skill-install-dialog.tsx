@@ -160,7 +160,7 @@ export function SkillInstallDialog({
             安装入口路径
           </span>
           <TextInput
-            autoFocus
+            data-dialog-autofocus
             value={path}
             onChange={(event) => setPath(event.target.value)}
             placeholder="以 agent-sessions 结尾的完整路径"

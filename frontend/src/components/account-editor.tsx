@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type {
   BrowserAccount,
   EnvironmentSettings,
@@ -28,10 +28,6 @@ export function AccountEditor({
   onClose: () => void;
   initialProxyId?: string;
 }) {
-  const nameInput = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    nameInput.current?.focus();
-  }, []);
   const [value, setValue] = useState<BrowserAccount>(
     () =>
       account || {
@@ -84,8 +80,6 @@ export function AccountEditor({
       <Field label="账号邮箱或名称" htmlFor="account-editor-0">
         <TextInput
           id="account-editor-0"
-          ref={nameInput}
-          autoFocus
           required
           maxLength={120}
           value={value.name}

@@ -134,7 +134,7 @@ export function pathId(path: JsonPath): string {
 }
 
 export function claimFocus(button: HTMLElement): void {
-  button.focus();
+  button.focus({ preventScroll: true });
 }
 
 export function moveFocus(button: HTMLElement, direction: -1 | 1): void {
@@ -150,7 +150,8 @@ export function moveFocus(button: HTMLElement, direction: -1 | 1): void {
   const next = (current + direction + expanders.length) % expanders.length;
   const nextExpander = expanders[next];
   /* v8 ignore next -- modulo over the non-empty expander set always resolves a member. */
-  if (nextExpander !== undefined) claimFocus(nextExpander);
+  // Keyboard traversal may reveal the next row; clicking an expander stays put.
+  if (nextExpander !== undefined) nextExpander.focus();
 }
 
 function formattedPath(path: JsonPath): string {

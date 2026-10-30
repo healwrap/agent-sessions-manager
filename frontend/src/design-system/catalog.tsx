@@ -373,7 +373,6 @@ export function ComponentCatalog() {
           <Field label="环境名称" htmlFor="catalog-dialog-name">
             <TextInput
               id="catalog-dialog-name"
-              autoFocus
               required
               value={name}
               onChange={(event) => setName(event.target.value)}

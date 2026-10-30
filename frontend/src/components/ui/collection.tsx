@@ -1,7 +1,8 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
 import { SearchField } from '../search-field';
 import { Panel } from './layout';
 import { usePaneResize } from '../../hooks/use-pane-resize';
+import { useCollectionScrollFloor } from '../../hooks/use-collection-scroll-floor';
 
 export function ChoiceGroup<T extends string>({
   label,
@@ -119,8 +120,14 @@ export function CollectionPanel({
   children: ReactNode;
   className?: string;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  useCollectionScrollFloor(ref);
   return (
-    <Panel className={`ui-collection-panel ${className}`} padding="none">
+    <Panel
+      ref={ref}
+      className={`ui-collection-panel ${className}`}
+      padding="none"
+    >
       <div className="ui-collection-panel-toolbar">{toolbar}</div>
       <div className="ui-collection-panel-body">{children}</div>
     </Panel>

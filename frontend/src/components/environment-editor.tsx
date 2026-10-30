@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type {
   BrowserProfile,
   AppProfile,
@@ -33,10 +33,6 @@ export function EnvironmentEditor({
 }) {
   const profile = edit.kind !== 'proxies';
   const native = edit.kind === 'app_profiles';
-  const nameInput = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    nameInput.current?.focus();
-  }, []);
   const [value, setValue] = useState<BrowserProfile | AppProfile | ProxyConfig>(
     () =>
       edit.item ||
@@ -127,8 +123,6 @@ export function EnvironmentEditor({
       >
         <TextInput
           id="environment-editor-0"
-          autoFocus
-          ref={nameInput}
           required
           maxLength={120}
           value={value.name}

@@ -3,14 +3,11 @@ import type {
   EnvironmentSettings,
   ProxyConfig,
 } from '../lib/environment-settings';
+import { Button, EmptyState, Notice, ResourceRow, StatusBadge } from './ui';
 import {
-  Button,
-  EmptyState,
-  Notice,
-  RemoveButton,
-  ResourceRow,
-  StatusBadge,
-} from './ui';
+  NetworkNodeDelete,
+  type NodeEnvironmentEdit,
+} from './network-node-delete';
 
 export function NetworkLines({
   data,
@@ -19,6 +16,7 @@ export function NetworkLines({
   onEdit,
   onInspect,
   onDelete,
+  onEditEnvironment,
 }: {
   data: EnvironmentSettings;
   query: string;
@@ -26,6 +24,7 @@ export function NetworkLines({
   onEdit: (item: ProxyConfig) => void;
   onInspect: (item: ProxyConfig) => void;
   onDelete: (id: string) => void;
+  onEditEnvironment: (edit: NodeEnvironmentEdit) => void;
 }) {
   const rows = data.proxies.filter((row) =>
     (row.name + ' ' + row.clash_node)
@@ -105,11 +104,12 @@ export function NetworkLines({
                   <SlidersHorizontal size={16} />
                   配置
                 </Button>
-                <RemoveButton
-                  label={'移除线路 ' + item.name}
-                  disabled={busy || !!accounts}
-                  message="移除此 Claude 节点？"
-                  onRemove={() => onDelete(item.id)}
+                <NetworkNodeDelete
+                  item={item}
+                  data={data}
+                  busy={busy}
+                  onEditEnvironment={onEditEnvironment}
+                  onDelete={onDelete}
                 />
               </>
             }

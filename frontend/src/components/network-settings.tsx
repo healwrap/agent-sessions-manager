@@ -36,6 +36,7 @@ import clashVergeIcon from '../assets/components/clash-verge.png';
 import '../styles/network-settings.css';
 import { NetworkLines } from './network-lines';
 import { NetworkControls } from './network-controls';
+import type { NodeEnvironmentEdit } from './network-node-delete';
 
 const empty: ClashNetwork = {
   connected: false,
@@ -62,6 +63,7 @@ export function NetworkSettings({
   onInspect,
   onDelete,
   onSavedProxy,
+  onEditEnvironment,
 }: {
   data: EnvironmentSettings;
   busy: boolean;
@@ -71,6 +73,7 @@ export function NetworkSettings({
   onInspect: (item: ProxyConfig) => void;
   onDelete: (id: string) => void;
   onSavedProxy: (item: ProxyConfig) => void;
+  onEditEnvironment: (edit: NodeEnvironmentEdit) => void;
 }) {
   const network = data.network || empty;
   const [query, setQuery] = useState('');
@@ -254,6 +257,7 @@ export function NetworkSettings({
           onEdit={setEditing}
           onInspect={onInspect}
           onDelete={onDelete}
+          onEditEnvironment={onEditEnvironment}
         />
       </CollectionPanel>
       <ResourceCard

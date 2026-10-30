@@ -260,6 +260,7 @@ export function AccountWorkspace({
               onCloseCreate={() => setEdit(null)}
               onReload={reload}
               onDelete={(id) => void remove('proxies', id)}
+              onEditEnvironment={setEdit}
               onInspect={inspectProxy}
               onSavedProxy={(proxy) => guideStore.proxySaved(proxy.id)}
             />

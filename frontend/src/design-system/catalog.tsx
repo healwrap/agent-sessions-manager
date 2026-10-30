@@ -338,6 +338,7 @@ export function ComponentCatalog() {
       {contentDialog && (
         <ContentDialog
           title="检测结果 · 组件预览"
+          description="标题与关闭按钮共用一行，说明文字在下方独立展示。"
           onClose={() => setContentDialog(false)}
           footer={<Button onClick={() => setContentDialog(false)}>关闭</Button>}
         >

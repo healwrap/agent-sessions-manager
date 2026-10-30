@@ -78,16 +78,14 @@ export function ContentDialog({
   const content = (
     <>
       <header className="editor-dialog-heading">
-        <div>
-          <h2>{title}</h2>
-          {description && <p>{description}</p>}
-        </div>
+        <h2>{title}</h2>
         <IconButton
           icon="close"
           label={`关闭${title}`}
           onClick={onClose}
           disabled={busy}
         />
+        {description && <p>{description}</p>}
       </header>
       <div ref={body} className="editor-dialog-body">
         {children}

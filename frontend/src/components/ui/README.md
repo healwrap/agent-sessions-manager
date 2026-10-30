@@ -55,6 +55,7 @@
 - SettingsButton 复用 DSH 灰色无底色图标按钮，使用标准 H32 / R12。WorkspaceSidebar 在工作区切换器右侧统一放置设置入口；WorkspaceLayout 在侧栏收起时将入口移到顶部右侧。设置弹窗由工作区根节点统一承载，关闭后保留当前页面。
 - 组件不请求业务接口、不读写账号、不修改系统设置。页面持有真实状态。
 - ContentDialog 统一管理标题、正文的 24px 水平留白、20px 内容间距、独立滚动体与固定底部操作区。正文直接放入内容，不再由页面添加内边距容器。EditorDialog 复用它的外壳，增加表单提交与字段禁用；内容弹窗内的业务表单不嵌套在另一层 form 中。
+- 弹窗标题与关闭按钮共用首行，左右均留白 24px，关闭按钮保留 28px 点击区域；说明文字独占下一行，长标题换行时不挤压或下推关闭按钮。
 - 弹窗初始焦点由 ContentDialog 统一设置，使用 preventScroll；需要优先聚焦的字段标记 `data-dialog-autofocus`，不使用原生 autoFocus 或页面里的重复 focus。Select 只滚动菜单自己的视口，Disclosure 展开不自动滚到底部。
 - Disclosure 的 `compact` 用于帮助弹窗等紧凑区域：沿用 DSH DisclosureRow 的 24px 标题行、16px 图标占位和 6px 间距，正文与标题文字对齐，段落间距 8px。管理列表继续使用默认的大点击区域；组件预览包含紧凑变体。
 - ContentDialog 内的 Disclosure 自动采用紧凑布局，标题不再叠加列表内边距，展开正文缩进 22px 与标题文字对齐。启动门控表单使用同一规则，不额外嵌套带边框的卡片。

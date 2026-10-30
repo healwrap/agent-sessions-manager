@@ -13,13 +13,21 @@ export const request: Request = async <T>(
     Object.entries(params).map(([k, v]) => [k, String(v)]),
   ).toString();
   const controller = new AbortController();
+  const authorizing =
+    path === '/api/components' &&
+    typeof body === 'object' &&
+    body !== null &&
+    'action' in body &&
+    body.action === 'auto-update';
   const timeout = setTimeout(
     () => controller.abort(),
-    ['/api/claude-diagnostics/run', '/api/browser-runtime/region'].includes(
-      path,
-    )
-      ? 60_000
-      : 30_000,
+    authorizing
+      ? 330_000
+      : ['/api/claude-diagnostics/run', '/api/browser-runtime/region'].includes(
+            path,
+          )
+        ? 60_000
+        : 30_000,
   );
   try {
     const response = await fetch(

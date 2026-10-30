@@ -8,6 +8,7 @@ from agent_sessions.platform_process import claude_processes
 from .artifacts import remove_owned
 from .desktop_installer import DesktopInstaller
 from .native_uninstall import removable
+from .update_policy import UpdatePolicy
 
 NAMES = {'fingerprint': 'Fingerprint Chromium', 'mihomo': 'Mihomo', 'claude': 'Claude App'}
 
@@ -17,6 +18,7 @@ class ComponentManager:
         self.directory = Path(directory)
         self.browser, self.app, self.proxies = browser, app, proxies
         self.desktop = {'claude': DesktopInstaller(directory)}
+        self.auto_updates = UpdatePolicy()
 
     def installer(self, key):
         return self.browser.installer if key == 'fingerprint' else self.proxies.core if key == 'mihomo' else self.desktop[key]
@@ -47,7 +49,8 @@ class ComponentManager:
             rows.append({'id': key, 'name': name, **found, 'managed': owned, 'supported': supported,
                          'removable': owned or key == 'claude' and bool(app) and removable(app),
                          'source': '应用管理' if owned else '本机安装' if found['available'] else '尚未安装',
-                         'installation': self.operation(key)})
+                         'installation': self.operation(key),
+                         **({'auto_updates': self.auto_updates.state()} if key == 'claude' else {})})
         return {'platform': 'Windows' if sys.platform == 'win32' else 'macOS' if sys.platform == 'darwin' else sys.platform,
                 'architecture': platform.machine(), 'items': rows}
 
@@ -70,6 +73,12 @@ class ComponentManager:
 
     def command(self, value):
         if not isinstance(value, dict) or value.get('id') not in NAMES: raise ValueError('组件操作参数无效')
+        if value.get('action') == 'auto-update':
+            if set(value) != {'id', 'action', 'disabled'} or value['id'] != 'claude':
+                raise ValueError('Claude 自动更新设置参数无效')
+            self.ready('claude')
+            self.auto_updates.set_disabled(value['disabled'])
+            return self.state()
         key = value['id']
         runtime = self.proxies if key == 'mihomo' else self.app if key == 'claude' else self.browser
         with runtime.lock: return self._command(value)

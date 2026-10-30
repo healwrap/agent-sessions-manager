@@ -11,7 +11,9 @@ import {
   Notice,
   ResourceCard,
   StatusBadge,
+  Switch,
 } from '../ui';
+import { SettingsRow } from './row';
 
 type Component = {
   id: 'fingerprint' | 'mihomo' | 'claude';
@@ -23,6 +25,13 @@ type Component = {
   path: string;
   version: string;
   source: string;
+  auto_updates?: {
+    supported: boolean;
+    disabled: boolean | null;
+    locked: boolean;
+    source: string;
+    error: string;
+  };
   installation: {
     state: string;
     progress: number;
@@ -67,7 +76,8 @@ export function ComponentSettings({ active }: { active: boolean }) {
   }, [active]);
   const command = async (
     item: Component,
-    action: 'check' | 'install' | 'remove',
+    action: 'check' | 'install' | 'remove' | 'auto-update',
+    disabled?: boolean,
   ) => {
     revision.current++;
     pending.current = true;
@@ -82,6 +92,7 @@ export function ComponentSettings({ active }: { active: boolean }) {
             id: item.id,
             action,
             ...(action === 'remove' ? { path: item.path } : {}),
+            ...(action === 'auto-update' ? { disabled } : {}),
           },
         ),
       );
@@ -189,6 +200,37 @@ export function ComponentSettings({ active }: { active: boolean }) {
             }
           >
             {item.path && <code className="component-path">{item.path}</code>}
+            {item.auto_updates?.supported && (
+              <>
+                <SettingsRow
+                  label="禁用自动更新"
+                  htmlFor="claude-disable-auto-updates"
+                  description={
+                    item.auto_updates.locked
+                      ? '由系统策略管理。'
+                      : `对当前用户的所有 Claude 环境生效，下次启动 Claude 时应用。${data.platform === 'macOS' ? '修改时需要管理员授权。' : ''}`
+                  }
+                >
+                  <Switch
+                    id="claude-disable-auto-updates"
+                    label="禁用 Claude 自动更新"
+                    checked={item.auto_updates.disabled === true}
+                    disabled={
+                      busy ||
+                      working ||
+                      item.auto_updates.locked ||
+                      item.auto_updates.disabled === null
+                    }
+                    onChange={(disabled) =>
+                      void command(item, 'auto-update', disabled)
+                    }
+                  />
+                </SettingsRow>
+                {item.auto_updates.error && (
+                  <Notice tone="error">{item.auto_updates.error}</Notice>
+                )}
+              </>
+            )}
             {!item.supported && (
               <Notice>此架构暂时没有适用的 Fingerprint Chromium 发行包</Notice>
             )}

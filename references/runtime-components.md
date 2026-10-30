@@ -22,6 +22,12 @@ macOS 的「安装独立副本」将官方 Claude 副本放入应用自己的组
 
 Claude Windows MSIX 的 Cowork 服务需要管理员授权。安装会显示 Windows 授权请求，拒绝授权时保留原状态并报告未完成；卸载调用当前用户的系统卸载入口。Windows 卸载器可能清除官方包自身的本地数据，确认弹窗会说明，本应用保存的独立账号与环境数据仍会保留。官方说明见 [Windows 部署](https://support.claude.com/en/articles/12622703-deploy-claude-desktop-for-windows)。本应用不修改 Claude 官方程序或其更新签名，官方自身更新后会重新读取实际版本；Windows 使用包族身份保留管理关系。
 
+### 自动更新
+
+Claude App 组件提供「禁用自动更新」开关，读取并写入官方的 `disableAutoUpdates` 策略。macOS 使用 `/Library/Managed Preferences/<当前用户>/com.anthropic.claudefordesktop.plist`，系统会请求管理员授权；Windows 使用 `HKCU\SOFTWARE\Policies\Claude` 的 DWORD 值。仅修改这个键，保留其他策略。生效的机器级策略显示锁定，保留系统管理员的设置；读取失败时显示错误并禁用开关。macOS 读数遵循本机 Claude 的用户级覆盖顺序，Windows 的 HKLM 优先于 HKCU。
+
+策略对当前用户的本机安装、受管副本及全部独立账号环境生效，下次启动 Claude 时读取。安装、重新安装或手动更新组件不会清除该策略。「检查更新」与手动安装更新仍可使用。Windows 的 Microsoft Store 更新由系统商店管理，此开关只控制 Claude 自身更新器。官方定义见 [Claude Desktop 企业配置](https://support.claude.com/en/articles/12622667-enterprise-configuration-for-claude-desktop)。
+
 指纹 Chromium 来自 [上游发布](https://github.com/adryfish/fingerprint-chromium/releases)，Mihomo 来自 [官方发布](https://github.com/MetaCubeX/mihomo/releases)，Claude 使用 [官方下载](https://claude.com/download)对应的版本清单或 MSIX 入口。
 
 ## 平台实现与验收

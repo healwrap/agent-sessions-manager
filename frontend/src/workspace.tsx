@@ -11,6 +11,7 @@ import { sessionStore } from './state/session-store';
 import { SettingsDialog } from './components/settings-dialog';
 import { GuideCenter } from './components/guide-center';
 import { guideStore, useGuide } from './state/guide-store';
+import { TooltipLayer } from './components/ui/tooltip';
 
 const GuideDemoWorkspace = lazy(
   () => import('./components/guide-demo-workspace'),
@@ -143,6 +144,7 @@ export function Workspace() {
           />
         </Suspense>
       )}
+      <TooltipLayer />
     </>
   );
 }

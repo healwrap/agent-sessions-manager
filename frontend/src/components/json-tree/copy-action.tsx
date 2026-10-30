@@ -71,7 +71,7 @@ export function JsonCopyAction({
               data-json-copy-button
               data-state={state}
               aria-label={copyTitle}
-              title={labels.copyButtonTitle(copyTitle)}
+              data-tooltip={labels.copyButtonTitle(copyTitle)}
               onClick={() =>
                 void onCopy(target, object ? 'prettyJson' : 'value')
               }

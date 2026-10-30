@@ -28,7 +28,7 @@ export function SessionLabels({
     .join(' · ');
   if (!label) return null;
   return (
-    <span className="provider-tag" title={label}>
+    <span className="provider-tag" data-tooltip={label}>
       {!provider && <AgentIcon source={source} />}
       <span className="provider-name">{label}</span>
     </span>

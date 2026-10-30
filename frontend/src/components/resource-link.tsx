@@ -94,7 +94,7 @@ export function ResourceLink({
         href={resource.target}
         target={resource.kind === 'web' ? '_blank' : undefined}
         rel="noreferrer"
-        title={
+        data-tooltip={
           resource.kind === 'file'
             ? `${resource.target}（点击打开，右键${revealLabel}）`
             : resource.target

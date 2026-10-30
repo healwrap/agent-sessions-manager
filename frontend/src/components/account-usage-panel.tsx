@@ -124,7 +124,7 @@ export function AccountUsagePanel({
       )}
       {data?.updated_at && (
         <div className="account-usage-updated">
-          <span title={data.organization_name}>{data.source_label}</span>
+          <span data-tooltip={data.organization_name}>{data.source_label}</span>
           <time dateTime={new Date(data.updated_at * 1000).toISOString()}>
             更新于 {new Date(data.updated_at * 1000).toLocaleString('zh-CN')}
           </time>

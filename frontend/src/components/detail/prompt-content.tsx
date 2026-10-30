@@ -17,7 +17,7 @@ function ToolCatalog({
           <summary className="prompt-tool-summary">
             <ChevronRight className="prompt-tool-chevron" size={12} />
             <Wrench className="prompt-tool-icon" size={12} />
-            <span className="prompt-tool-name" title={tool.name}>
+            <span className="prompt-tool-name" data-tooltip={tool.name}>
               {tool.name}
             </span>
             <span className="prompt-tool-description">{tool.description}</span>

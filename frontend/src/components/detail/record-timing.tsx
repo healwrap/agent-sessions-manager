@@ -72,12 +72,12 @@ export function RecordTiming({
       {entries.map(([key, value]) => (
         <div key={key}>
           <dt>{key}</dt>
-          <dd title={value}>
+          <dd data-tooltip={value}>
             {key === '开始时间' && Number.isFinite(started) ? (
               <button
                 type="button"
                 className="timestamp-toggle"
-                title={showUnix ? '显示本地时间' : '显示 Unix 时间戳'}
+                data-tooltip={showUnix ? '显示本地时间' : '显示 Unix 时间戳'}
                 onClick={(event) => {
                   const selection = window.getSelection();
                   if (

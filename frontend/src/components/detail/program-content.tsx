@@ -16,7 +16,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       className="programAction"
-      title={title}
+      data-tooltip={title}
       aria-label={title}
       data-state={state}
       onClick={() =>
@@ -53,7 +53,7 @@ export function ProgramInput({
         <button
           type="button"
           className="programAction"
-          title="自动换行"
+          data-tooltip="自动换行"
           aria-label="自动换行"
           aria-pressed={wrapped}
           onClick={() => {
@@ -68,7 +68,7 @@ export function ProgramInput({
         <button
           type="button"
           className="programAction"
-          title="原始 JSON"
+          data-tooltip="原始 JSON"
           aria-label="原始 JSON"
           aria-pressed={showJson}
           onClick={() => setShowJson(!showJson)}

@@ -14,6 +14,7 @@
 | ChoiceGroup 分段选择           | `packages/client/ui-primitives/src/SegmentedControl.module.css`                                                                                                            | `styles/dsh/choices.css`，保留滑动指示器                                                        |
 | ChoiceGroup 下划线导航         | `packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.module.css`                                                                                         | `styles/dsh/choices.css`                                                                        |
 | Select / 菜单                  | `ui-primitives/src/Menu.module.css`、`MenuSurface.module.css`、`ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.module.css`（均位于 `packages/client`） | `select.tsx`、`styles/dsh/menu.css`                                                             |
+| Tooltip 悬浮提示               | `packages/client/ui-primitives/src/Tooltip.tsx`、`Tooltip.module.css`                                                                                                      | `ui/tooltip.tsx`、`styles/dsh/tooltip.css`，统一悬停、焦点与顶层定位                            |
 | 状态标签几何                   | `packages/client/ui-primitives/src/Pill.module.css`                                                                                                                        | `styles/form-controls.css`，状态色使用 DSH 语义别名                                             |
 | ContentDialog / EditorDialog   | `packages/client/ui-primitives/src/Modal.module.css`                                                                                                                       | `styles/form-controls.css`，共用标题、关闭、滚动体与底部操作区                                  |
 | 设置面板                       | `packages/client/ui-settings-general/src/client/SettingsRoot.module.css`                                                                                                   | `styles/settings.css`                                                                           |
@@ -24,16 +25,16 @@
 
 ## 公共组件
 
-| 类别     | 组件                                                                                                               | 职责                                     |
-| -------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| 基础控件 | Button、IconButton、TextInput、TextArea、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                      |
-| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                                         | 标题、信息分组、图标与事实展示           |
-| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                                      | 互斥选择、搜索与筛选                     |
-| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton                                                                        | 空列表、加载、操作反馈与移除确认         |
-| 使用引导 | GuidedTour、GuideLink                                                                                              | 高亮真实控件、展示步骤与资料入口         |
-| 资源展示 | ResourceCard、ResourceRow                                                                                          | 组合身份、状态、操作、内容及折叠区       |
-| 表单     | Field                                                                                                              | 标签与控件关联                           |
-| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                                 | 页面外壳、导航、工作区切换与全局设置入口 |
+| 类别     | 组件                                                                                                               | 职责                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| 基础控件 | Button、IconButton、TextInput、TextArea、Select、SearchField、StatusBadge、Disclosure、ContentDialog、EditorDialog | 适配 DSH 控件与交互                        |
+| 页面组合 | PageHeading、SectionHeading、Panel、LeadingIcon、FactsGrid                                                         | 标题、信息分组、图标与事实展示             |
+| 集合操作 | ChoiceGroup、CollectionToolbar、CollectionPanel、MasterDetail                                                      | 互斥选择、搜索与筛选                       |
+| 状态反馈 | EmptyState、BusyState、Notice、RemoveButton、Tooltip、TooltipLayer                                                 | 空列表、加载、操作反馈、悬浮提示与移除确认 |
+| 使用引导 | GuidedTour、GuideLink                                                                                              | 高亮真实控件、展示步骤与资料入口           |
+| 资源展示 | ResourceCard、ResourceRow                                                                                          | 组合身份、状态、操作、内容及折叠区         |
+| 表单     | Field                                                                                                              | 标签与控件关联                             |
+| 工作区   | WorkspaceLayout、WorkspaceSidebar、WorkspacePicker、SettingsButton                                                 | 页面外壳、导航、工作区切换与全局设置入口   |
 
 页面组合是 Agent Sessions 的业务组件，并非声称 DSH 存在同名组件。它们只组合布局与数据，复用 DSH 控件、设置卡片材质和文字层级。
 
@@ -64,6 +65,10 @@ GuidedTour 复用 Driver.js 的定位、遮罩与原生弹窗层级处理，浮�
 步骤可通过 `popover.side / align` 指定 Driver.js 的首选方位，空间不足时仍由 Driver.js 自动换边。结果确认应高亮实际结果区域，避免只锚定结果标题后让提示覆盖卡片；代理出口确认采用上方、尾部对齐，组件预览的结果步骤也展示这一用法。网络检测弹窗使用 Driver.js 原生定位，不使用窄窗口表单的固定底部样式。
 
 ProgressMeter 使用原生 progress 语义，统一显示已用比例，适配 DSH 的业务色、接近额度与达到额度状态。账户用量页和基础组件预览共用此控件。
+
+Tooltip / TooltipLayer 使用 DSH Tooltip 的紧凑深色表面、R8 圆角与 13px / 20px 排版，替代浏览器的原生 `title` 提示。工作区统一挂载一个 TooltipLayer；IconButton 自动显示 label 或显式 title，Button 的显式 title 也接入同一层。普通文本使用 `<Tooltip label="完整内容">…</Tooltip>`，已有控件可以设置 `data-tooltip`，不增加影响布局的包裹节点。
+
+鼠标悬停延迟 350ms，键盘焦点立即显示；点击、离开、滚动、失焦和 Escape 关闭。提示通过 HTML popover 进入顶层，自行绘制样式，支持禁用控件、弹窗内控件、屏幕边缘翻转及长路径换行。打开期间用 aria-describedby 关联控件，关闭时保留原有描述；沿用减少动态效果偏好。组件预览包含普通、禁用和长文本提示。
 
 启动现有 Vite 服务后访问 `/?components=1`，查看浅深色、按钮、搜索筛选、资源状态、表单弹窗、加载与空列表。示例只维护页面内状态。
 

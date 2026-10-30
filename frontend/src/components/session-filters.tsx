@@ -58,7 +58,7 @@ export function SessionFilters({
         ref={trigger}
         type="button"
         className="icon-button session-filter-trigger"
-        title="筛选会话"
+        data-tooltip="筛选会话"
         aria-label="筛选会话"
         aria-haspopup="menu"
         aria-expanded={open}

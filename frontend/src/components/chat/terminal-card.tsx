@@ -110,16 +110,16 @@ export function TerminalCard({
                   className="chat-terminal-state"
                   role="img"
                   aria-label={label}
-                  title={label}
+                  data-tooltip={label}
                 />
               )}
               <span
                 className="chat-terminal-cwd"
-                title={index === 0 ? cwd || undefined : undefined}
+                data-tooltip={index === 0 ? cwd || undefined : undefined}
               >
                 {index ? '$' : prompt}
               </span>
-              <span className="chat-terminal-command" title={line}>
+              <span className="chat-terminal-command" data-tooltip={line}>
                 {line || '\u200b'}
               </span>
             </div>
@@ -131,7 +131,7 @@ export function TerminalCard({
         <button
           type="button"
           className="chat-terminal-copy"
-          title={output.detail ? '复制已载入输出' : '复制命令'}
+          data-tooltip={output.detail ? '复制已载入输出' : '复制命令'}
           onClick={() => void copy()}
         >
           {copied ? '已复制' : '复制'}

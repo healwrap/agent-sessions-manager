@@ -141,7 +141,7 @@ export function App({
                   state.views.trace.data,
                 )}
                 disabled={!durationAvailable(state.views.trace.data)}
-                title={
+                data-tooltip={
                   durationAvailable(state.views.trace.data)
                     ? '按记录的执行时长展示'
                     : '会话未记录执行时长，按等宽区段展示'

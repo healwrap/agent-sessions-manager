@@ -117,7 +117,7 @@ export function Timeline({ state }: { state: AppState }) {
           className="TrajectoryTimeline-track"
           tabIndex={0}
           aria-label="时间线概览；拖动选择范围，滚轮缩放，Shift＋滚轮或按住右键拖动平移，双击取消圈选并保留缩放位置"
-          title="滚轮缩放 · Shift＋滚轮或按住右键拖动平移 · 双击取消圈选"
+          data-tooltip="滚轮缩放 · Shift＋滚轮或按住右键拖动平移 · 双击取消圈选"
           data-panning={panning}
           onKeyDown={(event) => {
             if (event.key !== 'Escape' || !range) return;

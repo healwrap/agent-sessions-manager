@@ -58,7 +58,7 @@ export function WorkspaceSidebar({
         aria-orientation="vertical"
         aria-valuemin={180}
         aria-valuemax={520}
-        title="拖动调整侧栏宽度，双击恢复默认"
+        data-tooltip="拖动调整侧栏宽度，双击恢复默认"
         tabIndex={closed ? -1 : 0}
         {...resize}
       />

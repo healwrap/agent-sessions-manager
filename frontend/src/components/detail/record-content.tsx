@@ -90,7 +90,7 @@ export function RecordContent({
                     type="button"
                     className="assistant-tool-link"
                     disabled={!call.ref}
-                    title={
+                    data-tooltip={
                       call.ref
                         ? '打开工具调用概述'
                         : '原始记录中没有唯一关联的工具调用'
@@ -101,7 +101,10 @@ export function RecordContent({
                   >
                     <Icon name="tool-call" className="assistant-tool-icon" />
                     <span className="assistant-tool-text">
-                      <span className="assistant-tool-name" title={call.name}>
+                      <span
+                        className="assistant-tool-name"
+                        data-tooltip={call.name}
+                      >
                         {call.name}
                       </span>
                       {call.preview && (

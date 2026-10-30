@@ -39,7 +39,11 @@ export function Subagents({
   const panel = useRef<HTMLDivElement>(null);
   if (!family)
     return error ? (
-      <button className="subagents-trigger" onClick={retry} title={error}>
+      <button
+        className="subagents-trigger"
+        onClick={retry}
+        data-tooltip={error}
+      >
         重试会话关联
       </button>
     ) : null;
@@ -69,7 +73,10 @@ export function Subagents({
               </span>
             )}
           </span>
-          <span className="subagent-status" title="状态来自本机保存的执行记录">
+          <span
+            className="subagent-status"
+            data-tooltip="状态来自本机保存的执行记录"
+          >
             {labels[item.status] || '状态未记录'}
           </span>
           <Icon name="right" />
@@ -81,7 +88,7 @@ export function Subagents({
           <button
             className="subagent-result"
             onClick={() => navigate(item.id, item.result_ref)}
-            title="查看子代理消息"
+            data-tooltip="查看子代理消息"
           >
             {markdownText(item.result_preview)}
           </button>
@@ -95,14 +102,14 @@ export function Subagents({
           <button
             className="subagents-parent"
             onClick={() => navigate(family.parent!.id)}
-            title={sessionTitle(family.parent, preferences)}
+            data-tooltip={sessionTitle(family.parent, preferences)}
           >
             <Icon name="up" /> 返回父会话
           </button>
         ) : (
           <span
             className="subagents-orphan"
-            title="父会话未保存在当前启用的来源中"
+            data-tooltip="父会话未保存在当前启用的来源中"
           >
             子代理会话
           </span>

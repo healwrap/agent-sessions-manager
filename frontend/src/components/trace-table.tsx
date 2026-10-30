@@ -93,7 +93,7 @@ export function TraceTable({ state }: { state: AppState }) {
                     )}
                   </td>
                   <td className="content">
-                    <button className="fold-summary" title="展开记录">
+                    <button className="fold-summary" data-tooltip="展开记录">
                       <span className="summary-ellipsis">…</span>
                       {event.preview}
                     </button>
@@ -134,7 +134,7 @@ export function TraceTable({ state }: { state: AppState }) {
                 data-error={event.status === 'error'}
                 data-timeline-focus={outside ? 'outside' : 'inside'}
                 tabIndex={event.request_only ? -1 : 0}
-                title={event.ref + ' · ' + event.name}
+                data-tooltip={event.ref + ' · ' + event.name}
                 onClick={event.request_only ? undefined : select}
                 onDoubleClick={(e) => {
                   if (
@@ -203,7 +203,7 @@ export function TraceTable({ state }: { state: AppState }) {
                         (activeTurn === event.turn ? ' turnLabelActive' : '')
                       }
                       aria-label={`第 ${event.turn} 轮`}
-                      title={
+                      data-tooltip={
                         state.foldTurns !== state.collapsed.has(event.turn)
                           ? '展开轮次'
                           : '收起轮次'
@@ -235,7 +235,7 @@ export function TraceTable({ state }: { state: AppState }) {
                           <span
                             className="kindTagIcon"
                             aria-hidden="true"
-                            title={label}
+                            data-tooltip={label}
                           >
                             <Icon
                               name={

@@ -21,7 +21,7 @@ export function AccountUsageWindows({
       className="account-usage-windows"
       data-compact={compact || undefined}
       aria-label={compact ? '账号用量摘要' : undefined}
-      title={cached ? '上次查询结果' : undefined}
+      data-tooltip={cached ? '上次查询结果' : undefined}
     >
       {windows.map((window) => (
         <span className="account-usage-window" key={window.id}>
@@ -44,7 +44,7 @@ export function AccountUsageWindows({
           {!compact && window.resets_at && (
             <time
               dateTime={window.resets_at}
-              title={new Date(window.resets_at).toLocaleString('zh-CN')}
+              data-tooltip={new Date(window.resets_at).toLocaleString('zh-CN')}
             >
               {resetLabel(window.resets_at, now)}
             </time>

@@ -12,7 +12,7 @@ export function MarkdownImage({
   inLink?: boolean;
 }) {
   const fallback = (
-    <span className="markdown-image-alt" title={href}>
+    <span className="markdown-image-alt" data-tooltip={href}>
       图片无法预览 · {alt || '图片'}
     </span>
   );

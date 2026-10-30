@@ -172,7 +172,7 @@ export function ChatPane({ state }: { state: AppState }) {
       {!atBottom && (
         <button
           className="chat-bottom"
-          title="回到底部"
+          data-tooltip="回到底部"
           aria-label="回到底部"
           onClick={() =>
             ref.current?.scrollTo({

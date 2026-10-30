@@ -1,4 +1,5 @@
 /* Adapted from DeepSeek Harness, MIT; see frontend/public/harness-license.txt. */
+.app-tooltip,
 .timeline-tooltip {
   position: fixed;
   z-index: 100;
@@ -8,21 +9,31 @@
   border-radius: var(--dsw-radius-sm);
   background: var(--dsw-static-neutral-bluish-850);
   color: var(--dsw-static-neutral-bluish-00);
-  font: var(--dsw-font-xxxs-11);
+  font-size: 13px;
+  line-height: 20px;
   white-space: pre-line;
   overflow-wrap: break-word;
   pointer-events: none;
-  animation: timeline-tooltip-in 150ms var(--ds-ease-in-out);
+  animation: tooltip-in 150ms var(--ds-ease-in-out);
 }
+.app-tooltip {
+  z-index: 1100;
+  inset: auto;
+  margin: 0;
+  border: 0;
+  max-width: min(360px, calc(100vw - 24px));
+}
+[data-ds-dark-theme] .app-tooltip,
 [data-ds-dark-theme] .timeline-tooltip {
   background: var(--dsw-static-neutral-bluish-750);
 }
-@keyframes timeline-tooltip-in {
+@keyframes tooltip-in {
   from {
     opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .app-tooltip,
   .timeline-tooltip {
     animation: none;
   }

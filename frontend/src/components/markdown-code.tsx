@@ -23,7 +23,7 @@ export function MarkdownCode({
         <span>{language || '代码块'}</span>
         <span className="markdown-code-actions">
           <button
-            title={wrapped ? '取消自动换行' : '自动换行'}
+            data-tooltip={wrapped ? '取消自动换行' : '自动换行'}
             aria-label="自动换行"
             aria-pressed={wrapped}
             onClick={() => {
@@ -34,7 +34,7 @@ export function MarkdownCode({
             <Icon name="wrap" />
           </button>
           <button
-            title={copied ? '已复制' : '复制代码'}
+            data-tooltip={copied ? '已复制' : '复制代码'}
             aria-label={copied ? '已复制' : '复制代码'}
             onClick={() =>
               void copyText(code)

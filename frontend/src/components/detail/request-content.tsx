@@ -129,7 +129,7 @@ export function RequestContent({
         {detail.request_error && (
           <div>
             <dt>错误</dt>
-            <dd title={detail.request_error}>
+            <dd data-tooltip={detail.request_error}>
               {detail.request_error_code === 'AUTH'
                 ? '身份验证失败'
                 : detail.request_error}

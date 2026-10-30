@@ -42,7 +42,7 @@ export function NetworkOverview({ report }: { report: ClaudeReport }) {
             </DiagnosticField>
           ))}
           <DiagnosticField label="IPv6 出口">
-            <span title={ipv6?.detail}>{ipv6?.value || '未取得'}</span>
+            <span data-tooltip={ipv6?.detail}>{ipv6?.value || '未取得'}</span>
           </DiagnosticField>
         </dl>
       </DiagnosticCard>

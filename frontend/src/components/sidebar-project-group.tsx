@@ -31,7 +31,7 @@ export function SidebarProjectGroup({
       <button
         className="project-heading"
         aria-expanded={open}
-        title={group.project_path}
+        data-tooltip={group.project_path}
         onClick={() => sessionStore.toggleProject(group, !open)}
       >
         <Icon name="right" className="project-chevron" />

@@ -32,5 +32,6 @@ export { EmptyState, Notice, BusyState, RemoveButton } from './feedback';
 export { ResourceCard, ResourceRow } from './resource-card';
 export { Field } from './field';
 export { ProgressMeter } from './progress-meter';
+export { Tooltip, TooltipLayer } from './tooltip';
 export { WorkspacePicker } from '../workspace-picker';
 export { WorkspaceLayout, WorkspaceSidebar } from '../workspace-layout';

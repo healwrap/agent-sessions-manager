@@ -99,7 +99,7 @@ export function AttachmentList({
               <FileGlyph item={item} image={!!image} />
             )}
             <div className="record-attachment-info">
-              <span className="record-attachment-name" title={name}>
+              <span className="record-attachment-name" data-tooltip={name}>
                 {name}
               </span>
               <span className="record-attachment-metadata">

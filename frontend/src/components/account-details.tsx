@@ -11,6 +11,7 @@ import {
   RemoveButton,
   SectionHeading,
   StatusBadge,
+  Tooltip,
 } from './ui';
 import { planLabels } from '../lib/account-overview';
 import { AccountClientPanel } from './account-client-panel';
@@ -59,7 +60,9 @@ export function AccountDetails({
       <header className="account-detail-header">
         <div className="account-detail-title">
           <div className="account-detail-identity">
-            <h2 title={account.name}>{account.name}</h2>
+            <Tooltip label={account.name}>
+              <h2>{account.name}</h2>
+            </Tooltip>
             {account.provider === 'claude' && (
               <StatusBadge>
                 {plan ? planLabels[plan] : '套餐待确认'}

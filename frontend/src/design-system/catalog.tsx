@@ -5,6 +5,7 @@ import {
   Check,
   ExternalLink,
   Globe2,
+  KeyRound,
   Layers3,
   PanelsTopLeft,
   Plus,
@@ -25,6 +26,9 @@ import {
   PageHeading,
   Panel,
   ProgressMeter,
+  IconButton,
+  Tooltip,
+  TooltipLayer,
   ResourceCard,
   Select,
   SettingsButton,
@@ -116,6 +120,17 @@ export function ComponentCatalog() {
       ) : (
         <div className="catalog-grid">
           <InputPreview />
+          <Panel title="悬浮提示">
+            <div className="ui-actions">
+              <IconButton label="重新授权" icon={<KeyRound size={17} />} />
+              <Button title="稍后可刷新账号用量" disabled>
+                禁用操作
+              </Button>
+              <Tooltip label="完整路径：/Users/example/Library/Application Support/Agent Sessions/profiles/work">
+                <span tabIndex={0}>悬停或使用 Tab 查看完整路径</span>
+              </Tooltip>
+            </div>
+          </Panel>
           <Panel title="额度进度">
             {[26, 85, 100].map((value) => (
               <div key={value}>
@@ -376,6 +391,7 @@ export function ComponentCatalog() {
           </Disclosure>
         </EditorDialog>
       )}
+      <TooltipLayer />
     </main>
   );
 }

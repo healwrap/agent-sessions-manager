@@ -15,7 +15,7 @@ export function DnsResolvers({ servers }: { servers: DnsServer[] }) {
           key={server.ip}
         >
           <span className="diagnostic-mono">{server.ip}</span>
-          <span title={server.info[0]}>
+          <span data-tooltip={server.info[0]}>
             {countryLabel(server.country) || '地区未知'}
           </span>
           <span>

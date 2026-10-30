@@ -83,21 +83,21 @@ export function MessageActions({
     <div className="chat-message-actions" data-last-user={lastUser}>
       {user && timestamp}
       <button
-        title={copied ? '已复制' : '复制'}
+        data-tooltip={copied ? '已复制' : '复制'}
         aria-label={'复制消息 ' + event.ref}
         onClick={() => void copy()}
       >
         <Icon name={copied ? 'check' : 'copy'} />
       </button>
       <button
-        title="查看轨迹"
+        data-tooltip="查看轨迹"
         aria-label={'查看轨迹 ' + event.ref}
         onClick={() => void sessionStore.selectEvent(event.ref, true)}
       >
         <Icon name="jump" />
       </button>
       <button
-        title="复制上下文引用（从此消息开始）"
+        data-tooltip="复制上下文引用（从此消息开始）"
         aria-label={'复制上下文引用 ' + event.ref}
         onClick={() => void contextReference()}
       >
@@ -106,7 +106,7 @@ export function MessageActions({
       {!user && (
         <span className="chat-end-info">
           {total != null && (
-            <span className="chat-time" title="本轮已记录用量">
+            <span className="chat-time" data-tooltip="本轮已记录用量">
               {formatted} tok
             </span>
           )}

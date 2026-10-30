@@ -64,7 +64,7 @@ export function SearchField({
           type="button"
           className="search-field-clear"
           aria-label={'清除' + label}
-          title="清除搜索"
+          data-tooltip="清除搜索"
           onClick={clear}
         >
           <Icon name="close" />

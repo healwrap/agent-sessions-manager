@@ -46,7 +46,10 @@ export function SidebarAgentGroup({
         <Icon name="right" className="project-chevron" />
         <AgentIcon source={group.id} />
         <MarqueeTitle className="agent-name" text={group.label} />
-        <span className="agent-session-count" title={`${group.count} 个会话`}>
+        <span
+          className="agent-session-count"
+          data-tooltip={`${group.count} 个会话`}
+        >
           {group.count}
         </span>
       </button>

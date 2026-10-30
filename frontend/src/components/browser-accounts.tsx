@@ -204,7 +204,9 @@ export function BrowserAccounts({
                         <AgentIcon source={account.provider} />
                       </span>
                       <span className="account-list-identity">
-                        <strong title={account.name}>{account.name}</strong>
+                        <strong data-tooltip={account.name}>
+                          {account.name}
+                        </strong>
                         <span className="account-list-caption">
                           {account.provider === 'claude' ? 'Claude' : 'Codex'}
                           {account.provider === 'claude' && plan && (

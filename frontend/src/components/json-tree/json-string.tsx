@@ -132,7 +132,7 @@ export function JsonString({
               type="button"
               className={css.actionButton}
               aria-label={stringWrapping.label}
-              title={stringWrapping.label}
+              data-tooltip={stringWrapping.label}
               aria-pressed={wrapped}
               aria-controls={contentsId}
               onClick={() => {
@@ -148,7 +148,7 @@ export function JsonString({
             type="button"
             className={css.actionButton}
             aria-label={labels.collapseNode}
-            title={labels.collapseNode}
+            data-tooltip={labels.collapseNode}
             aria-expanded
             aria-controls={contentsId}
             onClick={() => {

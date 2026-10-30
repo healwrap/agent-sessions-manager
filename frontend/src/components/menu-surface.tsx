@@ -87,6 +87,7 @@ export function MenuItem({
   trailing,
   children,
   className = '',
+  title,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: ReactNode;
@@ -96,6 +97,7 @@ export function MenuItem({
     <button
       type="button"
       role="menuitem"
+      data-tooltip={title}
       {...props}
       className={`dsh-menu-item ${className}`}
     >

@@ -34,7 +34,7 @@ export function ImagePreview({
       <button
         type="button"
         className={'image-preview ' + className}
-        title="查看原图"
+        data-tooltip="查看原图"
         aria-label={`查看原图：${alt || '图片'}`}
         aria-haspopup="dialog"
         onClick={(event) => {

@@ -29,7 +29,7 @@ export function MarqueeTitle({
     <span
       ref={viewport}
       className={`${className} marquee-title`}
-      title={text}
+      data-tooltip={text}
       data-scrolling={!!motion}
       style={motion}
       onPointerEnter={start}

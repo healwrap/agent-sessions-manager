@@ -22,6 +22,7 @@ export function Icon({
 export function IconButton({
   icon,
   label,
+  title,
   className = '',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -32,7 +33,7 @@ export function IconButton({
     <button
       type="button"
       className={`icon-button ${className}`}
-      title={label}
+      data-tooltip={title ?? label}
       aria-label={label}
       {...props}
     >
@@ -47,6 +48,7 @@ export function Button({
   className = '',
   type = 'button',
   size = 'normal',
+  title,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: string;
@@ -59,6 +61,7 @@ export function Button({
       className={'action-button ' + className}
       data-variant={variant}
       data-size={size}
+      data-tooltip={title}
       {...props}
     >
       {icon && <Icon name={icon} />}

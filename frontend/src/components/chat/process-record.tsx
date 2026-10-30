@@ -187,7 +187,7 @@ export function ToolProcess({ event, id }: { event: Event; id: string }) {
           <button
             type="button"
             className="chat-inspect"
-            title="查看轨迹"
+            data-tooltip="查看轨迹"
             aria-label={'查看轨迹 ' + event.ref}
             onClick={() => void sessionStore.selectEvent(event.ref, true)}
           >

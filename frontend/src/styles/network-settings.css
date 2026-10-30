@@ -2,6 +2,18 @@
   display: grid;
   gap: 24px;
 }
+.network-settings .ui-collection-toolbar .ui-section-heading {
+  margin: 0;
+}
+.account-workspace .network-settings .network-line .ui-resource-heading {
+  padding-block: 12px;
+}
+.network-settings .network-line-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  overflow-wrap: anywhere;
+}
 .network-bound-accounts {
   color: var(--dsw-alias-label-secondary);
   overflow-wrap: anywhere;

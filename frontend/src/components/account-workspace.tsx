@@ -51,7 +51,7 @@ const sections = [
     id: 'proxies',
     title: '网络设置',
     icon: Globe2,
-    description: '连接 Clash Verge，为账号选择出口线路并配置内网访问。',
+    description: '连接 Clash Verge，为账号选择出口线路并配置直连规则。',
   },
 ] as const;
 

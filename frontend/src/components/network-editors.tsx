@@ -248,7 +248,7 @@ export function IntranetEditor({
   };
   return (
     <ContentDialog
-      title="内网访问"
+      title="直连配置"
       busy={pending}
       onClose={onClose}
       onSubmit={(event) => {
@@ -268,23 +268,23 @@ export function IntranetEditor({
     >
       {error && <Notice tone="error">{error}</Notice>}
       {locked && <Notice>停止运行中的环境后可修改配置。</Notice>}
-      <Field label="公司域名" htmlFor="intranet-domains">
+      <Field label="直连域名" htmlFor="intranet-domains">
         <TextArea
           disabled={locked}
           id="intranet-domains"
           value={domains}
           onChange={(event) => setDomains(event.target.value)}
-          placeholder="每行一个域名，例如 company.com"
+          placeholder="每行一个域名，例如 example.com"
           rows={3}
         />
       </Field>
-      <Field label="公司 DNS" htmlFor="intranet-dns">
+      <Field label="DNS 服务器（可选）" htmlFor="intranet-dns">
         <TextArea
           disabled={locked}
           id="intranet-dns"
           value={dns}
           onChange={(event) => setDns(event.target.value)}
-          placeholder="每行一个 DNS 地址"
+          placeholder="每行一个 IP 地址，留空使用 Clash 现有 DNS"
           rows={2}
         />
       </Field>

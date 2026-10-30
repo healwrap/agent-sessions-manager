@@ -30,11 +30,11 @@ def command(server, action, value):
         host = value['host'].strip().lower()
         domains = manager.settings()['domains']
         if not host or not any(host == d or host.endswith('.'+d) for d in domains):
-            raise ValueError('请填写已配置的公司域名')
+            raise ValueError('请填写已配置的直连域名')
         from urllib.parse import quote
         result = Controller(manager.settings()).request('GET', '/dns/query?name='+quote(host)+'&type=A')
         addresses = [row['data'] for row in result.get('Answer', []) if row['type'] == 1]
-        if not addresses: raise ValueError('公司 DNS 未返回地址')
+        if not addresses: raise ValueError('DNS 未返回地址')
         with socket.create_connection((host, 443), timeout=3): pass
         return {'host': host, 'addresses': addresses, 'reachable': True}
     raise ValueError('网络操作无效')

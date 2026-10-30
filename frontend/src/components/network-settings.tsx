@@ -23,6 +23,7 @@ import {
   Field,
   Notice,
   ResourceCard,
+  SectionHeading,
   StatusBadge,
   TextInput,
 } from './ui';
@@ -205,7 +206,7 @@ export function NetworkSettings({
             onQuery={setQuery}
             searchLabel="搜索出口线路"
           >
-            <h2>出口线路</h2>
+            <SectionHeading title="出口线路" />
           </CollectionToolbar>
         }
       >
@@ -220,10 +221,10 @@ export function NetworkSettings({
         />
       </CollectionPanel>
       <ResourceCard
-        title="内网访问"
+        title="直连配置"
         icon={<Network size={22} />}
         subtitle={
-          network.domains.length ? network.domains.join('、') : '未配置公司网络'
+          network.domains.length ? network.domains.join('、') : '未配置直连域名'
         }
         actions={
           <Button disabled={pending} onClick={() => setDialog('intranet')}>
@@ -234,7 +235,7 @@ export function NetworkSettings({
       >
         {!!network.dns.length && (
           <p className="network-bound-accounts">
-            公司 DNS · {network.dns.join('、')}
+            DNS 服务器 · {network.dns.join('、')}
           </p>
         )}
         {!!network.domains.length && (
@@ -244,7 +245,7 @@ export function NetworkSettings({
                 id="network-intranet-host"
                 value={host}
                 onChange={(event) => setHost(event.target.value)}
-                placeholder="输入一个公司内网域名"
+                placeholder="输入已配置的直连域名"
               />
             </Field>
             <Button

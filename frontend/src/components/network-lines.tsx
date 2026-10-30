@@ -66,11 +66,24 @@ export function NetworkLines({
       {rows.map((item) => {
         const legacy = item.kind !== 'clash';
         const previous = latest(item.id);
+        const accounts = bound(item.id);
         return (
           <ResourceRow
             key={item.id}
+            className="network-line"
             title={item.name}
-            subtitle={legacy ? item.url : item.clash_node}
+            subtitle={
+              <span className="network-line-meta">
+                <span>{legacy ? item.url : item.clash_node}</span>
+                {accounts && <span>{accounts}</span>}
+                {previous && (
+                  <span title={new Date(previous.checked_at).toLocaleString()}>
+                    最近预检 · {previous.resolved.ip}{' '}
+                    {previous.resolved.country}
+                  </span>
+                )}
+              </span>
+            }
             icon={<Globe2 size={22} />}
             badge={
               legacy ? (
@@ -114,7 +127,7 @@ export function NetworkLines({
                   </Button>
                   <RemoveButton
                     label={'移除线路 ' + item.name}
-                    disabled={busy || !!bound(item.id)}
+                    disabled={busy || !!accounts}
                     message="移除此出口线路？"
                     onRemove={() => onDelete(item.id)}
                   />
@@ -122,16 +135,6 @@ export function NetworkLines({
               )
             }
           >
-            {bound(item.id) && (
-              <p className="network-bound-accounts">{bound(item.id)}</p>
-            )}
-            {previous && (
-              <p className="network-bound-accounts">
-                最近启动预检 · {previous.resolved.ip}{' '}
-                {previous.resolved.country} ·{' '}
-                {new Date(previous.checked_at).toLocaleString()}
-              </p>
-            )}
             {!legacy &&
               data.network?.connected &&
               !data.network.nodes.some(

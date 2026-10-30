@@ -97,11 +97,11 @@ class NetworkManager:
             return self.state(True)
 
     def apply(self, value):
-        if set(value) != {'domains', 'dns'}: raise ValueError('内网配置参数无效')
+        if set(value) != {'domains', 'dns'}: raise ValueError('直连配置参数无效')
         domains = direct_domains(value['domains']) if value['domains'] else []
         try: dns = [str(ipaddress.ip_address(item)) for item in value['dns']]
-        except ValueError: raise ValueError('公司 DNS 请填写 IP 地址') from None
-        if len(dns) > 8 or domains and not dns: raise ValueError('公司域名需要填写对应 DNS，最多 8 个')
+        except ValueError: raise ValueError('DNS 服务器请填写 IP 地址') from None
+        if len(dns) > 8: raise ValueError('DNS 服务器最多填写 8 个')
         with self.lock:
             self.mutable()
             settings = {**self.settings(), 'domains': domains, 'dns': dns}

@@ -1,31 +1,45 @@
 .account-detail {
+  --account-inset: 24px;
   min-width: 0;
   overflow: hidden;
   animation: account-detail-in 160ms ease-out;
 }
 .account-detail-header {
+  display: grid;
+  gap: 10px;
+  padding: 20px var(--account-inset) 16px;
+}
+.account-detail-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 24px 16px;
+}
+.account-detail-title > .ui-actions {
+  flex: none;
 }
 .account-detail h2 {
   font-size: 18px;
   font-weight: 600;
   line-height: 26px;
   margin: 0;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .account-detail-identity {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex: 1;
   gap: 8px;
   min-width: 0;
 }
+.account-detail-identity .status-badge {
+  flex: none;
+}
 .account-client-switch {
-  margin: 0 24px;
+  margin: 0 var(--account-inset);
   padding-top: 16px;
   border-top: 0.5px solid var(--dsw-alias-border-l2);
 }
@@ -35,7 +49,6 @@
 .account-status-panel {
   display: grid;
   gap: 6px;
-  margin: 0 24px 20px;
   font-size: 13px;
   line-height: 20px;
 }
@@ -66,8 +79,8 @@
   corner-shape: round;
   background: var(--dsw-alias-state-success-primary);
 }
-.account-client-panel {
-  animation: account-detail-in 160ms ease-out;
+.account-client-notice {
+  margin: 0 var(--account-inset) 16px;
 }
 .account-launch-bar {
   display: flex;
@@ -75,7 +88,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 16px 24px;
+  padding: 16px var(--account-inset);
 }
 .account-launch-status {
   display: flex;
@@ -116,7 +129,7 @@
   overflow-wrap: anywhere;
 }
 .account-environment-summary {
-  margin: 0 24px 20px;
+  margin: 0 var(--account-inset) 20px;
   padding: 16px 0 0;
   border-top: 0.5px solid var(--dsw-alias-border-l2);
 }
@@ -136,7 +149,7 @@
   color: var(--dsw-alias-label-secondary);
 }
 .account-login-link {
-  padding: 0 24px 16px;
+  padding: 0 var(--account-inset) 16px;
 }
 @keyframes account-detail-in {
   from {
@@ -149,16 +162,12 @@
   }
 }
 @container (max-width: 480px) {
+  .account-detail {
+    --account-inset: 20px;
+  }
   .account-detail-header,
   .account-launch-bar {
     padding: 20px;
-  }
-  .account-client-switch,
-  .account-status-panel {
-    margin-inline: 20px;
-  }
-  .account-environment-summary {
-    margin-inline: 20px;
   }
   .account-detail .ui-facts {
     grid-template-columns: minmax(0, 1fr);

@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { ChartNoAxesCombined, KeyRound, RefreshCw } from 'lucide-react';
+import { KeyRound, RefreshCw } from 'lucide-react';
 import type { AccountUsages } from '../hooks/use-account-usages';
-import { currency, resetLabel } from '../lib/account-usage';
+import { currency } from '../lib/account-usage';
 import type { BrowserAccount } from '../lib/environment-settings';
 import {
   Button,
   BusyState,
+  IconButton,
   Notice,
-  ProgressMeter,
-  SectionHeading,
   Select,
   StatusBadge,
 } from './ui';
 import { UsageAuthorization } from './usage-authorization';
+import { AccountUsageWindows } from './account-usage-windows';
 
 export function AccountUsagePanel({
   account,
@@ -33,43 +33,54 @@ export function AccountUsagePanel({
     ? Math.max(0, Math.ceil((data.next_refresh_at * 1000 - now) / 60_000))
     : 0;
   const extra = data?.extra_usage;
+  const authorizationLabel =
+    data?.authorization && data.authorization.state !== 'none'
+      ? '重新授权'
+      : '授权后台查询';
   return (
     <section className="account-usage" aria-label="账号用量">
-      <SectionHeading
-        level={3}
-        title="账号用量"
-        icon={<ChartNoAxesCombined size={17} />}
-        actions={
-          <>
-            {cached && <StatusBadge tone="warning">上次结果</StatusBadge>}
+      <div className="account-usage-toolbar">
+        <AccountUsageWindows data={data} now={now} />
+        <div className="ui-actions">
+          {cached && <StatusBadge tone="warning">上次结果</StatusBadge>}
+          {data?.windows.length ? (
+            <IconButton
+              label={authorizationLabel}
+              icon={<KeyRound size={15} />}
+              disabled={busy || !account.profile_id}
+              onClick={() => setAuthorizationOpen(true)}
+            />
+          ) : (
             <Button
               variant="text"
+              size="small"
               disabled={busy || !account.profile_id}
               onClick={() => setAuthorizationOpen(true)}
             >
               <KeyRound size={15} />
-              {data?.authorization && data.authorization.state !== 'none'
-                ? '重新授权'
-                : '授权后台查询'}
+              {authorizationLabel}
             </Button>
-            <Button
-              variant="text"
-              disabled={busy || !data?.can_refresh || data.refreshing}
-              onClick={() => void refresh()}
-            >
+          )}
+          <IconButton
+            label="刷新用量"
+            title={
+              data?.refreshing
+                ? '正在查询用量'
+                : wait
+                  ? `${wait} 分钟后可刷新`
+                  : '刷新用量'
+            }
+            icon={
               <RefreshCw
                 size={15}
                 className={data?.refreshing ? 'ui-spin' : ''}
               />
-              {data?.refreshing
-                ? '查询中'
-                : wait
-                  ? `${wait} 分钟后可刷新`
-                  : '刷新用量'}
-            </Button>
-          </>
-        }
-      />
+            }
+            disabled={busy || !data?.can_refresh || data.refreshing}
+            onClick={() => void refresh()}
+          />
+        </div>
+      </div>
       {!data && !error && <BusyState label="正在读取账号用量" />}
       {data &&
         !data.windows.length &&
@@ -100,34 +111,6 @@ export function AccountUsagePanel({
           ]}
         />
       )}
-      {!!data?.windows.length && (
-        <div className="account-usage-windows">
-          {data.windows.map((window) => (
-            <div className="account-usage-window" key={window.id}>
-              <div className="account-usage-value">
-                <span>{window.label}</span>
-                <strong>
-                  {new Intl.NumberFormat('zh-CN', {
-                    maximumFractionDigits: 1,
-                  }).format(window.used_percent)}
-                  <span>% 已用</span>
-                </strong>
-              </div>
-              <ProgressMeter label={window.label} value={window.used_percent} />
-              <time
-                dateTime={window.resets_at || undefined}
-                title={
-                  window.resets_at
-                    ? new Date(window.resets_at).toLocaleString('zh-CN')
-                    : undefined
-                }
-              >
-                {resetLabel(window.resets_at, now)}
-              </time>
-            </div>
-          ))}
-        </div>
-      )}
       {extra && (
         <div className="account-usage-spending">
           <span>额外用量</span>
@@ -141,11 +124,7 @@ export function AccountUsagePanel({
       )}
       {data?.updated_at && (
         <div className="account-usage-updated">
-          <span>
-            {[data.source_label, data.organization_name]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
+          <span title={data.organization_name}>{data.source_label}</span>
           <time dateTime={new Date(data.updated_at * 1000).toISOString()}>
             更新于 {new Date(data.updated_at * 1000).toLocaleString('zh-CN')}
           </time>

@@ -44,7 +44,7 @@
 - Input H32 / R12、选择器 H36 / R12；控件正文 14px / 22px。不在业务页面覆盖按钮填充、圆角与字号。
 - 单行文字使用 TextInput，多行文字使用 TextArea，搜索使用 SearchField，均从 `components/ui` 导入。三者通过 `text-control` 共用 `styles/dsh/input.css`；占位提示使用 label-secondary 并固定 opacity: 1，禁用态单独处理。业务页面不另写占位提示色；原生 checkbox、range、file 等非文字控件按各自规则保留。
 - Panel / ResourceCard 使用 DSH 设置卡片：R20、0.5px 描边、layer-2 底色，无额外投影。高层级弹窗保留 DSH elevation 与遮罩。
-- ChoiceGroup 分段指示器按 DSH 算法滑动，支持方向键、Home、End，并尊重关闭动画与减少动态效果。
+- ChoiceGroup 分段指示器按 DSH 算法滑动，支持方向键、Home、End，切换焦点不触发页面滚动，并尊重关闭动画与减少动态效果。
 - LeadingIcon 只容纳图标，不额外添加彩色底框。FactsGrid 展示真实字段，长 IP、路径和时区可换行。
 - Field 的文本标签通过 `htmlFor` 与输入 `id` 关联；Select 必须有 `label`。
 - Notice 只显示可操作反馈。一般信息不添加小字说明；错误保留原始反馈。

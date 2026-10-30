@@ -30,7 +30,9 @@
 
 “全部”是范围，其他五种状态互斥。平台、订阅套餐、环境运行情况和邮箱／代理搜索独立组合筛选，状态页签的数量基于这些条件计算。窗口是否运行、客户端启动失败、Token 估算模型切换不会改变账号分类。模型专属额度仍在用量中展示，并参与对应模型的 Token 估算。
 
-账号详情先展示状态与账号用量，再展示“访问环境”页签。独立浏览器和 Claude App 是同一账号的访问环境，切换页签保留账号用量和后台授权操作。环境的启动状态、登录凭据和启动检查在各自环境中显示。
+账号列表显示 5 小时和周额度的小进度条；详情头部合并身份、状态、紧凑用量和授权／刷新入口，复用 `AccountUsageWindows` 与公共 `ProgressMeter`。未取得的数据不显示为零，其他实际返回的模型窗口和额外用量仍保留。邮箱单行省略，悬停查看全文。
+
+独立浏览器和 Claude App 是同一账号的访问环境。切换页签保留两个环境面板、启动检查展开状态、账号用量和后台授权操作；隐藏面板不占布局空间，也不暴露可操作控件。键盘切换使用不触发滚动的焦点移动。环境的启动状态、登录凭据和启动检查在各自环境中显示，提示条与正文共用水平留白。
 
 Token 数据来自 [All Done Sites Claude Usage Tracker](https://alldonesites.com/claude-usage-tracker/) 的[公开 JSON](https://alldonesites.com/data/claude-usage.json)，测量和换算实现见 [jonathanavis96/claude-usage-tracker](https://github.com/jonathanavis96/claude-usage-tracker)（MIT）。展示 schema v2 的 `credits.window_tokens.per_family` 混合量，结合套餐比例、各套餐周窗口和模型包含范围换算；不使用来源已标记弃用的 `rates` 数字。模型列表随数据源更新，目前有 Opus 5.5、Opus 5、Sonnet 5、Haiku 4.5 和 Fable 5.1；Sonnet 5.5、Haiku 5.5、Opus 4.6 在尚无独立混合量时，按 `credits.measured_rates.per_family` 已发布的消耗比例及 Opus 5 样本换算，保留价格近似说明并标注“比例估算”。仅在输入、输出共用同一比例时换算。来源补齐独立混合量后自动优先采用。内置 2026-10-29 发布数据快照，每 6 小时在查看总览时同步，失败保留原快照和原发布时间。公共数据自动使用系统网络与代理设置，估算依据弹窗可手动同步，不提供单独的代理配置。
 

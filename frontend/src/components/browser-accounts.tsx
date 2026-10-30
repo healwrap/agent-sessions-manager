@@ -27,6 +27,7 @@ import {
   type AccountStateKind,
 } from '../lib/account-state';
 import { AccountFilters } from './account-filters';
+import { AccountUsageWindows } from './account-usage-windows';
 
 export function BrowserAccounts({
   data,
@@ -215,6 +216,13 @@ export function BrowserAccounts({
                         </span>
                       </span>
                       <ChevronRight className="account-list-arrow" size={16} />
+                      {account.provider === 'claude' && (
+                        <AccountUsageWindows
+                          data={usage.items[account.id]}
+                          now={usage.now}
+                          compact
+                        />
+                      )}
                     </button>
                   );
                 })}

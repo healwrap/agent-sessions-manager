@@ -28,6 +28,7 @@ export function AccountClientPanel({
   client,
   data,
   busy,
+  hidden,
   onRuntime,
   onLogin,
   onSessionLogin,
@@ -47,6 +48,7 @@ export function AccountClientPanel({
   client: AccountClient;
   data: EnvironmentSettings;
   busy: boolean;
+  hidden: boolean;
 }) {
   const { profile, run, session, target } = client;
   const checking = run?.status === 'checking';
@@ -77,7 +79,11 @@ export function AccountClientPanel({
       ? 1
       : 2;
   return (
-    <div className="account-client-panel" data-guide-target={target}>
+    <div
+      className="account-client-panel"
+      data-guide-target={target}
+      hidden={hidden}
+    >
       <div className="account-launch-bar" data-guide="account-login">
         <div className="account-launch-status">
           <StatusBadge tone={tone}>
@@ -150,10 +156,12 @@ export function AccountClientPanel({
         </div>
       </div>
       {target === 'app' && (
-        <Notice>
-          {sessionSync?.value ||
-            '每次启动前自动同步各账号及本机 CLI 的全部本地 Code 会话，可在官方 App 中继续对话。'}
-        </Notice>
+        <div className="account-client-notice">
+          <Notice>
+            {sessionSync?.value ||
+              '每次启动前自动同步各账号及本机 CLI 的全部本地 Code 会话，可在官方 App 中继续对话。'}
+          </Notice>
+        </div>
       )}
       {checking && (
         <div

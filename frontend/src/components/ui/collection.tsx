@@ -60,7 +60,7 @@ export function ChoiceGroup<T extends string>({
                   (event.key === 'ArrowLeft' ? -1 : 1) +
                   buttons.length) %
                 buttons.length;
-        buttons[next].focus();
+        buttons[next].focus({ preventScroll: true });
         buttons[next].click();
       }}
     >

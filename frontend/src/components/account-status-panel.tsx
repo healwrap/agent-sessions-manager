@@ -13,7 +13,10 @@ export function AccountStatusPanel({
   status: AccountState;
 }) {
   const data = usage.items[accountId];
-  const description = status.detail === data?.error ? '' : status.detail;
+  const description =
+    status.kind === 'available' || status.detail === data?.error
+      ? ''
+      : status.detail;
   return (
     <section className="account-status-panel" aria-label="账号状态">
       <div className="account-status-heading">

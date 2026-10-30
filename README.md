@@ -89,16 +89,20 @@ Agent Sessions 的重点是两个工作区：**会话管理**和**账号管理**
 
 ### 构建桌面应用
 
-需要 **Node.js 22.12+、Python 3.10+、Rust / Cargo**，以及目标系统的 [Tauri 构建依赖](https://v2.tauri.app/start/prerequisites/)。
+需要 **Node.js 22.12+、Python 3.12.x、Rust / Cargo**，以及目标系统的 [Tauri 构建依赖](https://v2.tauri.app/start/prerequisites/)。
 
 ```bash
 git clone --branch main https://github.com/healwrap/agent-sessions-manager.git
 cd agent-sessions-manager
+python3.12 -m venv .venv
+source .venv/bin/activate
 npm ci
 npm run desktop:build
 ```
 
-安装包包含界面与 Python 后台，成品无需另起服务。macOS 构建输出：
+开发服务和打包均校验 Python 3.12.x；已有的 `.venv-desktop` 也会检查，旧版本环境需要用 Python 3.12 重新创建。Windows 可用 `py -3.12 -m venv .venv` 创建环境，再通过 `.venv\Scripts\Activate.ps1` 激活。
+
+安装包包含界面、Python 3.12 解释器与后台依赖，成品无需用户安装 Python 或另起服务。构建会运行已打包的后台，核验它实际内置的 Python 版本。macOS 构建输出：
 
 - `desktop/target/release/bundle/macos/Agent Sessions.app`
 - `desktop/target/release/bundle/dmg/Agent Sessions_0.1.0_aarch64.dmg`（Apple Silicon）
@@ -109,7 +113,7 @@ macOS 已在本机构建和运行；Windows / Linux 需在对应系统构建与�
 <summary>以本地网页方式运行</summary>
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 npm ci

@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 import tempfile
 from .plugin_library import catalog, publish, read_json
-from agent_sessions.paths import is_junction
 
 
 def write_json(path, value):
@@ -21,7 +20,7 @@ def write_json(path, value):
 def sync_plugins(config, library, enabled=True, home=None):
     config = Path(config)
     for path in (config/'plugins', config/'plugins/data', config/'settings.json'):
-        if path.is_symlink() or is_junction(path):
+        if path.is_symlink() or os.path.isjunction(path):
             raise ValueError('此环境的插件配置或数据指向其他目录，请先恢复为独立目录')
     source = Path(home) if home is not None else Path.home()
     rows = catalog(source) if enabled else []

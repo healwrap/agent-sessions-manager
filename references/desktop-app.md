@@ -58,14 +58,16 @@ macOS 使用原生 Sidebar 材质，正文区域保持独立背景。侧栏、�
 
 ## 构建
 
-在目标系统上构建，使用 Rust/Cargo、Node/npm 和 Python 3，以及该系统的 Tauri 原生开发依赖。macOS 需要 Xcode Command Line Tools，Windows 需要 MSVC 和 WebView2，Linux 需要 WebKitGTK 等原生库，参见 [Tauri 开发前置条件](https://v2.tauri.app/start/prerequisites/)。从仓库根目录运行：
+在目标系统上构建，使用 Rust/Cargo、Node/npm 和 Python 3.12.x，以及该系统的 Tauri 原生开发依赖。macOS 需要 Xcode Command Line Tools，Windows 需要 MSVC 和 WebView2，Linux 需要 WebKitGTK 等原生库，参见 [Tauri 开发前置条件](https://v2.tauri.app/start/prerequisites/)。激活 Python 3.12 虚拟环境后，从仓库根目录运行：
 
 ```bash
 npm ci
 npm run desktop:build
 ```
 
-脚本创建专用构建环境，将 Python 与查看器资源打包为 sidecar，再构建 Tauri 应用和普通安装镜像。运行成品无需上述开发依赖。
+脚本校验调用者和 `.venv-desktop` 均为 Python 3.12.x，再将 Python 解释器、后台依赖与查看器资源打包为 sidecar。旧 `.venv-desktop` 不会自动升级解释器，版本不符时会停止，需要用 Python 3.12 重新创建。`.python-version` 和 CI 统一选择 3.12。
+
+打包后先通过 sidecar 的 `--runtime-info` 核验 `frozen=true` 与实际 Python 版本，再构建 Tauri 应用和普通安装镜像。成品使用内置运行时，不依赖安装电脑的 Python 版本；可用同一参数检查成品运行时。
 
 输出：
 

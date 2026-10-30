@@ -9,6 +9,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT/'backend'))
+from agent_sessions.runtime_version import PYTHON_VERSION, require_python
 
 
 def run(*args, cwd=ROOT):
@@ -16,10 +18,15 @@ def run(*args, cwd=ROOT):
 
 
 def main():
+    require_python()
     windows = sys.platform == 'win32'
     python = ROOT/('.venv-desktop/Scripts/python.exe' if windows else '.venv-desktop/bin/python')
     if not python.exists():
         run(sys.executable, '-m', 'venv', ROOT/'.venv-desktop')
+    # Existing virtual environments retain the interpreter that created them.
+    # Validate it before reusing any dependencies or producing an installation package.
+    if subprocess.run([str(python), str(ROOT/'backend/agent_sessions/runtime_version.py')]).returncode:
+        raise SystemExit('请用 Python 3.12 重新创建 .venv-desktop 后重试；当前环境未用于打包。')
     if subprocess.run([str(python), '-c', 'import PyInstaller'], capture_output=True).returncode:
         run(python, '-m', 'pip', 'install', 'pyinstaller==6.22.3')
     run(python, '-m', 'pip', 'install', '-r', ROOT/'requirements.txt')
@@ -40,7 +47,12 @@ def main():
     directory = ROOT/'desktop/binaries'
     directory.mkdir(exist_ok=True)
     extension = '.exe' if windows else ''
-    shutil.copy2(ROOT/('dist/agent-sessions-server'+extension), directory/('agent-sessions-server-'+triple+extension))
+    sidecar = ROOT/('dist/agent-sessions-server'+extension)
+    runtime = json.loads(subprocess.check_output([str(sidecar), '--runtime-info'], text=True))
+    if tuple(runtime['version'][:2]) != PYTHON_VERSION or runtime['frozen'] is not True:
+        raise SystemExit('安装包必须内置 Python 3.12，停止打包：'+json.dumps(runtime, ensure_ascii=False))
+    print('Verified bundled Python:', json.dumps(runtime, ensure_ascii=False), flush=True)
+    shutil.copy2(sidecar, directory/('agent-sessions-server-'+triple+extension))
     with tempfile.TemporaryDirectory(prefix='agent-sessions-icons-') as icons:
         source = 'source-macos.png' if sys.platform == 'darwin' else 'source.png'
         run(cli, 'icon', ROOT/'desktop/icons'/source, '--output', icons)

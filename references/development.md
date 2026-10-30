@@ -51,17 +51,17 @@ tests/frontend/                  Vitest 状态、导航、显示投影与 API �
 
 ## 开发
 
-需要 Node 22.12+（或兼容 Vite 的更新版本）与 Python 3.10+。从根目录运行：
+需要 Node 22.12+（或兼容 Vite 的更新版本）与 Python 3.12.x；开发入口会在加载后台前校验版本。从根目录运行：
 
 ```bash
 npm ci
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python3 scripts/trajectory_server.py --port 8766
 ```
 
-Windows 使用 `.venv\Scripts\Activate.ps1` 激活环境。另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
+Windows 使用 `py -3.12 -m venv .venv` 创建环境，通过 `.venv\Scripts\Activate.ps1` 激活。已有虚拟环境保留创建时的 Python 版本，需要升级时用 Python 3.12 重新创建。另一个终端运行 `npm run dev`。Vite 的界面和 API 代理仅绑定回环地址；桌面和正式本地服务使用构建后的静态资源：
 
 ```bash
 npm run build:ui

@@ -1,23 +1,27 @@
 import { useLayoutEffect, type RefObject } from 'react';
 
-// Keep enough space below the current viewport when filtered details shrink.
-// Scrolling back up releases that space instead of keeping the tallest panel.
+// Reserve scroll space outside the card when shorter content would move the page.
+// Scrolling up releases the reserve; the card always follows its content height.
 export function useCollectionScrollFloor(ref: RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
-    const panel = ref.current!;
-    let pane = panel.parentElement;
+    const region = ref.current!;
+    let pane = region.parentElement;
     while (pane && !/auto|scroll/.test(getComputedStyle(pane).overflowY))
       pane = pane.parentElement;
     if (!pane) return;
     const container = pane;
     const sync = () => {
+      if (container.scrollTop <= 0) {
+        region.style.removeProperty('--collection-scroll-floor');
+        return;
+      }
       const remaining = Math.max(
         0,
         container.scrollHeight - container.clientHeight - container.scrollTop,
       );
-      panel.style.setProperty(
+      region.style.setProperty(
         '--collection-scroll-floor',
-        `${Math.max(0, Math.ceil(panel.getBoundingClientRect().height - remaining))}px`,
+        `${Math.max(0, Math.ceil(region.getBoundingClientRect().height - remaining))}px`,
       );
     };
     sync();
@@ -27,7 +31,7 @@ export function useCollectionScrollFloor(ref: RefObject<HTMLElement | null>) {
     return () => {
       container.removeEventListener('scroll', sync);
       resize.disconnect();
-      panel.style.removeProperty('--collection-scroll-floor');
+      region.style.removeProperty('--collection-scroll-floor');
     };
   }, [ref]);
 }

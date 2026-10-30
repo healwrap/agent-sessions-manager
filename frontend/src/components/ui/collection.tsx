@@ -120,17 +120,15 @@ export function CollectionPanel({
   children: ReactNode;
   className?: string;
 }) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   useCollectionScrollFloor(ref);
   return (
-    <Panel
-      ref={ref}
-      className={`ui-collection-panel ${className}`}
-      padding="none"
-    >
-      <div className="ui-collection-panel-toolbar">{toolbar}</div>
-      <div className="ui-collection-panel-body">{children}</div>
-    </Panel>
+    <div ref={ref} className="ui-collection-scroll-region">
+      <Panel className={`ui-collection-panel ${className}`} padding="none">
+        <div className="ui-collection-panel-toolbar">{toolbar}</div>
+        <div className="ui-collection-panel-body">{children}</div>
+      </Panel>
+    </div>
   );
 }
 

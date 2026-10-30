@@ -7,23 +7,27 @@ export function AppSessionSync({ run }: { run?: BrowserRun }) {
   const completed = result.imported + result.updated + result.unchanged;
   return (
     <Disclosure
-      className="launch-check"
+      className="launch-check app-session-sync"
       compact
       title={
         <>
           <span>
-            上次启动同步
+            会话同步
             {result.state === 'pending'
               ? ' · 尚未开始'
               : ` · ${completed} 条已同步${result.skipped ? `，${result.skipped} 条未同步` : ''}`}
           </span>
-          <time dateTime={result.completed_at}>
+          <time dateTime={result.completed_at} title="上次启动时的同步时间">
             {new Date(result.completed_at).toLocaleString()}
           </time>
         </>
       }
     >
-      <p>{result.message}</p>
+      <p>
+        每次启动此账号的 Claude App 时，自动同步各账号与本机 Claude Code
+        的全部可恢复会话。
+      </p>
+      <p>上次同步结果：{result.message}</p>
       {!!result.issues.length && (
         <ul>
           {result.issues.map((issue) => (
@@ -33,7 +37,6 @@ export function AppSessionSync({ run }: { run?: BrowserRun }) {
           ))}
         </ul>
       )}
-      <p>下次启动此账号的 App 时重新检查。</p>
     </Disclosure>
   );
 }

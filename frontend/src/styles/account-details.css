@@ -80,7 +80,7 @@
   background: var(--dsw-alias-state-success-primary);
 }
 .account-client-notice {
-  margin: 0 var(--account-inset) 16px;
+  margin: 0 var(--account-inset);
 }
 .account-launch-bar {
   display: flex;

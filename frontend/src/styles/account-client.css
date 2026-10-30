@@ -65,6 +65,16 @@
   min-height: 48px;
   font-size: 14px;
 }
+.account-detail .app-session-sync[data-compact] > .disclosure-trigger {
+  padding-block: 12px;
+}
+.app-session-sync[data-open='true'] {
+  padding-bottom: 12px;
+}
+.app-session-sync .disclosure-content > ul {
+  margin: 0;
+  padding-inline-start: 20px;
+}
 .account-check-details .environment-gate-result {
   padding: 18px 28px;
 }

@@ -96,7 +96,7 @@ export function AccountDetails({
         <SectionHeading level={3} title="访问环境" />
         <ChoiceGroup
           label="选择访问环境"
-          variant="tabs"
+          variant="segmented"
           value={client.target}
           onChange={setTarget}
           items={clients.map((item) => ({

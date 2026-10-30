@@ -77,11 +77,12 @@
   display: grid;
   gap: 12px;
 }
-.account-state-tabs {
+.account-state-scroll {
+  min-width: 0;
   overflow-x: auto;
 }
-.account-state-tabs > button {
-  flex: none;
+.account-state-choices {
+  width: max-content;
 }
 @container (max-width: 680px) {
   .account-filters .ui-collection-toolbar .search-field {

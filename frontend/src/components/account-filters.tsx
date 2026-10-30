@@ -23,21 +23,39 @@ export function AccountFilters({
   );
   return (
     <div className="account-filters">
-      <ChoiceGroup
-        className="account-state-tabs"
-        label="筛选账号可用状态"
-        variant="tabs"
-        value={value.state}
-        onChange={(state) => onChange({ ...value, state })}
-        items={[
-          { value: 'all', label: '全部', count: counts.all },
-          ...Object.entries(accountStates).map(([kind, state]) => ({
-            value: kind as AccountStateKind,
-            label: state.label,
-            count: counts[kind as AccountStateKind],
-          })),
-        ]}
-      />
+      <div
+        className="account-state-scroll"
+        onKeyDown={(event) => {
+          const choice = document.activeElement;
+          if (
+            !(choice instanceof HTMLElement) ||
+            !event.currentTarget.contains(choice)
+          )
+            return;
+          const bounds = choice.getBoundingClientRect();
+          const viewport = event.currentTarget.getBoundingClientRect();
+          if (bounds.left < viewport.left)
+            event.currentTarget.scrollLeft += bounds.left - viewport.left - 4;
+          else if (bounds.right > viewport.right)
+            event.currentTarget.scrollLeft += bounds.right - viewport.right + 4;
+        }}
+      >
+        <ChoiceGroup
+          className="account-state-choices"
+          label="筛选账号可用状态"
+          variant="segmented"
+          value={value.state}
+          onChange={(state) => onChange({ ...value, state })}
+          items={[
+            { value: 'all', label: '全部', count: counts.all },
+            ...Object.entries(accountStates).map(([kind, state]) => ({
+              value: kind as AccountStateKind,
+              label: state.label,
+              count: counts[kind as AccountStateKind],
+            })),
+          ]}
+        />
+      </div>
       <CollectionToolbar
         query={value.query}
         onQuery={(query) => onChange({ ...value, query })}

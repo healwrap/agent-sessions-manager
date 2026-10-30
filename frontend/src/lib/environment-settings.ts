@@ -70,6 +70,17 @@ export interface BrowserRun {
   pid?: number;
   data_directory?: string;
   pages?: { title: string; url: string }[];
+  session_sync?: {
+    state: 'complete' | 'partial' | 'pending';
+    imported: number;
+    updated: number;
+    unchanged: number;
+    branches: number;
+    skipped: number;
+    completed_at: string;
+    message: string;
+    issues: { title: string; path: string; reason: string }[];
+  };
 }
 export interface LocalSession {
   state: 'saved' | 'empty' | 'unavailable';

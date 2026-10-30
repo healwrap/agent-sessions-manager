@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import tempfile
 import time
+import re
+from datetime import datetime, timezone
 from uuid import NAMESPACE_URL, uuid5
 from agent_sessions.paths import claude_root, claude_desktop_root
 from agent_sessions.profile_ownership import directory
@@ -45,6 +47,46 @@ def encode(value):
     return json.dumps(value, ensure_ascii=False, indent=2).encode('utf-8')
 
 
+def report_message(result):
+    total = result['imported']+result['updated']+result['unchanged']
+    text = f"已同步 {total} 条会话（新增 {result['imported']}，更新 {result['updated']}，无需更新 {result['unchanged']}）"
+    if result['branches']: text += f"，另存分支 {result['branches']}"
+    if result['skipped']: text += f"；另有 {result['skipped']} 条未同步"
+    return text
+
+
+def restore_report(run):
+    """Keep a saved launch result identifiable after the manager restarts."""
+    check = next((row for row in run.get('checks', []) if row['id'] == 'app-session-sync'), None)
+    if not check: return
+    if 'session_sync' not in run:
+        match = re.search(r'新增 (\d+)，更新 (\d+)，已同步 (\d+)', check['value'])
+        if not match: return
+        imported, updated, unchanged = map(int, match.groups())
+        issues = []
+        for line in filter(None, check.get('detail', '').split('；')):
+            path, separator, reason = line.partition('：')
+            issues.append({'path': path, 'reason': reason if separator else line})
+        branch = re.search(r'另存分支 (\d+)', check['value'])
+        run['session_sync'] = dict(state='partial' if issues else 'complete', imported=imported,
+                                  updated=updated, unchanged=unchanged, branches=int(branch[1]) if branch else 0,
+                                  skipped=len(issues), issues=issues, completed_at=run['checked_at'])
+    report = run['session_sync']
+    report.setdefault('completed_at', run['checked_at'])
+    for issue in report['issues']:
+        if issue.get('title'): continue
+        path = Path(issue['path'])
+        issue['title'] = path.stem
+        try:
+            record = load(path) if path.suffix == '.json' else {}
+            if isinstance(record, dict): issue['title'] = record.get('title') or record.get('name') or path.stem
+        except (ValueError, OSError): pass
+    if report['state'] != 'pending':
+        report['message'] = report_message(report)
+        check['value'] = report['message']
+        if report['skipped']: check['label'] = '部分未同步'
+
+
 def sidecars(source, target, cli_id, backups):
     project = source.code/'projects'/slug(source.cwd)
     destinations = [(project/source.cli_id, target/'claude-code/projects'/slug(source.cwd)/cli_id),
@@ -61,7 +103,8 @@ def synchronize(root, profile_id, settings, paths=None):
     root = Path(root)
     target = directory(root, 'app_profiles', profile_id)
     storage = account_storage(target)
-    result = {'state': 'complete', 'imported': 0, 'updated': 0, 'unchanged': 0, 'branches': 0, 'skipped': 0, 'issues': []}
+    result = {'state': 'complete', 'imported': 0, 'updated': 0, 'unchanged': 0, 'branches': 0, 'skipped': 0, 'issues': [],
+              'completed_at': datetime.now(timezone.utc).isoformat()}
     if storage is None:
         return {**result, 'state': 'pending', 'message': '登录并选择组织后，再次打开环境会自动同步全部本地 Code 会话'}
     paths = paths or {}
@@ -138,7 +181,6 @@ def synchronize(root, profile_id, settings, paths=None):
             result['updated' if own else 'imported'] += 1
     result['skipped'] = len(result['issues'])
     if result['skipped']: result['state'] = 'partial'
-    result['message'] = f"本地 Code 会话：新增 {result['imported']}，更新 {result['updated']}，已同步 {result['unchanged']}"
-    if result['branches']: result['message'] += f"，另存分支 {result['branches']}"
-    if result['skipped']: result['message'] += f"，{result['skipped']} 条待同步"
+    result['completed_at'] = datetime.now(timezone.utc).isoformat()
+    result['message'] = report_message(result)
     return result

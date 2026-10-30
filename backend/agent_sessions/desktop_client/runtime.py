@@ -22,7 +22,7 @@ from agent_sessions.applications import app_executable
 from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
 from .network import configure as configure_network
 from .connections import ProcessConnections, ConnectionViolation, public
-from .session_sync import synchronize
+from .session_sync import synchronize, restore_report
 
 
 def app_processes():
@@ -44,6 +44,7 @@ class AppRuntime:
         app = next((row for row in settings['apps'] if row['id'] == 'claude'), None)
         executable = app_executable(app) if app else ''
         self.runs, self.processes = self.registry.restore(settings['app_profiles'], self.profile_directory, lambda profile: executable)
+        for run in self.runs.values(): restore_report(run)
 
     def profile_directory(self, key):
         return self.directory/'profiles'/(hashlib.sha256(key.encode()).hexdigest()[:32]+'-3p')
@@ -131,7 +132,8 @@ class AppRuntime:
                 checks.append(dict(id='app-session-sync', title='账号间会话同步', policy='warn',
                                    state='pass' if synced['state'] == 'complete' else 'unknown',
                                    value=synced['message'],
-                                   detail='；'.join(row['path']+'：'+row['reason'] for row in synced['issues'])))
+                                   label='尚未同步' if synced['state'] == 'pending' else '部分未同步' if synced['skipped'] else '已完成',
+                                   detail='；'.join(row['title']+'：'+row['reason']+'（'+row['path']+'）' for row in synced['issues'])))
                 if run.get('cancelled'): return
                 run['skill_inheritance'] = sync_skills(config, profile.get('inherit_skills', True))
                 plugins = sync_plugins(config, self.directory/'plugin-library', profile.get('inherit_plugins', True))

@@ -68,11 +68,12 @@ def conversations(environment, code, indexes):
     for path in files: by_id.setdefault(path.stem, []).append(path)
     rows, issues, represented = [], [], set()
     for index in sorted([*indexes.glob('*/*/*.json'), *indexes.glob('*.json')]):
+        record = {}
         try:
             record = load(index)
             if not isinstance(record, dict) or not isinstance(record.get('sessionId'), str) or not isinstance(record.get('cwd'), str): continue
             cli_id = uuid(record.get('cliSessionId') or record.get('unarchivedCliSessionId'))
-            if not cli_id: raise ValueError('此会话没有可恢复的本地 Code ID')
+            if not cli_id: raise ValueError('只有会话索引，尚未生成可恢复的本地 Code ID')
             if record.get('sshConfig') or record.get('wslConfig'): raise ValueError('远程环境会话需保留在原环境中')
             matches = by_id.get(cli_id, [])
             direct = code/'projects'/slug(record.get('originCwd') or record['cwd'])/(cli_id+'.jsonl')
@@ -85,7 +86,8 @@ def conversations(environment, code, indexes):
             rows.append(snapshot(environment, code, path, record, cli_id, manifest.get(record['sessionId'], {}), index))
             represented.add(path)
         except (ValueError, OSError) as error:
-            issues.append({'environment_id': environment, 'path': str(index), 'reason': str(error)})
+            issues.append({'environment_id': environment, 'path': str(index),
+                           'title': record.get('title') or record.get('name') or index.stem, 'reason': str(error)})
     for path in sorted(files):
         if path in represented or not uuid(path.stem): continue
         try:
@@ -103,7 +105,7 @@ def conversations(environment, code, indexes):
                       'lastActivityAt': path.stat().st_mtime*1000, 'importedFrom': 'terminal-cli'}
             rows.append(snapshot(environment, code, path, record, path.stem, {}, None))
         except (ValueError, OSError, AttributeError) as error:
-            issues.append({'environment_id': environment, 'path': str(path), 'reason': str(error)})
+            issues.append({'environment_id': environment, 'path': str(path), 'title': path.stem, 'reason': str(error)})
     return rows, issues
 
 

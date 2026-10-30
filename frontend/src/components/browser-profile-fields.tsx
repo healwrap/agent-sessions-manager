@@ -83,12 +83,12 @@ export function BrowserProfileFields({
           </Field>
         </div>
       )}
-      <Field label="专用代理">
+      <Field label="出口线路">
         <Select
-          label="环境专用代理"
+          label="环境出口线路"
           value={value.proxy_id}
           options={[
-            { value: '', label: '系统路由' },
+            { value: '', label: '请选择出口线路' },
             ...proxies.map((proxy) => ({ value: proxy.id, label: proxy.name })),
           ]}
           onChange={(proxy_id) => {

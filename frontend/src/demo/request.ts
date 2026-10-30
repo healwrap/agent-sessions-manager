@@ -242,7 +242,29 @@ export const demoRequest: Request = async <T>(
   } as Record<string, string>;
   let value: unknown;
   if (path === '/api/environments') value = environments(body);
-  else if (/^\/api\/(browser|app)-runtime\/(open|start|stop)$/.test(path))
+  else if (path.startsWith('/api/network')) {
+    if (path.endsWith('/save-line')) {
+      const item = {
+        id: args.id || id('proxy'),
+        name: args.name,
+        url: 'http://127.0.0.1:18903',
+        kind: 'clash' as const,
+        clash_node: args.node,
+      };
+      const index = data.proxies.findIndex((row) => row.id === item.id);
+      if (index < 0) data.proxies.push(item);
+      else data.proxies[index] = item;
+      value = data;
+    } else if (path.endsWith('/intranet'))
+      value = { addresses: ['192.0.2.10'], reachable: true, host: args.host };
+    else {
+      if (path.endsWith('/apply')) Object.assign(data.network!, body);
+      if (path.endsWith('/prepare'))
+        data.network!.current_node =
+          data.proxies.find((row) => row.id === args.id)?.clash_node || '';
+      value = data.network;
+    }
+  } else if (/^\/api\/(browser|app)-runtime\/(open|start|stop)$/.test(path))
     value = runtime(path, args);
   else if (path.startsWith('/api/proxy-services/')) value = proxies(path, args);
   else if (path === '/api/settings') {

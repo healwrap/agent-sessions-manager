@@ -111,10 +111,11 @@ export function ComponentSettings({ active }: { active: boolean }) {
     ) : (
       <BusyState label="正在读取组件" />
     );
+  const components = data.items.filter((item) => item.id !== 'mihomo');
   return (
     <div className="component-settings">
       {error && !removing && <Notice tone="error">{error}</Notice>}
-      {data.items.map((item) => {
+      {components.map((item) => {
         const job = item.installation;
         const working = ['checking', 'installing', 'removing'].includes(
           job.state,

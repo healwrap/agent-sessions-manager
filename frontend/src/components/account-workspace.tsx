@@ -20,7 +20,9 @@ import { AppAccounts } from './app-accounts';
 import { BrowserEnvironments } from './browser-environments';
 import { NetworkDiagnostics } from './network-diagnostics';
 import { EnvironmentEditor, type EnvironmentEdit } from './environment-editor';
-import { ProxyEnvironments } from './proxy-environments';
+import { NetworkSettings } from './network-settings';
+import { request } from '../lib/api';
+import { errorMessage } from '../lib/error-message';
 import { Button, ContentDialog, Notice, PageHeading } from './ui';
 import { WorkspacePicker } from './workspace-picker';
 import { WorkspaceLayout, WorkspaceSidebar } from './workspace-layout';
@@ -47,9 +49,9 @@ const sections = [
   },
   {
     id: 'proxies',
-    title: '代理设置',
+    title: '网络设置',
     icon: Globe2,
-    description: '集中保存专用代理，为环境选择对应的网络出口。',
+    description: '连接 Clash Verge，为账号选择出口线路并配置内网访问。',
   },
 ] as const;
 
@@ -71,6 +73,7 @@ export function AccountWorkspace({
   const [loginAccountId, setLoginAccountId] = useState('');
   const [sessionAccountId, setSessionAccountId] = useState('');
   const [diagnosticProxy, setDiagnosticProxy] = useState<ProxyConfig>();
+  const [networkError, setNetworkError] = useState('');
   const {
     data,
     loading,
@@ -93,8 +96,13 @@ export function AccountWorkspace({
     (item) => item.id === sessionAccount?.profile_id,
   );
   const inspectProxy = (item: ProxyConfig) => {
+    setNetworkError('');
     setNetwork(undefined);
-    if (item.kind === 'managed')
+    if (item.kind === 'clash')
+      void request('/api/network/prepare', {}, { id: item.id })
+        .then(() => setDiagnosticProxy(item))
+        .catch((reason) => setNetworkError(errorMessage(reason)));
+    else if (item.kind === 'managed')
       void proxyCommand('start', { id: item.id })
         .then((latest) => {
           if (
@@ -185,14 +193,14 @@ export function AccountWorkspace({
                 {section === 'accounts'
                   ? '添加账号'
                   : section === 'proxies'
-                    ? '添加代理'
+                    ? '添加线路'
                     : section === 'browser'
                       ? '新建浏览器环境'
                       : '新建 App 环境'}
               </Button>
             }
           />
-          {error && (
+          {(error || networkError) && (
             <Notice
               tone="error"
               action={
@@ -205,7 +213,7 @@ export function AccountWorkspace({
                 </Button>
               }
             >
-              {error}
+              {networkError || error}
             </Notice>
           )}
           {section === 'accounts' && (!error || data.accounts.length > 0) && (
@@ -258,16 +266,16 @@ export function AccountWorkspace({
             />
           )}
           {section === 'proxies' && (
-            <ProxyEnvironments
+            <NetworkSettings
               data={data}
               busy={busy}
-              loading={loading}
               creating={edit?.kind === 'proxies'}
-              onCreate={() => setEdit({ kind: 'proxies' })}
               onCloseCreate={() => setEdit(null)}
-              onSaveExternal={(item) => save('proxies', item)}
+              onReload={reload}
               onDelete={(id) => void remove('proxies', id)}
-              onCommand={proxyCommand}
+              onLegacyStop={(id) =>
+                void proxyCommand('stop', { id }).catch(() => {})
+              }
               onInspect={inspectProxy}
               onSavedProxy={(proxy) => guideStore.proxySaved(proxy.id)}
             />

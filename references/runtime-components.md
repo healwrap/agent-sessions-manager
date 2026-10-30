@@ -1,13 +1,12 @@
 # 平台与组件管理
 
-「设置 → 组件管理」管理 Fingerprint Chromium、Mihomo 和 Claude App 三个组件，集中显示版本、来源、安装位置，以及安装、检查更新、重新安装和卸载操作。浏览器只管理 Fingerprint Chromium，不提供 Google Chrome 的安装和更新入口。运行中的环境会阻止相关组件更新或卸载。账号与独立环境数据保存在组件目录之外，卸载受管组件时保留；重新安装后可以继续使用原来的环境。
+「设置 → 组件管理」管理 Fingerprint Chromium 和 Claude App 两个组件，集中显示版本、来源、安装位置，以及安装、检查更新、重新安装和卸载操作。浏览器只管理 Fingerprint Chromium，不提供 Google Chrome 的安装和更新入口。运行中的环境会阻止相关组件更新或卸载。账号与独立环境数据保存在组件目录之外，卸载受管组件时保留；重新安装后可以继续使用原来的环境。
 
-安装包包含 Agent Sessions 自己的界面与后台。浏览器、Mihomo 和 Claude 首次使用时从对应发布方下载，不预先附带在桌面安装包中。下载成功的官方包会缓存以便重新安装；卸载组件时清除对应二进制和下载缓存。
+安装包包含 Agent Sessions 自己的界面与后台。浏览器和 Claude 首次使用时从对应发布方下载，不预先附带在桌面安装包中。下载成功的官方包会缓存以便重新安装；卸载组件时清除对应二进制和下载缓存。
 
 | 组件 | macOS | Windows | 管理方式 |
 | --- | --- | --- | --- |
 | Fingerprint Chromium | 上游当前提供 Apple Silicon DMG | 上游 x64 ZIP | GitHub 发布 SHA256 校验，独立安装、更新、卸载 |
-| Mihomo | arm64 / amd64-compatible | arm64 / amd64-compatible | 官方发布 SHA256 校验，独立安装、更新、卸载 |
 | Claude App | Anthropic 官方通用 ZIP，校验 Apple 发布者签名 | Anthropic 官方 MSIX，校验 Authenticode 后请求 Windows 授权安装 | 管理官方程序，账号数据继续使用各自的独立目录 |
 
 Windows ARM 上的指纹浏览器使用 x64 兼容版本，需要操作系统支持 x64 应用。上游没有适用指纹浏览器发行包时，界面显示不可安装。已有 Chrome 环境保留兼容能力，本机 Chrome 不参与组件管理。
@@ -27,6 +26,8 @@ Claude Windows MSIX 的 Cowork 服务需要管理员授权。安装会显示 Win
 Claude App 组件提供「禁用自动更新」开关，读取并写入官方的 `disableAutoUpdates` 策略。macOS 使用 `/Library/Managed Preferences/<当前用户>/com.anthropic.claudefordesktop.plist`，系统会请求管理员授权；Windows 使用 `HKCU\SOFTWARE\Policies\Claude` 的 DWORD 值。仅修改这个键，保留其他策略。生效的机器级策略显示锁定，保留系统管理员的设置；读取失败时显示错误并禁用开关。macOS 读数遵循本机 Claude 的用户级覆盖顺序，Windows 的 HKLM 优先于 HKCU。
 
 策略对当前用户的本机安装、受管副本及全部独立账号环境生效，下次启动 Claude 时读取。安装、重新安装或手动更新组件不会清除该策略。「检查更新」与手动安装更新仍可使用。Windows 的 Microsoft Store 更新由系统商店管理，此开关只控制 Claude 自身更新器。官方定义见 [Claude Desktop 企业配置](https://support.claude.com/en/articles/12622667-enterprise-configuration-for-claude-desktop)。
+
+网络转发由用户安装的 Clash Verge 提供；应用不再提供新建受管 Mihomo 代理或其组件安装入口。旧受管代理保留到逐条迁移完成，之后才停止对应旧进程。
 
 指纹 Chromium 来自 [上游发布](https://github.com/adryfish/fingerprint-chromium/releases)，Mihomo 来自 [官方发布](https://github.com/MetaCubeX/mihomo/releases)，Claude 使用 [官方下载](https://claude.com/download)对应的版本清单或 MSIX 入口。
 

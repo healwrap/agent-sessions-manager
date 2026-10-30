@@ -1,0 +1,297 @@
+import { useState } from 'react';
+import {
+  ExternalLink,
+  Globe2,
+  Network,
+  RefreshCw,
+  ScanLine,
+  SlidersHorizontal,
+} from 'lucide-react';
+import type {
+  ClashNetwork,
+  EnvironmentSettings,
+  ProxyConfig,
+} from '../lib/environment-settings';
+import { request } from '../lib/api';
+import { errorMessage } from '../lib/error-message';
+import {
+  Button,
+  CollectionPanel,
+  CollectionToolbar,
+  Disclosure,
+  FactsGrid,
+  Field,
+  Notice,
+  ResourceCard,
+  StatusBadge,
+  TextInput,
+} from './ui';
+import {
+  IntranetEditor,
+  NetworkConnectionEditor,
+  NetworkLineEditor,
+} from './network-editors';
+import '../styles/network-settings.css';
+import { NetworkLines } from './network-lines';
+
+const empty: ClashNetwork = {
+  connected: false,
+  version: '',
+  tun: false,
+  mode: '',
+  error: '',
+  endpoint: '',
+  secret_set: false,
+  group: '',
+  current_node: '',
+  nodes: [],
+  routing_ready: false,
+  domains: [],
+  dns: [],
+};
+
+export function NetworkSettings({
+  data,
+  busy,
+  creating,
+  onCloseCreate,
+  onReload,
+  onInspect,
+  onDelete,
+  onSavedProxy,
+  onLegacyStop,
+}: {
+  data: EnvironmentSettings;
+  busy: boolean;
+  creating: boolean;
+  onCloseCreate: () => void;
+  onReload: () => Promise<void>;
+  onInspect: (item: ProxyConfig) => void;
+  onDelete: (id: string) => void;
+  onSavedProxy: (item: ProxyConfig) => void;
+  onLegacyStop: (id: string) => void;
+}) {
+  const network = data.network || empty;
+  const [query, setQuery] = useState('');
+  const [editing, setEditing] = useState<ProxyConfig>();
+  const [dialog, setDialog] = useState<'connection' | 'intranet'>();
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState('');
+  const [host, setHost] = useState('');
+  const [result, setResult] = useState('');
+  const lines = data.proxies.filter((row) => row.kind === 'clash');
+  const pending = working || busy;
+  const locked = [...data.browser.runs, ...data.app_runtime.runs].some(
+    (row) => row.alive || row.status === 'checking',
+  );
+  const run = async (action: string, body: unknown = {}) => {
+    setWorking(true);
+    setError('');
+    try {
+      await request('/api/network/' + action, {}, body);
+      await onReload();
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  };
+  const testIntranet = async () => {
+    setWorking(true);
+    setError('');
+    setResult('');
+    try {
+      const value = await request<{ addresses: string[] }>(
+        '/api/network/intranet',
+        {},
+        { host },
+      );
+      setResult('解析和连接正常 · ' + value.addresses.join('、'));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  };
+  const saved = () => {
+    setDialog(undefined);
+    void onReload();
+  };
+  return (
+    <section className="network-settings" aria-label="网络设置">
+      {error && <Notice tone="error">{error}</Notice>}
+      <ResourceCard
+        title="Clash Verge"
+        icon={<Globe2 size={22} />}
+        subtitle={
+          network.connected
+            ? network.tun
+              ? 'TUN 已开启'
+              : 'TUN 未开启'
+            : '连接本机 Clash Verge'
+        }
+        badge={
+          <StatusBadge tone={network.connected ? 'success' : 'neutral'}>
+            {network.connected ? '已连接' : '未连接'}
+          </StatusBadge>
+        }
+        actions={
+          <>
+            <Button disabled={pending} onClick={() => void run('refresh')}>
+              <RefreshCw size={16} />
+              刷新
+            </Button>
+            <Button disabled={pending} onClick={() => void run('open')}>
+              <ExternalLink size={16} />
+              打开 Clash
+            </Button>
+            <Button disabled={pending} onClick={() => setDialog('connection')}>
+              <SlidersHorizontal size={16} />
+              连接设置
+            </Button>
+          </>
+        }
+      >
+        {network.error && <Notice tone="warning">{network.error}</Notice>}
+        {network.connected && network.mode !== 'rule' && (
+          <Notice tone="warning">请将 Clash Verge 切换到规则模式。</Notice>
+        )}
+        {network.connected && !network.tun && (
+          <Notice tone="warning">
+            请在 Clash Verge 开启 TUN，再启动账号环境。
+          </Notice>
+        )}
+        {network.connected && !!lines.length && !network.routing_ready && (
+          <Notice
+            tone="warning"
+            action={
+              <Button
+                disabled={pending}
+                onClick={() =>
+                  void run('apply', {
+                    domains: network.domains,
+                    dns: network.dns,
+                  })
+                }
+              >
+                应用分流
+              </Button>
+            }
+          >
+            账号分流规则未生效
+          </Notice>
+        )}
+        <Disclosure title="连接详情" compact>
+          <FactsGrid
+            items={[
+              { label: '内核版本', value: network.version || '未取得' },
+              {
+                label: '控制接口',
+                value: network.controller || network.endpoint || '自动发现',
+              },
+              {
+                label: '当前账号出口',
+                value: network.current_node || '尚未选择',
+              },
+            ]}
+          />
+          <p>TUN、节点或规则变化时会停止受影响的环境。检测后停止有时间差。</p>
+        </Disclosure>
+      </ResourceCard>
+      <CollectionPanel
+        toolbar={
+          <CollectionToolbar
+            query={query}
+            onQuery={setQuery}
+            searchLabel="搜索出口线路"
+          >
+            <h2>出口线路</h2>
+          </CollectionToolbar>
+        }
+      >
+        <NetworkLines
+          data={data}
+          query={query}
+          busy={pending}
+          onEdit={setEditing}
+          onInspect={onInspect}
+          onDelete={onDelete}
+          onStop={onLegacyStop}
+        />
+      </CollectionPanel>
+      <ResourceCard
+        title="内网访问"
+        icon={<Network size={22} />}
+        subtitle={
+          network.domains.length ? network.domains.join('、') : '未配置公司网络'
+        }
+        actions={
+          <Button disabled={pending} onClick={() => setDialog('intranet')}>
+            <SlidersHorizontal size={16} />
+            配置
+          </Button>
+        }
+      >
+        {!!network.dns.length && (
+          <p className="network-bound-accounts">
+            公司 DNS · {network.dns.join('、')}
+          </p>
+        )}
+        {!!network.domains.length && (
+          <div className="network-intranet-test">
+            <Field label="检测域名" htmlFor="network-intranet-host">
+              <TextInput
+                id="network-intranet-host"
+                value={host}
+                onChange={(event) => setHost(event.target.value)}
+                placeholder="输入一个公司内网域名"
+              />
+            </Field>
+            <Button
+              disabled={pending || !host.trim()}
+              onClick={() => void testIntranet()}
+            >
+              <ScanLine size={16} />
+              检测
+            </Button>
+          </div>
+        )}
+        {result && <Notice tone="success">{result}</Notice>}
+      </ResourceCard>
+      {(creating || editing) && (
+        <NetworkLineEditor
+          item={editing}
+          existingIds={data.proxies.map((row) => row.id)}
+          locked={locked}
+          network={network}
+          onClose={() => {
+            setEditing(undefined);
+            onCloseCreate();
+          }}
+          onSaved={(latest, id) => {
+            setEditing(undefined);
+            onCloseCreate();
+            void onReload();
+            onSavedProxy(latest.proxies.find((row) => row.id === id)!);
+          }}
+        />
+      )}
+      {dialog === 'connection' && (
+        <NetworkConnectionEditor
+          locked={locked}
+          network={network}
+          onClose={() => setDialog(undefined)}
+          onSaved={saved}
+        />
+      )}
+      {dialog === 'intranet' && (
+        <IntranetEditor
+          locked={locked}
+          network={network}
+          onClose={() => setDialog(undefined)}
+          onSaved={saved}
+        />
+      )}
+    </section>
+  );
+}

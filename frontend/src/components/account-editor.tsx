@@ -182,17 +182,16 @@ export function AccountEditor({
         </Field>
       )}
       {creating && (
-        <Field label="新环境的代理">
+        <Field label="新环境的出口线路">
           <Select
-            label="新环境代理"
+            label="新环境出口线路"
             value={proxy}
             options={[
-              { value: '', label: '系统路由' },
+              { value: '', label: '请选择出口线路' },
               ...data.proxies.map((item) => ({
                 value: item.id,
                 label: item.name,
               })),
-              { value: '__custom__', label: '添加专用代理…' },
             ]}
             onChange={setProxy}
           />

@@ -228,7 +228,7 @@ export function AccountClientPanel({
             <FactsGrid
               items={[
                 {
-                  label: '专用代理',
+                  label: '出口线路',
                   value: proxy?.name || '系统路由',
                 },
                 {

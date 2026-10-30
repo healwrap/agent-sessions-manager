@@ -5,28 +5,28 @@ export const guideSteps: Record<
   { title: string; chapter: string; hint: string }
 > = {
   'proxy-nav': {
-    title: '配置代理',
-    chapter: '代理准备 · 1 / 5',
-    hint: '点击左侧「代理设置」。',
+    title: '配置网络',
+    chapter: '网络准备 · 1 / 5',
+    hint: '点击左侧「网络设置」。',
   },
   'proxy-add': {
-    title: '添加代理',
-    chapter: '代理准备 · 2 / 5',
-    hint: '添加代理地址，或导入订阅。',
+    title: '添加出口线路',
+    chapter: '网络准备 · 2 / 5',
+    hint: '连接 Clash Verge 后，点击「添加线路」。',
   },
   'proxy-form': {
-    title: '保存代理',
-    chapter: '代理准备 · 3 / 5',
-    hint: '填好代理信息后保存。',
+    title: '保存出口线路',
+    chapter: '网络准备 · 3 / 5',
+    hint: '选择 Clash 中的固定节点，保存线路。',
   },
   'proxy-test': {
     title: '检测代理',
-    chapter: '代理准备 · 4 / 5',
+    chapter: '网络准备 · 4 / 5',
     hint: '点击「检测」，确认出口 IP。',
   },
   'proxy-result': {
     title: '确认出口',
-    chapter: '代理准备 · 5 / 5',
+    chapter: '网络准备 · 5 / 5',
     hint: '核对出口 IP 和地区。',
   },
   'account-add': {
@@ -37,7 +37,7 @@ export const guideSteps: Record<
   'account-form': {
     title: '保存账号',
     chapter: '账号配置 · 2 / 2',
-    hint: '填写邮箱、选择代理，然后保存。',
+    hint: '填写邮箱、选择出口线路，然后保存。',
   },
   'account-open': {
     title: '打开环境',

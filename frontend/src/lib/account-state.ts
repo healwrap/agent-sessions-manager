@@ -69,7 +69,7 @@ export function accountState(
       data.proxies.some((proxy) => proxy.id === client.profile?.proxy_id),
     )
   )
-    return result('action', '待配置代理', '为账号的访问环境配置专用代理。');
+    return result('action', '待配置线路', '为账号的访问环境配置出口线路。');
   if (account.provider !== 'claude')
     return result('unknown', '尚未检测', '尚未取得此账号的访问状态与额度。');
   if (usage?.status === 'authorization_required')

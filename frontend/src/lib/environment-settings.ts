@@ -119,7 +119,8 @@ export interface ProxyConfig {
   id: string;
   name: string;
   url: string;
-  kind?: 'external' | 'managed';
+  kind?: 'external' | 'managed' | 'clash';
+  clash_node?: string;
 }
 export interface ProxySubscription {
   url: string;
@@ -160,6 +161,7 @@ export interface LocalApp {
   path: string;
 }
 export interface EnvironmentSettings {
+  network?: ClashNetwork;
   profile_owners?: Record<
     'profiles' | 'app_profiles',
     Record<string, { account_id: string; account_name: string }>
@@ -173,6 +175,22 @@ export interface EnvironmentSettings {
   browser: BrowserRuntimeState;
   app_runtime: AppRuntimeState;
   proxy_runtime?: ProxyRuntimeState;
+}
+export interface ClashNetwork {
+  connected: boolean;
+  version: string;
+  tun: boolean;
+  mode: string;
+  error: string;
+  endpoint: string;
+  secret_set: boolean;
+  controller?: string;
+  group: string;
+  current_node: string;
+  nodes: { name: string; type: string }[];
+  routing_ready: boolean;
+  domains: string[];
+  dns: string[];
 }
 export type EnvironmentSection =
   'accounts' | 'browser' | 'claude-app' | 'proxies';

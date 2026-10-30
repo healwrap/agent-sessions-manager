@@ -50,7 +50,7 @@ export function ProxyEditor({
     (row) => row.id === item?.id,
   );
   const [mode, setMode] = useState<'external' | 'managed'>(
-    item ? item.kind || 'external' : 'managed',
+    item ? (item.kind === 'managed' ? 'managed' : 'external') : 'managed',
   );
   const [name, setName] = useState(item?.name || demoDefaults.proxyName);
   const [url, setUrl] = useState(item?.url || '');

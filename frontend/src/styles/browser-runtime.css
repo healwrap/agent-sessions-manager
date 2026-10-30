@@ -1,13 +1,12 @@
 .environment-gate-editor {
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsw-radius-md);
-  overflow: hidden;
-}
-.environment-gate-editor > .disclosure-collapse > div > .disclosure-content {
-  padding: 0 16px 16px;
+  --disclosure-content-gap: 0px;
+  min-width: 0;
 }
 .environment-gate-editor .settings-row {
-  padding: 14px 0;
+  padding: 12px 0;
+}
+.environment-gate-editor .settings-row:first-child {
+  padding-top: 0;
 }
 .environment-gate-editor .settings-row:last-child {
   border-bottom: 0;

@@ -33,15 +33,6 @@ class NetworkManager:
     def settings(self):
         saved = json.loads(self.path.read_text()) if self.path.exists() else {}
         defaults = {'endpoint': '', 'secret': '', 'group': GROUP, 'domains': [], 'dns': [], 'auto_prepare': True}
-        if not self.path.exists():
-            try:
-                policy = source_config().get('dns', {}).get('nameserver-policy', {})
-                for domain, servers in policy.items():
-                    if domain in ('+.sankuai.com', '+.sankuai.info'):
-                        defaults['domains'].append(domain[2:])
-                        defaults['dns'] += servers if isinstance(servers, list) else [servers]
-                defaults['dns'] = list(dict.fromkeys(defaults['dns']))
-            except (ValueError, OSError): pass
         return {**defaults, **saved}
 
     def invalidate(self):

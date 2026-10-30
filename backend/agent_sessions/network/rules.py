@@ -13,6 +13,7 @@ START = '// BEGIN AGENT SESSIONS NETWORK'
 END = '// END AGENT SESSIONS NETWORK'
 GROUP = 'Agent Sessions · Claude'
 BEFORE = 'x-agent-sessions-before'
+CREATED = '// AGENT SESSIONS CREATED GLOBAL SCRIPT'
 
 
 def dns_configuration(settings):
@@ -173,9 +174,13 @@ def restore(controller, directory):
         backup = Path(directory)/'network-backups'/str(time.time_ns())
         backup.mkdir(parents=True, mode=0o700)
         (backup/'Script.js').write_text(original, encoding='utf-8')
-        temporary = path.with_suffix('.agent-sessions.tmp')
-        temporary.write_text(re.sub(re.escape(START)+r'.*?'+re.escape(END)+r'\n?', '', original, flags=re.S), encoding='utf-8')
-        temporary.replace(path)
+        text = re.sub(re.escape(START)+r'.*?'+re.escape(END)+r'\n?', '', original, flags=re.S)
+        if CREATED in fragment.group(1) and not text:
+            path.unlink()
+        else:
+            temporary = path.with_suffix('.agent-sessions.tmp')
+            temporary.write_text(text, encoding='utf-8')
+            temporary.replace(path)
         # The generated file may still contain the old block until Verge next reloads it.
         private_json(Path(directory)/'network-baseline.json', {
             'fingerprint': hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest(), 'config': config})
@@ -186,6 +191,8 @@ def restore(controller, directory):
 def install(controller, settings, directory, lines=()):
     """Own nodes and rules survive subscription changes through one removable script block."""
     path, original, fragment = legacy_fragment()
+    script_existed = path.is_file()
+    created = not script_existed or fragment is not None and CREATED in fragment.group(1)
     source = source_config()
     config = clean_config(source, directory, fragment.group(1) if fragment else None)
     if any(row.get('name') == GROUP for row in config.get('proxy-groups', [])):
@@ -202,7 +209,8 @@ def install(controller, settings, directory, lines=()):
             'group': next((row for row in staged.get('proxy-groups', []) if row['name'] == GROUP), None),
             'dnsPolicies': policies, 'dnsOptions': options, 'domains': settings['domains'], 'dns': settings['dns']}
     block = f'''{START}
-const agentSessionsOriginalMain = main;
+{CREATED if created else ''}
+const agentSessionsOriginalMain = typeof main === "function" ? main : config => config;
 main = function(config, profileName) {{
   config = agentSessionsOriginalMain(config, profileName);
   const network = {json.dumps(data, ensure_ascii=False)};
@@ -236,18 +244,20 @@ main = function(config, profileName) {{
     temporary.chmod(0o600)
     temporary.replace(runtime)
     text = re.sub(re.escape(START)+r'.*?'+re.escape(END)+r'\n?', '', original, flags=re.S)
-    if not path.is_file(): raise ValueError('未找到 Clash Verge 全局扩展脚本，请先创建全局脚本')
-    if path.read_text(encoding='utf-8') != original: raise ValueError('Clash 全局脚本刚被修改，请刷新后重试')
+    if path.is_file() != script_existed or (path.read_text(encoding='utf-8') if script_existed else '') != original:
+        raise ValueError('Clash 全局脚本刚被修改，请刷新后重试')
     backup = Path(directory)/'network-backups'/str(time.time_ns())
     backup.mkdir(parents=True, mode=0o700)
     (backup/'Script.js').write_text(original, encoding='utf-8')
+    path.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
     script_temp = path.with_suffix('.agent-sessions.tmp')
     script_temp.write_text(text+('' if not text or text.endswith('\n') else '\n')+block, encoding='utf-8')
     script_temp.chmod(0o600)
     script_temp.replace(path)
     try: controller.request('PUT', '/configs?force=true', {'payload': payload})
     except Exception:
-        path.write_text(original, encoding='utf-8')
+        if script_existed: path.write_text(original, encoding='utf-8')
+        else: path.unlink()
         raise
     private_json(Path(directory)/'network-baseline.json', {
         'fingerprint': hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest(), 'config': config})

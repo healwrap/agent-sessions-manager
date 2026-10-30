@@ -38,16 +38,6 @@ export function NetworkLines({
         title={query ? '没有匹配的节点' : '还没有 Claude 专用节点'}
       />
     );
-  const bound = (id: string) =>
-    data.accounts
-      .filter((account) =>
-        [
-          data.profiles.find((row) => row.id === account.profile_id),
-          data.app_profiles.find((row) => row.id === account.app_profile_id),
-        ].some((row) => row?.proxy_id === id),
-      )
-      .map((row) => row.name)
-      .join('、');
   const latest = (id: string) => {
     const ids = new Set(
       [...data.profiles, ...data.app_profiles]
@@ -62,7 +52,6 @@ export function NetworkLines({
     <div role="list">
       {rows.map((item) => {
         const previous = latest(item.id);
-        const accounts = bound(item.id);
         return (
           <ResourceRow
             key={item.id}
@@ -75,7 +64,6 @@ export function NetworkLines({
                     ? `${item.node.type.toUpperCase()} · ${item.node.server}:${item.node.port}`
                     : item.clash_node}
                 </span>
-                {accounts && <span>{accounts}</span>}
                 {previous && (
                   <span title={new Date(previous.checked_at).toLocaleString()}>
                     最近预检 · {previous.resolved.ip}{' '}

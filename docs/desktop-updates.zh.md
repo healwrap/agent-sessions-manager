@@ -16,7 +16,7 @@
 
 发布工作流是 `.github/workflows/desktop-release.yml`。启用前需在仓库 Actions Secrets 配置与已提交公钥对应的 `TAURI_SIGNING_PRIVATE_KEY`，有密码时再配置 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`。
 
-同步修改 `package.json`、`package-lock.json`、`desktop/Cargo.toml` 和 `desktop/tauri.conf.json` 的版本，并更新 Cargo 锁文件。推送相同版本的 `v<版本号>` 标签后，工作流构建 macOS Apple Silicon 与 Windows x64，生成更新签名，合并 `latest.json` 并发布 GitHub Release。两端构建全部成功后才发布更新清单。其他架构暂不发布更新包。
+同步修改 `package.json`、`package-lock.json`、`desktop/Cargo.toml` 和 `desktop/tauri.conf.json` 的版本，并更新 Cargo 锁文件。推送相同版本的 `v<版本号>` 标签后，工作流构建 macOS Apple Silicon 与 Windows x64，生成更新签名，合并 `latest.json` 并发布 GitHub Release。也可手动从主分支触发，填写同样的发布标签；首次发布可先完成构建再创建标签。两端构建全部成功后才发布更新清单，同时附带首次安装镜像。其他架构暂不发布更新包。
 
 固定清单地址：`https://github.com/healwrap/agent-sessions-manager/releases/latest/download/latest.json`。未发布清单时，应用显示“暂未发布更新”；网络错误不会显示成“已是最新版本”。发布渠道未配置 Secret 或尚未发布 Release 时，应用内更新不能被当作已上线。
 

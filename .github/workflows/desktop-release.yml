@@ -2,6 +2,17 @@ name: Publish desktop update
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag matching the application version
+        required: true
+        default: v0.2.0
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+concurrency:
+  group: desktop-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -31,7 +42,7 @@ jobs:
           import json, os, subprocess
           from pathlib import Path
           version = json.loads(Path('desktop/tauri.conf.json').read_text())['version']
-          assert os.environ['GITHUB_REF_NAME'] == 'v'+version, 'Tag must match application version'
+          assert os.environ['RELEASE_TAG'] == 'v'+version, 'Tag must match application version'
           assert os.environ['TAURI_SIGNING_PRIVATE_KEY'], 'Configure the updater signing secret before publishing'
           notes = Path('docs/releases')/(version+'.md')
           if not notes.is_file():
@@ -59,8 +70,10 @@ jobs:
           pattern: update-*
           path: dist/updates
           merge-multiple: true
-      - run: python tools/merge_update_feed.py dist/updates "$GITHUB_REF_NAME"
+      - run: python tools/merge_update_feed.py dist/updates "$RELEASE_TAG"
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: dist/updates/*

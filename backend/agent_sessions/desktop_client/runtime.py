@@ -17,6 +17,7 @@ from .conflicts import warnings
 from .focus import focus_process, quit_process
 from .skills import sync_skills
 from .plugins import sync_plugins
+from .preferences import sync_preferences
 from agent_sessions.platform_process import claude_processes
 from agent_sessions.applications import app_executable
 from agent_sessions.profile_identity import ProfileIdentity, IdentityConflict
@@ -138,6 +139,13 @@ class AppRuntime:
                                    label='尚未同步' if synced['state'] == 'pending' else '部分未同步' if synced['skipped'] else '已完成',
                                    detail='；'.join(row['title']+'：'+row['reason']+'（'+row['path']+'）' for row in synced['issues'])))
                 if run.get('cancelled'): return
+                try:
+                    paths = self.session_paths()
+                    run['preference_inheritance'] = sync_preferences(directory,
+                        Path(paths['claude:desktop']).parent if paths.get('claude:desktop') else None,
+                        paths.get('claude:local'))
+                except (ValueError, OSError) as error:
+                    run['preference_inheritance'] = {'state': 'skipped', 'error': str(error)}
                 run['skill_inheritance'] = sync_skills(config, profile.get('inherit_skills', True))
                 plugins = sync_plugins(config, self.directory/'plugin-library', profile.get('inherit_plugins', True))
                 run['plugin_inheritance'] = {name: value for name, value in plugins.items() if name != 'environment'}

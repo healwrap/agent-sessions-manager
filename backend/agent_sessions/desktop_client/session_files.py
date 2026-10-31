@@ -109,7 +109,7 @@ def conversations(environment, code, indexes):
     return rows, issues
 
 
-def account_storage(profile):
+def account_storage(profile, fallbacks=()):
     account = load(profile/'config.json').get('lastKnownAccountUuid')
     if not uuid(account): return None
     oauth = load(profile/'claude-code/.claude.json').get('oauthAccount', {})
@@ -118,4 +118,13 @@ def account_storage(profile):
     if not uuid(organization):
         choices = [path.name for path in root.iterdir() if path.is_dir() and uuid(path.name)] if root.is_dir() else []
         organization = choices[0] if len(choices) == 1 else None
+        if not choices:
+            inherited = set()
+            for source in fallbacks:
+                source = Path(source)
+                if load(source/'config.json').get('lastKnownAccountUuid') != account: continue
+                existing = source/'claude-code-sessions'/account
+                if existing.is_dir():
+                    inherited.update(path.name for path in existing.iterdir() if path.is_dir() and uuid(path.name))
+            if len(inherited) == 1: organization = inherited.pop()
     return root/organization if uuid(organization) else None

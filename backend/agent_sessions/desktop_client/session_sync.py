@@ -102,15 +102,15 @@ def sidecars(source, target, cli_id, backups):
 def synchronize(root, profile_id, settings, paths=None):
     root = Path(root)
     target = directory(root, 'app_profiles', profile_id)
-    storage = account_storage(target)
-    result = {'state': 'complete', 'imported': 0, 'updated': 0, 'unchanged': 0, 'branches': 0, 'skipped': 0, 'issues': [],
-              'completed_at': datetime.now(timezone.utc).isoformat()}
-    if storage is None:
-        return {**result, 'state': 'pending', 'message': '登录并选择组织后，再次打开环境会自动同步全部本地 Code 会话'}
     paths = paths or {}
     sources = [(profile['id'], directory(root, 'app_profiles', profile['id'])/'claude-code',
                  directory(root, 'app_profiles', profile['id'])/'claude-code-sessions') for profile in settings['app_profiles']]
     sources.append(('default', Path(paths.get('claude:local') or claude_root()), Path(paths.get('claude:desktop') or claude_desktop_root())))
+    storage = account_storage(target, [indexes.parent for _, _, indexes in sources])
+    result = {'state': 'complete', 'imported': 0, 'updated': 0, 'unchanged': 0, 'branches': 0, 'skipped': 0, 'issues': [],
+              'completed_at': datetime.now(timezone.utc).isoformat()}
+    if storage is None:
+        return {**result, 'state': 'pending', 'message': '登录并选择组织后，再次打开环境会自动同步全部本地 Code 会话'}
     groups, seen, seen_files = {}, set(), set()
     for environment, code, indexes in sources:
         if (code.resolve(), indexes.resolve()) in seen: continue

@@ -7,7 +7,7 @@ on:
       tag:
         description: Release tag matching the application version
         required: true
-        default: v0.2.0
+        default: v0.2.1
 env:
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 concurrency:

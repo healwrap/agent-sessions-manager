@@ -1,5 +1,6 @@
 """Create signed update artifacts after the complete desktop bundle is signed."""
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -37,6 +38,11 @@ def build(version, triple):
         app = ROOT/'desktop/target/release/bundle/macos/Agent Sessions.app'
         with tarfile.open(artifact, 'w:gz', dereference=False) as archive:
             archive.add(app, arcname=app.name)
+        image = ROOT/'desktop/target/release/bundle/dmg'/f'Agent Sessions_{version}_{arch}.dmg'
+        image_name = 'Agent-Sessions_'+version+'_macOS-'+('arm64' if arch == 'aarch64' else arch)+'.dmg'
+        bootstrap = output/image_name
+        shutil.copy2(image, bootstrap)
+        bootstrap.with_suffix('.dmg.sha256').write_text(hashlib.sha256(bootstrap.read_bytes()).hexdigest()+'  '+image_name+'\n', encoding='utf-8')
     elif sys.platform == 'win32':
         target = 'windows-'+arch
         installers = list((ROOT/'desktop/target/release/bundle/nsis').glob('*.exe'))

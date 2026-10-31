@@ -263,17 +263,20 @@ class NetworkManager:
     def start(self):
         # Migrate the old global patch once, before any account is allowed to start.
         try:
-            source = source_config()
-            pending = any(proxy.get('kind') == 'clash' and not proxy.get('node') for proxy in self.environments.read()['proxies'])
-            if pending and hasattr(self.environments, 'path'):
-                backup = self.directory/'network-node-migration-backup.json'
-                if not backup.exists(): private_json(backup, json.loads(self.environments.path.read_text(encoding='utf-8')))
-            for proxy in self.environments.read()['proxies']:
-                if proxy.get('kind') == 'clash' and not proxy.get('node'):
-                    self.environments.change({'collection': 'proxies', 'action': 'save', 'item': import_existing(proxy, source)})
-            if legacy_fragment()[2]: restore(Controller(self.settings()), self.directory)
-            if self.environments.read()['proxies']:
-                self._apply(self.settings())
+            proxies = self.environments.read()['proxies']
+            # A new/isolated state does not own another instance's global script.
+            if proxies or (self.directory/'network-baseline.json').is_file():
+                source = source_config()
+                pending = any(proxy.get('kind') == 'clash' and not proxy.get('node') for proxy in proxies)
+                if pending and hasattr(self.environments, 'path'):
+                    backup = self.directory/'network-node-migration-backup.json'
+                    if not backup.exists(): private_json(backup, json.loads(self.environments.path.read_text(encoding='utf-8')))
+                for proxy in proxies:
+                    if proxy.get('kind') == 'clash' and not proxy.get('node'):
+                        self.environments.change({'collection': 'proxies', 'action': 'save', 'item': import_existing(proxy, source)})
+                if legacy_fragment()[2]: restore(Controller(self.settings()), self.directory)
+                if self.environments.read()['proxies']:
+                    self._apply(self.settings())
         except (ValueError, OSError) as error: self.restore_error = str(error)
         threading.Thread(target=self._watch, daemon=True).start()
 

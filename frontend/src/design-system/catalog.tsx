@@ -42,6 +42,7 @@ import { LayoutPreview } from './layout-preview';
 import { InputPreview } from './input-preview';
 import { GuidePreview } from './guide-preview';
 import { ToastPreview } from './toast-preview';
+import { StatusPreview } from './status-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
@@ -142,23 +143,7 @@ export function ComponentCatalog() {
               </div>
             ))}
           </Panel>
-          <Panel title="按钮与状态">
-            <div className="ui-actions">
-              <Button variant="primary" onClick={() => setDialog(true)}>
-                <Plus size={16} />
-                新建环境
-              </Button>
-              <Button variant="outline">描边按钮</Button>
-              <Button variant="ghost">无底色按钮</Button>
-              <Button disabled>不可用</Button>
-            </div>
-            <div className="catalog-statuses">
-              <StatusBadge>未启动</StatusBadge>
-              <StatusBadge tone="success">运行中</StatusBadge>
-              <StatusBadge tone="warning">检查中</StatusBadge>
-              <StatusBadge tone="error">已拦截</StatusBadge>
-            </div>
-          </Panel>
+          <StatusPreview onCreate={() => setDialog(true)} />
           <Panel title="工具栏与筛选">
             <CollectionToolbar
               query={query}

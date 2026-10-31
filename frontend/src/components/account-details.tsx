@@ -27,6 +27,7 @@ export function AccountDetails({
   guidedTarget,
   usage,
   status,
+  monitoringAvailable = true,
   ...actions
 }: AccountActions & {
   account: BrowserAccount;
@@ -35,6 +36,7 @@ export function AccountDetails({
   guidedTarget?: 'browser' | 'app';
   usage: AccountUsages;
   status: AccountState;
+  monitoringAvailable?: boolean;
 }) {
   const clients = accountClients(account, data);
   const [target, setTarget] = useState(
@@ -129,6 +131,7 @@ export function AccountDetails({
           client={item}
           data={data}
           busy={busy}
+          monitoringAvailable={monitoringAvailable}
           {...actions}
         />
       ))}

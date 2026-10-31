@@ -1,5 +1,6 @@
 import type {
   FormEventHandler,
+  HTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
   Ref,
@@ -34,12 +35,14 @@ export function TextArea({
 export function StatusBadge({
   children,
   tone = 'neutral',
+  className = '',
+  ...props
 }: {
   children: ReactNode;
   tone?: 'neutral' | 'success' | 'warning' | 'error';
-}) {
+} & HTMLAttributes<HTMLSpanElement>) {
   return (
-    <span className="status-badge" data-tone={tone}>
+    <span className={`status-badge ${className}`} data-tone={tone} {...props}>
       {children}
     </span>
   );

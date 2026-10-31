@@ -242,6 +242,7 @@ export function BrowserAccounts({
               usage={usage}
               status={current.status}
               guidedTarget={guidedTarget}
+              monitoringAvailable={!loading && !readError}
               {...actions}
             />
           </MasterDetail>

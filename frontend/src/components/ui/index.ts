@@ -32,6 +32,7 @@ export { EmptyState, Notice, BusyState, RemoveButton } from './feedback';
 export { ResourceCard, ResourceRow } from './resource-card';
 export { Field } from './field';
 export { ProgressMeter } from './progress-meter';
+export { RuntimeProtectionBadge } from '../runtime-protection';
 export { Tooltip, TooltipLayer } from './tooltip';
 export {
   Toast,

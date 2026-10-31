@@ -6,7 +6,6 @@ import {
   LogIn,
   KeyRound,
   Settings2,
-  ShieldCheck,
   Square,
 } from 'lucide-react';
 import type {
@@ -14,12 +13,13 @@ import type {
   EnvironmentSettings,
 } from '../lib/environment-settings';
 import { runLabels } from '../lib/environment-settings';
+import { runtimeProtection } from '../lib/runtime-protection';
 import {
   clientIssue,
   type AccountActions,
   type AccountClient,
 } from '../lib/account-view';
-import { Button, FactsGrid } from './ui';
+import { Button, FactsGrid, RuntimeProtectionBadge } from './ui';
 import { StatusBadge } from './form-controls';
 import { BrowserLaunchReport } from './browser-launch-report';
 import { AppSessionSync } from './app-session-sync';
@@ -30,6 +30,7 @@ export function AccountClientPanel({
   data,
   busy,
   hidden,
+  monitoringAvailable = true,
   onRuntime,
   onLogin,
   onSessionLogin,
@@ -50,6 +51,7 @@ export function AccountClientPanel({
   data: EnvironmentSettings;
   busy: boolean;
   hidden: boolean;
+  monitoringAvailable?: boolean;
 }) {
   const { profile, run, session, target } = client;
   const checking = run?.status === 'checking';
@@ -57,6 +59,12 @@ export function AccountClientPanel({
   const saved = session?.state === 'saved';
   const issue = clientIssue(client);
   const proxy = data.proxies.find((item) => item.id === profile?.proxy_id);
+  const protection = runtimeProtection(
+    account.provider,
+    run,
+    proxy,
+    monitoringAvailable ? data.network : undefined,
+  );
   const tone = issue
     ? 'error'
     : checking
@@ -84,11 +92,15 @@ export function AccountClientPanel({
     >
       <div className="account-launch-bar" data-guide="account-login">
         <div className="account-launch-status">
-          <StatusBadge tone={tone}>
-            {run ? runLabels[run.status] : profile ? '尚未启动' : '待绑定'}
-          </StatusBadge>
+          {protection ? (
+            <RuntimeProtectionBadge state={protection} />
+          ) : (
+            <StatusBadge tone={tone}>
+              {run ? runLabels[run.status] : profile ? '尚未启动' : '待绑定'}
+            </StatusBadge>
+          )}
           <span className="account-session-state">
-            <ShieldCheck size={16} />
+            <KeyRound size={16} />
             {saved
               ? '登录凭据已保存'
               : session?.state === 'unavailable'

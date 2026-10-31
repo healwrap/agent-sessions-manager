@@ -70,6 +70,7 @@
 @import './account-overview.css' layer(components);
 @import './dsh/progress.css' layer(components);
 @import './account-client.css' layer(components);
+@import './runtime-protection.css' layer(components);
 @import './dsh/controls.css' layer(components);
 @import './dsh/choices.css' layer(components);
 @import './ui-foundations.css' layer(components);

@@ -20,6 +20,21 @@ def read_json(path):
     return json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {}
 
 
+def inline_definition(source, name, market, version):
+    known = read_json(source/'plugins/known_marketplaces.json').get(market, {})
+    location = known.get('installLocation')
+    if not isinstance(location, str) or not location: return {}
+    metadata = read_json(Path(location).expanduser()/'.claude-plugin/marketplace.json')
+    if metadata.get('name') != market: return {}
+    for entry in metadata.get('plugins', []):
+        # Non-strict marketplace entries can define an entire plugin without plugin.json.
+        # Keep the installed name/version checks instead of guessing a missing manifest.
+        if (entry.get('name') == name and entry.get('version') == version
+                and entry.get('strict') is False):
+            return entry
+    return {}
+
+
 def catalog(home):
     source = Path(home)/'.claude'
     records = read_json(source/'plugins/installed_plugins.json').get('plugins', {})
@@ -34,14 +49,16 @@ def catalog(home):
         path = Path(row['installPath']).expanduser().resolve()
         # Only installed program caches are public. Account-synced plugins remain account-owned.
         if not path.is_relative_to((source/'plugins/cache').resolve()): continue
-        manifest = read_json(path/'.claude-plugin/plugin.json')
+        manifest_path = path/'.claude-plugin/plugin.json'
         version = row.get('version', '')
+        definition = inline_definition(source, *parts, version) if not manifest_path.is_file() else {}
+        manifest = read_json(manifest_path) if manifest_path.is_file() else definition
         if (manifest.get('name') != parts[0] or not VERSION.fullmatch(version)
                 or manifest.get('version', version) != version):
             raise ValueError('本机插件安装记录与程序不一致：'+key)
         if type(flags.get(key, True)) is not bool: raise ValueError('本机插件启用状态无效：'+key)
         result.append(dict(id=key, name=parts[0], marketplace=parts[1], version=version,
-                           source=path, enabled=flags.get(key, True)))
+                           source=path, enabled=flags.get(key, True), definition=definition))
     return result
 
 
@@ -108,7 +125,8 @@ def publish(library, rows):
     library = Path(library).resolve()
     with LOCK:
         packages = [(row, *package(library, row)) for row in rows]
-        signature = json.dumps(dict(layout=2, plugins=[(row['id'], row['version'], digest) for row, _, digest in packages]))
+        signature = json.dumps(dict(layout=3, plugins=[(row['id'], row['version'], digest, row.get('definition', {}))
+                                                      for row, _, digest in packages]), sort_keys=True)
         destination = library/'seeds'/hashlib.sha256(signature.encode()).hexdigest()[:24]
         if destination.is_dir(): return destination
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -122,7 +140,8 @@ def publish(library, rows):
                 # Hard links share immutable bytes without copying large dependency trees again.
                 shutil.copytree(program, temporary/'marketplaces'/market/'plugins'/name,
                                 copy_function=os.link, symlinks=True)
-                markets.setdefault(market, []).append(dict(name=name, version=version, source='./plugins/'+name))
+                markets.setdefault(market, []).append({**row.get('definition', {}), 'name': name,
+                                                        'version': version, 'source': './plugins/'+name})
             known = {}
             for market, plugins in markets.items():
                 location = destination/'marketplaces'/market

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { GeneralSettings } from './settings/general';
 import { SessionSettings } from './settings/sessions';
 import { ComponentSettings } from './settings/components';
+import { UpdateSettings } from './settings/updates';
 import { useSettingsAutosave } from '../hooks/use-settings-autosave';
 import { Dialog, Icon } from './primitives';
 import { Button, BusyState, IconButton, Notice, SectionHeading } from './ui';
@@ -34,6 +35,7 @@ export function SettingsDialog({ open }: { open: boolean }) {
               ['general', 'settings', '通用'],
               ['sessions', 'context', '会话管理'],
               ['components', 'settings', '组件管理'],
+              ['updates', 'settings', '应用更新'],
             ].map(([key, icon, label]) => (
               <button
                 key={key}
@@ -61,7 +63,9 @@ export function SettingsDialog({ open }: { open: boolean }) {
                       ? '通用'
                       : section === 'components'
                         ? '组件管理'
-                        : '会话管理'
+                        : section === 'updates'
+                          ? '应用更新'
+                          : '会话管理'
                   }
                 />
                 <div hidden={section !== 'general'}>
@@ -79,10 +83,16 @@ export function SettingsDialog({ open }: { open: boolean }) {
                     active={open && section === 'components'}
                   />
                 </div>
+                <div hidden={section !== 'updates'}>
+                  <UpdateSettings active={open && section === 'updates'} />
+                </div>
               </>
             )}
           </div>
-          <footer className="settings-footer" hidden={section === 'components'}>
+          <footer
+            className="settings-footer"
+            hidden={section === 'components' || section === 'updates'}
+          >
             {error && <Notice tone="error">{error}</Notice>}
             <div className="settings-actions">
               <Button

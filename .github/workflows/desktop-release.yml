@@ -1,0 +1,66 @@
+name: Publish desktop update
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      AGENT_SESSIONS_REQUIRE_UPDATE_SIGNATURE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Validate release configuration
+        shell: python
+        run: |
+          import json, os, subprocess
+          from pathlib import Path
+          version = json.loads(Path('desktop/tauri.conf.json').read_text())['version']
+          assert os.environ['GITHUB_REF_NAME'] == 'v'+version, 'Tag must match application version'
+          assert os.environ['TAURI_SIGNING_PRIVATE_KEY'], 'Configure the updater signing secret before publishing'
+          notes = Path('docs/releases')/(version+'.md')
+          if not notes.is_file():
+              notes = Path('build/release-notes.md')
+              notes.parent.mkdir(parents=True, exist_ok=True)
+              notes.write_text(subprocess.check_output(['git', 'log', '-1', '--pretty=%B'], text=True), encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
+              stream.write('AGENT_SESSIONS_RELEASE_NOTES='+str(notes.resolve())+'\n')
+      - run: npm ci
+      - run: python tools/build_desktop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: update-${{ runner.os }}
+          path: dist/updates/*
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: update-*
+          path: dist/updates
+          merge-multiple: true
+      - run: python tools/merge_update_feed.py dist/updates "$GITHUB_REF_NAME"
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/updates/*

@@ -161,7 +161,8 @@ class Handler(BaseHTTPRequestHandler):
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
         network = self.path in {'/api/network/connect', '/api/network/control', '/api/network/reset', '/api/network/refresh', '/api/network/open', '/api/network/apply', '/api/network/save-line', '/api/network/prepare', '/api/network/intranet'}
-        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not usage and not network) or not hasattr(self.server, 'settings'):
+        desktop_update = self.path in {'/api/desktop-update/prepare', '/api/desktop-update/cancel'}
+        if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not usage and not network and not desktop_update) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
         host = self.headers.get('Host', '')
         if host != f'127.0.0.1:{self.server.server_port}' and host != f'localhost:{self.server.server_port}':
@@ -180,7 +181,9 @@ class Handler(BaseHTTPRequestHandler):
             if browser_session and (length > 20000 or self.headers.get_content_type() != 'application/json'):
                 raise ValueError('会话导入应使用 JSON，大小不能超过 20 KB')
             value = json.loads(self.rfile.read(length))
-            if network:
+            if desktop_update:
+                self.respond(200, self.server.desktop_updates.command(self.path.rsplit('/', 1)[-1], value))
+            elif network:
                 if length > 20000 or self.headers.get_content_type() != 'application/json': raise ValueError('网络参数应使用不超过 20 KB 的 JSON')
                 from agent_sessions.network.api import command
                 self.respond(200, command(self.server, self.path.rsplit('/', 1)[-1], value))
@@ -331,8 +334,10 @@ def main():
     server.browser_session = SessionImport(server.environments, server.browser_runtime)
     from agent_sessions.components.manager import ComponentManager
     server.component_manager = ComponentManager(args.state_home, server.browser_runtime, server.app_runtime)
-    server.browser_runtime.component_guard = server.component_manager.ready
-    server.app_runtime.component_guard = server.component_manager.ready
+    from agent_sessions.api.desktop_updates import DesktopUpdateGuard
+    server.desktop_updates = DesktopUpdateGuard(server.browser_runtime, server.app_runtime, server.component_manager)
+    server.browser_runtime.component_guard = server.desktop_updates.ready
+    server.app_runtime.component_guard = server.desktop_updates.ready
     print(f'http://127.0.0.1:{server.server_port}/', flush=True)
     if args.desktop:
         # The owning app closes stdin on exit; do not leave an orphan service.

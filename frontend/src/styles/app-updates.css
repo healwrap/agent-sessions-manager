@@ -1,0 +1,14 @@
+.app-update-notes {
+  white-space: pre-wrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 22px;
+}
+.app-update-actions {
+  margin: 20px 0;
+}
+.app-update-progress {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}

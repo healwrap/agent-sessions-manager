@@ -2,13 +2,16 @@ export function ProgressMeter({
   label,
   value,
   max = 100,
+  tone: overrideTone,
 }: {
   label: string;
   value: number;
   max?: number;
+  tone?: 'normal' | 'warning' | 'error';
 }) {
   const tone =
-    value >= max ? 'error' : value >= max * 0.8 ? 'warning' : 'normal';
+    overrideTone ??
+    (value >= max ? 'error' : value >= max * 0.8 ? 'warning' : 'normal');
   return (
     <progress
       className="ui-progress-meter"

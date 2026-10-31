@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Agent Sessions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "local.agent-sessions.desktop",
   "build": {
     "frontendDist": "loader"
@@ -34,5 +34,17 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY0NzdFQjNCRjBEODA0NTMKUldSVEJOandPK3QzWkNFekJ0L2lxdlArM3EvcWNadGdEUytIQ2doS2o5a3MzNFFzRmErL0ptVVIK",
+      "endpoints": [
+        "https://github.com/healwrap/agent-sessions-manager/releases/latest/download/latest.json"
+      ],
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

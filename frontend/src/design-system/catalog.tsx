@@ -43,6 +43,7 @@ import { InputPreview } from './input-preview';
 import { GuidePreview } from './guide-preview';
 import { ToastPreview } from './toast-preview';
 import { StatusPreview } from './status-preview';
+import { UpdatePreview } from './update-preview';
 
 export function ComponentCatalog() {
   const [theme, setTheme] = useState('light');
@@ -144,6 +145,7 @@ export function ComponentCatalog() {
             ))}
           </Panel>
           <StatusPreview onCreate={() => setDialog(true)} />
+          <UpdatePreview />
           <Panel title="工具栏与筛选">
             <CollectionToolbar
               query={query}

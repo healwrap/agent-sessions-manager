@@ -1,0 +1,7 @@
+{
+  "identifier": "local-updates",
+  "description": "本机主界面可管理已签名应用更新，不接受自定义下载地址",
+  "windows": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:8766/*"] },
+  "permissions": ["allow-app-updates"]
+}

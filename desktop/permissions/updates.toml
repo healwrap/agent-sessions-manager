@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-app-updates"
+description = "从固定发布渠道检查、下载及安装已签名的应用更新"
+commands.allow = ["app_update_status", "app_update_check", "app_update_download", "app_update_install"]

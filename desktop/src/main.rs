@@ -2,6 +2,7 @@
 mod appearance;
 mod local_backend;
 mod resources;
+mod updates;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     Mutex,
@@ -142,8 +143,11 @@ fn main() {
         .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Backend::default())
-        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about, appearance::set_theme, resources::open_resource])
+        .manage(updates::AppUpdates::default())
+        .invoke_handler(tauri::generate_handler![restart_backend, backend_status, show_about, appearance::set_theme, resources::open_resource,
+            updates::app_update_status, updates::app_update_check, updates::app_update_download, updates::app_update_install])
         .on_page_load(|window, _| {
             let preference = appearance::saved_preference(window.app_handle());
             let _ = window.eval(&format!("localStorage.setItem('agent-sessions-theme','{preference}');"));
@@ -192,6 +196,8 @@ fn main() {
                     _ => {}
                 }).build(app)?;
             restart_backend(app.handle().clone()).map_err(std::io::Error::other)?;
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move { let _ = updates::app_update_check(handle).await; });
             Ok(())
         })
         .build(tauri::generate_context!()).expect("无法启动 Agent Sessions");

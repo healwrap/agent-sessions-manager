@@ -61,6 +61,8 @@ def main():
     bundles = 'app' if sys.platform == 'darwin' else 'nsis' if windows else 'deb,appimage'
     run(cli, 'build', '--bundles', bundles, cwd=ROOT/'desktop')
     if sys.platform != 'darwin':
+        from build_update import build
+        build(json.loads((ROOT/'desktop/tauri.conf.json').read_text(encoding='utf-8'))['version'], triple)
         print('Bundles:', ROOT/'desktop/target/release/bundle')
         return
     app = ROOT/'desktop/target/release/bundle/macos/Agent Sessions.app'
@@ -76,6 +78,8 @@ def main():
             '-fs', 'HFS+', '-ov', '-format', 'UDZO', output)
     print('App:', app)
     print('DMG:', output)
+    from build_update import build
+    build(version, triple)
 
 
 if __name__ == '__main__': main()

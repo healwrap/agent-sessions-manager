@@ -44,6 +44,8 @@ class EnvironmentSettings:
                 if not isinstance(key, str) or not key: raise ValueError('请选择配置')
                 if collection == 'proxies' and any(item['proxy_id'] == key for item in current['profiles']+current['app_profiles']):
                     raise ValueError('此代理已被环境配置引用，请先调整对应环境')
+                if collection == 'proxies' and any(key in row.get('fallback_ids', []) for row in current['proxies']):
+                    raise ValueError('此节点仍被用作备用，请先解除备用关系')
                 field = 'profile_id' if collection == 'profiles' else 'app_profile_id'
                 if collection in ('profiles', 'app_profiles') and any(item.get(field) == key for item in current['accounts']):
                     raise ValueError('此环境已绑定账号，请先调整账号绑定')
@@ -71,10 +73,10 @@ class EnvironmentSettings:
                     'app_profiles': {'name', 'proxy_id', 'locale', 'timezone'}}[collection]
         optional = {'locale_mode', 'timezone_mode', 'expected_ip', 'expected_dns', 'gates', 'name_account_id'} if collection in ('profiles', 'app_profiles') else {'app_profile_id', 'usage_plan'} if collection == 'accounts' else set()
         if collection == 'app_profiles': optional |= {'inherit_skills', 'inherit_plugins'}
-        if collection == 'proxies': optional |= {'kind', 'clash_node', 'node'}
+        if collection == 'proxies': optional |= {'kind', 'clash_node', 'node', 'fallback_ids', 'fallback_mode'}
         if not isinstance(item, dict) or not required <= set(item) <= required | optional | {'id'}:
             raise ValueError('环境配置字段无效')
-        fields = set(item)-{'gates', 'inherit_skills', 'inherit_plugins', 'node'}
+        fields = set(item)-{'gates', 'inherit_skills', 'inherit_plugins', 'node', 'fallback_ids'}
         if 'inherit_skills' in item and type(item['inherit_skills']) is not bool:
             raise ValueError('本机 skills 继承开关无效')
         if 'inherit_plugins' in item and type(item['inherit_plugins']) is not bool:
@@ -93,6 +95,8 @@ class EnvironmentSettings:
                 node = validate(item['node'])
                 if node.get('name') != PREFIX+key or item.get('clash_node') != node['name']:
                     raise ValueError('Claude 节点标识与线路不一致')
+            from .network.fallback_plan import validate
+            validate([row for row in current['proxies'] if row['id'] != key]+[{**item, 'id': key}])
         elif collection == 'accounts':
             item = {**item, 'name': item['name'].strip()}
             if item['provider'] not in ('claude', 'codex'): raise ValueError('请选择账号类型')

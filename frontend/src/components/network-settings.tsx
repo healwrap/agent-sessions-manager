@@ -38,6 +38,8 @@ import '../styles/network-settings.css';
 import { NetworkLines } from './network-lines';
 import { NetworkControls } from './network-controls';
 import type { NodeEnvironmentEdit } from './network-node-delete';
+import { NetworkFallbackDialog } from './network-fallback-dialog';
+import type { FallbackSwitch } from './network-fallback-status';
 
 const empty: ClashNetwork = {
   connected: false,
@@ -79,15 +81,19 @@ export function NetworkSettings({
   const network = data.network || empty;
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<ProxyConfig>();
+  const [fallbackSwitch, setFallbackSwitch] = useState<FallbackSwitch>();
   const [dialog, setDialog] = useState<'connection' | 'intranet'>();
   const [working, setWorking] = useState(false);
   const [loadingControl, setLoadingControl] = useState<string>();
   const [host, setHost] = useState('');
   const lines = data.proxies.filter((row) => row.kind === 'clash');
-  const pending = working || busy;
-  const locked = [...data.browser.runs, ...data.app_runtime.runs].some(
-    (row) => row.alive || row.status === 'checking',
-  );
+  const pending =
+    working || busy || !!network.fallbacks?.some((row) => row.switching);
+  const locked =
+    !!network.fallbacks?.some((row) => row.switching) ||
+    [...data.browser.runs, ...data.app_runtime.runs].some(
+      (row) => row.alive || row.status === 'checking',
+    );
   const run = async (action: string, body: unknown = {}, control?: string) => {
     setWorking(true);
     setLoadingControl(control);
@@ -262,6 +268,7 @@ export function NetworkSettings({
           onInspect={onInspect}
           onDelete={onDelete}
           onEditEnvironment={onEditEnvironment}
+          onFallback={setFallbackSwitch}
         />
       </CollectionPanel>
       <ResourceCard
@@ -306,6 +313,7 @@ export function NetworkSettings({
         <NetworkLineEditor
           item={editing}
           existingIds={data.proxies.map((row) => row.id)}
+          lines={data.proxies}
           locked={locked}
           onClose={() => {
             setEditing(undefined);
@@ -316,6 +324,17 @@ export function NetworkSettings({
             onCloseCreate();
             void onReload();
             onSavedProxy(latest.proxies.find((row) => row.id === id)!);
+          }}
+        />
+      )}
+      {fallbackSwitch && (
+        <NetworkFallbackDialog
+          value={fallbackSwitch}
+          data={data}
+          onClose={() => setFallbackSwitch(undefined)}
+          onSaved={() => {
+            setFallbackSwitch(undefined);
+            void onReload();
           }}
         />
       )}

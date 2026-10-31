@@ -38,3 +38,23 @@
   flex: 1;
   min-width: 220px;
 }
+.network-fallback-fields,
+.network-fallback-status {
+  display: grid;
+  gap: 12px;
+}
+.network-fallback-order,
+.network-fallback-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.network-fallback-order > span {
+  flex: 1;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+.network-fallback-status p {
+  margin: 0;
+}

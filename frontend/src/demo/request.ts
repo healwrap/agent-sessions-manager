@@ -8,6 +8,7 @@ import type {
 import { initialState } from '../state/model';
 import { sampleBenchmarks } from './usage';
 import { demoAuthorize } from './usage-authorization';
+import { demoFallback, refreshFallbacks } from './network-fallback';
 import {
   createDemoSettings,
   sampleReport,
@@ -163,7 +164,9 @@ export const demoRequest: Request = async <T>(
   let value: unknown;
   if (path === '/api/environments') value = environments(body);
   else if (path.startsWith('/api/network')) {
-    if (path.endsWith('/save-line')) {
+    if (path.endsWith('/fallback-switch'))
+      value = demoFallback(data, args as { id: string; target: string });
+    else if (path.endsWith('/save-line')) {
       const key = args.id || id('proxy');
       let node: NonNullable<ProxyConfig['node']>;
       if (args.address) {
@@ -184,6 +187,10 @@ export const demoRequest: Request = async <T>(
           throw new Error('演示模式的单节点配置请使用 JSON，或改用代理地址。');
         }
       }
+      const fallback = body as {
+        fallback_ids?: string[];
+        fallback_mode?: 'manual' | 'automatic';
+      };
       const item = {
         id: key,
         name: args.name,
@@ -191,6 +198,8 @@ export const demoRequest: Request = async <T>(
         kind: 'clash' as const,
         clash_node: node.name,
         node,
+        fallback_ids: fallback.fallback_ids || [],
+        fallback_mode: fallback.fallback_mode || 'manual',
       };
       const index = data.proxies.findIndex((row) => row.id === item.id);
       if (index < 0) data.proxies.push(item);
@@ -199,6 +208,7 @@ export const demoRequest: Request = async <T>(
         name: row.clash_node,
         type: row.node?.type || 'http',
       }));
+      refreshFallbacks(data);
       value = data;
     } else if (path.endsWith('/intranet'))
       value = { addresses: ['192.0.2.10'], reachable: true, host: args.host };

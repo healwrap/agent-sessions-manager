@@ -12,6 +12,8 @@ from .client import Controller, source_config
 from .rules import GROUP, install, rules, restore, legacy_fragment
 from .catalogue import profile_summary
 from .nodes import parse as parse_node, import_existing
+from .fallback import NodeFallbacks
+from .fallback_plan import references
 from . import system_proxy
 from .verge import open_app
 
@@ -29,6 +31,7 @@ class NetworkManager:
         self.restore_error = ''
         self.automatic_changes = {}
         self.suspended = False
+        self.fallbacks = NodeFallbacks(self)
 
     def settings(self):
         saved = json.loads(self.path.read_text()) if self.path.exists() else {}
@@ -48,7 +51,8 @@ class NetworkManager:
                      'group': GROUP, 'current_node': '', 'nodes': [], 'routing_ready': False,
                      'domains': settings['domains'], 'dns': settings['dns'], 'auto_prepare': settings['auto_prepare'],
                      'routing_active': self.applied, 'restore_error': self.restore_error,
-                     'system_proxy': system_proxy.read(), 'profile': {'name': '', 'type': '', 'dynamic_providers': 0}}
+                     'system_proxy': system_proxy.read(), 'profile': {'name': '', 'type': '', 'dynamic_providers': 0},
+                     'fallbacks': self.fallbacks.state(self.environments.read()['proxies'])}
             try:
                 client = Controller(settings)
                 config = client.request('GET', '/configs')
@@ -84,6 +88,7 @@ class NetworkManager:
                     yield profile
 
     def mutable(self):
+        if self.fallbacks.switching: raise ValueError('正在切换节点，请完成后再修改网络配置')
         if next(self.active(), None): raise ValueError('请先停止运行中的账号环境，再修改网络配置')
 
     def connect(self, value):
@@ -189,7 +194,8 @@ class NetworkManager:
         if run is not None: run['stage'] = '正在检查账号出口'
 
     def save_line(self, value):
-        if set(value)-{'id', 'name', 'address', 'node_yaml', 'node'}: raise ValueError('线路参数无效')
+        if set(value)-{'id', 'name', 'address', 'node_yaml', 'node', 'fallback_ids', 'fallback_mode', 'reset_exit'}: raise ValueError('线路参数无效')
+        if type(value.get('reset_exit', False)) is not bool: raise ValueError('出口确认参数无效')
         if not isinstance(value.get('name'), str) or not value['name'].strip() or len(value['name']) > 2048:
             raise ValueError('请填写线路名称')
         with self.lock:
@@ -202,10 +208,14 @@ class NetworkManager:
             port = int(old['url'].rsplit(':', 1)[1]) if old and old.get('kind') == 'clash' else free_port()
             item = {'id': key, 'name': value['name'].strip(), 'kind': 'clash',
                     'url': f'http://127.0.0.1:{port}', 'clash_node': node['name'], 'node': node}
+            item.update(fallback_ids=value.get('fallback_ids', old.get('fallback_ids', []) if old else []),
+                        fallback_mode=value.get('fallback_mode', old.get('fallback_mode', 'manual') if old else 'manual'))
             self.environments.validate('proxies', item, current)
             lines = [row for row in current['proxies'] if row.get('kind') == 'clash' and row['id'] != key]+[item]
             self._apply(self.settings(), lines)
             self.environments.change({'collection': 'proxies', 'action': 'save', 'item': item})
+            if value.get('reset_exit') or old and old.get('node') != node: self.fallbacks.forget(key)
+            self.fallbacks.reconcile(lines)
             self.invalidate()
             return item
 
@@ -215,21 +225,42 @@ class NetworkManager:
             current = self.environments.read()
             if any(row['proxy_id'] == key for row in current['profiles']+current['app_profiles']):
                 raise ValueError('此线路已被环境引用，请先调整对应环境')
+            if references(current['proxies'], key): raise ValueError('此节点仍被用作备用，请先解除备用关系')
             lines = [row for row in current['proxies'] if row.get('kind') == 'clash' and row['id'] != key]
             self._apply(self.settings(), lines)
             self.environments.change({'collection': 'proxies', 'action': 'delete', 'id': key})
+            self.fallbacks.forget(key)
             self.invalidate()
 
     def ensure(self, proxy, starting_profile=None, run=None):
         if not proxy or proxy.get('kind') != 'clash': raise ValueError('请先为环境选择 Clash 出口线路')
         self.activate(proxy, starting_profile, run)
 
+    def select_route(self, profile, proxy, run):
+        # Ensure the controller/listeners are ready before probing a configured fallback chain.
+        if proxy.get('fallback_ids'):
+            with self.lock:
+                self.suspended = False
+                self._prepare(self.settings(), proxy, run)
+                self._ready(self.state(True), proxy)
+        return self.fallbacks.resolve(profile, proxy, run)
+
+    def runtime_proxy(self, profile):
+        with self.fallbacks.lock:
+            selected = self.fallbacks.selected.get(profile['proxy_id'], profile['proxy_id'])
+        for _, runtime in self.runtimes:
+            run = runtime.runs.get(profile['id'], {})
+            route = run.get('route', {})
+            if run.get('status') in ('checking', 'running') and route.get('root_id') == profile['proxy_id']:
+                selected = route['proxy_id']
+        return next((row for row in self.environments.read()['proxies'] if row['id'] == selected), {})
+
     def activate(self, proxy, starting_profile=None, run=None):
         with self.lock:
             if self.suspended and not starting_profile: raise ValueError('账号分流已停用，请先启动账号或应用分流')
             if starting_profile: self.suspended = False
             for profile in self.active(starting_profile) if starting_profile else []:
-                other = next((row for row in self.environments.read()['proxies'] if row['id'] == profile['proxy_id']), {})
+                other = self.runtime_proxy(profile)
                 if other.get('kind') == 'clash' and other['clash_node'] != proxy['clash_node']:
                     raise ValueError('另一个账号出口正在使用，请先停止该环境再切换线路')
             self._prepare(self.settings(), proxy, run)
@@ -279,6 +310,7 @@ class NetworkManager:
                     self._apply(self.settings())
         except (ValueError, OSError) as error: self.restore_error = str(error)
         threading.Thread(target=self._watch, daemon=True).start()
+        threading.Thread(target=self.fallbacks.watch, daemon=True).start()
 
     def _watch(self):
         while not self.closed.wait(.5):
@@ -288,7 +320,7 @@ class NetworkManager:
                     key = profile['id']
                     run = runtime.runs.get(key, {})
                     if key not in self.prepared or run.get('status') not in ('running', 'checking'): continue
-                    proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), {})
+                    proxy = self.runtime_proxy(profile)
                     if proxy.get('kind') != 'clash': continue
                     try: self.check(proxy)
                     except (ValueError, OSError) as error:

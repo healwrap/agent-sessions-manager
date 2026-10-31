@@ -49,6 +49,15 @@ export interface BrowserAccount {
   usage_plan?: '' | 'pro' | 'max5' | 'max20';
 }
 export interface BrowserRun {
+  route?: {
+    root_id: string;
+    proxy_id: string;
+    root_name: string;
+    proxy_name: string;
+    clash_node: string;
+    backup: boolean;
+    attempts: string[];
+  };
   profile_id: string;
   account_id: string;
   name: string;
@@ -116,6 +125,8 @@ export interface BrowserRuntimeState {
   sessions?: Record<string, LocalSession>;
 }
 export interface ProxyConfig {
+  fallback_ids?: string[];
+  fallback_mode?: 'manual' | 'automatic';
   node?: {
     name: string;
     type: string;
@@ -150,6 +161,17 @@ export interface EnvironmentSettings {
   app_runtime: AppRuntimeState;
 }
 export interface ClashNetwork {
+  fallbacks?: {
+    id: string;
+    current_id: string;
+    chain: string[];
+    switching: boolean;
+    state?: 'healthy' | 'backup' | 'degraded' | 'exhausted' | 'switching';
+    failures?: number;
+    message?: string;
+    checked_at?: string;
+    switched_at?: string;
+  }[];
   connected: boolean;
   version: string;
   tun: boolean;

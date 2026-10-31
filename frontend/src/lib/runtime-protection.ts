@@ -9,7 +9,9 @@ export type RuntimeProtectionState = 'active' | 'pending';
 
 export function runtimeProtection(
   provider: BrowserAccount['provider'],
-  run: Pick<BrowserRun, 'status' | 'alive' | 'error' | 'checks'> | undefined,
+  run:
+    | Pick<BrowserRun, 'status' | 'alive' | 'error' | 'checks' | 'route'>
+    | undefined,
   proxy: Pick<ProxyConfig, 'kind' | 'clash_node'> | undefined,
   network:
     | Pick<
@@ -40,7 +42,7 @@ export function runtimeProtection(
     network.tun &&
     network.mode === 'rule' &&
     network.routing_ready &&
-    network.current_node === proxy.clash_node
+    network.current_node === (run.route?.clash_node || proxy.clash_node)
     ? 'active'
     : 'pending';
 }

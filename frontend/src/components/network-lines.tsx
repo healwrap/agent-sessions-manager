@@ -8,6 +8,10 @@ import {
   NetworkNodeDelete,
   type NodeEnvironmentEdit,
 } from './network-node-delete';
+import {
+  NetworkFallbackStatus,
+  type FallbackSwitch,
+} from './network-fallback-status';
 
 export function NetworkLines({
   data,
@@ -17,6 +21,7 @@ export function NetworkLines({
   onInspect,
   onDelete,
   onEditEnvironment,
+  onFallback,
 }: {
   data: EnvironmentSettings;
   query: string;
@@ -25,6 +30,7 @@ export function NetworkLines({
   onInspect: (item: ProxyConfig) => void;
   onDelete: (id: string) => void;
   onEditEnvironment: (edit: NodeEnvironmentEdit) => void;
+  onFallback: (value: FallbackSwitch) => void;
 }) {
   const rows = data.proxies.filter((row) =>
     (row.name + ' ' + row.clash_node)
@@ -102,6 +108,12 @@ export function NetworkLines({
               </>
             }
           >
+            <NetworkFallbackStatus
+              item={item}
+              data={data}
+              busy={busy}
+              onSwitch={onFallback}
+            />
             {data.network?.connected &&
               !data.network.nodes.some(
                 (row) => row.name === item.clash_node,

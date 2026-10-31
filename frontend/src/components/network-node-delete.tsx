@@ -40,13 +40,16 @@ export function NetworkNodeDelete({
       .map((item) => ({ kind: 'app_profiles' as const, item })),
   ];
   const runs = [...data.browser.runs, ...data.app_runtime.runs];
+  const parents = data.proxies.filter((row) =>
+    row.fallback_ids?.includes(item.id),
+  );
   const active = (id?: string) =>
     runs.some(
       (row) =>
         (!id || row.profile_id === id) &&
         (row.alive || row.status === 'checking'),
     );
-  const inUse = environments.length > 0;
+  const inUse = environments.length > 0 || parents.length > 0;
   return (
     <>
       <Button
@@ -93,8 +96,15 @@ export function NetworkNodeDelete({
           {inUse ? (
             <>
               <Notice>
-                以下环境正在使用“{item.name}”。请先更换它们的节点，再删除。
+                “{item.name}”仍被环境或备用配置使用。请先解除引用，再删除。
               </Notice>
+              {parents.length > 0 && (
+                <p>
+                  作为以下节点的备用：
+                  {parents.map((row) => row.name).join('、')}
+                  。请在节点配置中移除备用关系。
+                </p>
+              )}
               <div role="list">
                 {environments.map((edit) => (
                   <ResourceRow

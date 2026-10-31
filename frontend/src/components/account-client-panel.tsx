@@ -58,7 +58,11 @@ export function AccountClientPanel({
   const alive = !!run?.alive;
   const saved = session?.state === 'saved';
   const issue = clientIssue(client);
-  const proxy = data.proxies.find((item) => item.id === profile?.proxy_id);
+  const route =
+    run?.route?.root_id === profile?.proxy_id ? run?.route : undefined;
+  const proxy = data.proxies.find(
+    (item) => item.id === (route?.proxy_id || profile?.proxy_id),
+  );
   const protection = runtimeProtection(
     account.provider,
     run,
@@ -243,6 +247,9 @@ export function AccountClientPanel({
                   label: '出口线路',
                   value: proxy?.name || '系统路由',
                 },
+                ...(route?.backup
+                  ? [{ label: '回退来源', value: route.root_name }]
+                  : []),
                 {
                   label: '最近出口',
                   value: (

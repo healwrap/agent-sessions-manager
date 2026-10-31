@@ -1,5 +1,6 @@
 """Own isolated browser processes; gate account navigation on actual browser reports."""
 from datetime import datetime, timezone
+from contextlib import nullcontext
 import hashlib
 import json
 import os
@@ -91,7 +92,7 @@ class BrowserRuntime:
                 self.stop(key)
         return self.launch(value)
 
-    def launch(self, value):
+    def launch(self, value, *, fallback=False):
         if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}:
             raise ValueError('浏览器启动参数无效')
         settings = self.environments.read()
@@ -109,7 +110,9 @@ class BrowserRuntime:
         if profile['engine'] != 'chrome' and getattr(self, 'component_guard', None): self.component_guard('fingerprint')
         found = kernel.for_profile(profile, self.directory/'kernel', settings['apps'])
         if not found['available']: raise ValueError('未找到 '+found['name']+'，请先安装对应浏览器')
-        with self.lock:
+        with self.lock, (self.network.fallbacks.lock if self.network else nullcontext()):
+            if self.network and self.network.fallbacks.switching and not fallback:
+                raise ValueError('正在切换节点，请完成后再启动账号环境')
             process = self.processes.get(key)
             if (process and process.poll() is None) or self.runs.get(key, {}).get('status') == 'checking':
                 raise ValueError('此环境正在运行或检查，请先停止后再启动')
@@ -128,7 +131,9 @@ class BrowserRuntime:
     def _launch(self, profile, proxy, account, found, run):
         key, ticket = profile['id'], None
         try:
-            if self.network: self.network.ensure(proxy, key, run)
+            if self.network:
+                profile, proxy = self.network.select_route(profile, proxy, run)
+                self.network.ensure(proxy, key, run)
             modes = policy(profile)
             url = proxy['url'] if proxy else ''
             resolved, checks = inspect(profile, proxy)

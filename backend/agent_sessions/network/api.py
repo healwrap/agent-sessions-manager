@@ -22,6 +22,10 @@ def command(server, action, value):
     if action == 'save-line':
         manager.save_line(value)
         return environment_state(server)
+    if action == 'fallback-switch':
+        if set(value) != {'id', 'target'}: raise ValueError('请选择节点及切换方向')
+        manager.fallbacks.switch(value['id'], value['target'])
+        return environment_state(server)
     if action == 'prepare':
         if set(value) != {'id'}: raise ValueError('请选择出口线路')
         proxy = next((row for row in server.environments.read()['proxies'] if row['id'] == value['id']), None)
@@ -49,6 +53,7 @@ def environment_state(server):
 
 
 def change_environment(server, value):
+    if server.network.fallbacks.switching: raise ValueError('正在切换节点，请完成后再修改账号与环境')
     if value.get('collection') == 'proxies':
         if value.get('action') != 'delete': raise ValueError('请在网络设置中选择 Clash 节点')
         server.network.remove_line(value.get('id'))

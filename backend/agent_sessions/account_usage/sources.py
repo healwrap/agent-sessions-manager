@@ -75,6 +75,7 @@ class UsageSources:
             raise
         proxy = next((row for row in settings['proxies'] if row['id'] == profile.get('proxy_id')), None)
         if not proxy: raise UsageError('blocked', '请先为 App 环境绑定专用代理，再查询用量')
+        profile, proxy = self.network.fallbacks.background_route(profile, proxy)
         self.network.ensure(proxy)
         with self.app.lock:
             run = self.app.runs.get(key, {})

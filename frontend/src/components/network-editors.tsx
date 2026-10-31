@@ -6,6 +6,7 @@ import type {
 } from '../lib/environment-settings';
 import { request } from '../lib/api';
 import { errorMessage } from '../lib/error-message';
+import { NetworkFallbackFields } from './network-fallback-fields';
 import {
   Button,
   ContentDialog,
@@ -15,17 +16,21 @@ import {
   Select,
   TextArea,
   TextInput,
+  Disclosure,
+  Switch,
 } from './ui';
 
 export function NetworkLineEditor({
   item,
   existingIds,
+  lines,
   locked = false,
   onClose,
   onSaved,
 }: {
   item?: ProxyConfig;
   existingIds: string[];
+  lines: ProxyConfig[];
   locked?: boolean;
   onClose: () => void;
   onSaved: (data: EnvironmentSettings, id: string) => void;
@@ -39,6 +44,11 @@ export function NetworkLineEditor({
       : '',
   );
   const [pending, setPending] = useState(false);
+  const [resetExit, setResetExit] = useState(false);
+  const [fallbackIds, setFallbackIds] = useState(item?.fallback_ids || []);
+  const [fallbackMode, setFallbackMode] = useState(
+    item?.fallback_mode || 'manual',
+  );
   const save = async () => {
     if (locked) return;
     setPending(true);
@@ -49,6 +59,9 @@ export function NetworkLineEditor({
         {
           id: item?.id,
           name,
+          fallback_ids: fallbackIds,
+          fallback_mode: fallbackMode,
+          reset_exit: resetExit,
           ...(format === 'address' ? { address } : { node_yaml: nodeConfig }),
         },
       );
@@ -145,6 +158,35 @@ export function NetworkLineEditor({
         </Field>
       )}
       <p className="network-bound-accounts">仅保存此节点，不导入或更新订阅。</p>
+      <NetworkFallbackFields
+        id={item?.id}
+        name={name}
+        lines={lines}
+        selected={fallbackIds}
+        mode={fallbackMode}
+        disabled={locked || pending}
+        onChange={setFallbackIds}
+        onMode={setFallbackMode}
+      />
+      {item && (
+        <Disclosure title="重新确认出口">
+          <Field
+            label="保存后重新记录此节点的出口 IP"
+            htmlFor="network-reset-exit"
+          >
+            <Switch
+              id="network-reset-exit"
+              label="重新记录节点出口"
+              checked={resetExit}
+              disabled={locked || pending}
+              onChange={setResetExit}
+            />
+          </Field>
+          <p className="network-bound-accounts">
+            供应商更换 IP 后使用。原有账号的固定主节点 IP 仍需在环境中单独确认。
+          </p>
+        </Disclosure>
+      )}
     </ContentDialog>
   );
 }

@@ -1,5 +1,6 @@
 """Launch the official Claude app with isolated data and embedded Code settings."""
 from datetime import datetime, timezone
+from contextlib import nullcontext
 import json
 import hashlib
 import os
@@ -83,7 +84,7 @@ class AppRuntime:
             if process and process.poll() is None: self.stop(key)
         return self.launch(value)
 
-    def launch(self, value):
+    def launch(self, value, *, fallback=False):
         if not isinstance(value, dict) or set(value)-{'profile_id', 'account_id'}: raise ValueError('App 启动参数无效')
         settings = self.environments.read()
         account = next((row for row in settings['accounts'] if row['id'] == value.get('account_id')), None)
@@ -98,7 +99,9 @@ class AppRuntime:
         proxy = next((row for row in settings['proxies'] if row['id'] == profile['proxy_id']), None)
         if profile['proxy_id'] and not proxy: raise ValueError('绑定的代理不存在')
         if not proxy or proxy.get('kind') != 'clash': raise ValueError('请先为环境选择出口线路')
-        with self.lock:
+        with self.lock, (self.network.fallbacks.lock if self.network else nullcontext()):
+            if self.network and self.network.fallbacks.switching and not fallback:
+                raise ValueError('正在切换节点，请完成后再启动账号环境')
             if any(row['status'] == 'checking' for row in self.runs.values()): raise ValueError('正在切换 App 环境，请稍候')
             if getattr(self, 'component_guard', None): self.component_guard('claude')
             process = self.processes.get(key)
@@ -115,7 +118,9 @@ class AppRuntime:
     def _launch(self, profile, proxy, app, run):
         key = profile['id']
         try:
-            if self.network: self.network.ensure(proxy, key, run)
+            if self.network:
+                profile, proxy = self.network.select_route(profile, proxy, run)
+                self.network.ensure(proxy, key, run)
             resolved, checks = inspect(profile, proxy, browser=False)
             with self.lock:
                 if run.get('cancelled'): return

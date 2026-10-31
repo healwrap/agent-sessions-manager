@@ -27,12 +27,16 @@ class UsageAuthorization:
         if not account or account['provider'] != 'claude': raise ValueError('请选择 Claude 账号')
         profile = next((row for row in settings['profiles'] if row['id'] == account['profile_id']), None)
         collection = 'profiles'
-        if not profile and not browser_required:
-            collection = 'app_profiles'
-            profile = next((row for row in settings['app_profiles'] if row['id'] == account.get('app_profile_id')), None)
+        if not browser_required:
+            app_profile = next((row for row in settings['app_profiles'] if row['id'] == account.get('app_profile_id')), None)
+            browser_process = self.browser.processes.get(profile['id']) if profile else None
+            app_process = self.app.processes.get(app_profile['id']) if app_profile else None
+            if not profile or app_process and app_process.poll() is None and not (browser_process and browser_process.poll() is None):
+                collection, profile = 'app_profiles', app_profile
         if not profile: raise ValueError('请先为账号绑定独立浏览器环境')
         proxy = next((row for row in settings['proxies'] if row['id'] == profile.get('proxy_id')), None)
         if not proxy: raise UsageError('blocked', '请先为账号环境绑定专用代理，再授权后台查询')
+        profile, proxy = self.proxies.fallbacks.background_route(profile, proxy)
         runtime = self.browser if collection == 'profiles' else self.app
         runtime.identity.verify(settings, collection, profile['id'])
         identity = {field: value for field, value in account.items() if field != 'usage_plan'}

@@ -38,9 +38,13 @@ class AccountUsage:
         if not account or account['provider'] != 'claude': raise ValueError('请选择 Claude 账号')
         profiles = [row for row in settings['profiles']+settings['app_profiles']
                     if row['id'] in (account.get('profile_id'), account.get('app_profile_id'))]
-        proxies = [row for row in settings['proxies'] if any(profile['proxy_id'] == row['id'] for profile in profiles)]
+        from agent_sessions.network.fallback_plan import chain
+        roots = {profile['proxy_id'] for profile in profiles if profile.get('proxy_id')}
+        relevant = {row['id'] for key in roots for row in chain(settings['proxies'], key)}
+        proxies = [row for row in settings['proxies'] if row['id'] in relevant]
+        selection = self.sources.network.fallbacks.binding(roots)
         identity = {field: value for field, value in account.items() if field != 'usage_plan'}
-        binding = hashlib.sha256(json.dumps([identity, profiles, proxies, self.authorization.revision(key)], sort_keys=True).encode()).hexdigest()
+        binding = hashlib.sha256(json.dumps([identity, profiles, proxies, selection, self.authorization.revision(key)], sort_keys=True).encode()).hexdigest()
         return account, settings, binding
 
     def entry(self, key, binding):

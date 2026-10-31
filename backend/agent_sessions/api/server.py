@@ -160,7 +160,7 @@ class Handler(BaseHTTPRequestHandler):
         app_login = self.path in {'/api/app-login/open', '/api/app-login/cancel'}
         browser_session = self.path in {'/api/browser-session/import', '/api/browser-session/cancel'}
         diagnostic = self.path in {'/api/claude-diagnostics/run', '/api/claude-diagnostics/clear'}
-        network = self.path in {'/api/network/connect', '/api/network/control', '/api/network/reset', '/api/network/refresh', '/api/network/open', '/api/network/apply', '/api/network/save-line', '/api/network/prepare', '/api/network/intranet'}
+        network = self.path in {'/api/network/connect', '/api/network/control', '/api/network/reset', '/api/network/refresh', '/api/network/open', '/api/network/apply', '/api/network/save-line', '/api/network/prepare', '/api/network/intranet', '/api/network/fallback-switch'}
         desktop_update = self.path in {'/api/desktop-update/prepare', '/api/desktop-update/cancel'}
         if (self.path not in {'/api/preferences', '/api/settings', '/api/environments', '/api/components'} and not diagnostic and not browser_probe and not runtime and not app_login and not browser_session and not skill and not usage and not network and not desktop_update) or not hasattr(self.server, 'settings'):
             self.respond(501, {'error': '此接口不支持写入'}); return
